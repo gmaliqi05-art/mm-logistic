@@ -65,12 +65,14 @@ export interface Stock {
   company_id: string;
   depot_id: string;
   category_id: string;
+  category_product_id: string | null;
   quantity: number;
   condition: 'good' | 'damaged' | 'repaired';
   updated_at: string;
   created_at: string;
   category?: ProductCategory;
   depot?: Depot;
+  product?: { id: string; name: string } | null;
 }
 
 export interface StockMovement {
@@ -78,6 +80,7 @@ export interface StockMovement {
   company_id: string;
   depot_id: string;
   category_id: string;
+  category_product_id: string | null;
   movement_type: 'entry' | 'exit' | 'repair';
   quantity: number;
   condition_before: string;
@@ -88,6 +91,7 @@ export interface StockMovement {
   category?: ProductCategory;
   depot?: Depot;
   performer?: Profile;
+  product?: { id: string; name: string } | null;
 }
 
 export interface DeliveryNote {
