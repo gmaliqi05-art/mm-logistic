@@ -1,0 +1,87 @@
+/*
+  # Seed Support FAQs - Part 2 (Shoferet, Dokumentet, Chat)
+
+  Adds ~100 FAQ entries covering:
+  - Driver operations
+  - Document system
+  - Chat functionality
+*/
+
+INSERT INTO support_faqs (category, question, answer, keywords, priority) VALUES
+
+-- SHOFERET (Driver Operations) - 35 entries
+('Shoferet', 'Si te shoh fletedergesat e mia?', 'Shkoni te "Fletedergesat" ne menu. Aty shfaqen te gjitha fletedergesat qe jane caktuar per ju, te renditura sipas statusit dhe dates.', ARRAY['fletedergese', 'shoh', 'lista', 'mia', 'shofer'], 9),
+('Shoferet', 'Si te konfirmoj dorezimin e mallit?', 'Ne fletedergesen perkatese, klikoni "Konfirmo Dorezimin". Mund te shtoni foto te mallit te dorezuar dhe shenime per marresin.', ARRAY['konfirmo', 'dorezim', 'mall', 'dergese', 'perfundo'], 9),
+('Shoferet', 'Si te ngarkoj foto te dorezimit?', 'Ne faqen e fletedergeses, klikoni ikonene e kameres ose "Ngarko Foto". Zgjidhni foton nga pajisja juaj - rekomandohet te fotografoni mallin dhe firmosjen.', ARRAY['foto', 'ngarko', 'dorezim', 'imazh', 'dokumento', 'kamer'], 8),
+('Shoferet', 'Cfare statusesh ka nje fletedergese?', 'Statuset jane: Draft (pergatitur), Derguar (gati per transport), Ne Tranzit (ne ruge), Dorezuar (malli i dorezuar), Konfirmuar (marresi konfirmoi).', ARRAY['status', 'fletedergese', 'gjendja', 'faza', 'hapa'], 8),
+('Shoferet', 'Si te ndryshoj statusin e fletedergeses?', 'Kur niseni per transport, ndryshoni statusin ne "Ne Tranzit". Kur dorezoni mallin, ndryshoni ne "Dorezuar". Keto ndryshime njohtojne automatikisht administratorin.', ARRAY['ndrysho', 'status', 'fletedergese', 'tranzit', 'dorezuar'], 9),
+('Shoferet', 'Si te shoh adresen e dergeses?', 'Adresa e dergeses shfaqet ne detajet e fletedergeses. Mund ta klikoni per te hapur ne aplikacionin e hartave te telefonit tuaj.', ARRAY['adrese', 'dergese', 'harte', 'lokacion', 'vendndodhje'], 8),
+('Shoferet', 'Cfare bej nese nuk gjej adresen?', 'Kontaktoni administratorin ose derguesin permes chat-it per te marre udhezime me te sakta. Gjithashtu mund te telefononi marresin direkt.', ARRAY['adrese', 'gjej', 'nuk', 'humbur', 'gabim', 'lokacion'], 7),
+('Shoferet', 'Si te komunikoj me depon?', 'Perdorni Chat-in per te komunikuar me stafin e depoje. Zgjidhni biseden me punetorin ose grupin e depoje.', ARRAY['komunikoj', 'depo', 'chat', 'mesazh', 'kontakt'], 7),
+('Shoferet', 'A mund te refuzoj nje dergese?', 'Nese keni arsye te vlefshme per te refuzuar (p.sh. ngarkese e tejshme, gjendje e keqe e mallit), kontaktoni administratorin permes chat-it perpara se te merrni vendim.', ARRAY['refuzo', 'dergese', 'nuk', 'pranoj', 'arsye'], 7),
+('Shoferet', 'Cfare bej nese demtohet malli gjate transportit?', 'Fotografoni demtimin menjehere dhe njoftoni administratorin permes chat-it. Shenoni gjendjen ne fletedergese kur te dorezoni mallin.', ARRAY['demtim', 'transport', 'mall', 'aksident', 'problem'], 9),
+('Shoferet', 'Si te shoh historikun e dergesave?', 'Ne "Fletedergesat", perdorni filtrat per te pare dergesat e meparshme. Mund te filtroni sipas dates, statusit, ose depoje.', ARRAY['historik', 'dergesa', 'meparshme', 'lista', 'arkiv'], 6),
+('Shoferet', 'A mund te shoh sa dergesa kam bere sot?', 'Ne Dashboard-in tuaj shfaqet numri i dergesave te dites, javore, dhe mujore se bashku me statistika te tjera.', ARRAY['sa', 'dergesa', 'sot', 'numri', 'statistik'], 7),
+('Shoferet', 'Si te di kur kam dergese te re?', 'Do te merrni njoftim kur caktohet nje fletedergese e re per ju. Gjithashtu kontrolloni rregullisht listen e fletedergesave.', ARRAY['njoftim', 'dergese', 'reja', 'alarm', 'di'], 7),
+('Shoferet', 'Cfare dokumentesh mund te shoh?', 'Mund te shihni dokumentet qe jane derguar specifikisht per ju, si fletedergesa, udhezime, ose dokumente te tjera nga administratori.', ARRAY['dokument', 'shoh', 'akses', 'lloj'], 6),
+('Shoferet', 'Si te skanoj nje fletedergese?', 'Ne faqen e fletedergeses, klikoni "Skanoj Dokumentin". Perdorni kameren e telefonit per te fotografuar fletedergesen fizike.', ARRAY['skanoj', 'fletedergese', 'dokument', 'kamer', 'foto'], 7),
+('Shoferet', 'A mund te ndryshoj rrugen e dergeses?', 'Rruga e dergeses percaktohet nga administratori. Nese keni nevoje te ndryshoni rrugen, kontaktoni administratorin perpara se te ndryshoni dicka.', ARRAY['rruge', 'ndrysho', 'itininar', 'percorse'], 5),
+('Shoferet', 'Si te raportoj nje vonese?', 'Njoftoni menjehere administratorin permes chat-it. Shpjegoni arsyen e voneses dhe kohen e pritshme te mbeerritjes.', ARRAY['vonese', 'raportoj', 'vonoj', 'kohe', 'pritje'], 8),
+('Shoferet', 'Cfare bej nese marresi nuk eshte?', 'Prisni per nje kohe te arsyeshme dhe kontaktoni marresin me telefon. Nese nuk pergjigjet, njoftoni administratorin per udhezime te metejshme.', ARRAY['marresi', 'nuk', 'eshte', 'mungon', 'prit'], 7),
+('Shoferet', 'Si te shtoj shenime ne fletedergese?', 'Ne faqen e fletedergeses ka nje fushe "Shenime" ku mund te shkruani informacione shtese per dergesen ose marresin.', ARRAY['shenime', 'fletedergese', 'nota', 'shtoj', 'shkruaj'], 6),
+('Shoferet', 'A regjistrohet koha e dorezimit?', 'Po, kur ndryshoni statusin ne "Dorezuar", sistemi regjistron automatikisht daten dhe oren e dorezimit.', ARRAY['kohe', 'dorezim', 'regjistro', 'ore', 'date'], 5),
+('Shoferet', 'Cfare bej ne rast aksidenti?', 'Sigurine tuaj vini te paren. Thirni ndihmen nese eshte e nevojshme. Pastaj njoftoni administratorin menjehere. Fotografoni situaten per dokumentim.', ARRAY['aksident', 'urgjence', 'ndihme', 'sigurie', 'incident'], 10),
+('Shoferet', 'Si te shoh dashboard-in tim?', 'Dashboard-i shfaqet menjehere kur hyni ne sistem. Aty shihni dergesat e dites, statistikat, dhe njoftimet e fundit.', ARRAY['dashboard', 'shoh', 'kryefaqe', 'fillim'], 7),
+('Shoferet', 'A mund te punoj offline?', 'Platforma kerkon lidhje interneti per te funksionuar. Pa internet nuk mund te aksesoni te dhenat ose te beni ndryshime.', ARRAY['offline', 'internet', 'pa', 'lidhje', 'rrjet'], 6),
+('Shoferet', 'Si te perdor platformen ne telefon?', 'Hapni shfletuesin e telefonit (Chrome, Safari) dhe shkoni ne adresen e platformes. Faqja eshte e optimizuar per ekrane te vegjel.', ARRAY['telefon', 'mobile', 'perdor', 'shfletues', 'ekran'], 7),
+('Shoferet', 'Cfare informacioni shoh per cdo dergese?', 'Per cdo fletedergese shihni: adresen e mbledhjes/dergeses, listen e artikujve, sasine, gjendjen, shenimet, dhe statusin aktual.', ARRAY['informacion', 'dergese', 'detaje', 'fletedergese'], 6),
+('Shoferet', 'Si te marr udhezime per ne adrese?', 'Klikoni mbi adresen e dergeses ne fletedergese. Kjo do te hapje aplikacionin e hartave ne telefonin tuaj me drejtimin deri atje.', ARRAY['udhezime', 'adrese', 'harte', 'navigacion', 'drejtim', 'gps'], 7),
+('Shoferet', 'A mund te shoh dergesat e ardhshme?', 'Po, ne listen e fletedergesave shfaqen te gjitha dergesat e planifikuara per ju, perfshire ato te dites se sotme dhe ditet e ardhshme.', ARRAY['ardhshme', 'planifikim', 'neser', 'jave', 'dergesa'], 6),
+('Shoferet', 'Si te njoftoj per problem me automjetin?', 'Kontaktoni administratorin menjehere permes chat-it. Nese jeni ne rruge, vleresoni nese mund te vazhdoni ose keni nevoje per ndihme.', ARRAY['automjet', 'problem', 'prishje', 'motor', 'makine'], 8),
+('Shoferet', 'Cfare bej me paletat e kthyera?', 'Paletat e kthyera nga marresi duhet te regjistrohen si pranim ne depon e caktuar. Njoftoni depon perpara mbeerritjes per paletat e kthyera.', ARRAY['kthyer', 'paleta', 'rikthim', 'marresi', 'mbrapsht'], 7),
+('Shoferet', 'A mund te shoh raportin tim te performances?', 'Ne Dashboard shfaqen statistikat tuaja: numri i dergesave, koha mesatare, dhe vleresimi i performances.', ARRAY['raport', 'performanc', 'statistik', 'vleresim'], 6),
+('Shoferet', 'Si te verifikoj sasine perpara ngarkimit?', 'Para ngarkimit, kontrolloni listen e artikujve ne fletedergese dhe numroni paletat fizikisht. Shenoni cdo mosperputhje.', ARRAY['verifiko', 'sasi', 'ngarkim', 'kontroll', 'numero'], 7),
+('Shoferet', 'Kush e sheh lokacionin tim?', 'Lokacioni juaj nuk gjurmohet nga platforma. Vetem statusi i fletedergeses (Ne Tranzit, Dorezuar) eshte i dukshem per administratorin.', ARRAY['lokacion', 'gjurmim', 'gps', 'privatesise', 'ndjek'], 6),
+('Shoferet', 'A mund te pranoj dergesa per kompani te tjera?', 'Jo, mund te pranoni vetem dergesa qe jane caktuar per ju nga kompania juaj. Cdo dergese eshte e lidhur me kompanine tuaj.', ARRAY['kompani', 'tjeter', 'pranoj', 'dergese', 'ndryshme'], 4),
+('Shoferet', 'Si te konfirmoj mbledhjen e paletave?', 'Kur mblidhni paletat, ndryshoni statusin e fletedergeses ne "Ne Tranzit". Kjo konfirmon qe malli eshte marre dhe jeni ne rruge.', ARRAY['konfirmo', 'mbledhje', 'paleta', 'marr', 'ngarko'], 7),
+('Shoferet', 'Cfare bej nese fletedergesa ka gabime?', 'Njoftoni menjehere administratorin permes chat-it. Mos vazhdoni me dergesen derisa te korrigjohet gabimi ne fletedergese.', ARRAY['gabim', 'fletedergese', 'korrigjo', 'problem', 'pasaktesi'], 8),
+
+-- DOKUMENTET (Document System) - 20 entries
+('Dokumentet', 'Si te dergoj nje dokument?', 'Shkoni te "Dokumentet" ne menu, klikoni "+ Dergo Dokument". Zgjidhni skedarin, vendosni titullin, pershkrimin, dhe zgjidhni marresit.', ARRAY['dergo', 'dokument', 'skedar', 'file', 'ngarko'], 9),
+('Dokumentet', 'Cfare lloje dokumentesh suportohen?', 'Mund te dergoni: PDF, Word (.doc, .docx), Excel (.xls, .xlsx), imazhe (JPG, PNG), dhe skedare te tjere deri ne 50MB.', ARRAY['lloj', 'format', 'dokument', 'pdf', 'word', 'excel', 'imazh'], 7),
+('Dokumentet', 'Si te shoh dokumentet qe kam marre?', 'Ne "Dokumentet", seksioni "Te Marra" shfaq te gjitha dokumentet qe jane derguar per ju. Mund ti filtroni sipas tipit dhe dates.', ARRAY['shoh', 'dokument', 'marre', 'lista', 'pranuar'], 8),
+('Dokumentet', 'Si te firmosj nje dokument?', 'Hapni dokumentin dhe klikoni "Firmos Dokumentin". Mund te ngarkoni dokumentin e firmosur ose te perdorni firmosjen dixhitale.', ARRAY['firmos', 'dokument', 'nenshkrim', 'digital', 'approve'], 7),
+('Dokumentet', 'A mund te shoh kush e ka pare dokumentin?', 'Po, derguesit mund te shohin statusin e cdo marresi: derguar, pare, firmosur. Kjo informacion shfaqet ne detajet e dokumentit.', ARRAY['pare', 'lexuar', 'status', 'marresi', 'njoftim'], 6),
+('Dokumentet', 'Si te shkarkoj nje dokument?', 'Hapni dokumentin dhe klikoni butonin "Shkarko" ose ikonene e shkarkimit. Dokumenti do te ruhet ne pajisjen tuaj.', ARRAY['shkarko', 'download', 'ruaj', 'dokument', 'skedar'], 8),
+('Dokumentet', 'A mund te fshij nje dokument qe kam derguar?', 'Aktualisht dokumentet e derguar nuk mund te fshihen per arsye kontrolli. Kontaktoni administratorin per raste te vecanta.', ARRAY['fshij', 'dokument', 'derguar', 'hiq', 'largo'], 5),
+('Dokumentet', 'Cfare eshte prioriteti "urgjent"?', 'Dokumentet me prioritet "urgjent" shfaqen ne krye te listes dhe marresi merr njoftim te vecante. Perdoreni vetem per dokumente te rendesishme.', ARRAY['urgjent', 'prioritet', 'rendesi', 'shpejt'], 6),
+('Dokumentet', 'Si te pergjigjem nje dokumenti?', 'Hapni dokumentin dhe klikoni "Pergjigju". Mund te ngarkoni nje dokument pergjigje ose te shkruani nje shenojme.', ARRAY['pergjigj', 'dokument', 'kthe', 'respond'], 6),
+('Dokumentet', 'A jane te sigurta dokumentet?', 'Po, dokumentet ruhen ne menyre te enkriptuar. Vetem derguesit dhe marresit e caktuar kane akses. Askush tjeter nuk mund ti shoh.', ARRAY['sigurt', 'dokument', 'enkriptim', 'privatesi', 'mbrojtje'], 7),
+('Dokumentet', 'Sa i madh mund te jete nje dokument?', 'Madhesia maksimale per nje skedar eshte 50MB. Per skedare me te medhenj, ndajini ne pjese me te vogla.', ARRAY['madhesi', 'limit', 'mb', 'skedar', 'madh'], 5),
+('Dokumentet', 'Si te dergoj nje dokument disa personave?', 'Kur dergoni dokumentin, mund te zgjidhni shume marresi njekohesisht. Secili marresi merr nje kopje te dokumentit.', ARRAY['shume', 'persona', 'marresi', 'dergo', 'grup'], 6),
+('Dokumentet', 'Cfare ndodh kur firmosj nje dokument?', 'Firmosja ndryshon statusin e dokumentit ne "Firmosur" dhe njofton derguesin. Dokumenti i firmosur ruhet per reference te ardhshme.', ARRAY['firmos', 'ndodh', 'status', 'njoftim'], 5),
+('Dokumentet', 'A mund te printoj nje dokument?', 'Po, hapni dokumentin dhe perdorni funksionin e printimit te shfletuesit (Ctrl+P) ose klikoni butonin e printimit nese eshte i disponueshem.', ARRAY['printo', 'dokument', 'leter', 'printer'], 5),
+('Dokumentet', 'Si te gjej nje dokument te vjeter?', 'Perdorni funksionin e kerkimit dhe filtrave ne seksionin "Dokumentet". Mund te kerkoni sipas titullit, tipit, ose dates.', ARRAY['gjej', 'kerko', 'vjeter', 'arkiv', 'histori', 'dokument'], 6),
+('Dokumentet', 'A njoftohem kur me dergohet nje dokument?', 'Po, merrni njoftim ne zile kur dikush ju dergon nje dokument te ri. Dokumentet urgjente kane njoftim te vecante.', ARRAY['njoftim', 'dokument', 'alarm', 'derguar'], 6),
+('Dokumentet', 'Si te ndryshoj marresit e nje dokumenti?', 'Marresit nuk mund te ndryshohen pasi dokumenti te dergohet. Per te shtuar marresi te rinj, dergoni dokumentin perseri.', ARRAY['marresi', 'ndrysho', 'shtoj', 'hiq'], 5),
+('Dokumentet', 'A mund te dergoj dokument jashtë kompanise?', 'Jo, dokumentet mund te dergoheni vetem brenda kompanise suaj - punetoreve, shofereve, dhe depove tuaja.', ARRAY['jashte', 'kompani', 'dergo', 'ekstern'], 4),
+('Dokumentet', 'Cfare tipi dokumenti duhet te zgjedh?', 'Zgjidhni tipin qe pershkruan me se miri dokumentin: Fletedergese, Fature, Raport, Foto, Kontrate, ose Tjeter.', ARRAY['tip', 'lloj', 'kategori', 'zgjedh', 'dokument'], 5),
+('Dokumentet', 'A ruhen dokumentet pergjithmone?', 'Po, dokumentet ruhen ne server per gjithe jetegjatesine e llogarise suaj. Mund ti aksesoni ne cdo kohe.', ARRAY['ruaj', 'ruhen', 'pergjithmone', 'arkiv', 'kohe'], 5),
+
+-- CHAT (Chat Functionality) - 15 entries
+('Chat', 'Si te filloj nje bisede te re?', 'Shkoni te "Chat" ne menu dhe klikoni "Bisede e Re". Zgjidhni personin ose personat me te cilet deshironi te bisedoni.', ARRAY['bisede', 'reja', 'fillo', 'krijo', 'chat'], 9),
+('Chat', 'Si te krijoj nje grup ne chat?', 'Kur krijoni bisede te re, zgjidhni me shume se nje person. Sistemi do te krijoje automatikisht nje grup. Mund ti vendosni emer grupit.', ARRAY['grup', 'krijo', 'chat', 'bisede', 'shume'], 8),
+('Chat', 'A mund te dergoj foto ne chat?', 'Po, klikoni ikonene e fotos ne shiritin e mesazheve per te derguar nje foto. Suportohen formatet JPG, PNG, dhe GIF.', ARRAY['foto', 'imazh', 'dergo', 'chat', 'kamer', 'fotografi'], 8),
+('Chat', 'Si te dergoj nje skedar ne chat?', 'Klikoni ikonene e kapeses (paperclip) ne shiritin e mesazheve. Zgjidhni skedarin qe deshironi te dergoni.', ARRAY['skedar', 'file', 'dergo', 'chat', 'bashkangjitje', 'ngarko'], 7),
+('Chat', 'A mund te fshij nje mesazh?', 'Po, klikoni mbi mesazhin tuaj dhe zgjidhni "Fshi". Mesazhi do te shfaqet si "i fshire" per te gjithe, por nuk do te zhduket plotesisht.', ARRAY['fshij', 'mesazh', 'hiq', 'largo', 'chat'], 7),
+('Chat', 'Pse nuk me shfaqen mesazhet?', 'Provoni te rifreskoni faqen. Nese problemi vazhdon, kontrolloni lidhjen e internetit. Mesazhet ngarkohen ne kohe reale kur lidhja eshte aktive.', ARRAY['mesazh', 'nuk', 'shfaq', 'mungon', 'problem', 'chat'], 8),
+('Chat', 'A njoftohem per mesazhe te reja?', 'Po, kur dikush ju dergon mesazh, do te shihni nje tregues ne ikonen e chat-it. Njoftimet shfaqen edhe ne zile.', ARRAY['njoftim', 'mesazh', 'reja', 'alarm', 'tregues'], 7),
+('Chat', 'Si te kerkoj ne mesazhet e vjetra?', 'Aktualisht mund te levizni perpjete ne bisede per te pare mesazhet e meparshme. Funksioni i kerkimit brenda bisedes do te shtohet.', ARRAY['kerko', 'vjeter', 'meparshme', 'histori', 'mesazh'], 5),
+('Chat', 'A mund te perdor emoji ne mesazhe?', 'Po, klikoni ikonene e buzequeshjes ne shiritin e mesazheve per te hapur panelin e emoji-ve. Zgjidhni emoji-ne qe deshironi.', ARRAY['emoji', 'buzequeshje', 'ikone', 'emotikon', 'smiley'], 6),
+('Chat', 'Kush mund te shoh mesazhet e mia?', 'Mesazhet shihen vetem nga anetaret e bisedes. Ne bisedat private, vetem ju dhe personi tjeter. Ne grupe, te gjithe anetaret e grupit.', ARRAY['privatesise', 'shoh', 'mesazh', 'kush', 'akses', 'privatesi'], 7),
+('Chat', 'Si te dal nga nje grup chati?', 'Aktualisht nuk ka mundesi per tu larguar nga nje grup. Kontaktoni administratorin nese deshironi te hiqeni nga nje grup.', ARRAY['dal', 'largo', 'grup', 'chat', 'hiq', 'ik'], 4),
+('Chat', 'A mund te bej thirrje audio/video?', 'Aktualisht platforma suporton vetem mesazhe tekst, foto, dhe skedare. Thirrjet audio/video do te shtohen ne te ardhmen.', ARRAY['thirrje', 'audio', 'video', 'telefon', 'videocall'], 4),
+('Chat', 'Si te ndryshoj foton time te profilit?', 'Ne faqen e Chat-it, klikoni ikonene e kameres prane fotos suaj aktuale. Zgjidhni nje foto te re nga pajisja juaj.', ARRAY['foto', 'profil', 'ndrysho', 'avatar', 'imazh'], 7),
+('Chat', 'Pse dergohet ngadale mesazhi?', 'Shpejtesia e dergimit varet nga lidhja juaj e internetit. Sigurohuni qe keni lidhje te mire Wi-Fi ose te dhenash celulare.', ARRAY['ngadale', 'vonese', 'dergo', 'mesazh', 'internet', 'shpejtesi'], 6),
+('Chat', 'A mund te dergoj mesazh te gjithe njekohesisht?', 'Per te derguar mesazh te shume personave, krijoni nje grup chat me te gjithe marresit dhe dergoni mesazhin aty.', ARRAY['gjithe', 'njekohesisht', 'broadcast', 'masiv', 'grup'], 5)
+ON CONFLICT DO NOTHING;

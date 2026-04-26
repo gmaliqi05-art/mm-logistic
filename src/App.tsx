@@ -1,0 +1,262 @@
+import { lazy, Suspense } from 'react';
+import type { ReactNode } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import { LanguageProvider } from './i18n';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
+import RegisterPage from './pages/RegisterPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import InstallPromptBanner from './components/InstallPromptBanner';
+
+const SuperAdminLayout = lazy(() => import('./layouts/SuperAdminLayout'));
+const CompanyAdminLayout = lazy(() => import('./layouts/CompanyAdminLayout'));
+const DepotLayout = lazy(() => import('./layouts/DepotLayout'));
+const DriverLayout = lazy(() => import('./layouts/DriverLayout'));
+const AccountingLayout = lazy(() => import('./layouts/AccountingLayout'));
+const LogisticsLayout = lazy(() => import('./layouts/LogisticsLayout'));
+
+const SuperAdminDashboard = lazy(() => import('./pages/super-admin/Dashboard'));
+const SuperAdminCompanies = lazy(() => import('./pages/super-admin/Companies'));
+const SuperAdminUsers = lazy(() => import('./pages/super-admin/Users'));
+const SuperAdminReports = lazy(() => import('./pages/super-admin/Reports'));
+const SuperAdminSettings = lazy(() => import('./pages/super-admin/Settings'));
+const SuperAdminChat = lazy(() => import('./pages/super-admin/Chat'));
+const SuperAdminSubscriptionPlans = lazy(() => import('./pages/super-admin/SubscriptionPlans'));
+const SuperAdminPaymentSettings = lazy(() => import('./pages/super-admin/PaymentSettings'));
+const SuperAdminHomepage = lazy(() => import('./pages/super-admin/HomepageManager'));
+const SuperAdminStaticPages = lazy(() => import('./pages/super-admin/StaticPages'));
+const SuperAdminFooterSettings = lazy(() => import('./pages/super-admin/FooterSettings'));
+const SuperAdminFooterLinks = lazy(() => import('./pages/super-admin/FooterLinks'));
+const SuperAdminQRCodes = lazy(() => import('./pages/super-admin/QRCodes'));
+const SuperAdminAppDownload = lazy(() => import('./pages/super-admin/AppDownload'));
+const SuperAdminMetadataSeo = lazy(() => import('./pages/super-admin/MetadataSeo'));
+const SuperAdminHomepageMap = lazy(() => import('./pages/super-admin/HomepageMap'));
+const SuperAdminPwaSettings = lazy(() => import('./pages/super-admin/PwaSettings'));
+const SuperAdminUserManual = lazy(() => import('./pages/super-admin/UserManual'));
+const SuperAdminTestNotifications = lazy(() => import('./pages/super-admin/TestNotifications'));
+const SuperAdminPlatformBranding = lazy(() => import('./pages/super-admin/PlatformBranding'));
+
+const CompanyDashboard = lazy(() => import('./pages/company/Dashboard'));
+const CompanyDepots = lazy(() => import('./pages/company/Depots'));
+const CompanyDrivers = lazy(() => import('./pages/company/Drivers'));
+const CompanyStock = lazy(() => import('./pages/company/Stock'));
+const CompanyCategories = lazy(() => import('./pages/company/Categories'));
+const CompanyDeliveryNotes = lazy(() => import('./pages/company/DeliveryNotes'));
+const CompanyReports = lazy(() => import('./pages/company/Reports'));
+const CompanyRepairReports = lazy(() => import('./pages/company/RepairReports'));
+const CompanyChat = lazy(() => import('./pages/company/Chat'));
+const CompanyDocuments = lazy(() => import('./pages/company/Documents'));
+const CompanyAuditLog = lazy(() => import('./pages/company/AuditLog'));
+const CompanyStockAlerts = lazy(() => import('./pages/company/StockAlerts'));
+const CompanyDataExport = lazy(() => import('./pages/company/DataExport'));
+const CompanySettings = lazy(() => import('./pages/company/Settings'));
+const CompanyOverdueDocuments = lazy(() => import('./pages/company/OverdueDocuments'));
+const CompanyPartners = lazy(() => import('./pages/company/Partners'));
+
+const DepotDashboard = lazy(() => import('./pages/depot/Dashboard'));
+const DepotStock = lazy(() => import('./pages/depot/Stock'));
+const DepotReceiving = lazy(() => import('./pages/depot/Receiving'));
+const DepotRepairs = lazy(() => import('./pages/depot/Repairs'));
+const DepotRepairWorkers = lazy(() => import('./pages/depot/RepairWorkers'));
+const WorkerRepairEntry = lazy(() => import('./pages/depot/WorkerRepairEntry'));
+const DepotDeliveryNotes = lazy(() => import('./pages/depot/DeliveryNotes'));
+const DepotChat = lazy(() => import('./pages/depot/Chat'));
+const DepotDocuments = lazy(() => import('./pages/depot/Documents'));
+
+const DriverDashboard = lazy(() => import('./pages/driver/Dashboard'));
+const DriverChat = lazy(() => import('./pages/driver/Chat'));
+const DriverDocuments = lazy(() => import('./pages/driver/Documents'));
+const DriverOverdue = lazy(() => import('./pages/driver/Overdue'));
+
+const AccDashboard = lazy(() => import('./pages/accounting/Dashboard'));
+const AccContacts = lazy(() => import('./pages/accounting/Contacts'));
+const AccProducts = lazy(() => import('./pages/accounting/Products'));
+const AccProductDetail = lazy(() => import('./pages/accounting/ProductDetail'));
+const AccInvoices = lazy(() => import('./pages/accounting/Invoices'));
+const AccInvoicePrint = lazy(() => import('./pages/accounting/InvoicePrint'));
+const AccPurchases = lazy(() => import('./pages/accounting/Purchases'));
+const AccStock = lazy(() => import('./pages/accounting/Stock'));
+const AccDeliveryNotes = lazy(() => import('./pages/accounting/AccDeliveryNotes'));
+const AccTransactions = lazy(() => import('./pages/accounting/Transactions'));
+const AccExpenseCategories = lazy(() => import('./pages/accounting/ExpenseCategories'));
+const AccBankAccounts = lazy(() => import('./pages/accounting/BankAccounts'));
+const AccReports = lazy(() => import('./pages/accounting/Reports'));
+const AccSettings = lazy(() => import('./pages/accounting/AccSettings'));
+const AccFixedAssets = lazy(() => import('./pages/accounting/FixedAssets'));
+const AccScans = lazy(() => import('./pages/accounting/Scans'));
+const AccClientInvoices = lazy(() => import('./pages/accounting/ClientInvoices'));
+const AccGermanFinancials = lazy(() => import('./pages/accounting/GermanFinancials'));
+const AccImports = lazy(() => import('./pages/accounting/Imports'));
+const AccChartOfAccounts = lazy(() => import('./pages/accounting/ChartOfAccounts'));
+
+const LogisticsDashboard = lazy(() => import('./pages/logistics/Dashboard'));
+const LogisticsDispatch = lazy(() => import('./pages/logistics/Dispatch'));
+const LogisticsActive = lazy(() => import('./pages/logistics/Active'));
+const LogisticsDrivers = lazy(() => import('./pages/logistics/Drivers'));
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600" />
+    </div>
+  );
+}
+
+function ProtectedRoute({ children, roles }: { children: ReactNode; roles?: string[] }) {
+  const { session, profile, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+  if (!session || !profile) return <Navigate to="/login" replace />;
+  if (roles && !roles.includes(profile.role)) return <Navigate to="/login" replace />;
+
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/sa-access" element={<SuperAdminLoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+
+        <Route path="/super-admin" element={
+          <ProtectedRoute roles={['super_admin']}>
+            <SuperAdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<SuperAdminDashboard />} />
+          <Route path="companies" element={<SuperAdminCompanies />} />
+          <Route path="plans" element={<SuperAdminSubscriptionPlans />} />
+          <Route path="reports" element={<SuperAdminReports />} />
+          <Route path="payment-settings" element={<SuperAdminPaymentSettings />} />
+          <Route path="homepage" element={<SuperAdminHomepage />} />
+          <Route path="users" element={<SuperAdminUsers />} />
+          <Route path="settings" element={<SuperAdminSettings />} />
+          <Route path="branding" element={<SuperAdminPlatformBranding />} />
+          <Route path="chat" element={<SuperAdminChat />} />
+          <Route path="static-pages" element={<SuperAdminStaticPages />} />
+          <Route path="footer-settings" element={<SuperAdminFooterSettings />} />
+          <Route path="footer-links" element={<SuperAdminFooterLinks />} />
+          <Route path="qr-codes" element={<SuperAdminQRCodes />} />
+          <Route path="app-download" element={<SuperAdminAppDownload />} />
+          <Route path="metadata-seo" element={<SuperAdminMetadataSeo />} />
+          <Route path="homepage-map" element={<SuperAdminHomepageMap />} />
+          <Route path="pwa-settings" element={<SuperAdminPwaSettings />} />
+          <Route path="user-manual" element={<SuperAdminUserManual />} />
+          <Route path="test-notifications" element={<SuperAdminTestNotifications />} />
+        </Route>
+
+        <Route path="/company" element={
+          <ProtectedRoute roles={['company_admin']}>
+            <CompanyAdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<CompanyDashboard />} />
+          <Route path="depots" element={<CompanyDepots />} />
+          <Route path="drivers" element={<CompanyDrivers />} />
+          <Route path="stock" element={<CompanyStock />} />
+          <Route path="categories" element={<CompanyCategories />} />
+          <Route path="documents" element={<CompanyDocuments />} />
+          <Route path="delivery-notes" element={<CompanyDeliveryNotes />} />
+          <Route path="overdue" element={<CompanyOverdueDocuments />} />
+          <Route path="partners" element={<CompanyPartners />} />
+          <Route path="reports" element={<CompanyReports />} />
+          <Route path="repair-reports" element={<CompanyRepairReports />} />
+          <Route path="chat" element={<CompanyChat />} />
+          <Route path="audit-log" element={<CompanyAuditLog />} />
+          <Route path="stock-alerts" element={<CompanyStockAlerts />} />
+          <Route path="data-export" element={<CompanyDataExport />} />
+          <Route path="settings" element={<CompanySettings />} />
+        </Route>
+
+        <Route path="/depot" element={
+          <ProtectedRoute roles={['depot_worker']}>
+            <DepotLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<DepotDashboard />} />
+          <Route path="stock" element={<DepotStock />} />
+          <Route path="receiving" element={<DepotReceiving />} />
+          <Route path="delivery-notes" element={<DepotDeliveryNotes />} />
+          <Route path="repairs" element={<DepotRepairs />} />
+          <Route path="repair-workers" element={<DepotRepairWorkers />} />
+          <Route path="repair-workers/:workerId" element={<WorkerRepairEntry />} />
+          <Route path="documents" element={<DepotDocuments />} />
+          <Route path="chat" element={<DepotChat />} />
+        </Route>
+
+        <Route path="/driver" element={
+          <ProtectedRoute roles={['driver']}>
+            <DriverLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<DriverDashboard />} />
+          <Route path="overdue" element={<DriverOverdue />} />
+          <Route path="documents" element={<DriverDocuments />} />
+          <Route path="chat" element={<DriverChat />} />
+        </Route>
+
+        <Route path="/accounting" element={
+          <ProtectedRoute roles={['accountant', 'company_admin']}>
+            <AccountingLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<AccDashboard />} />
+          <Route path="contacts" element={<AccContacts />} />
+          <Route path="clients" element={<AccClientInvoices />} />
+          <Route path="products" element={<AccProducts />} />
+          <Route path="products/:id" element={<AccProductDetail />} />
+          <Route path="invoices" element={<AccInvoices />} />
+          <Route path="invoices/:id/print" element={<AccInvoicePrint />} />
+          <Route path="purchases" element={<AccPurchases />} />
+          <Route path="stock" element={<AccStock />} />
+          <Route path="deliveries" element={<AccDeliveryNotes />} />
+          <Route path="transactions" element={<AccTransactions />} />
+          <Route path="expenses" element={<AccExpenseCategories />} />
+          <Route path="bank-accounts" element={<AccBankAccounts />} />
+          <Route path="reports" element={<AccReports />} />
+          <Route path="financials" element={<AccGermanFinancials />} />
+          <Route path="imports" element={<AccImports />} />
+          <Route path="coa" element={<AccChartOfAccounts />} />
+          <Route path="assets" element={<AccFixedAssets />} />
+          <Route path="scans" element={<AccScans />} />
+          <Route path="settings" element={<AccSettings />} />
+        </Route>
+
+        <Route path="/logistics" element={
+          <ProtectedRoute roles={['logistics_admin', 'company_admin']}>
+            <LogisticsLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<LogisticsDashboard />} />
+          <Route path="dispatch" element={<LogisticsDispatch />} />
+          <Route path="active" element={<LogisticsActive />} />
+          <Route path="drivers" element={<LogisticsDrivers />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <LanguageProvider>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <AppRoutes />
+            <InstallPromptBanner />
+          </SubscriptionProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </BrowserRouter>
+  );
+}
