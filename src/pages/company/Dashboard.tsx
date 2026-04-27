@@ -26,6 +26,7 @@ import { useTranslation } from '../../i18n';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import PendingScansPanel from '../../components/scanner/PendingScansPanel';
+import QuickNoteModal from '../../components/delivery/QuickNoteModal';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote } from '../../types';
@@ -85,6 +86,7 @@ export default function CompanyDashboard() {
   const [scanKind, setScanKind] = useState<ScanDocKind | null>(null);
   const [scanRefreshKey, setScanRefreshKey] = useState(0);
   const [range, setRange] = useState<RangeKey>('7d');
+  const [quickNoteId, setQuickNoteId] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const todayStart = new Date();
@@ -359,6 +361,7 @@ export default function CompanyDashboard() {
             pickups={grouped.todayPickups}
             statusConfig={statusConfig}
             t={t}
+            onSelect={setQuickNoteId}
           />
           <ScheduleSection
             title={t('company.dashboard.tomorrow')}
@@ -366,6 +369,7 @@ export default function CompanyDashboard() {
             pickups={grouped.tomorrowPickups}
             statusConfig={statusConfig}
             t={t}
+            onSelect={setQuickNoteId}
           />
           {grouped.otherActive.length > 0 && (
             <ScheduleSection
@@ -374,6 +378,7 @@ export default function CompanyDashboard() {
               pickups={grouped.otherActive.filter((n: any) => n.type === 'pickup')}
               statusConfig={statusConfig}
               t={t}
+              onSelect={setQuickNoteId}
             />
           )}
 
@@ -659,12 +664,19 @@ export default function CompanyDashboard() {
           }}
         />
       )}
+      {quickNoteId && (
+        <QuickNoteModal
+          noteId={quickNoteId}
+          onClose={() => setQuickNoteId(null)}
+          onSaved={() => fetchData()}
+        />
+      )}
     </div>
   );
 }
 
 function ScheduleSection({
-  title, highlight, deliveries, pickups, statusConfig, t,
+  title, highlight, deliveries, pickups, statusConfig, t, onSelect,
 }: {
   title: string;
   highlight?: boolean;
@@ -672,6 +684,7 @@ function ScheduleSection({
   pickups: DeliveryNote[];
   statusConfig: Record<string, { label: string; className: string; barColor: string; icon: typeof CheckCircle2 }>;
   t: (k: string) => string;
+  onSelect: (id: string) => void;
 }) {
   const total = deliveries.length + pickups.length;
   return (
@@ -698,6 +711,7 @@ function ScheduleSection({
             notes={deliveries}
             statusConfig={statusConfig}
             t={t}
+            onSelect={onSelect}
           />
           <ScheduleColumn
             label={t('review.tabs.pickups')}
@@ -706,6 +720,7 @@ function ScheduleSection({
             notes={pickups}
             statusConfig={statusConfig}
             t={t}
+            onSelect={onSelect}
           />
         </div>
       )}
@@ -714,7 +729,7 @@ function ScheduleSection({
 }
 
 function ScheduleColumn({
-  label, icon: Icon, tone, notes, statusConfig, t,
+  label, icon: Icon, tone, notes, statusConfig, t, onSelect,
 }: {
   label: string;
   icon: typeof Truck;
@@ -722,6 +737,7 @@ function ScheduleColumn({
   notes: DeliveryNote[];
   statusConfig: Record<string, { label: string; className: string; barColor: string; icon: typeof CheckCircle2 }>;
   t: (k: string) => string;
+  onSelect: (id: string) => void;
 }) {
   const toneClasses = tone === 'sky'
     ? { dot: 'bg-sky-500', text: 'text-sky-700', bg: 'bg-sky-50', icon: 'text-sky-600' }
@@ -741,10 +757,11 @@ function ScheduleColumn({
             const cfg = statusConfig[note.status];
             const ts = note.type === 'pickup' ? note.scheduled_pickup_at : note.scheduled_delivery_at;
             return (
-              <Link
+              <button
                 key={note.id}
-                to="/company/delivery-notes"
-                className="block px-4 py-2.5 hover:bg-gray-50/70 transition-colors"
+                type="button"
+                onClick={() => onSelect(note.id)}
+                className="w-full text-left block px-4 py-2.5 hover:bg-gray-50/70 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
                   <div className={`p-1.5 rounded-lg flex-shrink-0 ${toneClasses.bg}`}>
@@ -775,7 +792,7 @@ function ScheduleColumn({
                     </span>
                   )}
                 </div>
-              </Link>
+              </button>
             );
           })}
           {notes.length > 6 && (
