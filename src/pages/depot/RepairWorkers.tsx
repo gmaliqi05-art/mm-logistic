@@ -389,6 +389,7 @@ export default function DepotRepairWorkers() {
         entry_count: entryCount,
         details: { workers: workersPayload },
         created_by: profile!.id,
+        review_status: 'pending_company_review',
       });
       if (insErr) throw insErr;
 

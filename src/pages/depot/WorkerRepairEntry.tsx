@@ -248,6 +248,7 @@ export default function WorkerRepairEntry() {
             by_product: Array.from(byProdMap.entries()).map(([name, quantity]) => ({ name, quantity })),
           },
           created_by: profile!.id,
+          review_status: 'pending_company_review',
         })
         .select('id')
         .maybeSingle();
@@ -259,6 +260,23 @@ export default function WorkerRepairEntry() {
         .update({ reported_at: nowIso })
         .in('id', ids);
       if (upErr) throw upErr;
+
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('company_id', companyId)
+        .in('role', ['company_admin']);
+      if (admins && admins.length > 0 && reportRow?.id) {
+        await supabase.from('notifications').insert(
+          admins.map((a) => ({
+            user_id: a.id,
+            title: 'Raport reparaturash per shqyrtim',
+            message: `${total} cope u raportuan dhe presin miratim.`,
+            type: 'system',
+            reference_id: reportRow.id,
+          })) as any,
+        );
+      }
 
       void reportRow;
       setSuccess(t('depot.repairWorkers.finalizedOk'));

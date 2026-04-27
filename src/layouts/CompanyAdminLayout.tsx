@@ -33,10 +33,12 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import SubscriptionBanner from '../components/subscription/SubscriptionBanner';
 import PlanBadge from '../components/subscription/PlanBadge';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { usePendingReviewCounts } from '../hooks/usePendingReviewCounts';
 
 const allNavItems = [
   { to: '/company', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, premium: false, bottomNav: true },
   { to: '/company/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, premium: false, bottomNav: true },
+  { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', end: false, premium: false, bottomNav: false, badgeKey: 'review' as const },
   { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, premium: false, bottomNav: false },
   { to: '/company/partners', icon: Building2, labelKey: 'nav.partners', end: false, premium: false, bottomNav: false },
   { to: '/company/stock', icon: Package, labelKey: 'nav.stock', end: false, premium: false, bottomNav: true },
@@ -62,6 +64,7 @@ export default function CompanyAdminLayout() {
   const { planTier } = useSubscription();
   const { t } = useTranslation();
   const location = useLocation();
+  const reviewCounts = usePendingReviewCounts(profile?.company_id);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string>('');
@@ -116,6 +119,7 @@ export default function CompanyAdminLayout() {
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
           {allNavItems.map((item) => {
             const isPremiumLocked = item.premium && planTier !== 'premium';
+            const badgeCount = (item as any).badgeKey === 'review' ? reviewCounts.total : 0;
             return (
               <NavLink
                 key={item.to}
@@ -133,6 +137,11 @@ export default function CompanyAdminLayout() {
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
                 <span className="flex-1 whitespace-nowrap">{t(item.labelKey)}</span>
+                {badgeCount > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-red-500 text-white">
+                    {badgeCount}
+                  </span>
+                )}
                 {item.premium && (
                   <Crown className={`w-3.5 h-3.5 flex-shrink-0 ${isPremiumLocked ? 'text-amber-400/60' : 'text-amber-400'}`} />
                 )}
@@ -278,13 +287,14 @@ export default function CompanyAdminLayout() {
                 const isActive = item.end
                   ? location.pathname === item.to
                   : location.pathname.startsWith(item.to);
+                const badgeCount = (item as any).badgeKey === 'review' ? reviewCounts.total : 0;
                 return (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     end={item.end}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 active:scale-95
+                    className={`relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 active:scale-95
                       ${isActive
                         ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200'
                         : isPremiumLocked
@@ -296,6 +306,11 @@ export default function CompanyAdminLayout() {
                     <span className="text-xs font-medium text-center leading-tight">{t(item.labelKey)}</span>
                     {item.premium && (
                       <Crown className={`w-3 h-3 ${isPremiumLocked ? 'text-amber-400/60' : 'text-amber-400'}`} />
+                    )}
+                    {badgeCount > 0 && (
+                      <span className="absolute top-2 right-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-red-500 text-white">
+                        {badgeCount}
+                      </span>
                     )}
                   </NavLink>
                 );

@@ -67,7 +67,14 @@ interface Product {
   category_id: string | null;
 }
 
-export default function DeliveryReviewPanel({ role }: { role: Role }) {
+interface DeliveryReviewPanelProps {
+  role: Role;
+  typeFilter?: 'delivery' | 'pickup';
+  hideChrome?: boolean;
+  emptyMessage?: string;
+}
+
+export default function DeliveryReviewPanel({ role, typeFilter, hideChrome, emptyMessage }: DeliveryReviewPanelProps) {
   const { profile } = useAuth();
   const [notes, setNotes] = useState<ReviewNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,16 +109,36 @@ export default function DeliveryReviewPanel({ role }: { role: Role }) {
     if (role === 'depot_worker' && profile.depot_id) {
       q = q.eq('assigned_depot_id', profile.depot_id);
     }
+    if (typeFilter) {
+      q = q.eq('type', typeFilter);
+    }
     const { data } = await q;
     setNotes((data as ReviewNote[]) ?? []);
     setLoading(false);
   }
 
   if (loading && notes.length === 0) {
+    if (hideChrome) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        </div>
+      );
+    }
     return null;
   }
 
-  if (notes.length === 0) return null;
+  if (notes.length === 0) {
+    if (hideChrome) {
+      return (
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-10 text-center">
+          <CheckCircle2 className="w-9 h-9 text-emerald-300 mx-auto mb-2" />
+          <p className="text-sm font-medium text-gray-700">{emptyMessage || 'Nuk ka asgje per shqyrtim'}</p>
+        </div>
+      );
+    }
+    return null;
+  }
 
   const headerTitle = role === 'company_admin'
     ? 'Dergesa per shqyrtim'
@@ -124,64 +151,72 @@ export default function DeliveryReviewPanel({ role }: { role: Role }) {
     : 'from-orange-500 to-amber-600';
   const badgeCls = role === 'company_admin' ? 'bg-sky-100 text-sky-800' : 'bg-orange-100 text-orange-800';
 
+  const listInner = (
+    <div className={hideChrome ? 'space-y-2' : 'p-3 space-y-2'}>
+      {notes.map((n) => (
+        <button
+          key={n.id}
+          onClick={() => setSelected(n)}
+          className="w-full text-left bg-white rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-sky-400 p-3.5 active:scale-[0.99] hover:shadow-md transition-all"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-sky-50 flex-shrink-0">
+              {n.type === 'pickup' ? (
+                <Package className="w-4 h-4 text-sky-600" />
+              ) : (
+                <Truck className="w-4 h-4 text-sky-600" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-bold text-gray-900">{n.note_number}</span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeCls}`}>
+                  {n.type === 'pickup' ? 'Fletemarrje' : 'Fletedergese'}
+                </span>
+                {n.ai_confidence != null && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
+                    <Sparkles className="w-2.5 h-2.5" /> {Math.round(n.ai_confidence * 100)}%
+                  </span>
+                )}
+              </div>
+              {n.partner_name && (
+                <p className="text-sm font-medium text-gray-800 mt-1 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-gray-400" /> {n.partner_name}
+                </p>
+              )}
+              {(n.delivery_address || n.pickup_address) && (
+                <p className="text-xs text-gray-500 mt-0.5 flex items-start gap-1.5">
+                  <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span className="line-clamp-1">{n.delivery_address || n.pickup_address}</span>
+                </p>
+              )}
+            </div>
+            <ArrowRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" />
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className={`bg-gradient-to-r ${accentGradient} px-4 py-3 text-white flex items-center gap-3`}>
-          <div className="p-1.5 bg-white/20 rounded-lg">
-            <ClipboardList className="w-4 h-4" />
+      {hideChrome ? (
+        listInner
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className={`bg-gradient-to-r ${accentGradient} px-4 py-3 text-white flex items-center gap-3`}>
+            <div className="p-1.5 bg-white/20 rounded-lg">
+              <ClipboardList className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold uppercase tracking-wide">{headerTitle}</p>
+              <p className="text-[11px] text-white/90">{headerSubtitle}</p>
+            </div>
+            <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">{notes.length}</span>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold uppercase tracking-wide">{headerTitle}</p>
-            <p className="text-[11px] text-white/90">{headerSubtitle}</p>
-          </div>
-          <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">{notes.length}</span>
+          {listInner}
         </div>
-        <div className="p-3 space-y-2">
-          {notes.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => setSelected(n)}
-              className="w-full text-left bg-white rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-sky-400 p-3.5 active:scale-[0.99] hover:shadow-md transition-all"
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-sky-50 flex-shrink-0">
-                  {n.type === 'pickup' ? (
-                    <Package className="w-4 h-4 text-sky-600" />
-                  ) : (
-                    <Truck className="w-4 h-4 text-sky-600" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-bold text-gray-900">{n.note_number}</span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeCls}`}>
-                      {n.type === 'pickup' ? 'Fletemarrje' : 'Fletedergese'}
-                    </span>
-                    {n.ai_confidence != null && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
-                        <Sparkles className="w-2.5 h-2.5" /> {Math.round(n.ai_confidence * 100)}%
-                      </span>
-                    )}
-                  </div>
-                  {n.partner_name && (
-                    <p className="text-sm font-medium text-gray-800 mt-1 flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-gray-400" /> {n.partner_name}
-                    </p>
-                  )}
-                  {(n.delivery_address || n.pickup_address) && (
-                    <p className="text-xs text-gray-500 mt-0.5 flex items-start gap-1.5">
-                      <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <span className="line-clamp-1">{n.delivery_address || n.pickup_address}</span>
-                    </p>
-                  )}
-                </div>
-                <ArrowRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" />
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {selected && (
         <ReviewModal

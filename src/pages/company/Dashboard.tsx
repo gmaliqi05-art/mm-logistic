@@ -26,7 +26,8 @@ import { useTranslation } from '../../i18n';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import PendingScansPanel from '../../components/scanner/PendingScansPanel';
-import DeliveryReviewPanel from '../../components/delivery/DeliveryReviewPanel';
+import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
+import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote } from '../../types';
 
 interface DriverRow {
@@ -75,6 +76,7 @@ type RangeKey = '7d' | '30d' | '90d';
 export default function CompanyDashboard() {
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const reviewCounts = usePendingReviewCounts(profile?.company_id);
   const [stats, setStats] = useState<Stats>(emptyStats);
   const [recentNotes, setRecentNotes] = useState<DeliveryNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,9 @@ export default function CompanyDashboard() {
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).in('status', ['sent', 'in_transit']),
         supabase.from('delivery_notes')
           .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(name)')
-          .eq('company_id', companyId).neq('status', 'draft').order('created_at', { ascending: false }).limit(6),
+          .eq('company_id', companyId)
+          .in('status', ['sent', 'in_transit', 'delivered', 'pending_company_review', 'pending_stock_confirmation'])
+          .order('created_at', { ascending: false }).limit(10),
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', todayIso),
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('type', 'pickup').in('status', ['draft', 'sent', 'in_transit']),
         supabase.from('depots').select('id, name').eq('company_id', companyId).eq('is_active', true),
@@ -285,7 +289,7 @@ export default function CompanyDashboard() {
         <QuickActionTile to="/company/reports" icon={BarChart3} label={t('nav.reports')} color="gray" />
       </div>
 
-      <DeliveryReviewPanel role="company_admin" />
+      <ReviewCTA counts={reviewCounts} t={t} />
 
       <PendingScansPanel role="company_admin" refreshKey={scanRefreshKey} />
 
@@ -303,21 +307,6 @@ export default function CompanyDashboard() {
         />
       </div>
 
-      {stats.pendingPickups > 0 && (
-        <Link
-          to="/company/delivery-notes?type=pickup"
-          className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-xl hover:bg-orange-100 transition-colors"
-        >
-          <div className="p-2 rounded-lg bg-orange-500/10">
-            <Package className="w-5 h-5 text-orange-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-orange-900">{stats.pendingPickups} {t('companyAdmin.dashboard.pendingPickups')}</p>
-            <p className="text-xs text-orange-700">{t('companyAdmin.dashboard.pendingPickupsDesc')}</p>
-          </div>
-          <ArrowRight className="w-4 h-4 text-orange-600" />
-        </Link>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left column */}
@@ -665,6 +654,55 @@ export default function CompanyDashboard() {
         />
       )}
     </div>
+  );
+}
+
+function ReviewCTA({ counts, t }: { counts: ReturnType<typeof usePendingReviewCounts>; t: (k: string) => string }) {
+  if (counts.loading) return null;
+  if (counts.total === 0) {
+    return (
+      <Link
+        to="/company/review"
+        className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl hover:bg-emerald-100/70 transition-colors"
+      >
+        <div className="p-2 rounded-lg bg-emerald-500/10">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-emerald-900">{t('review.cta.allClearTitle')}</p>
+          <p className="text-xs text-emerald-700">{t('review.cta.allClearSubtitle')}</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-emerald-600" />
+      </Link>
+    );
+  }
+
+  const parts: string[] = [];
+  if (counts.deliveries > 0) parts.push(`${counts.deliveries} ${t('review.tabs.deliveries').toLowerCase()}`);
+  if (counts.pickups > 0) parts.push(`${counts.pickups} ${t('review.tabs.pickups').toLowerCase()}`);
+  if (counts.repairs > 0) parts.push(`${counts.repairs} ${t('review.tabs.repairs').toLowerCase()}`);
+
+  return (
+    <Link
+      to="/company/review"
+      className="group relative flex items-center gap-4 p-4 lg:p-5 bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 rounded-2xl text-white shadow-lg hover:shadow-xl active:scale-[0.99] transition-all overflow-hidden"
+    >
+      <span className="absolute top-3 right-4 flex items-center justify-center">
+        <span className="absolute w-3 h-3 bg-white/40 rounded-full animate-ping" />
+        <span className="relative w-2 h-2 bg-white rounded-full" />
+      </span>
+      <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm flex-shrink-0">
+        <ClipboardList className="w-6 h-6 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold uppercase tracking-wide">{t('review.cta.title')}</p>
+        <p className="text-xs lg:text-sm text-white/90 mt-0.5 truncate">{parts.join(' - ')}</p>
+      </div>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <span className="text-2xl lg:text-3xl font-bold tabular-nums">{counts.total}</span>
+        <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+      </div>
+    </Link>
   );
 }
 
