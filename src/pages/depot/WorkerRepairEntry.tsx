@@ -24,6 +24,7 @@ import type { Profile, ProductCategory } from '../../types';
 interface RepairEntry {
   id: string;
   category_id: string | null;
+  category_product_id: string | null;
   product_name: string;
   quantity_repaired: number;
   logged_at: string;
@@ -39,6 +40,7 @@ interface CatalogProduct {
 
 interface ReportDetailEntry {
   category_id: string | null;
+  category_product_id: string | null;
   category_name: string;
   product_name: string;
   quantity: number;
@@ -126,7 +128,7 @@ export default function WorkerRepairEntry() {
           .order('name'),
         supabase
           .from('depot_repairs')
-          .select('id, category_id, product_name, quantity_repaired, logged_at, reported_at, category:product_categories(name)')
+          .select('id, category_id, category_product_id, product_name, quantity_repaired, logged_at, reported_at, category:product_categories(name)')
           .eq('company_id', companyId)
           .eq('worker_id', workerId)
           .is('reported_at', null)
@@ -171,12 +173,20 @@ export default function WorkerRepairEntry() {
     try {
       setSaving(true);
       setError(null);
+      const trimmedProduct = formProduct.trim();
+      const matchedProduct = trimmedProduct
+        ? catalog.find(
+            (p) => p.category_id === formCategory && p.name.trim().toLowerCase() === trimmedProduct.toLowerCase(),
+          ) ?? null
+        : null;
+
       const { error: insErr } = await supabase.from('depot_repairs').insert({
         company_id: profile!.company_id,
         depot_id: profile!.depot_id ?? null,
         worker_id: workerId,
         category_id: formCategory,
-        product_name: formProduct.trim(),
+        category_product_id: matchedProduct?.id ?? null,
+        product_name: trimmedProduct,
         quantity_repaired: qty,
         quantity_in: 0,
         quantity_scrapped: 0,
@@ -216,6 +226,7 @@ export default function WorkerRepairEntry() {
 
       const detailEntries: ReportDetailEntry[] = entries.map((e) => ({
         category_id: e.category_id,
+        category_product_id: e.category_product_id ?? null,
         category_name: e.category?.name ?? '-',
         product_name: e.product_name || '',
         quantity: e.quantity_repaired ?? 0,
