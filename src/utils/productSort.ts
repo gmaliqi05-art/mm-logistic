@@ -31,3 +31,11 @@ export function compareCategoriesByPriority(a: string, b: string): number {
   if (ra !== rb) return ra - rb;
   return a.localeCompare(b);
 }
+
+export function epalClassRank(productName: string | null | undefined): number {
+  const n = (productName ?? '').toLowerCase();
+  if (/(?:^|[^a-z])(klasse\s*a|class\s*a|a[\s-]*klasse|epal\s*a|a\s*pallet|a\b)/i.test(n)) return 0;
+  if (/(?:^|[^a-z])(klasse\s*b|class\s*b|b[\s-]*klasse|epal\s*b|b\s*pallet|b\b)/i.test(n)) return 1;
+  if (/(?:^|[^a-z])(klasse\s*c|class\s*c|c[\s-]*klasse|epal\s*c|c\s*pallet|c\b)/i.test(n)) return 2;
+  return 3;
+}

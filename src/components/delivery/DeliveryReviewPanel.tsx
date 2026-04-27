@@ -404,18 +404,30 @@ function ReviewModal({
       const depotId = note.assigned_depot_id || profile?.depot_id;
       if (!depotId) throw new Error('Depoja nuk eshte caktuar per kete dergese.');
 
+      const productIds = items.map((i) => i.product_id).filter((x): x is string => !!x);
+      const validProductIds = new Set<string>();
+      if (productIds.length > 0) {
+        const { data: cps } = await supabase
+          .from('category_products')
+          .select('id')
+          .in('id', productIds);
+        (cps ?? []).forEach((p) => validProductIds.add(p.id));
+      }
+
       const isPickup = note.type === 'pickup';
       for (const it of items) {
         const signedQty = isPickup ? -Math.abs(it.quantity) : Math.abs(it.quantity);
+        const stockProductId = it.product_id && validProductIds.has(it.product_id) ? it.product_id : null;
 
-        const { data: existing } = await supabase
+        let lookup = supabase
           .from('stock')
           .select('id, quantity')
           .eq('company_id', note.company_id)
           .eq('depot_id', depotId)
           .eq('category_id', it.category_id)
-          .eq('condition', it.condition)
-          .maybeSingle();
+          .eq('condition', it.condition);
+        lookup = stockProductId ? lookup.eq('category_product_id', stockProductId) : lookup.is('category_product_id', null);
+        const { data: existing } = await lookup.maybeSingle();
 
         if (existing) {
           await supabase
@@ -427,6 +439,7 @@ function ReviewModal({
             company_id: note.company_id,
             depot_id: depotId,
             category_id: it.category_id,
+            category_product_id: stockProductId,
             condition: it.condition,
             quantity: signedQty,
           });
@@ -436,6 +449,7 @@ function ReviewModal({
           company_id: note.company_id,
           depot_id: depotId,
           category_id: it.category_id,
+          category_product_id: stockProductId,
           movement_type: isPickup ? 'exit' : 'entry',
           quantity: Math.abs(it.quantity),
           condition_after: it.condition,

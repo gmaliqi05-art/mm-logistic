@@ -16,16 +16,24 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import SmartDocScanner, { SmartScanResult } from '../../components/scanner/SmartDocScanner';
 import type { StockMovement, ProductCategory } from '../../types';
+import { epalClassRank } from '../../utils/productSort';
+
+interface CategoryProductLite {
+  id: string;
+  category_id: string;
+  name: string;
+}
 
 interface ItemRow {
   id: string;
   category_id: string;
+  category_product_id: string;
   quantity: string;
   condition: string;
 }
 
 function createRow(): ItemRow {
-  return { id: crypto.randomUUID(), category_id: '', quantity: '', condition: 'good' };
+  return { id: crypto.randomUUID(), category_id: '', category_product_id: '', quantity: '', condition: 'good' };
 }
 
 export default function DepotReceiving() {
@@ -33,6 +41,7 @@ export default function DepotReceiving() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'receiving' | 'shipping'>('receiving');
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [products, setProducts] = useState<CategoryProductLite[]>([]);
   const [history, setHistory] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,12 +78,22 @@ export default function DepotReceiving() {
     const isShipping = kind === 'delivery_out';
 
     const rows: ItemRow[] = (r.extracted.line_items || [])
-      .map((li) => ({
-        id: crypto.randomUUID(),
-        category_id: findCategoryId(li.description || ''),
-        quantity: String(Math.max(1, Math.round(Number(li.quantity) || 1))),
-        condition: 'good',
-      }))
+      .map((li) => {
+        const catId = findCategoryId(li.description || '');
+        const desc = normalize(li.description || '');
+        const productMatch = catId
+          ? products.find((p) => p.category_id === catId && desc && (
+              normalize(p.name) === desc || desc.includes(normalize(p.name)) || normalize(p.name).includes(desc)
+            ))
+          : null;
+        return {
+          id: crypto.randomUUID(),
+          category_id: catId,
+          category_product_id: productMatch?.id ?? '',
+          quantity: String(Math.max(1, Math.round(Number(li.quantity) || 1))),
+          condition: 'good',
+        };
+      })
       .filter((r) => r.category_id);
 
     const finalRows = rows.length > 0 ? rows : [createRow()];
@@ -139,14 +158,19 @@ export default function DepotReceiving() {
       const depotId = profile!.depot_id!;
       const companyId = profile!.company_id!;
 
-      const [catRes, histRes] = await Promise.all([
+      const [catRes, prodRes, histRes] = await Promise.all([
         supabase
           .from('product_categories')
           .select('*')
           .eq('company_id', companyId),
         supabase
+          .from('category_products')
+          .select('id, category_id, name')
+          .eq('company_id', companyId)
+          .eq('is_active', true),
+        supabase
           .from('stock_movements')
-          .select('*, category:product_categories(id, name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
+          .select('*, category:product_categories(id, name), product:category_products(id, name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .in('movement_type', ['entry', 'exit'])
@@ -155,9 +179,11 @@ export default function DepotReceiving() {
       ]);
 
       if (catRes.error) throw catRes.error;
+      if (prodRes.error) throw prodRes.error;
       if (histRes.error) throw histRes.error;
 
       setCategories(catRes.data ?? []);
+      setProducts(prodRes.data ?? []);
       setHistory(histRes.data ?? []);
     } catch (err: any) {
       setError(err.message || t('common.errorLoading'));
@@ -175,7 +201,12 @@ export default function DepotReceiving() {
   }
 
   function updateReceivingRow(id: string, field: keyof ItemRow, value: string) {
-    setReceivingRows((prev) => prev.map((r) => r.id === id ? { ...r, [field]: value } : r));
+    setReceivingRows((prev) => prev.map((r) => {
+      if (r.id !== id) return r;
+      const next = { ...r, [field]: value };
+      if (field === 'category_id') next.category_product_id = '';
+      return next;
+    }));
   }
 
   function addShippingRow() {
@@ -187,7 +218,22 @@ export default function DepotReceiving() {
   }
 
   function updateShippingRow(id: string, field: keyof ItemRow, value: string) {
-    setShippingRows((prev) => prev.map((r) => r.id === id ? { ...r, [field]: value } : r));
+    setShippingRows((prev) => prev.map((r) => {
+      if (r.id !== id) return r;
+      const next = { ...r, [field]: value };
+      if (field === 'category_id') next.category_product_id = '';
+      return next;
+    }));
+  }
+
+  function productsForCategory(categoryId: string): CategoryProductLite[] {
+    return products
+      .filter((p) => p.category_id === categoryId)
+      .sort((a, b) => epalClassRank(a.name) - epalClassRank(b.name) || a.name.localeCompare(b.name));
+  }
+
+  function categoryHasProducts(categoryId: string): boolean {
+    return products.some((p) => p.category_id === categoryId);
   }
 
   async function handleReceiving(e: React.FormEvent) {
@@ -195,6 +241,12 @@ export default function DepotReceiving() {
     const validRows = receivingRows.filter((r) => r.category_id && r.quantity && parseInt(r.quantity, 10) > 0);
     if (validRows.length === 0) {
       setError('Shto te pakten nje artikull valid');
+      return;
+    }
+    const missingProduct = validRows.find((r) => categoryHasProducts(r.category_id) && !r.category_product_id);
+    if (missingProduct) {
+      const cat = categories.find((c) => c.id === missingProduct.category_id);
+      setError(`Zgjedh produktin specifik per kategorin "${cat?.name ?? ''}".`);
       return;
     }
 
@@ -209,6 +261,7 @@ export default function DepotReceiving() {
         company_id: companyId,
         depot_id: depotId,
         category_id: r.category_id,
+        category_product_id: r.category_product_id || null,
         movement_type: 'entry' as const,
         quantity: parseInt(r.quantity, 10),
         condition_before: r.condition,
@@ -222,14 +275,16 @@ export default function DepotReceiving() {
 
       for (const row of validRows) {
         const qty = parseInt(row.quantity, 10);
-        const { data: existing } = await supabase
+        const productId = row.category_product_id || null;
+        let lookup = supabase
           .from('stock')
           .select('id, quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .eq('category_id', row.category_id)
-          .eq('condition', row.condition)
-          .maybeSingle();
+          .eq('condition', row.condition);
+        lookup = productId ? lookup.eq('category_product_id', productId) : lookup.is('category_product_id', null);
+        const { data: existing } = await lookup.maybeSingle();
 
         if (existing) {
           await supabase
@@ -241,6 +296,7 @@ export default function DepotReceiving() {
             company_id: companyId,
             depot_id: depotId,
             category_id: row.category_id,
+            category_product_id: productId,
             quantity: qty,
             condition: row.condition,
           });
@@ -265,6 +321,12 @@ export default function DepotReceiving() {
       setError('Shto te pakten nje artikull valid');
       return;
     }
+    const missingProduct = validRows.find((r) => categoryHasProducts(r.category_id) && !r.category_product_id);
+    if (missingProduct) {
+      const cat = categories.find((c) => c.id === missingProduct.category_id);
+      setError(`Zgjedh produktin specifik per kategorin "${cat?.name ?? ''}".`);
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -279,6 +341,7 @@ export default function DepotReceiving() {
         company_id: companyId,
         depot_id: depotId,
         category_id: r.category_id,
+        category_product_id: r.category_product_id || null,
         movement_type: 'exit' as const,
         quantity: parseInt(r.quantity, 10),
         condition_before: r.condition,
@@ -289,18 +352,21 @@ export default function DepotReceiving() {
 
       for (const row of validRows) {
         const qty = parseInt(row.quantity, 10);
-        const { data: existing } = await supabase
+        const productId = row.category_product_id || null;
+        let lookup = supabase
           .from('stock')
           .select('id, quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .eq('category_id', row.category_id)
-          .eq('condition', row.condition)
-          .maybeSingle();
+          .eq('condition', row.condition);
+        lookup = productId ? lookup.eq('category_product_id', productId) : lookup.is('category_product_id', null);
+        const { data: existing } = await lookup.maybeSingle();
 
         if (!existing || existing.quantity < qty) {
           const cat = categories.find((c) => c.id === row.category_id);
-          setError(`Stok i pamjaftueshem per ${cat?.name ?? 'artikullin'} (${row.condition}).`);
+          const prod = products.find((p) => p.id === productId);
+          setError(`Stok i pamjaftueshem per ${prod?.name ?? cat?.name ?? 'artikullin'} (${row.condition}).`);
           return;
         }
       }
@@ -310,14 +376,16 @@ export default function DepotReceiving() {
 
       for (const row of validRows) {
         const qty = parseInt(row.quantity, 10);
-        const { data: existing } = await supabase
+        const productId = row.category_product_id || null;
+        let lookup = supabase
           .from('stock')
           .select('id, quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .eq('category_id', row.category_id)
-          .eq('condition', row.condition)
-          .maybeSingle();
+          .eq('condition', row.condition);
+        lookup = productId ? lookup.eq('category_product_id', productId) : lookup.is('category_product_id', null);
+        const { data: existing } = await lookup.maybeSingle();
 
         if (existing) {
           await supabase
@@ -446,9 +514,12 @@ export default function DepotReceiving() {
           {activeTab === 'receiving' ? (
             <form onSubmit={handleReceiving} className="space-y-4">
               <div className="space-y-3">
-                {receivingRows.map((row) => (
+                {receivingRows.map((row) => {
+                  const rowProducts = productsForCategory(row.category_id);
+                  const hasProducts = rowProducts.length > 0;
+                  return (
                   <div key={row.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">{t('depot.stock.category')}</label>
                         <select
@@ -460,6 +531,21 @@ export default function DepotReceiving() {
                           <option value="">{t('depot.stock.selectCategory')}</option>
                           {categories.map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Produkti</label>
+                        <select
+                          value={row.category_product_id}
+                          onChange={(e) => updateReceivingRow(row.id, 'category_product_id', e.target.value)}
+                          disabled={!row.category_id || !hasProducts}
+                          required={hasProducts}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                        >
+                          <option value="">{hasProducts ? 'Zgjedh produktin' : (row.category_id ? '— pa produkte —' : '— zgjedh kategorin —')}</option>
+                          {rowProducts.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
                         </select>
                       </div>
@@ -496,7 +582,8 @@ export default function DepotReceiving() {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               <button
@@ -533,9 +620,12 @@ export default function DepotReceiving() {
           ) : (
             <form onSubmit={handleShipping} className="space-y-4">
               <div className="space-y-3">
-                {shippingRows.map((row) => (
+                {shippingRows.map((row) => {
+                  const rowProducts = productsForCategory(row.category_id);
+                  const hasProducts = rowProducts.length > 0;
+                  return (
                   <div key={row.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">{t('depot.stock.category')}</label>
                         <select
@@ -547,6 +637,21 @@ export default function DepotReceiving() {
                           <option value="">{t('depot.stock.selectCategory')}</option>
                           {categories.map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Produkti</label>
+                        <select
+                          value={row.category_product_id}
+                          onChange={(e) => updateShippingRow(row.id, 'category_product_id', e.target.value)}
+                          disabled={!row.category_id || !hasProducts}
+                          required={hasProducts}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                        >
+                          <option value="">{hasProducts ? 'Zgjedh produktin' : '— pa produkte —'}</option>
+                          {rowProducts.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
                         </select>
                       </div>
@@ -571,7 +676,8 @@ export default function DepotReceiving() {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               <button
@@ -631,7 +737,7 @@ export default function DepotReceiving() {
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.type')}</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('depot.stock.category')}</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti / {t('depot.stock.category')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.quantity')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('company.stock.condition')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('common.createdBy')}</th>
@@ -659,7 +765,10 @@ export default function DepotReceiving() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      {(m.category as any)?.name ?? '-'}
+                      <div className="font-medium">{(m.product as any)?.name ?? (m.category as any)?.name ?? '-'}</div>
+                      {(m.product as any)?.name && (m.category as any)?.name && (
+                        <div className="text-xs text-gray-500">{(m.category as any)?.name}</div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">{m.quantity}</td>
                     <td className="px-6 py-4 hidden md:table-cell">
