@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Warehouse,
   Truck,
@@ -86,6 +86,46 @@ export default function CompanyDashboard() {
   const [scanRefreshKey, setScanRefreshKey] = useState(0);
   const [range, setRange] = useState<RangeKey>('7d');
 
+  const grouped = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+    const dayAfterStart = new Date(todayStart);
+    dayAfterStart.setDate(dayAfterStart.getDate() + 2);
+
+    const getDate = (n: any) => {
+      const ts = n.type === 'pickup' ? n.scheduled_pickup_at : n.scheduled_delivery_at;
+      if (!ts) return null;
+      const d = new Date(ts);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
+
+    const buckets = {
+      todayDeliveries: [] as DeliveryNote[],
+      todayPickups: [] as DeliveryNote[],
+      tomorrowDeliveries: [] as DeliveryNote[],
+      tomorrowPickups: [] as DeliveryNote[],
+      otherActive: [] as DeliveryNote[],
+    };
+
+    for (const n of recentNotes) {
+      const d = getDate(n as any);
+      const isPickup = (n as any).type === 'pickup';
+      if (d && d.getTime() === todayStart.getTime()) {
+        if (isPickup) buckets.todayPickups.push(n);
+        else buckets.todayDeliveries.push(n);
+      } else if (d && d.getTime() === tomorrowStart.getTime()) {
+        if (isPickup) buckets.tomorrowPickups.push(n);
+        else buckets.tomorrowDeliveries.push(n);
+      } else {
+        buckets.otherActive.push(n);
+      }
+    }
+    return buckets;
+  }, [recentNotes]);
+
   const statusConfig: Record<string, { label: string; className: string; barColor: string; icon: typeof CheckCircle2 }> = {
     draft: { label: t('company.deliveryNotes.draft'), className: 'bg-gray-100 text-gray-700', barColor: 'bg-gray-400', icon: FileText },
     sent: { label: t('company.deliveryNotes.sent'), className: 'bg-blue-100 text-blue-700', barColor: 'bg-blue-500', icon: Send },
@@ -144,8 +184,8 @@ export default function CompanyDashboard() {
         supabase.from('delivery_notes')
           .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(name)')
           .eq('company_id', companyId)
-          .in('status', ['sent', 'in_transit', 'delivered', 'pending_company_review', 'pending_stock_confirmation'])
-          .order('created_at', { ascending: false }).limit(10),
+          .in('status', ['sent', 'in_transit'])
+          .order('created_at', { ascending: false }).limit(50),
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', todayIso),
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('type', 'pickup').in('status', ['draft', 'sent', 'in_transit']),
         supabase.from('depots').select('id, name').eq('company_id', companyId).eq('is_active', true),
@@ -453,66 +493,31 @@ export default function CompanyDashboard() {
             </div>
           </div>
 
-          {/* Recent Deliveries */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900 text-sm">{t('company.dashboard.recentDeliveries')}</h2>
-              <Link to="/company/delivery-notes" className="text-xs text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
-                {t('company.dashboard.viewReports')}
-                <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {recentNotes.length === 0 ? (
-                <div className="p-10 text-center">
-                  <FileText className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                  <p className="text-gray-400 text-xs">{t('company.dashboard.noRecentDeliveries')}</p>
-                </div>
-              ) : (
-                recentNotes.map((note) => {
-                  const cfg = statusConfig[note.status];
-                  const StatusIcon = cfg?.icon || FileText;
-                  return (
-                    <div key={note.id} className="px-4 py-3 hover:bg-gray-50/50 transition-colors active:bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-1.5 rounded-lg flex-shrink-0 ${cfg?.className.split(' ')[0] || 'bg-gray-100'}`}>
-                          <StatusIcon className={`w-3.5 h-3.5 ${cfg?.className.split(' ')[1] || 'text-gray-600'}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium text-gray-900">{note.note_number}</span>
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${cfg?.className || 'bg-gray-100 text-gray-700'}`}>
-                              {cfg?.label || note.status}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
-                            <span className="flex items-center gap-1 truncate">
-                              <Truck className="w-3 h-3 flex-shrink-0" />
-                              {(note.driver as any)?.full_name ?? t('company.deliveryNotes.noDriver')}
-                            </span>
-                            <span className="flex items-center gap-1 truncate">
-                              <MapPin className="w-3 h-3 flex-shrink-0" />
-                              {(note.depot as any)?.name ?? t('company.deliveryNotes.noDepot')}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <span className="block text-[10px] text-gray-400">
-                            {new Date(note.created_at).toLocaleDateString()}
-                          </span>
-                          {(note as any).delivered_at && (
-                            <span className="block text-[9px] text-teal-600 font-medium mt-0.5">
-                              {new Date((note as any).delivered_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+          {/* Today / Tomorrow Active Orders */}
+          <ScheduleSection
+            title={t('company.dashboard.today')}
+            highlight
+            deliveries={grouped.todayDeliveries}
+            pickups={grouped.todayPickups}
+            statusConfig={statusConfig}
+            t={t}
+          />
+          <ScheduleSection
+            title={t('company.dashboard.tomorrow')}
+            deliveries={grouped.tomorrowDeliveries}
+            pickups={grouped.tomorrowPickups}
+            statusConfig={statusConfig}
+            t={t}
+          />
+          {grouped.otherActive.length > 0 && (
+            <ScheduleSection
+              title={t('company.dashboard.otherActive')}
+              deliveries={grouped.otherActive.filter((n: any) => n.type !== 'pickup')}
+              pickups={grouped.otherActive.filter((n: any) => n.type === 'pickup')}
+              statusConfig={statusConfig}
+              t={t}
+            />
+          )}
         </div>
 
         {/* Right column */}
@@ -652,6 +657,132 @@ export default function CompanyDashboard() {
             fetchData();
           }}
         />
+      )}
+    </div>
+  );
+}
+
+function ScheduleSection({
+  title, highlight, deliveries, pickups, statusConfig, t,
+}: {
+  title: string;
+  highlight?: boolean;
+  deliveries: DeliveryNote[];
+  pickups: DeliveryNote[];
+  statusConfig: Record<string, { label: string; className: string; barColor: string; icon: typeof CheckCircle2 }>;
+  t: (k: string) => string;
+}) {
+  const total = deliveries.length + pickups.length;
+  return (
+    <div className={`bg-white rounded-xl shadow-sm border ${highlight ? 'border-teal-200 ring-1 ring-teal-100' : 'border-gray-100'} overflow-hidden`}>
+      <div className={`px-4 py-3 flex items-center justify-between ${highlight ? 'bg-teal-50' : 'bg-gray-50'}`}>
+        <div className="flex items-center gap-2">
+          <h2 className={`font-semibold text-sm ${highlight ? 'text-teal-900' : 'text-gray-900'}`}>{title}</h2>
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${highlight ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+            {total}
+          </span>
+        </div>
+      </div>
+      {total === 0 ? (
+        <div className="p-6 text-center">
+          <FileText className="w-7 h-7 text-gray-200 mx-auto mb-1.5" />
+          <p className="text-gray-400 text-xs">{t('company.dashboard.noScheduled')}</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+          <ScheduleColumn
+            label={t('review.tabs.deliveries')}
+            icon={Truck}
+            tone="sky"
+            notes={deliveries}
+            statusConfig={statusConfig}
+            t={t}
+          />
+          <ScheduleColumn
+            label={t('review.tabs.pickups')}
+            icon={Package}
+            tone="orange"
+            notes={pickups}
+            statusConfig={statusConfig}
+            t={t}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScheduleColumn({
+  label, icon: Icon, tone, notes, statusConfig, t,
+}: {
+  label: string;
+  icon: typeof Truck;
+  tone: 'sky' | 'orange';
+  notes: DeliveryNote[];
+  statusConfig: Record<string, { label: string; className: string; barColor: string; icon: typeof CheckCircle2 }>;
+  t: (k: string) => string;
+}) {
+  const toneClasses = tone === 'sky'
+    ? { dot: 'bg-sky-500', text: 'text-sky-700', bg: 'bg-sky-50', icon: 'text-sky-600' }
+    : { dot: 'bg-orange-500', text: 'text-orange-700', bg: 'bg-orange-50', icon: 'text-orange-600' };
+  return (
+    <div>
+      <div className="px-4 py-2 flex items-center gap-2 border-b border-gray-50">
+        <span className={`w-1.5 h-1.5 rounded-full ${toneClasses.dot}`} />
+        <span className={`text-xs font-semibold uppercase tracking-wide ${toneClasses.text}`}>{label}</span>
+        <span className="ml-auto text-[11px] text-gray-400">{notes.length}</span>
+      </div>
+      {notes.length === 0 ? (
+        <div className="px-4 py-5 text-center text-[11px] text-gray-400">{t('company.dashboard.noScheduled')}</div>
+      ) : (
+        <div className="divide-y divide-gray-50">
+          {notes.slice(0, 6).map((note: any) => {
+            const cfg = statusConfig[note.status];
+            const ts = note.type === 'pickup' ? note.scheduled_pickup_at : note.scheduled_delivery_at;
+            return (
+              <Link
+                key={note.id}
+                to="/company/delivery-notes"
+                className="block px-4 py-2.5 hover:bg-gray-50/70 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-1.5 rounded-lg flex-shrink-0 ${toneClasses.bg}`}>
+                    <Icon className={`w-3.5 h-3.5 ${toneClasses.icon}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-gray-900 truncate">{note.note_number}</span>
+                      {cfg && (
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${cfg.className}`}>
+                          {cfg.label}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
+                      {note.partner_name && <span className="truncate">{note.partner_name}</span>}
+                      {(note.driver as any)?.full_name && (
+                        <span className="flex items-center gap-1 truncate">
+                          <Truck className="w-2.5 h-2.5" />
+                          {(note.driver as any).full_name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {ts && (
+                    <span className="text-[10px] text-gray-400 flex-shrink-0 tabular-nums">
+                      {new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+          {notes.length > 6 && (
+            <Link to="/company/delivery-notes" className="block px-4 py-2 text-center text-[11px] font-semibold text-teal-600 hover:bg-gray-50">
+              +{notes.length - 6} {t('common.total').toLowerCase()}
+            </Link>
+          )}
+        </div>
       )}
     </div>
   );
