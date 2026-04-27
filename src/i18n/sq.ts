@@ -3,6 +3,7 @@ export const sq = {
     logout: 'Dil',
     cancel: 'Anulo',
     save: 'Ruaj',
+    assign: 'Cakto',
     saveChanges: 'Ruaj Ndryshimet',
     delete: 'Fshi',
     edit: 'Ndrysho',
@@ -2076,6 +2077,7 @@ export const sq = {
       errDriverLimit: 'Keni arritur limitin e {limit} shofereve per planin tuaj. Kaloni ne nje plan me te larte per te shtuar me shume.',
     },
     stock: {
+      registerStock: 'Regjistro Stok',
       errFillFields: 'Plotesoni deponen, kategorine dhe sasine valide',
       errInsufficientStock: 'Stok i pamjaftueshem ne kete depo per daljen e kerkuar',
     },

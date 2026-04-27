@@ -5,6 +5,7 @@ export const fr: typeof sq = {
     logout: 'D\u00e9connexion',
     cancel: 'Annuler',
     save: 'Enregistrer',
+    assign: 'Assigner',
     saveChanges: 'Enregistrer les modifications',
     delete: 'Supprimer',
     edit: 'Modifier',
@@ -2078,6 +2079,7 @@ export const fr: typeof sq = {
       errDriverLimit: 'Vous avez atteint la limite de {limit} chauffeurs pour votre forfait. Passez a un forfait superieur pour en ajouter plus.',
     },
     stock: {
+      registerStock: 'Enregistrer le stock',
       errFillFields: 'Veuillez renseigner le depot, la categorie et une quantite valide',
       errInsufficientStock: 'Stock insuffisant dans ce depot pour la sortie demandee',
     },

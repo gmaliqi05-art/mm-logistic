@@ -5,6 +5,7 @@ export const de: typeof sq = {
     logout: 'Abmelden',
     cancel: 'Abbrechen',
     save: 'Speichern',
+    assign: 'Zuweisen',
     saveChanges: 'Änderungen speichern',
     delete: 'Löschen',
     edit: 'Bearbeiten',
@@ -2078,6 +2079,7 @@ export const de: typeof sq = {
       errDriverLimit: 'Sie haben das Limit von {limit} Fahrern fuer Ihren Plan erreicht. Wechseln Sie zu einem hoeheren Plan, um weitere hinzuzufuegen.',
     },
     stock: {
+      registerStock: 'Bestand erfassen',
       errFillFields: 'Bitte Lager, Kategorie und gueltige Menge ausfuellen',
       errInsufficientStock: 'Nicht genuegend Bestand in diesem Lager fuer den gewuenschten Abgang',
     },

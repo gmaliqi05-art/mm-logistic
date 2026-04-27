@@ -140,7 +140,7 @@ export default function CompanyStock() {
           .limit(2000),
         supabase.from('depots').select('*').eq('company_id', companyId).eq('is_active', true),
         supabase.from('product_categories').select('*').eq('company_id', companyId),
-        supabase.from('category_products').select('id, company_id, category_id, name, is_active').eq('company_id', companyId).eq('is_active', true),
+        supabase.from('category_products').select('id, company_id, category_id, name, is_active').eq('company_id', companyId),
       ]);
 
       if (stockRes.error) throw stockRes.error;
@@ -342,7 +342,7 @@ export default function CompanyStock() {
     return t('company.stock.sourceManual');
   }
 
-  const productsForCategory = (catId: string) => products.filter((p) => p.category_id === catId);
+  const productsForCategory = (catId: string) => products.filter((p) => p.category_id === catId && p.is_active);
   const sortedCategoriesForSelect = categories.slice().sort((a, b) => compareCategoriesByPriority(a.name, b.name));
   const sortedProductsForSelect = regForm.category_id
     ? productsForCategory(regForm.category_id).slice().sort((a, b) => epalClassRank(a.name) - epalClassRank(b.name) || a.name.localeCompare(b.name))
@@ -492,7 +492,7 @@ export default function CompanyStock() {
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium shadow-sm"
         >
           <Plus className="w-4 h-4" />
-          {t('companyAdmin.stock.registerStock') || 'Regjistro Stok'}
+          {t('companyAdmin.stock.registerStock')}
         </button>
       </div>
 
@@ -558,7 +558,7 @@ export default function CompanyStock() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={`${t('common.search') ?? 'Kerko'}...`}
+                placeholder={`${t('common.search')}...`}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
               />
             </div>
@@ -688,7 +688,7 @@ export default function CompanyStock() {
                                       className="text-[10px] font-semibold uppercase tracking-wide text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded px-2 py-0.5 inline-flex items-center gap-1"
                                     >
                                       <ArrowRightCircle className="w-3 h-3" />
-                                      {t('common.assign') ?? 'Cakto'}
+                                      {t('common.assign')}
                                     </button>
                                   )}
                                 </div>
@@ -805,7 +805,7 @@ export default function CompanyStock() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowRegisterModal(false)} />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-semibold text-gray-900">{t('companyAdmin.stock.registerStock') || 'Regjistro Stok'}</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t('companyAdmin.stock.registerStock')}</h2>
               <button
                 onClick={() => setShowRegisterModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"

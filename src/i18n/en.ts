@@ -5,6 +5,7 @@ export const en: typeof sq = {
     logout: 'Log Out',
     cancel: 'Cancel',
     save: 'Save',
+    assign: 'Assign',
     saveChanges: 'Save Changes',
     delete: 'Delete',
     edit: 'Edit',
@@ -2078,6 +2079,7 @@ export const en: typeof sq = {
       errDriverLimit: 'You have reached the limit of {limit} drivers for your plan. Upgrade to a higher plan to add more.',
     },
     stock: {
+      registerStock: 'Register Stock',
       errFillFields: 'Please fill in the depot, category and a valid quantity',
       errInsufficientStock: 'Insufficient stock in this depot for the requested outflow',
     },
