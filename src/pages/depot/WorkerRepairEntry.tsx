@@ -20,10 +20,12 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { Profile, ProductCategory } from '../../types';
+import { compareCategoriesByPriority, epalClassRank } from '../../utils/productSort';
 
 interface RepairEntry {
   id: string;
   category_id: string | null;
+  category_product_id: string | null;
   product_name: string;
   quantity_repaired: number;
   logged_at: string;
@@ -39,6 +41,7 @@ interface CatalogProduct {
 
 interface ReportDetailEntry {
   category_id: string | null;
+  category_product_id: string | null;
   category_name: string;
   product_name: string;
   quantity: number;
@@ -87,7 +90,7 @@ export default function WorkerRepairEntry() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [formCategory, setFormCategory] = useState('');
-  const [formProduct, setFormProduct] = useState('');
+  const [formProductId, setFormProductId] = useState('');
   const [formQuantity, setFormQuantity] = useState('');
   const [saving, setSaving] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
@@ -126,7 +129,7 @@ export default function WorkerRepairEntry() {
           .order('name'),
         supabase
           .from('depot_repairs')
-          .select('id, category_id, product_name, quantity_repaired, logged_at, reported_at, category:product_categories(name)')
+          .select('id, category_id, category_product_id, product_name, quantity_repaired, logged_at, reported_at, category:product_categories(name)')
           .eq('company_id', companyId)
           .eq('worker_id', workerId)
           .is('reported_at', null)
@@ -168,6 +171,12 @@ export default function WorkerRepairEntry() {
       setError(t('depot.stock.positiveQty'));
       return;
     }
+    const catalogForCategory = catalog.filter((p) => p.category_id === formCategory);
+    if (catalogForCategory.length > 0 && !formProductId) {
+      setError('Zgjidhni produktin (p.sh. EPAL Klasse A/B/C) per kete kategori.');
+      return;
+    }
+    const selected = catalog.find((p) => p.id === formProductId) ?? null;
     try {
       setSaving(true);
       setError(null);
@@ -176,7 +185,8 @@ export default function WorkerRepairEntry() {
         depot_id: profile!.depot_id ?? null,
         worker_id: workerId,
         category_id: formCategory,
-        product_name: formProduct.trim(),
+        category_product_id: selected?.id ?? null,
+        product_name: selected?.name ?? '',
         quantity_repaired: qty,
         quantity_in: 0,
         quantity_scrapped: 0,
@@ -216,20 +226,34 @@ export default function WorkerRepairEntry() {
 
       const detailEntries: ReportDetailEntry[] = entries.map((e) => ({
         category_id: e.category_id,
+        category_product_id: e.category_product_id,
         category_name: e.category?.name ?? '-',
         product_name: e.product_name || '',
         quantity: e.quantity_repaired ?? 0,
         logged_at: e.logged_at,
       }));
 
-      const byCatMap = new Map<string, number>();
-      const byProdMap = new Map<string, number>();
+      const byCatMap = new Map<string, { category_id: string | null; name: string; quantity: number }>();
+      const byProdMap = new Map<string, { category_product_id: string | null; category_id: string | null; name: string; quantity: number }>();
       let total = 0;
       for (const e of detailEntries) {
         total += e.quantity;
-        byCatMap.set(e.category_name, (byCatMap.get(e.category_name) ?? 0) + e.quantity);
+        const catKey = e.category_id ?? `name:${e.category_name}`;
+        const catCur = byCatMap.get(catKey) ?? { category_id: e.category_id, name: e.category_name, quantity: 0 };
+        catCur.quantity += e.quantity;
+        byCatMap.set(catKey, catCur);
         const p = (e.product_name || '').trim();
-        if (p) byProdMap.set(p, (byProdMap.get(p) ?? 0) + e.quantity);
+        const prodKey = e.category_product_id ?? (p ? `name:${p}` : '');
+        if (prodKey) {
+          const prodCur = byProdMap.get(prodKey) ?? {
+            category_product_id: e.category_product_id,
+            category_id: e.category_id,
+            name: p || '-',
+            quantity: 0,
+          };
+          prodCur.quantity += e.quantity;
+          byProdMap.set(prodKey, prodCur);
+        }
       }
 
       const { data: reportRow, error: repErr } = await supabase
@@ -244,8 +268,13 @@ export default function WorkerRepairEntry() {
           entry_count: entries.length,
           details: {
             entries: detailEntries,
-            by_category: Array.from(byCatMap.entries()).map(([name, quantity]) => ({ name, quantity })),
-            by_product: Array.from(byProdMap.entries()).map(([name, quantity]) => ({ name, quantity })),
+            by_category: Array.from(byCatMap.values()).map((c) => ({ category_id: c.category_id, name: c.name, quantity: c.quantity })),
+            by_product: Array.from(byProdMap.values()).map((p) => ({
+              category_product_id: p.category_product_id,
+              category_id: p.category_id,
+              name: p.name,
+              quantity: p.quantity,
+            })),
           },
           created_by: profile!.id,
           review_status: 'pending_company_review',
@@ -310,14 +339,24 @@ export default function WorkerRepairEntry() {
 
   const todayTotal = entries.reduce((s, e) => s + (e.quantity_repaired ?? 0), 0);
 
-  const productSuggestions = useMemo(() => {
-    const set = new Set<string>();
-    for (const p of catalog) {
-      if (formCategory && p.category_id !== formCategory) continue;
-      if (p.name?.trim()) set.add(p.name.trim());
-    }
-    return Array.from(set).slice(0, 50);
+  const productOptions = useMemo(() => {
+    if (!formCategory) return [] as CatalogProduct[];
+    return catalog
+      .filter((p) => p.category_id === formCategory)
+      .slice()
+      .sort((a, b) => {
+        const ra = epalClassRank(a.name);
+        const rb = epalClassRank(b.name);
+        if (ra !== rb) return ra - rb;
+        return a.name.localeCompare(b.name);
+      });
   }, [catalog, formCategory]);
+
+  useEffect(() => {
+    if (formProductId && !productOptions.some((p) => p.id === formProductId)) {
+      setFormProductId('');
+    }
+  }, [formCategory, productOptions, formProductId]);
 
   if (loading) {
     return (
@@ -396,30 +435,35 @@ export default function WorkerRepairEntry() {
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
             >
               <option value="">{t('depot.stock.selectCategory')}</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
+              {categories
+                .slice()
+                .sort((a, b) => compareCategoriesByPriority(a.name, b.name))
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
               {t('depot.repairWorkers.product')}
             </label>
-            <input
-              type="text"
-              value={formProduct}
-              onChange={(e) => setFormProduct(e.target.value)}
-              list="repair-products"
-              placeholder={t('depot.repairWorkers.productPlaceholder')}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-            />
-            <datalist id="repair-products">
-              {productSuggestions.map((p) => (
-                <option key={p} value={p} />
+            <select
+              value={formProductId}
+              onChange={(e) => setFormProductId(e.target.value)}
+              disabled={!formCategory || productOptions.length === 0}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+            >
+              <option value="">
+                {productOptions.length === 0 ? '—' : t('depot.repairWorkers.productPlaceholder')}
+              </option>
+              {productOptions.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
               ))}
-            </datalist>
+            </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -442,7 +486,7 @@ export default function WorkerRepairEntry() {
         <div className="flex items-center justify-end">
           <button
             type="submit"
-            disabled={saving || !formCategory || !formQuantity}
+            disabled={saving || !formCategory || !formQuantity || (productOptions.length > 0 && !formProductId)}
             className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}

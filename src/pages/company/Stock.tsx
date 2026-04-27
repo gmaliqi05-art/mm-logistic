@@ -57,6 +57,7 @@ export default function CompanyStock() {
     notes: '',
   });
   const [saving, setSaving] = useState(false);
+  const [reassignCategoryId, setReassignCategoryId] = useState<string | null>(null);
 
   const movementConfig: Record<string, { label: string; className: string; icon: typeof ArrowUpCircle }> = {
     entry: { label: t('depot.stock.entry'), className: 'bg-green-100 text-green-700', icon: ArrowUpCircle },
@@ -384,7 +385,11 @@ export default function CompanyStock() {
           ) : (
             <div className="space-y-4">
               {categoryGroups.map((g) => (
-                <CategoryGroupCard key={g.categoryId} group={g} />
+                <CategoryGroupCard
+                  key={g.categoryId}
+                  group={g}
+                  onReassign={() => setReassignCategoryId(g.categoryId)}
+                />
               ))}
             </div>
           )}
@@ -651,6 +656,23 @@ export default function CompanyStock() {
           </div>
         </div>
       )}
+
+      {reassignCategoryId && (
+        <ReassignModal
+          categoryId={reassignCategoryId}
+          companyId={profile!.company_id!}
+          performedBy={profile!.id}
+          stocks={stocks}
+          depots={depots}
+          products={products.filter((p) => p.category_id === reassignCategoryId)}
+          categoryName={categoryById.get(reassignCategoryId)?.name ?? '-'}
+          onClose={() => setReassignCategoryId(null)}
+          onDone={async () => {
+            setReassignCategoryId(null);
+            await fetchAll();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -677,13 +699,16 @@ function SummaryStat({
   );
 }
 
-function CategoryGroupCard({ group }: { group: {
-  categoryId: string;
-  categoryName: string;
-  total: number;
-  unassignedTotal: number;
-  products: Array<{ productId: string; name: string; total: number; isActive: boolean }>;
-} }) {
+function CategoryGroupCard({ group, onReassign }: {
+  group: {
+    categoryId: string;
+    categoryName: string;
+    total: number;
+    unassignedTotal: number;
+    products: Array<{ productId: string; name: string; total: number; isActive: boolean }>;
+  };
+  onReassign: () => void;
+}) {
   const [open, setOpen] = useState(true);
   const visibleProducts = group.products.filter((p) => p.isActive || p.total > 0);
   const hasBreakdown = visibleProducts.length > 0;
@@ -745,20 +770,300 @@ function CategoryGroupCard({ group }: { group: {
               );
             })}
             {group.unassignedTotal > 0 && (
-              <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 flex items-start gap-3">
+              <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 flex items-start gap-3 sm:col-span-2 lg:col-span-3">
                 <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
                   <Package className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-amber-900">Pa produkt te caktuar</p>
-                  <p className="text-[11px] text-amber-700 mt-0.5">Hyrje pa specifikim produkti</p>
-                  <p className="text-xl font-bold text-amber-700 tabular-nums mt-1">{group.unassignedTotal}</p>
+                  <p className="text-sm font-semibold text-amber-900">Pa produkt te caktuar</p>
+                  <p className="text-[11px] text-amber-700 mt-0.5">
+                    Hyrje pa specifikim produkti — caktoja produkteve specifike (A/B/C Klasse).
+                  </p>
+                  <p className="text-2xl font-bold text-amber-700 tabular-nums mt-1">{group.unassignedTotal}</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReassign();
+                  }}
+                  className="self-start inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  Cakto Produktin
+                </button>
               </div>
             )}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ReassignModal({
+  categoryId,
+  companyId,
+  performedBy,
+  stocks,
+  depots,
+  products,
+  categoryName,
+  onClose,
+  onDone,
+}: {
+  categoryId: string;
+  companyId: string;
+  performedBy: string;
+  stocks: StockType[];
+  depots: Depot[];
+  products: CategoryProduct[];
+  categoryName: string;
+  onClose: () => void;
+  onDone: () => void | Promise<void>;
+}) {
+  const sortedProducts = useMemo(
+    () => [...products].sort((a, b) => epalClassRank(a.name) - epalClassRank(b.name) || a.name.localeCompare(b.name)),
+    [products]
+  );
+
+  const unassignedRows = useMemo(() => {
+    return stocks.filter(
+      (s) => s.category_id === categoryId && !s.category_product_id && (s.quantity ?? 0) > 0
+    );
+  }, [stocks, categoryId]);
+
+  const [depotId, setDepotId] = useState<string>(unassignedRows[0]?.depot_id ?? '');
+  const [allocations, setAllocations] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const sourceRow = useMemo(
+    () => unassignedRows.find((r) => r.depot_id === depotId) ?? null,
+    [unassignedRows, depotId]
+  );
+  const available = sourceRow?.quantity ?? 0;
+  const allocated = useMemo(
+    () => Object.values(allocations).reduce((sum, v) => sum + (parseInt(v || '0', 10) || 0), 0),
+    [allocations]
+  );
+  const remaining = available - allocated;
+
+  async function handleSubmit() {
+    if (!sourceRow || !depotId) {
+      setErr('Zgjedh nje depo me stok te pacaktuar.');
+      return;
+    }
+    if (allocated <= 0) {
+      setErr('Cakto te pakten nje sasi per nje produkt.');
+      return;
+    }
+    if (allocated > available) {
+      setErr('Sasia e caktuar tejkalon stokun e pacaktuar.');
+      return;
+    }
+    try {
+      setSaving(true);
+      setErr(null);
+
+      for (const [productId, qtyStr] of Object.entries(allocations)) {
+        const qty = parseInt(qtyStr || '0', 10) || 0;
+        if (qty <= 0) continue;
+
+        const existing = stocks.find(
+          (s) =>
+            s.depot_id === depotId &&
+            s.category_id === categoryId &&
+            s.category_product_id === productId &&
+            s.condition === sourceRow.condition
+        );
+
+        if (existing) {
+          const { error: updErr } = await supabase
+            .from('stock')
+            .update({ quantity: (existing.quantity ?? 0) + qty })
+            .eq('id', existing.id);
+          if (updErr) throw updErr;
+        } else {
+          const { error: insErr } = await supabase.from('stock').insert({
+            company_id: companyId,
+            depot_id: depotId,
+            category_id: categoryId,
+            category_product_id: productId,
+            condition: sourceRow.condition,
+            quantity: qty,
+          });
+          if (insErr) throw insErr;
+        }
+
+        await supabase.from('stock_movements').insert({
+          company_id: companyId,
+          depot_id: depotId,
+          category_id: categoryId,
+          category_product_id: productId,
+          movement_type: 'entry',
+          quantity: qty,
+          condition: sourceRow.condition,
+          performed_by: performedBy,
+          notes: `Reassign nga ${categoryName} pa produkt`,
+        });
+      }
+
+      const newQty = available - allocated;
+      if (newQty <= 0) {
+        const { error: delErr } = await supabase.from('stock').delete().eq('id', sourceRow.id);
+        if (delErr) throw delErr;
+      } else {
+        const { error: updErr } = await supabase
+          .from('stock')
+          .update({ quantity: newQty })
+          .eq('id', sourceRow.id);
+        if (updErr) throw updErr;
+      }
+
+      await supabase.from('stock_movements').insert({
+        company_id: companyId,
+        depot_id: depotId,
+        category_id: categoryId,
+        category_product_id: null,
+        movement_type: 'exit',
+        quantity: allocated,
+        condition: sourceRow.condition,
+        performed_by: performedBy,
+        notes: `Reassign drejt produkteve specifike (${categoryName})`,
+      });
+
+      await onDone();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Gabim ne ruajtje.';
+      setErr(msg);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const depotsWithUnassigned = depots.filter((d) => unassignedRows.some((r) => r.depot_id === d.id));
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Cakto produktin</h3>
+            <p className="text-xs text-gray-500 mt-0.5">{categoryName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {depotsWithUnassigned.length === 0 ? (
+            <p className="text-sm text-gray-500">Nuk ka stok te pacaktuar per kete kategori.</p>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Depo</label>
+                <select
+                  value={depotId}
+                  onChange={(e) => {
+                    setDepotId(e.target.value);
+                    setAllocations({});
+                  }}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  {depotsWithUnassigned.map((d) => {
+                    const row = unassignedRows.find((r) => r.depot_id === d.id);
+                    return (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({row?.quantity ?? 0} pa produkt)
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Stok i pacaktuar</span>
+                  <span className="font-semibold text-gray-900 tabular-nums">{available}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm mt-1">
+                  <span className="text-gray-600">Te caktuara</span>
+                  <span className="font-semibold text-teal-700 tabular-nums">{allocated}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm mt-1">
+                  <span className="text-gray-600">Te mbetura</span>
+                  <span
+                    className={`font-semibold tabular-nums ${
+                      remaining < 0 ? 'text-red-600' : 'text-gray-900'
+                    }`}
+                  >
+                    {remaining}
+                  </span>
+                </div>
+              </div>
+
+              {sortedProducts.length === 0 ? (
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  Nuk ka produkte te regjistruara per kete kategori. Krijoji ne menyne e Kategorive.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {sortedProducts.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-3 px-3 py-2 bg-white border border-gray-100 rounded-lg"
+                    >
+                      <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="flex-1 text-sm font-medium text-gray-800 truncate">{p.name}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={available}
+                        value={allocations[p.id] ?? ''}
+                        onChange={(e) =>
+                          setAllocations((prev) => ({ ...prev, [p.id]: e.target.value }))
+                        }
+                        placeholder="0"
+                        className="w-20 px-2 py-1.5 text-sm text-right border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 tabular-nums"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {err && (
+                <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+                  {err}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            Anulo
+          </button>
+          <button
+            type="button"
+            disabled={saving || allocated <= 0 || allocated > available}
+            onClick={handleSubmit}
+            className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            Ruaj
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

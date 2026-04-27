@@ -26,7 +26,19 @@ interface RepairReportRow {
       worker_id: string;
       worker_name: string;
       total_quantity: number;
-      by_product?: Array<{ name: string; quantity: number }>;
+      by_product?: Array<{
+        category_product_id?: string | null;
+        category_id?: string | null;
+        name: string;
+        quantity: number;
+      }>;
+      entries?: Array<{
+        category_id?: string | null;
+        category_product_id?: string | null;
+        category_name?: string;
+        product_name?: string;
+        quantity?: number;
+      }>;
     }>;
   };
 }
@@ -34,16 +46,25 @@ interface RepairReportRow {
 interface OpenRepair {
   product_name: string | null;
   category_id: string | null;
+  category_product_id: string | null;
   quantity_repaired: number | null;
   logged_at: string;
   category?: { name: string } | null;
 }
 
 interface ProductSummary {
+  key: string;
+  productId: string | null;
   name: string;
   category: string;
   total: number;
   lastDate: string;
+}
+
+interface CatalogLite {
+  id: string;
+  name: string;
+  category_name: string;
 }
 
 interface DamagedStockRow {
@@ -64,6 +85,7 @@ export default function DepotRepairs() {
   const [reports, setReports] = useState<RepairReportRow[]>([]);
   const [openRepairs, setOpenRepairs] = useState<OpenRepair[]>([]);
   const [damagedStock, setDamagedStock] = useState<DamagedStockRow[]>([]);
+  const [catalog, setCatalog] = useState<CatalogLite[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -88,7 +110,7 @@ export default function DepotRepairs() {
         .order('quantity', { ascending: false });
       if (depotId) stockQuery = stockQuery.eq('depot_id', depotId);
 
-      const [reportsRes, openRes, stockRes] = await Promise.all([
+      const [reportsRes, openRes, stockRes, catalogRes] = await Promise.all([
         supabase
           .from('depot_repair_reports')
           .select('id, report_date, total_quantity, details')
@@ -98,21 +120,27 @@ export default function DepotRepairs() {
           .limit(120),
         supabase
           .from('depot_repairs')
-          .select('product_name, category_id, quantity_repaired, logged_at, category:product_categories(name)')
+          .select('product_name, category_id, category_product_id, quantity_repaired, logged_at, category:product_categories(name)')
           .eq('company_id', companyId)
           .is('reported_at', null),
         stockQuery,
+        supabase
+          .from('category_products')
+          .select('id, name, category:product_categories(name)')
+          .eq('company_id', companyId),
       ]);
 
       if (reportsRes.error) throw reportsRes.error;
       if (openRes.error) throw openRes.error;
       if (stockRes.error) throw stockRes.error;
+      if (catalogRes.error) throw catalogRes.error;
 
       setReports((reportsRes.data ?? []) as RepairReportRow[]);
 
       const openRows = (openRes.data ?? []) as unknown as Array<{
         product_name: string | null;
         category_id: string | null;
+        category_product_id: string | null;
         quantity_repaired: number | null;
         logged_at: string;
         category?: { name: string } | { name: string }[] | null;
@@ -121,9 +149,23 @@ export default function DepotRepairs() {
         openRows.map((r) => ({
           product_name: r.product_name,
           category_id: r.category_id,
+          category_product_id: r.category_product_id,
           quantity_repaired: r.quantity_repaired,
           logged_at: r.logged_at,
           category: Array.isArray(r.category) ? r.category[0] ?? null : r.category ?? null,
+        })),
+      );
+
+      const catalogRows = (catalogRes.data ?? []) as unknown as Array<{
+        id: string;
+        name: string;
+        category?: { name: string } | { name: string }[] | null;
+      }>;
+      setCatalog(
+        catalogRows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          category_name: (Array.isArray(r.category) ? r.category[0]?.name : r.category?.name) ?? '',
         })),
       );
 
@@ -151,39 +193,58 @@ export default function DepotRepairs() {
   }
 
   const productSummary = useMemo<ProductSummary[]>(() => {
+    const catalogById = new Map(catalog.map((c) => [c.id, c]));
     const map = new Map<string, ProductSummary>();
+    const ensure = (productId: string | null, name: string, category: string, date: string): ProductSummary => {
+      const trimmed = (name || '').trim();
+      const resolved = productId
+        ? catalogById.get(productId)
+        : null;
+      const finalName = resolved?.name ?? trimmed ?? '-';
+      const finalCategory = resolved?.category_name || category || '';
+      const key = productId ?? `name:${finalName.toLowerCase()}`;
+      const cur = map.get(key) ?? {
+        key,
+        productId,
+        name: finalName,
+        category: finalCategory,
+        total: 0,
+        lastDate: date,
+      };
+      if (!cur.category && finalCategory) cur.category = finalCategory;
+      if (date > cur.lastDate) cur.lastDate = date;
+      map.set(key, cur);
+      return cur;
+    };
     for (const r of reports) {
       const date = r.report_date;
       for (const w of r.details?.workers ?? []) {
-        for (const p of w.by_product ?? []) {
-          const key = (p.name || '').trim();
-          if (!key) continue;
-          const cur = map.get(key) ?? { name: key, category: '', total: 0, lastDate: date };
-          cur.total += p.quantity || 0;
-          if (date > cur.lastDate) cur.lastDate = date;
-          map.set(key, cur);
+        const wAny = w as unknown as {
+          entries?: Array<{ category_id?: string | null; category_product_id?: string | null; category_name?: string; product_name?: string; quantity?: number }>;
+          by_product?: Array<{ category_product_id?: string | null; category_id?: string | null; name: string; quantity: number }>;
+        };
+        if (wAny.entries && wAny.entries.length > 0) {
+          for (const e of wAny.entries) {
+            const cur = ensure(e.category_product_id ?? null, e.product_name ?? '', e.category_name ?? '', date);
+            cur.total += e.quantity ?? 0;
+          }
+        } else {
+          for (const p of wAny.by_product ?? []) {
+            const cur = ensure(p.category_product_id ?? null, p.name ?? '', '', date);
+            cur.total += p.quantity || 0;
+          }
         }
       }
     }
     for (const r of openRepairs) {
-      const key = (r.product_name || '').trim();
-      if (!key) continue;
-      const cur = map.get(key) ?? {
-        name: key,
-        category: r.category?.name ?? '',
-        total: 0,
-        lastDate: r.logged_at.slice(0, 10),
-      };
-      cur.total += r.quantity_repaired ?? 0;
-      if (!cur.category && r.category?.name) cur.category = r.category.name;
       const day = r.logged_at.slice(0, 10);
-      if (day > cur.lastDate) cur.lastDate = day;
-      map.set(key, cur);
+      const cur = ensure(r.category_product_id, r.product_name ?? '', r.category?.name ?? '', day);
+      cur.total += r.quantity_repaired ?? 0;
     }
-    const list = Array.from(map.values());
+    const list = Array.from(map.values()).filter((p) => p.total > 0 && p.name && p.name !== '-');
     list.sort((a, b) => compareEpalThenTotal(a, b, (r) => r.name, (r) => r.total));
     return list;
-  }, [reports, openRepairs]);
+  }, [reports, openRepairs, catalog]);
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -411,7 +472,7 @@ function ReportsTab({
               {rows.map((p) => {
                 const pct = totalRepaired > 0 ? (p.total / totalRepaired) * 100 : 0;
                 return (
-                  <tr key={p.name} className="hover:bg-slate-50 transition-colors">
+                  <tr key={p.key} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
