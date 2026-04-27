@@ -503,7 +503,7 @@ function DamagedTab({ rows }: { rows: DamagedStockRow[] }) {
                     {r.category?.name ?? '-'}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Demtuar · per reparim
+                    Defekt · per reparim
                   </p>
                   <p className="text-2xl font-bold text-amber-700 mt-2">{r.quantity}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">

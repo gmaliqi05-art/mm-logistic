@@ -720,7 +720,7 @@ function ReviewModal({
                               : 'bg-white text-gray-600 border-gray-200'
                           }`}
                         >
-                          {c === 'good' ? 'I mire' : c === 'damaged' ? 'I demtuar' : 'I riparuar'}
+                          {c === 'good' ? 'I mire' : c === 'damaged' ? 'Me defekt' : 'I riparuar'}
                         </button>
                       ))}
                     </div>
