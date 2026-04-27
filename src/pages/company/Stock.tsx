@@ -186,65 +186,38 @@ export default function CompanyStock() {
     return m;
   }, [categories]);
 
-  const categoryGroups = useMemo(() => {
-    type Row = { key: string; name: string; total: number; productId: string | null };
-    type Group = { categoryId: string; categoryName: string; total: number; rows: Row[] };
-    const groups = new Map<string, Group>();
-
-    const ensureGroup = (catId: string) => {
-      if (!groups.has(catId)) {
-        groups.set(catId, {
-          categoryId: catId,
-          categoryName: categoryById.get(catId)?.name ?? '-',
-          total: 0,
-          rows: [],
-        });
-      }
-      return groups.get(catId)!;
-    };
-
+  const productTotals = useMemo(() => {
+    const tally = new Map<string, { name: string; categoryName: string; total: number; productId: string | null; categoryId: string }>();
     products.forEach((p) => {
-      const g = ensureGroup(p.category_id);
-      g.rows.push({ key: `p:${p.id}`, name: p.name, total: 0, productId: p.id });
+      const cat = categoryById.get(p.category_id);
+      tally.set(p.id, { name: p.name, categoryName: cat?.name ?? '-', total: 0, productId: p.id, categoryId: p.category_id });
     });
-
     stocks.forEach((s) => {
       if (s.condition === 'damaged') return;
-      const g = ensureGroup(s.category_id);
-      if (s.category_product_id) {
-        const row = g.rows.find((r) => r.productId === s.category_product_id);
-        if (row) {
-          row.total += s.quantity;
-        } else {
-          g.rows.push({ key: `p:${s.category_product_id}`, name: (s as any).product?.name ?? '-', total: s.quantity, productId: s.category_product_id });
-        }
-      } else {
-        const fallbackKey = `cat:${s.category_id}`;
-        let row = g.rows.find((r) => r.key === fallbackKey);
-        if (!row) {
-          row = { key: fallbackKey, name: g.categoryName, total: 0, productId: null };
-          g.rows.push(row);
-        }
+      if (s.category_product_id && tally.has(s.category_product_id)) {
+        const row = tally.get(s.category_product_id)!;
         row.total += s.quantity;
+      } else {
+        const catKey = `cat:${s.category_id}`;
+        const cat = categoryById.get(s.category_id);
+        const existing = tally.get(catKey);
+        if (existing) {
+          existing.total += s.quantity;
+        } else {
+          tally.set(catKey, {
+            name: cat?.name ?? '-',
+            categoryName: cat?.name ?? '-',
+            total: s.quantity,
+            productId: null,
+            categoryId: s.category_id,
+          });
+        }
       }
-      g.total += s.quantity;
     });
-
-    return Array.from(groups.values())
-      .filter((g) => g.rows.some((r) => r.total > 0) || g.rows.length > 0)
-      .map((g) => ({
-        ...g,
-        rows: g.rows
-          .filter((r) => r.total > 0 || r.productId !== null)
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      }))
-      .sort((a, b) => compareCategoriesByPriority(a.categoryName, b.categoryName));
+    return Array.from(tally.values())
+      .filter((r) => r.total > 0 || r.productId !== null)
+      .sort((a, b) => compareProducts(a, b, (r) => r.categoryName, (r) => r.name));
   }, [products, stocks, categoryById]);
-
-  const grandTotal = useMemo(
-    () => categoryGroups.reduce((sum, g) => sum + g.total, 0),
-    [categoryGroups],
-  );
 
   const visibleStocks = stocks
     .slice()
@@ -343,56 +316,15 @@ export default function CompanyStock() {
         </button>
       </div>
 
-      {tab === 'active' && categoryGroups.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 rounded-xl px-5 py-3">
-            <div className="flex items-center gap-2">
-              <Boxes className="w-5 h-5 text-teal-700" />
-              <span className="text-sm font-semibold text-teal-900">{t('company.stock.totalStock')}</span>
+      {tab === 'active' && productTotals.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {productTotals.map((p) => (
+            <div key={`${p.productId ?? 'cat'}-${p.categoryId}`} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <p className="text-xs text-gray-500 truncate" title={p.name}>{p.name}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{p.total}</p>
+              {p.productId && <p className="text-[10px] text-gray-400 mt-0.5 truncate">{p.categoryName}</p>}
             </div>
-            <span className="text-2xl font-bold text-teal-900 tabular-nums">{grandTotal}</span>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {categoryGroups.map((g) => {
-              const max = Math.max(1, ...g.rows.map((r) => r.total));
-              return (
-                <div key={g.categoryId} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="flex items-center justify-between px-5 py-3 bg-gray-50/70 border-b border-gray-100">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-1.5 h-6 bg-teal-500 rounded-full flex-shrink-0" />
-                      <h3 className="text-sm font-semibold text-gray-900 truncate" title={g.categoryName}>
-                        {g.categoryName}
-                      </h3>
-                    </div>
-                    <span className="text-base font-bold text-gray-900 tabular-nums flex-shrink-0">{g.total}</span>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {g.rows.length === 0 ? (
-                      <div className="px-5 py-6 text-center text-xs text-gray-400">{t('company.stock.noStock')}</div>
-                    ) : (
-                      g.rows.map((r) => {
-                        const pct = (r.total / max) * 100;
-                        return (
-                          <div key={r.key} className="px-5 py-3">
-                            <div className="flex items-center justify-between gap-3 mb-1.5">
-                              <span className="text-sm text-gray-700 truncate" title={r.name}>{r.name}</span>
-                              <span className="text-sm font-semibold text-gray-900 tabular-nums flex-shrink-0">{r.total}</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all ${r.total > 0 ? 'bg-teal-500' : 'bg-gray-200'}`}
-                                style={{ width: `${Math.max(pct, r.total > 0 ? 4 : 0)}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          ))}
         </div>
       )}
 

@@ -26,7 +26,6 @@ import type { Depot } from '../../types';
 
 interface ReportWorkerEntry {
   category_id?: string | null;
-  category_product_id?: string | null;
   category_name?: string;
   product_name?: string;
   quantity?: number;
@@ -271,36 +270,26 @@ export default function CompanyRepairReports() {
           throw new Error(t('company.repairReports.noDepotForStock') || 'No depot available to receive stock.');
         }
 
-        const totals = new Map<string, { categoryId: string; categoryProductId: string | null; qty: number }>();
+        const totals = new Map<string, number>();
         for (const w of r.details?.workers ?? []) {
           for (const e of w.entries ?? []) {
             const cid = e.category_id ?? null;
             if (!cid) continue;
-            const pid = e.category_product_id ?? null;
-            const key = `${cid}::${pid ?? ''}`;
-            const existing = totals.get(key);
-            if (existing) {
-              existing.qty += e.quantity ?? 0;
-            } else {
-              totals.set(key, { categoryId: cid, categoryProductId: pid, qty: e.quantity ?? 0 });
-            }
+            totals.set(cid, (totals.get(cid) ?? 0) + (e.quantity ?? 0));
           }
         }
 
-        for (const { categoryId, categoryProductId, qty } of totals.values()) {
+        for (const [categoryId, qty] of totals.entries()) {
           if (qty <= 0) continue;
 
-          let stockQuery = supabase
+          const existing = await supabase
             .from('stock')
             .select('id, quantity')
             .eq('company_id', r.company_id)
             .eq('depot_id', depotId)
             .eq('category_id', categoryId)
-            .eq('condition', 'good');
-          stockQuery = categoryProductId
-            ? stockQuery.eq('category_product_id', categoryProductId)
-            : stockQuery.is('category_product_id', null);
-          const existing = await stockQuery.maybeSingle();
+            .eq('condition', 'good')
+            .maybeSingle();
           if (existing.error) throw existing.error;
 
           if (existing.data) {
@@ -314,7 +303,6 @@ export default function CompanyRepairReports() {
               company_id: r.company_id,
               depot_id: depotId,
               category_id: categoryId,
-              category_product_id: categoryProductId,
               quantity: qty,
               condition: 'good',
             });
@@ -325,7 +313,6 @@ export default function CompanyRepairReports() {
             company_id: r.company_id,
             depot_id: depotId,
             category_id: categoryId,
-            category_product_id: categoryProductId,
             movement_type: 'repair',
             quantity: qty,
             condition_before: 'damaged',

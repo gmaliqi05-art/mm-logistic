@@ -2078,7 +2078,6 @@ export const sq = {
     stock: {
       errFillFields: 'Plotesoni deponen, kategorine dhe sasine valide',
       errInsufficientStock: 'Stok i pamjaftueshem ne kete depo per daljen e kerkuar',
-      registerStock: 'Regjistro Stok',
     },
     deliveryNotes: {
       errOrderTitle: 'Ju lutem vendosni nje titull / identifikim per kete porosi.',

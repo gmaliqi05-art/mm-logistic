@@ -2080,7 +2080,6 @@ export const en: typeof sq = {
     stock: {
       errFillFields: 'Please fill in the depot, category and a valid quantity',
       errInsufficientStock: 'Insufficient stock in this depot for the requested outflow',
-      registerStock: 'Register Stock',
     },
     deliveryNotes: {
       errOrderTitle: 'Please enter a title / identifier for this order.',
