@@ -26,6 +26,8 @@ import {
   BookOpen,
   BellRing,
   Image as ImageIcon,
+  ShieldCheck,
+  Activity,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -69,6 +71,13 @@ const navSections: NavSection[] = [
       { to: '/super-admin/pwa-settings', icon: Smartphone, labelKey: 'nav.pwaSettings', end: false },
       { to: '/super-admin/user-manual', icon: BookOpen, labelKey: 'nav.userManual', end: false },
       { to: '/super-admin/test-notifications', icon: BellRing, labelKey: 'nav.testNotifications', end: false },
+    ],
+  },
+  {
+    titleKey: 'nav.platformOps',
+    items: [
+      { to: '/super-admin/system-health', icon: Activity, labelKey: 'nav.systemHealth', end: false, badgeKey: 'common.new' },
+      { to: '/super-admin/audit-log', icon: ShieldCheck, labelKey: 'nav.auditLog', end: false, badgeKey: 'common.new' },
     ],
   },
   {

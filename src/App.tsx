@@ -38,6 +38,8 @@ const SuperAdminPwaSettings = lazy(() => import('./pages/super-admin/PwaSettings
 const SuperAdminUserManual = lazy(() => import('./pages/super-admin/UserManual'));
 const SuperAdminTestNotifications = lazy(() => import('./pages/super-admin/TestNotifications'));
 const SuperAdminPlatformBranding = lazy(() => import('./pages/super-admin/PlatformBranding'));
+const SuperAdminAuditLog = lazy(() => import('./pages/super-admin/AuditLog'));
+const SuperAdminSystemHealth = lazy(() => import('./pages/super-admin/SystemHealth'));
 
 const CompanyDashboard = lazy(() => import('./pages/company/Dashboard'));
 const CompanyDepots = lazy(() => import('./pages/company/Depots'));
@@ -150,6 +152,8 @@ function AppRoutes() {
           <Route path="pwa-settings" element={<SuperAdminPwaSettings />} />
           <Route path="user-manual" element={<SuperAdminUserManual />} />
           <Route path="test-notifications" element={<SuperAdminTestNotifications />} />
+          <Route path="audit-log" element={<SuperAdminAuditLog />} />
+          <Route path="system-health" element={<SuperAdminSystemHealth />} />
         </Route>
 
         <Route path="/company" element={

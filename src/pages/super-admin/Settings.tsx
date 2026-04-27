@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Settings as SettingsIcon,
   Save,
@@ -12,6 +12,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
+import { supabase } from '../../lib/supabase';
+import { logSaAudit } from '../../lib/saAudit';
 
 interface PlatformSettings {
   platformName: string;
@@ -26,23 +28,92 @@ interface PlatformSettings {
   maintenanceMessage: string;
 }
 
+const DEFAULTS: PlatformSettings = {
+  platformName: 'MM Logistic',
+  platformDescription: '',
+  emailNotifications: true,
+  smsNotifications: false,
+  pushNotifications: true,
+  deliveryAlerts: true,
+  stockAlerts: true,
+  systemAlerts: true,
+  maintenanceMode: false,
+  maintenanceMessage: '',
+};
+
+const KEY_MAP: Record<keyof PlatformSettings, string> = {
+  platformName: 'platform_name',
+  platformDescription: 'platform_description',
+  emailNotifications: 'notif_email_enabled',
+  smsNotifications: 'notif_sms_enabled',
+  pushNotifications: 'notif_push_enabled',
+  deliveryAlerts: 'alerts_delivery_enabled',
+  stockAlerts: 'alerts_stock_enabled',
+  systemAlerts: 'alerts_system_enabled',
+  maintenanceMode: 'maintenance_mode',
+  maintenanceMessage: 'maintenance_message',
+};
+
+const BOOLEAN_KEYS: Array<keyof PlatformSettings> = [
+  'emailNotifications',
+  'smsNotifications',
+  'pushNotifications',
+  'deliveryAlerts',
+  'stockAlerts',
+  'systemAlerts',
+  'maintenanceMode',
+];
+
+function parseBool(value: string | null | undefined, fallback: boolean): boolean {
+  if (value === null || value === undefined) return fallback;
+  return value === 'true' || value === '1';
+}
+
 export default function SuperAdminSettings() {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<PlatformSettings>({
-    platformName: 'Euro Pallet',
-    platformDescription: 'Platforma per menaxhimin e paletave dhe dergesave',
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    deliveryAlerts: true,
-    stockAlerts: true,
-    systemAlerts: true,
-    maintenanceMode: false,
-    maintenanceMessage: '',
-  });
+  const [settings, setSettings] = useState<PlatformSettings>(DEFAULTS);
+  const [original, setOriginal] = useState<PlatformSettings>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  async function loadSettings() {
+    try {
+      setLoading(true);
+      const keys = Object.values(KEY_MAP);
+      const { data, error: fetchError } = await supabase
+        .from('platform_settings')
+        .select('key, value')
+        .in('key', keys);
+      if (fetchError) throw fetchError;
+
+      const next: PlatformSettings = { ...DEFAULTS };
+      const map = new Map((data ?? []).map((row) => [row.key, row.value]));
+
+      (Object.keys(KEY_MAP) as Array<keyof PlatformSettings>).forEach((field) => {
+        const dbKey = KEY_MAP[field];
+        const raw = map.get(dbKey);
+        if (BOOLEAN_KEYS.includes(field)) {
+          (next[field] as boolean) = parseBool(raw, DEFAULTS[field] as boolean);
+        } else if (raw !== undefined && raw !== null) {
+          (next[field] as string) = raw;
+        }
+      });
+
+      setSettings(next);
+      setOriginal(next);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('common.errorSaving');
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSave() {
     try {
@@ -50,12 +121,42 @@ export default function SuperAdminSettings() {
       setError(null);
       setSaved(false);
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const rows = (Object.keys(KEY_MAP) as Array<keyof PlatformSettings>).map((field) => ({
+        key: KEY_MAP[field],
+        value: BOOLEAN_KEYS.includes(field)
+          ? (settings[field] as boolean ? 'true' : 'false')
+          : String(settings[field] ?? ''),
+        updated_at: new Date().toISOString(),
+      }));
 
+      const { error: upsertError } = await supabase
+        .from('platform_settings')
+        .upsert(rows, { onConflict: 'key' });
+
+      if (upsertError) throw upsertError;
+
+      const changed: Record<string, { from: unknown; to: unknown }> = {};
+      (Object.keys(KEY_MAP) as Array<keyof PlatformSettings>).forEach((field) => {
+        if (settings[field] !== original[field]) {
+          changed[field] = { from: original[field], to: settings[field] };
+        }
+      });
+
+      if (Object.keys(changed).length > 0) {
+        await logSaAudit({
+          action: 'settings_change',
+          entity_type: 'platform_settings',
+          entity_label: 'Platform Settings',
+          details: { changed },
+        });
+      }
+
+      setOriginal(settings);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
-      setError(err.message || t('common.errorSaving'));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('common.errorSaving');
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -65,6 +166,52 @@ export default function SuperAdminSettings() {
     setSettings((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+      </div>
+    );
+  }
+
+  const renderToggle = (
+    field: keyof PlatformSettings,
+    icon: typeof Mail,
+    label: string,
+    description: string,
+    danger = false
+  ) => {
+    const Icon = icon;
+    const value = settings[field] as boolean;
+    return (
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${danger ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-600'}`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">{label}</p>
+            <p className="text-xs text-gray-500">{description}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => updateSetting(field, !value as PlatformSettings[typeof field])}
+          className={`relative w-12 h-6 rounded-full transition-colors ${
+            value ? (danger ? 'bg-red-500' : 'bg-teal-600') : 'bg-gray-300'
+          }`}
+          aria-label={label}
+        >
+          <div
+            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+              value ? 'translate-x-6' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -104,11 +251,9 @@ export default function SuperAdminSettings() {
       )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <SettingsIcon className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-semibold text-gray-900">{t('common.information')}</h2>
-          </div>
+        <div className="p-6 border-b border-gray-100 flex items-center gap-2">
+          <SettingsIcon className="w-5 h-5 text-teal-600" />
+          <h2 className="text-lg font-semibold text-gray-900">{t('common.information')}</h2>
         </div>
         <div className="p-6 space-y-5">
           <div>
@@ -137,212 +282,50 @@ export default function SuperAdminSettings() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-semibold text-gray-900">{t('superAdmin.settings.notifications')}</h2>
-          </div>
+        <div className="p-6 border-b border-gray-100 flex items-center gap-2">
+          <Bell className="w-5 h-5 text-teal-600" />
+          <h2 className="text-lg font-semibold text-gray-900">{t('superAdmin.settings.notifications')}</h2>
         </div>
         <div className="p-6 divide-y divide-gray-100">
-          <div className="flex items-center justify-between py-4 first:pt-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
-                <Mail className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t('superAdmin.settings.emailNotif')}</p>
-                <p className="text-xs text-gray-500">{t('superAdmin.settings.emailNotif')}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateSetting('emailNotifications', !settings.emailNotifications)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.emailNotifications ? 'bg-teal-600' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings.emailNotifications ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t('superAdmin.settings.smsNotif')}</p>
-                <p className="text-xs text-gray-500">{t('superAdmin.settings.smsNotif')}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateSetting('smsNotifications', !settings.smsNotifications)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.smsNotifications ? 'bg-teal-600' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings.smsNotifications ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t('superAdmin.settings.pushNotif')}</p>
-                <p className="text-xs text-gray-500">{t('superAdmin.settings.pushNotif')}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateSetting('pushNotifications', !settings.pushNotifications)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.pushNotifications ? 'bg-teal-600' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings.pushNotifications ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t('superAdmin.settings.deliveryAlerts')}</p>
-                <p className="text-xs text-gray-500">{t('superAdmin.settings.deliveryAlerts')}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateSetting('deliveryAlerts', !settings.deliveryAlerts)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.deliveryAlerts ? 'bg-teal-600' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings.deliveryAlerts ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t('superAdmin.settings.stockAlerts')}</p>
-                <p className="text-xs text-gray-500">{t('superAdmin.settings.stockAlerts')}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateSetting('stockAlerts', !settings.stockAlerts)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.stockAlerts ? 'bg-teal-600' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings.stockAlerts ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between py-4 last:pb-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">{t('superAdmin.settings.systemAlerts')}</p>
-                <p className="text-xs text-gray-500">{t('superAdmin.settings.systemAlerts')}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => updateSetting('systemAlerts', !settings.systemAlerts)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.systemAlerts ? 'bg-teal-600' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings.systemAlerts ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
+          {renderToggle('emailNotifications', Mail, t('superAdmin.settings.emailNotif'), t('superAdmin.settings.emailNotif'))}
+          {renderToggle('smsNotifications', MessageSquare, t('superAdmin.settings.smsNotif'), t('superAdmin.settings.smsNotif'))}
+          {renderToggle('pushNotifications', Bell, t('superAdmin.settings.pushNotif'), t('superAdmin.settings.pushNotif'))}
+          {renderToggle('deliveryAlerts', Shield, t('superAdmin.settings.deliveryAlerts'), t('superAdmin.settings.deliveryAlerts'))}
+          {renderToggle('stockAlerts', Shield, t('superAdmin.settings.stockAlerts'), t('superAdmin.settings.stockAlerts'))}
+          {renderToggle('systemAlerts', Shield, t('superAdmin.settings.systemAlerts'), t('superAdmin.settings.systemAlerts'))}
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Server className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-semibold text-gray-900">{t('superAdmin.settings.maintenance')}</h2>
-          </div>
+        <div className="p-6 border-b border-gray-100 flex items-center gap-2">
+          <Server className="w-5 h-5 text-teal-600" />
+          <h2 className="text-lg font-semibold text-gray-900">{t('superAdmin.settings.maintenance')}</h2>
         </div>
         <div className="p-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">{t('superAdmin.settings.maintenanceMode')}</p>
-              <p className="text-xs text-gray-500">
-                {t('superAdmin.settings.maintenanceWarning')}
-              </p>
-            </div>
-            <button
-              onClick={() => updateSetting('maintenanceMode', !settings.maintenanceMode)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.maintenanceMode ? 'bg-red-500' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  settings.maintenanceMode ? 'translate-x-6' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
+          {renderToggle('maintenanceMode', Server, t('superAdmin.settings.maintenanceMode'), t('superAdmin.settings.maintenanceWarning'), true)}
 
           {settings.maintenanceMode && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                {t('superAdmin.settings.maintenanceMode')}
-              </label>
-              <textarea
-                value={settings.maintenanceMessage}
-                onChange={(e) => updateSetting('maintenanceMessage', e.target.value)}
-                rows={3}
-                placeholder={t('superAdmin.settings.maintenanceWarning')}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm resize-none"
-              />
-            </div>
-          )}
+            <>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  {t('superAdmin.settings.maintenanceMode')}
+                </label>
+                <textarea
+                  value={settings.maintenanceMessage}
+                  onChange={(e) => updateSetting('maintenanceMessage', e.target.value)}
+                  rows={3}
+                  placeholder={t('superAdmin.settings.maintenanceWarning')}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm resize-none"
+                />
+              </div>
 
-          {settings.maintenanceMode && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <div className="flex items-center gap-2">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
                 <p className="text-sm text-amber-700 font-medium">
                   {t('superAdmin.settings.maintenanceWarning')}
                 </p>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>

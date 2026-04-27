@@ -1,23 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Building2,
-  Search,
-  Edit2,
-  ToggleLeft,
-  ToggleRight,
-  X,
-  AlertTriangle,
-  Loader2,
-  Filter,
-  Zap,
-  Star,
-  Shield,
-  Clock,
-  Settings,
-  Upload,
-  Image as ImageIcon,
-} from 'lucide-react';
+import { Building2, Search, CreditCard as Edit2, ToggleLeft, ToggleRight, X, AlertTriangle, Loader2, Filter, Zap, Star, Shield, Clock, Settings, Upload, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { logSaAudit } from '../../lib/saAudit';
 import { useTranslation } from '../../i18n';
 import CompanyFeaturesManager from '../../components/subscription/CompanyFeaturesManager';
 
@@ -115,6 +99,13 @@ export default function SuperAdminCompanies() {
         .update({ is_active: !company.is_active })
         .eq('id', company.id);
       if (err) throw err;
+      await logSaAudit({
+        action: 'toggle',
+        entity_type: 'company',
+        entity_id: company.id,
+        entity_label: company.name,
+        details: { field: 'is_active', from: company.is_active, to: !company.is_active },
+      });
       await fetchCompanies();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('common.error'));
@@ -180,6 +171,18 @@ export default function SuperAdminCompanies() {
         })
         .eq('id', editingCompany.id);
       if (err) throw err;
+      await logSaAudit({
+        action: 'update',
+        entity_type: 'company',
+        entity_id: editingCompany.id,
+        entity_label: editingCompany.name,
+        details: {
+          name: editingCompany.name,
+          email: editingCompany.email,
+          phone: editingCompany.phone,
+          address: editingCompany.address,
+        },
+      });
       setEditingCompany(null);
       await fetchCompanies();
     } catch (err: unknown) {
