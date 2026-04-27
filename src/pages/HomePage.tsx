@@ -249,19 +249,13 @@ const stats = [
               <LanguageSwitcher variant="header" />
               <Link
                 to="/login"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  scrolled ? 'text-slate-700 hover:text-teal-600' : 'text-white/90 hover:text-white'
+                className={`inline-flex items-center px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  scrolled
+                    ? 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm shadow-teal-600/30'
+                    : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white'
                 }`}
               >
-                <LogIn className="h-4 w-4" />
                 {t('home.v2.nav.login')}
-              </Link>
-              <Link
-                to="/register"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition-all shadow-sm shadow-teal-600/30"
-              >
-                {t('home.v2.nav.startFree')}
-                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
