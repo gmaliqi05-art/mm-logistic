@@ -121,7 +121,7 @@ export default function CompanyDashboard() {
       } else if (d && d.getTime() === tomorrowStart.getTime()) {
         if (isPickup) buckets.tomorrowPickups.push(n);
         else buckets.tomorrowDeliveries.push(n);
-      } else {
+      } else if (d && d.getTime() >= dayAfterStart.getTime()) {
         buckets.otherActive.push(n);
       }
     }
