@@ -246,13 +246,12 @@ const stats = [
               <LanguageSwitcher variant="header" />
               <Link
                 to="/login"
-                className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                className={`inline-flex items-center px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                   scrolled
                     ? 'text-slate-700 hover:text-teal-600 hover:bg-slate-50'
                     : 'text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20'
                 }`}
               >
-                <LogIn className="h-4 w-4" />
                 {t('home.v2.nav.login')}
               </Link>
             </div>
