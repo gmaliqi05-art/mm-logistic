@@ -12,12 +12,16 @@ import {
   Loader2,
   Boxes,
   ShieldAlert,
+  Layers,
+  ChevronDown,
+  ChevronRight,
+  Warehouse,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { Stock as StockType, StockMovement, Depot, ProductCategory } from '../../types';
-import { compareCategoriesByPriority, compareProducts } from '../../utils/productSort';
+import { compareCategoriesByPriority, compareProducts, epalClassRank } from '../../utils/productSort';
 
 interface CategoryProduct {
   id: string;
@@ -186,38 +190,71 @@ export default function CompanyStock() {
     return m;
   }, [categories]);
 
-  const productTotals = useMemo(() => {
-    const tally = new Map<string, { name: string; categoryName: string; total: number; productId: string | null; categoryId: string }>();
+  type CategoryGroup = {
+    categoryId: string;
+    categoryName: string;
+    total: number;
+    unassignedTotal: number;
+    products: Array<{ productId: string; name: string; total: number; isActive: boolean }>;
+  };
+
+  const categoryGroups = useMemo<CategoryGroup[]>(() => {
+    const groups = new Map<string, CategoryGroup>();
+    const ensure = (catId: string): CategoryGroup => {
+      let g = groups.get(catId);
+      if (!g) {
+        const cat = categoryById.get(catId);
+        g = {
+          categoryId: catId,
+          categoryName: cat?.name ?? '-',
+          total: 0,
+          unassignedTotal: 0,
+          products: [],
+        };
+        groups.set(catId, g);
+      }
+      return g;
+    };
+
     products.forEach((p) => {
-      const cat = categoryById.get(p.category_id);
-      tally.set(p.id, { name: p.name, categoryName: cat?.name ?? '-', total: 0, productId: p.id, categoryId: p.category_id });
+      const g = ensure(p.category_id);
+      g.products.push({ productId: p.id, name: p.name, total: 0, isActive: p.is_active });
     });
+
     stocks.forEach((s) => {
       if (s.condition === 'damaged') return;
-      if (s.category_product_id && tally.has(s.category_product_id)) {
-        const row = tally.get(s.category_product_id)!;
-        row.total += s.quantity;
+      const g = ensure(s.category_id);
+      g.total += s.quantity;
+      if (s.category_product_id) {
+        const prod = g.products.find((p) => p.productId === s.category_product_id);
+        if (prod) prod.total += s.quantity;
+        else g.unassignedTotal += s.quantity;
       } else {
-        const catKey = `cat:${s.category_id}`;
-        const cat = categoryById.get(s.category_id);
-        const existing = tally.get(catKey);
-        if (existing) {
-          existing.total += s.quantity;
-        } else {
-          tally.set(catKey, {
-            name: cat?.name ?? '-',
-            categoryName: cat?.name ?? '-',
-            total: s.quantity,
-            productId: null,
-            categoryId: s.category_id,
-          });
-        }
+        g.unassignedTotal += s.quantity;
       }
     });
-    return Array.from(tally.values())
-      .filter((r) => r.total > 0 || r.productId !== null)
-      .sort((a, b) => compareProducts(a, b, (r) => r.categoryName, (r) => r.name));
+
+    const list = Array.from(groups.values());
+    list.forEach((g) => {
+      g.products.sort((a, b) => {
+        const ra = epalClassRank(a.name);
+        const rb = epalClassRank(b.name);
+        if (ra !== rb) return ra - rb;
+        return a.name.localeCompare(b.name);
+      });
+    });
+    list.sort((a, b) => compareCategoriesByPriority(a.categoryName, b.categoryName));
+    return list;
   }, [products, stocks, categoryById]);
+
+  const totalActive = useMemo(
+    () => categoryGroups.reduce((s, g) => s + g.total, 0),
+    [categoryGroups],
+  );
+  const totalDefective = useMemo(
+    () => stocks.filter((s) => s.condition === 'damaged').reduce((sum, s) => sum + s.quantity, 0),
+    [stocks],
+  );
 
   const visibleStocks = stocks
     .slice()
@@ -316,16 +353,42 @@ export default function CompanyStock() {
         </button>
       </div>
 
-      {tab === 'active' && productTotals.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {productTotals.map((p) => (
-            <div key={`${p.productId ?? 'cat'}-${p.categoryId}`} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <p className="text-xs text-gray-500 truncate" title={p.name}>{p.name}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1 tabular-nums">{p.total}</p>
-              {p.productId && <p className="text-[10px] text-gray-400 mt-0.5 truncate">{p.categoryName}</p>}
+      {tab === 'active' && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <SummaryStat
+              label={t('company.stock.tabActive')}
+              value={totalActive}
+              icon={<Boxes className="w-5 h-5 text-teal-600" />}
+              tone="bg-teal-50"
+            />
+            <SummaryStat
+              label={t('nav.depots') ?? 'Depo'}
+              value={depots.length}
+              icon={<Warehouse className="w-5 h-5 text-sky-600" />}
+              tone="bg-sky-50"
+            />
+            <SummaryStat
+              label={t('company.stock.tabDefective')}
+              value={totalDefective}
+              icon={<ShieldAlert className="w-5 h-5 text-amber-600" />}
+              tone="bg-amber-50"
+            />
+          </div>
+
+          {categoryGroups.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+              <Package className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-400">{t('company.stock.noStock')}</p>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="space-y-4">
+              {categoryGroups.map((g) => (
+                <CategoryGroupCard key={g.categoryId} group={g} />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {tab === 'defective' && (
@@ -338,6 +401,7 @@ export default function CompanyStock() {
         </div>
       )}
 
+      {tab === 'defective' && (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-4 border-b border-gray-100">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -411,6 +475,7 @@ export default function CompanyStock() {
           </table>
         </div>
       </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-100">
@@ -583,6 +648,114 @@ export default function CompanyStock() {
                 {t('common.save')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryStat({
+  label,
+  value,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  tone: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
+      <div>
+        <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">{label}</p>
+        <p className="text-3xl font-bold text-gray-900 mt-1 tabular-nums">{value}</p>
+      </div>
+      <div className={`p-3 rounded-xl ${tone}`}>{icon}</div>
+    </div>
+  );
+}
+
+function CategoryGroupCard({ group }: { group: {
+  categoryId: string;
+  categoryName: string;
+  total: number;
+  unassignedTotal: number;
+  products: Array<{ productId: string; name: string; total: number; isActive: boolean }>;
+} }) {
+  const [open, setOpen] = useState(true);
+  const visibleProducts = group.products.filter((p) => p.isActive || p.total > 0);
+  const hasBreakdown = visibleProducts.length > 0;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors text-left"
+      >
+        <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+          <Layers className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-semibold text-gray-900 truncate">{group.categoryName}</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {visibleProducts.length} {visibleProducts.length === 1 ? 'produkt' : 'produkte'}
+            {group.unassignedTotal > 0 && ` · ${group.unassignedTotal} pa produkt`}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold text-teal-700 tabular-nums">{group.total}</p>
+          <p className="text-[11px] text-gray-400 uppercase tracking-wide">paleta</p>
+        </div>
+        {hasBreakdown && (
+          <div className="text-gray-400 ml-2">
+            {open ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+          </div>
+        )}
+      </button>
+      {open && hasBreakdown && (
+        <div className="border-t border-gray-100 bg-gray-50/40">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
+            {visibleProducts.map((p) => {
+              const pct = group.total > 0 ? (p.total / group.total) * 100 : 0;
+              return (
+                <div
+                  key={p.productId}
+                  className="bg-white rounded-xl border border-gray-100 p-4 flex items-start gap-3"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center flex-shrink-0">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate" title={p.name}>{p.name}</p>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-xl font-bold text-gray-900 tabular-nums">{p.total}</span>
+                      <span className="text-[11px] text-gray-400 tabular-nums">{pct.toFixed(0)}%</span>
+                    </div>
+                    <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-teal-500 rounded-full"
+                        style={{ width: `${Math.min(pct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {group.unassignedTotal > 0 && (
+              <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                  <Package className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-amber-900">Pa produkt te caktuar</p>
+                  <p className="text-[11px] text-amber-700 mt-0.5">Hyrje pa specifikim produkti</p>
+                  <p className="text-xl font-bold text-amber-700 tabular-nums mt-1">{group.unassignedTotal}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

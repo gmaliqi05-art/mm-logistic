@@ -15,6 +15,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { compareEpalThenTotal } from '../../utils/productSort';
 
 interface RepairReportRow {
   id: string;
@@ -180,7 +181,7 @@ export default function DepotRepairs() {
       map.set(key, cur);
     }
     const list = Array.from(map.values());
-    list.sort((a, b) => b.total - a.total);
+    list.sort((a, b) => compareEpalThenTotal(a, b, (r) => r.name, (r) => r.total));
     return list;
   }, [reports, openRepairs]);
 
