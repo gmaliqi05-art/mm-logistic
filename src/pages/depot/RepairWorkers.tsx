@@ -42,7 +42,6 @@ interface CategoryRow {
 interface OpenRepair {
   worker_id: string | null;
   category_id: string | null;
-  category_product_id: string | null;
   product_name: string | null;
   quantity_repaired: number | null;
   logged_at: string;
@@ -193,7 +192,7 @@ export default function DepotRepairWorkers() {
           .order('name'),
         supabase
           .from('depot_repairs')
-          .select('worker_id, category_id, category_product_id, product_name, quantity_repaired, logged_at, category:product_categories(name)')
+          .select('worker_id, category_id, product_name, quantity_repaired, logged_at, category:product_categories(name)')
           .eq('company_id', companyId)
           .is('reported_at', null)
           .gte('logged_at', dayStart),
@@ -215,7 +214,6 @@ export default function DepotRepairWorkers() {
       const openRows = (openRes.data ?? []) as unknown as Array<{
         worker_id: string | null;
         category_id: string | null;
-        category_product_id: string | null;
         product_name: string | null;
         quantity_repaired: number | null;
         logged_at: string;
@@ -224,7 +222,6 @@ export default function DepotRepairWorkers() {
       const normalizedOpen: OpenRepair[] = openRows.map((r) => ({
         worker_id: r.worker_id,
         category_id: r.category_id,
-        category_product_id: r.category_product_id,
         product_name: r.product_name,
         quantity_repaired: r.quantity_repaired,
         logged_at: r.logged_at,
@@ -297,7 +294,6 @@ export default function DepotRepairWorkers() {
         depot_id: profile!.depot_id ?? null,
         worker_id: selectedWorker!.id,
         category_id: selectedProduct!.category_id,
-        category_product_id: selectedProduct!.id,
         product_name: selectedProduct!.name,
         quantity_repaired: BATCH_SIZE,
         quantity_in: 0,
@@ -338,7 +334,6 @@ export default function DepotRepairWorkers() {
       const companyId = profile!.company_id!;
       const today = todayDateStr();
 
-      type ProdAgg = { category_product_id: string | null; category_id: string | null; name: string; quantity: number };
       const byWorker = new Map<
         string,
         {
@@ -346,9 +341,8 @@ export default function DepotRepairWorkers() {
           worker_name: string;
           total_quantity: number;
           entry_count: number;
-          entries: Array<{ category_id: string | null; category_product_id: string | null; product_name: string; quantity: number }>;
-          byCat: Map<string, { category_id: string | null; name: string; quantity: number }>;
-          byProd: Map<string, ProdAgg>;
+          byCat: Map<string, number>;
+          byProd: Map<string, number>;
         }
       >();
 
@@ -360,36 +354,16 @@ export default function DepotRepairWorkers() {
           worker_name: w?.full_name ?? '-',
           total_quantity: 0,
           entry_count: 0,
-          entries: [],
-          byCat: new Map<string, { category_id: string | null; name: string; quantity: number }>(),
-          byProd: new Map<string, ProdAgg>(),
+          byCat: new Map<string, number>(),
+          byProd: new Map<string, number>(),
         };
         const qty = r.quantity_repaired ?? 0;
         cur.total_quantity += qty;
         cur.entry_count += 1;
-        cur.entries.push({
-          category_id: r.category_id,
-          category_product_id: r.category_product_id,
-          product_name: r.product_name ?? '',
-          quantity: qty,
-        });
         const catName = r.category?.name ?? '-';
-        const catKey = r.category_id ?? `name:${catName}`;
-        const catCur = cur.byCat.get(catKey) ?? { category_id: r.category_id, name: catName, quantity: 0 };
-        catCur.quantity += qty;
-        cur.byCat.set(catKey, catCur);
+        cur.byCat.set(catName, (cur.byCat.get(catName) ?? 0) + qty);
         const prodName = (r.product_name || '').trim();
-        const prodKey = r.category_product_id ?? (prodName ? `name:${prodName}` : '');
-        if (prodKey) {
-          const prodCur = cur.byProd.get(prodKey) ?? {
-            category_product_id: r.category_product_id,
-            category_id: r.category_id,
-            name: prodName || '-',
-            quantity: 0,
-          };
-          prodCur.quantity += qty;
-          cur.byProd.set(prodKey, prodCur);
-        }
+        if (prodName) cur.byProd.set(prodName, (cur.byProd.get(prodName) ?? 0) + qty);
         byWorker.set(r.worker_id, cur);
       }
 
@@ -398,14 +372,8 @@ export default function DepotRepairWorkers() {
         worker_name: w.worker_name,
         total_quantity: w.total_quantity,
         entry_count: w.entry_count,
-        entries: w.entries,
-        by_category: Array.from(w.byCat.values()).map((c) => ({ category_id: c.category_id, name: c.name, quantity: c.quantity })),
-        by_product: Array.from(w.byProd.values()).map((p) => ({
-          category_product_id: p.category_product_id,
-          category_id: p.category_id,
-          name: p.name,
-          quantity: p.quantity,
-        })),
+        by_category: Array.from(w.byCat.entries()).map(([name, quantity]) => ({ name, quantity })),
+        by_product: Array.from(w.byProd.entries()).map(([name, quantity]) => ({ name, quantity })),
       }));
 
       const total = workersPayload.reduce((s, w) => s + w.total_quantity, 0);

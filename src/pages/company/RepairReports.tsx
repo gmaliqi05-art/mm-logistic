@@ -26,7 +26,6 @@ import type { Depot } from '../../types';
 
 interface ReportWorkerEntry {
   category_id?: string | null;
-  category_product_id?: string | null;
   category_name?: string;
   product_name?: string;
   quantity?: number;
@@ -38,8 +37,7 @@ interface ReportWorker {
   worker_name: string;
   total_quantity: number;
   entry_count: number;
-  by_category?: Array<{ category_id?: string | null; name: string; quantity: number }>;
-  by_product?: Array<{ category_product_id?: string | null; category_id?: string | null; name: string; quantity: number }>;
+  by_category?: Array<{ name: string; quantity: number }>;
   entries?: ReportWorkerEntry[];
 }
 
@@ -272,46 +270,26 @@ export default function CompanyRepairReports() {
           throw new Error(t('company.repairReports.noDepotForStock') || 'No depot available to receive stock.');
         }
 
-        type Bucket = { categoryId: string; productId: string | null; qty: number };
-        const totals = new Map<string, Bucket>();
-        const addBucket = (catId: string | null, prodId: string | null, qty: number) => {
-          if (!catId || qty <= 0) return;
-          const key = `${catId}|${prodId ?? ''}`;
-          const cur = totals.get(key) ?? { categoryId: catId, productId: prodId, qty: 0 };
-          cur.qty += qty;
-          totals.set(key, cur);
-        };
+        const totals = new Map<string, number>();
         for (const w of r.details?.workers ?? []) {
-          if (w.entries && w.entries.length > 0) {
-            for (const e of w.entries) {
-              addBucket(e.category_id ?? null, e.category_product_id ?? null, e.quantity ?? 0);
-            }
-          } else if (w.by_product && w.by_product.length > 0) {
-            for (const p of w.by_product) {
-              addBucket(p.category_id ?? null, p.category_product_id ?? null, p.quantity ?? 0);
-            }
-          } else if (w.by_category && w.by_category.length > 0) {
-            for (const c of w.by_category) {
-              addBucket(c.category_id ?? null, null, c.quantity ?? 0);
-            }
+          for (const e of w.entries ?? []) {
+            const cid = e.category_id ?? null;
+            if (!cid) continue;
+            totals.set(cid, (totals.get(cid) ?? 0) + (e.quantity ?? 0));
           }
         }
 
-        for (const bucket of totals.values()) {
-          const { categoryId, productId, qty } = bucket;
+        for (const [categoryId, qty] of totals.entries()) {
           if (qty <= 0) continue;
 
-          let existingQuery = supabase
+          const existing = await supabase
             .from('stock')
             .select('id, quantity')
             .eq('company_id', r.company_id)
             .eq('depot_id', depotId)
             .eq('category_id', categoryId)
-            .eq('condition', 'good');
-          existingQuery = productId
-            ? existingQuery.eq('category_product_id', productId)
-            : existingQuery.is('category_product_id', null);
-          const existing = await existingQuery.maybeSingle();
+            .eq('condition', 'good')
+            .maybeSingle();
           if (existing.error) throw existing.error;
 
           if (existing.data) {
@@ -325,7 +303,6 @@ export default function CompanyRepairReports() {
               company_id: r.company_id,
               depot_id: depotId,
               category_id: categoryId,
-              category_product_id: productId,
               quantity: qty,
               condition: 'good',
             });
@@ -336,7 +313,6 @@ export default function CompanyRepairReports() {
             company_id: r.company_id,
             depot_id: depotId,
             category_id: categoryId,
-            category_product_id: productId,
             movement_type: 'repair',
             quantity: qty,
             condition_before: 'damaged',
