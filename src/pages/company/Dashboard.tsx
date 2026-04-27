@@ -351,6 +351,32 @@ export default function CompanyDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left column */}
         <div className="lg:col-span-2 space-y-5">
+          {/* Today / Tomorrow Active Orders */}
+          <ScheduleSection
+            title={t('company.dashboard.today')}
+            highlight
+            deliveries={grouped.todayDeliveries}
+            pickups={grouped.todayPickups}
+            statusConfig={statusConfig}
+            t={t}
+          />
+          <ScheduleSection
+            title={t('company.dashboard.tomorrow')}
+            deliveries={grouped.tomorrowDeliveries}
+            pickups={grouped.tomorrowPickups}
+            statusConfig={statusConfig}
+            t={t}
+          />
+          {grouped.otherActive.length > 0 && (
+            <ScheduleSection
+              title={t('company.dashboard.otherActive')}
+              deliveries={grouped.otherActive.filter((n: any) => n.type !== 'pickup')}
+              pickups={grouped.otherActive.filter((n: any) => n.type === 'pickup')}
+              statusConfig={statusConfig}
+              t={t}
+            />
+          )}
+
           {/* Day Range Chart */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
@@ -493,31 +519,6 @@ export default function CompanyDashboard() {
             </div>
           </div>
 
-          {/* Today / Tomorrow Active Orders */}
-          <ScheduleSection
-            title={t('company.dashboard.today')}
-            highlight
-            deliveries={grouped.todayDeliveries}
-            pickups={grouped.todayPickups}
-            statusConfig={statusConfig}
-            t={t}
-          />
-          <ScheduleSection
-            title={t('company.dashboard.tomorrow')}
-            deliveries={grouped.tomorrowDeliveries}
-            pickups={grouped.tomorrowPickups}
-            statusConfig={statusConfig}
-            t={t}
-          />
-          {grouped.otherActive.length > 0 && (
-            <ScheduleSection
-              title={t('company.dashboard.otherActive')}
-              deliveries={grouped.otherActive.filter((n: any) => n.type !== 'pickup')}
-              pickups={grouped.otherActive.filter((n: any) => n.type === 'pickup')}
-              statusConfig={statusConfig}
-              t={t}
-            />
-          )}
         </div>
 
         {/* Right column */}
