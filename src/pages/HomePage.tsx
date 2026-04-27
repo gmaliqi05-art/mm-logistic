@@ -7,8 +7,6 @@ import {
   MessageSquare,
   Warehouse,
   ArrowRight,
-  Menu,
-  X,
   Shield,
   ChevronUp,
   Check,
@@ -95,7 +93,6 @@ const PRODUCT_TAB_ICONS: Record<ProductType, LucideIcon> = {
 };
 
 export default function HomePage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [banners, setBanners] = useState<BannerItem[]>([]);
@@ -245,63 +242,22 @@ const stats = [
               </div>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <LanguageSwitcher variant="header" />
               <Link
                 to="/login"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  scrolled ? 'text-slate-700 hover:text-teal-600' : 'text-white/90 hover:text-white'
+                className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  scrolled
+                    ? 'text-slate-700 hover:text-teal-600 hover:bg-slate-50'
+                    : 'text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20'
                 }`}
               >
                 <LogIn className="h-4 w-4" />
                 {t('home.v2.nav.login')}
               </Link>
-              <Link
-                to="/register"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition-all shadow-sm shadow-teal-600/30"
-              >
-                {t('home.v2.nav.startFree')}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`lg:hidden p-2 rounded-lg transition-colors ${
-                scrolled ? 'text-slate-800 hover:bg-slate-100' : 'text-white hover:bg-white/10'
-              }`}
-              aria-label="Menu"
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
           </div>
         </div>
-
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-slate-100 shadow-xl">
-            <div className="px-4 py-4 space-y-1">
-              <div className="flex flex-col gap-2">
-                <Link
-                  to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 text-center rounded-lg border border-slate-200 text-sm font-semibold text-slate-700"
-                >
-                  {t('home.v2.nav.login')}
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-3 text-center rounded-lg bg-teal-600 text-white text-sm font-semibold"
-                >
-                  {t('home.v2.nav.startFree')}
-                </Link>
-                <div className="pt-2">
-                  <LanguageSwitcher variant="default" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </nav>
 
       {/* Hero */}
