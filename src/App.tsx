@@ -9,7 +9,6 @@ import LoginPage from './pages/LoginPage';
 import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import LegalPage from './pages/legal/LegalPage';
 import InstallPromptBanner from './components/InstallPromptBanner';
 
 const SuperAdminLayout = lazy(() => import('./layouts/SuperAdminLayout'));
@@ -126,11 +125,6 @@ function AppRoutes() {
         <Route path="/sa-access" element={<SuperAdminLoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-        <Route path="/legal" element={<Navigate to="/legal/imprint" replace />} />
-        <Route path="/legal/:slug" element={<LegalPage />} />
-        <Route path="/privacy" element={<Navigate to="/legal/privacy-policy" replace />} />
-        <Route path="/terms" element={<Navigate to="/legal/terms" replace />} />
-        <Route path="/imprint" element={<Navigate to="/legal/imprint" replace />} />
 
         <Route path="/super-admin" element={
           <ProtectedRoute roles={['super_admin']}>
