@@ -716,7 +716,8 @@ export default function Invoices() {
   }
 
   function handlePrintPreview(invoice: AccInvoice) {
-    navigate(`/accounting/invoices/${invoice.id}/print`);
+    const base = typeof window !== 'undefined' && window.location.pathname.startsWith('/company') ? '/company' : '/accounting';
+    navigate(`${base}/invoices/${invoice.id}/print`);
   }
 
   async function createLinkedDeliveryNote(invoice: AccInvoice) {
@@ -854,7 +855,7 @@ export default function Invoices() {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href="/accounting/invoices/new"
+            href={typeof window !== 'undefined' && window.location.pathname.startsWith('/company') ? '/company/invoices/new' : '/accounting/invoices/new'}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold shadow-sm"
           >
             <Plus className="w-4 h-4" />

@@ -191,6 +191,10 @@ function AppRoutes() {
           <Route path="settings" element={<CompanySettings />} />
           <Route path="financial-summary" element={<CompanyFinancialSummary />} />
           <Route path="accounting-upgrade" element={<CompanyAccountingUpgrade />} />
+          <Route path="invoices" element={<AccInvoices />} />
+          <Route path="invoices/new" element={<AccInvoiceBuilder />} />
+          <Route path="invoices/:id/edit" element={<AccInvoiceBuilder />} />
+          <Route path="invoices/:id/print" element={<AccInvoicePrint />} />
         </Route>
 
         <Route path="/depot" element={

@@ -40,6 +40,7 @@ import { usePendingReviewCounts } from '../hooks/usePendingReviewCounts';
 
 const allNavItems = [
   { to: '/company', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, premium: false, bottomNav: true },
+  { to: '/company/invoices', icon: FileCheck2, labelKey: 'nav.invoices', end: false, premium: false, bottomNav: false },
   { to: '/company/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, premium: false, bottomNav: true },
   { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', end: false, premium: false, bottomNav: false, badgeKey: 'review' as const },
   { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, premium: false, bottomNav: false },
@@ -164,21 +165,8 @@ export default function CompanyAdminLayout() {
           </button>
 
           <button
-            onClick={() => navigate(accountingEnabled ? '/accounting/invoices' : '/company/accounting-upgrade')}
-            className="mt-2 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-teal-200 hover:bg-teal-800 hover:text-white"
-          >
-            <FileCheck2 className="w-5 h-5 flex-shrink-0" />
-            <span className="flex-1 whitespace-nowrap text-left">{t('nav.invoices')}</span>
-            {!accountingEnabled && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400/90 text-amber-900">
-                <Crown className="w-2.5 h-2.5" />
-              </span>
-            )}
-          </button>
-
-          <button
             onClick={() => navigate(accountingEnabled ? '/accounting' : '/company/accounting-upgrade')}
-            className={`mt-1 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full ${
+            className={`mt-2 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full ${
               accountingEnabled
                 ? 'text-teal-200 hover:bg-teal-800 hover:text-white'
                 : 'bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-teal-100 hover:from-emerald-500/30 border border-teal-500/40'
@@ -360,23 +348,6 @@ export default function CompanyAdminLayout() {
               >
                 <Headphones className="w-6 h-6" />
                 <span className="text-xs font-medium text-center leading-tight">{t('support.title')}</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate(accountingEnabled ? '/accounting/invoices' : '/company/accounting-upgrade');
-                }}
-                className={`relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 active:scale-95 ${
-                  accountingEnabled ? 'bg-teal-50 text-teal-700 ring-1 ring-teal-200' : 'bg-amber-50 text-amber-800 ring-1 ring-amber-200'
-                }`}
-              >
-                <FileCheck2 className="w-6 h-6" />
-                <span className="text-xs font-medium text-center leading-tight">{t('nav.invoices')}</span>
-                {!accountingEnabled && (
-                  <span className="absolute top-2 right-2 inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-bold bg-amber-500 text-white">
-                    EU
-                  </span>
-                )}
               </button>
               <button
                 onClick={() => {

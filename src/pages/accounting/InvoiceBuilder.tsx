@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Save, Send, Download, Printer, Loader2, CheckCircle2,
   AlertCircle, Sparkles, Copy, ShieldCheck, Languages, Palette, Building2,
@@ -82,8 +82,10 @@ function newItem(): Item {
 export default function InvoiceBuilder() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id: invoiceId } = useParams<{ id: string }>();
   const isEdit = Boolean(invoiceId && invoiceId !== 'new');
+  const listPath = location.pathname.startsWith('/company') ? '/company/invoices' : '/accounting/invoices';
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -431,7 +433,7 @@ export default function InvoiceBuilder() {
       });
     }
     await supabase.from('acc_invoices').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id);
-    navigate('/accounting/invoices');
+    navigate(listPath);
   }
 
   function printPreview() {
@@ -450,7 +452,7 @@ export default function InvoiceBuilder() {
     <div className="space-y-5 pb-20 print:pb-0">
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3 print:hidden">
-        <Link to="/accounting/invoices" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+        <Link to={listPath} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
           <ArrowLeft className="w-4 h-4" /> Kthehu
         </Link>
         <div className="flex items-center gap-2">
