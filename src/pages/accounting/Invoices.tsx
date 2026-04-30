@@ -852,13 +852,21 @@ export default function Invoices() {
           <h1 className="text-2xl font-bold text-gray-900">Faturat</h1>
           <p className="text-gray-500 mt-1">Menaxhoni faturat e shitjes</p>
         </div>
-        <button
-          onClick={openAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          Krijo Fature
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/accounting/invoices/new"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Fature EU (e re)
+          </a>
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+          >
+            Modeli klasik
+          </button>
+        </div>
       </div>
 
       {error && (

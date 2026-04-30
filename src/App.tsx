@@ -100,6 +100,7 @@ const AccClientInvoices = lazy(() => import('./pages/accounting/ClientInvoices')
 const AccGermanFinancials = lazy(() => import('./pages/accounting/GermanFinancials'));
 const AccImports = lazy(() => import('./pages/accounting/Imports'));
 const AccChartOfAccounts = lazy(() => import('./pages/accounting/ChartOfAccounts'));
+const AccInvoiceBuilder = lazy(() => import('./pages/accounting/InvoiceBuilder'));
 
 const LogisticsDashboard = lazy(() => import('./pages/logistics/Dashboard'));
 const LogisticsDispatch = lazy(() => import('./pages/logistics/Dispatch'));
@@ -230,6 +231,8 @@ function AppRoutes() {
           <Route path="products" element={<AccProducts />} />
           <Route path="products/:id" element={<AccProductDetail />} />
           <Route path="invoices" element={<AccInvoices />} />
+          <Route path="invoices/new" element={<AccInvoiceBuilder />} />
+          <Route path="invoices/:id/edit" element={<AccInvoiceBuilder />} />
           <Route path="invoices/:id/print" element={<AccInvoicePrint />} />
           <Route path="purchases" element={<AccPurchases />} />
           <Route path="stock" element={<AccStock />} />
