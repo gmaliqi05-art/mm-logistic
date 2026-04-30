@@ -215,31 +215,35 @@ export default function LoginPage() {
 
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 bg-slate-50">
         <div className="w-full max-w-md">
-          <div className="flex items-center justify-between mb-6 gap-3">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-teal-700 transition-colors shadow-sm"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>{t('privacy.backToHome')}</span>
-            </Link>
-            <div className="lg:hidden flex items-center gap-2 min-w-0">
+          <div className="flex items-center justify-between mb-6">
+            <div className="lg:hidden flex items-center gap-3">
               {platformSettings.logo ? (
                 <img
                   src={platformSettings.logo}
                   alt={platformSettings.name}
-                  className="w-9 h-9 rounded-xl object-contain"
+                  className="w-10 h-10 rounded-xl object-contain"
                 />
               ) : (
-                <div className="p-2 bg-teal-600 rounded-xl">
-                  <Package className="h-5 w-5 text-white" />
+                <div className="p-2.5 bg-teal-600 rounded-xl">
+                  <Package className="h-6 w-6 text-white" />
                 </div>
               )}
-              <span className="text-base font-bold text-slate-800 truncate">{platformSettings.name}</span>
+              <span className="text-xl font-bold text-slate-800">{platformSettings.name}</span>
             </div>
             <div className="ml-auto">
               <LanguageSwitcher />
             </div>
+          </div>
+
+          <div className="mb-4">
+            <Link
+              to="/"
+              aria-label={t('privacy.backToHome')}
+              title={t('privacy.backToHome')}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full text-slate-500 hover:text-teal-700 hover:bg-white transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/60 p-8">
