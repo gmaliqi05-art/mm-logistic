@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Warehouse,
@@ -57,7 +57,7 @@ const allNavItems = [
   { to: '/company/audit-log', icon: ClipboardList, labelKey: 'nav.auditLog', end: false, premium: true, bottomNav: false },
   { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', end: false, premium: true, bottomNav: false },
   { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', end: false, premium: true, bottomNav: false },
-  { to: '/accounting', icon: Calculator, labelKey: 'nav.accounting', end: false, premium: false, bottomNav: false },
+  { to: '/company/financial-summary', icon: BarChart3, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
   { to: '/logistics', icon: Truck, labelKey: 'nav.logistics', end: false, premium: false, bottomNav: false },
   { to: '/company/settings', icon: Settings, labelKey: 'nav.settings', end: false, premium: false, bottomNav: false },
 ];
@@ -66,8 +66,9 @@ const bottomNavItems = allNavItems.filter(i => i.bottomNav);
 
 export default function CompanyAdminLayout() {
   const { profile, signOut } = useAuth();
-  const { planTier } = useSubscription();
+  const { planTier, accountingEnabled } = useSubscription();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const location = useLocation();
   const reviewCounts = usePendingReviewCounts(profile?.company_id);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -159,6 +160,25 @@ export default function CompanyAdminLayout() {
           >
             <Headphones className="w-5 h-5 flex-shrink-0" />
             <span className="whitespace-nowrap">{t('support.title')}</span>
+          </button>
+
+          <button
+            onClick={() => navigate(accountingEnabled ? '/accounting' : '/company/accounting-upgrade')}
+            className={`mt-2 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full ${
+              accountingEnabled
+                ? 'text-teal-200 hover:bg-teal-800 hover:text-white'
+                : 'bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-teal-100 hover:from-emerald-500/30 border border-teal-500/40'
+            }`}
+          >
+            <Calculator className="w-5 h-5 flex-shrink-0" />
+            <span className="flex-1 whitespace-nowrap text-left">{t('nav.accounting')}</span>
+            {accountingEnabled ? (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/30 text-emerald-100">LIVE</span>
+            ) : (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-400/90 text-amber-900">
+                <Crown className="w-2.5 h-2.5" /> -50%
+              </span>
+            )}
           </button>
         </nav>
 
@@ -326,6 +346,23 @@ export default function CompanyAdminLayout() {
               >
                 <Headphones className="w-6 h-6" />
                 <span className="text-xs font-medium text-center leading-tight">{t('support.title')}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  navigate(accountingEnabled ? '/accounting' : '/company/accounting-upgrade');
+                }}
+                className={`relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 active:scale-95 ${
+                  accountingEnabled ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-amber-50 text-amber-800 ring-1 ring-amber-200'
+                }`}
+              >
+                <Calculator className="w-6 h-6" />
+                <span className="text-xs font-medium text-center leading-tight">{t('nav.accounting')}</span>
+                {!accountingEnabled && (
+                  <span className="absolute top-2 right-2 inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-bold bg-amber-500 text-white">
+                    -50%
+                  </span>
+                )}
               </button>
             </div>
           </div>

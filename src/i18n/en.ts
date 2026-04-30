@@ -181,6 +181,7 @@ export const en: typeof sq = {
     auditLog: 'Audit Log',
     stockAlerts: 'Alerts',
     dataExport: 'Export',
+    financialSummary: 'Financial Summary',
     settings: 'Settings',
     branding: 'Logo & Branding',
     receiving: 'Receiving/Shipping',

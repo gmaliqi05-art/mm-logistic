@@ -61,6 +61,9 @@ const CompanyVehicleDetail = lazy(() => import('./pages/company/VehicleDetail'))
 const CompanyDriverDetail = lazy(() => import('./pages/company/DriverDetail'));
 const CompanyCompliance = lazy(() => import('./pages/company/Compliance'));
 const CompanyFleetScans = lazy(() => import('./pages/company/FleetScans'));
+const CompanyFinancialSummary = lazy(() => import('./pages/company/FinancialSummary'));
+const CompanyAccountingUpgrade = lazy(() => import('./pages/company/AccountingUpgrade'));
+const AccountingRoute = lazy(() => import('./components/subscription/AccountingRoute'));
 
 const DepotDashboard = lazy(() => import('./pages/depot/Dashboard'));
 const DepotStock = lazy(() => import('./pages/depot/Stock'));
@@ -185,6 +188,8 @@ function AppRoutes() {
           <Route path="stock-alerts" element={<CompanyStockAlerts />} />
           <Route path="data-export" element={<CompanyDataExport />} />
           <Route path="settings" element={<CompanySettings />} />
+          <Route path="financial-summary" element={<CompanyFinancialSummary />} />
+          <Route path="accounting-upgrade" element={<CompanyAccountingUpgrade />} />
         </Route>
 
         <Route path="/depot" element={
@@ -215,9 +220,9 @@ function AppRoutes() {
         </Route>
 
         <Route path="/accounting" element={
-          <ProtectedRoute roles={['accountant', 'company_admin']}>
+          <AccountingRoute>
             <AccountingLayout />
-          </ProtectedRoute>
+          </AccountingRoute>
         }>
           <Route index element={<AccDashboard />} />
           <Route path="contacts" element={<AccContacts />} />

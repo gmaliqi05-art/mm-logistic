@@ -181,6 +181,7 @@ export const fr: typeof sq = {
     auditLog: 'Journal d\'audit',
     stockAlerts: 'Alertes',
     dataExport: 'Exporter',
+    financialSummary: 'Résumé Financier',
     settings: 'Paramètres',
     branding: 'Logo & Image de Marque',
     receiving: 'R\u00e9ception/Exp\u00e9dition',

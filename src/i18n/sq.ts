@@ -179,6 +179,7 @@ export const sq = {
     auditLog: 'Regjistri',
     stockAlerts: 'Alarmet',
     dataExport: 'Eksporto',
+    financialSummary: 'Permbledhja Financiare',
     settings: 'Cilesimet',
     branding: 'Logo & Branding',
     receiving: 'Pranim/Dergese',

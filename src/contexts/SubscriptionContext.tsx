@@ -36,6 +36,7 @@ interface SubscriptionContextType {
   isTrial: boolean;
   daysRemaining: number;
   companyFeatures: CompanyFeature[];
+  accountingEnabled: boolean;
   canAccess: (feature: Feature) => boolean;
   isWithinLimit: (type: 'drivers' | 'depots', currentCount: number) => boolean;
   getLimit: (type: 'drivers' | 'depots') => number;
@@ -50,6 +51,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [subscription, setSubscription] = useState<CompanySubscription | null>(null);
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
   const [companyFeatures, setCompanyFeatures] = useState<CompanyFeature[]>([]);
+  const [accountingEnabled, setAccountingEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchSubscription = async (companyId: string) => {
@@ -89,11 +91,19 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       } else {
         setCompanyFeatures(featuresData ?? []);
       }
+
+      const { data: companyRow } = await supabase
+        .from('companies')
+        .select('accounting_enabled')
+        .eq('id', companyId)
+        .maybeSingle();
+      setAccountingEnabled(Boolean((companyRow as { accounting_enabled?: boolean } | null)?.accounting_enabled));
     } catch (err) {
       console.error('Unexpected error fetching subscription:', err);
       setSubscription(null);
       setPlan(null);
       setCompanyFeatures([]);
+      setAccountingEnabled(false);
     }
   };
 
@@ -190,6 +200,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         isTrial,
         daysRemaining,
         companyFeatures,
+        accountingEnabled,
         canAccess,
         isWithinLimit,
         getLimit,
