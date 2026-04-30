@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Loader2, ScanLine, FileText, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { Loader2, ScanLine, FileText, CheckCircle2, XCircle, Clock, RefreshCw, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
+import ScanReviewModal from '../../components/accounting/ScanReviewModal';
 
 interface ScanRow {
   id: string;
+  company_id: string;
   status: string;
   detected_type: string | null;
   file_name: string;
@@ -15,6 +17,19 @@ interface ScanRow {
   extracted_json: Record<string, unknown> | null;
   linked_entity_type: string | null;
   linked_entity_id: string | null;
+  routing_decision: 'auto_saved' | 'pending_confirmation' | 'new_company_required' | null;
+  match_confidence: number | null;
+  suggested_contact_name: string | null;
+  suggested_contact_vat: string | null;
+  suggested_contact_tax: string | null;
+  suggested_contact_email: string | null;
+  suggested_contact_phone: string | null;
+  suggested_contact_address: string | null;
+  suggested_contact_city: string | null;
+  suggested_contact_postal_code: string | null;
+  suggested_contact_country: string | null;
+  suggested_contact_iban: string | null;
+  suggested_contact_bic: string | null;
   created_at: string;
 }
 
@@ -39,6 +54,7 @@ export default function Scans() {
   const [rows, setRows] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showScan, setShowScan] = useState(false);
+  const [reviewScan, setReviewScan] = useState<ScanRow | null>(null);
 
   useEffect(() => {
     load();
@@ -118,14 +134,25 @@ export default function Scans() {
                   const supplier = (ex.supplier_name as string) || (ex.customer_name as string) || '-';
                   const total = typeof ex.total === 'number' ? ex.total : 0;
                   const currency = (ex.currency as string) || 'EUR';
+                  const canReview = r.status === 'parsed' && r.routing_decision !== 'auto_saved';
                   return (
-                    <tr key={r.id} className="hover:bg-slate-50">
+                    <tr
+                      key={r.id}
+                      onClick={() => canReview && setReviewScan(r)}
+                      className={`hover:bg-slate-50 ${canReview ? 'cursor-pointer' : ''}`}
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 min-w-0">
                           <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
                           <span className="truncate max-w-xs" title={r.file_name}>
                             {r.file_name}
                           </span>
+                          {r.routing_decision === 'new_company_required' && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                              <Sparkles className="w-3 h-3" />
+                              Kompani e re
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-slate-700">
@@ -163,6 +190,17 @@ export default function Scans() {
           onClose={() => setShowScan(false)}
           onSaved={() => {
             setShowScan(false);
+            load();
+          }}
+        />
+      )}
+
+      {reviewScan && (
+        <ScanReviewModal
+          scan={reviewScan}
+          onClose={() => setReviewScan(null)}
+          onSaved={() => {
+            setReviewScan(null);
             load();
           }}
         />

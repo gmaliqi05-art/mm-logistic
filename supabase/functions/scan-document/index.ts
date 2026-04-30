@@ -22,6 +22,8 @@ interface Routing {
   match_reason: string;
   confidence: number;
   company_match: boolean;
+  routing_decision: "auto_saved" | "pending_confirmation" | "new_company_required";
+  candidates: Array<{ id: string; name: string; score: number; vat_number: string | null; contact_type: string }>;
 }
 
 interface ExtractedLine {
@@ -37,7 +39,15 @@ interface Extracted {
   document_nature_guess: "purchase" | "expense" | "investment" | "sale" | "unknown";
   supplier_name: string;
   supplier_vat: string;
+  supplier_tax: string;
   supplier_iban: string;
+  supplier_bic: string;
+  supplier_email: string;
+  supplier_phone: string;
+  supplier_address: string;
+  supplier_city: string;
+  supplier_postal_code: string;
+  supplier_country: string;
   customer_name: string;
   invoice_number: string;
   invoice_date: string;
@@ -57,7 +67,15 @@ function emptyExtracted(): Extracted {
     document_nature_guess: "unknown",
     supplier_name: "",
     supplier_vat: "",
+    supplier_tax: "",
     supplier_iban: "",
+    supplier_bic: "",
+    supplier_email: "",
+    supplier_phone: "",
+    supplier_address: "",
+    supplier_city: "",
+    supplier_postal_code: "",
+    supplier_country: "",
     customer_name: "",
     invoice_number: "",
     invoice_date: "",
@@ -176,7 +194,15 @@ function buildPrompt(): string {
   "document_nature_guess": "purchase" | "expense" | "investment" | "sale" | "unknown",
   "supplier_name": string,
   "supplier_vat": string,
+  "supplier_tax": string,
   "supplier_iban": string,
+  "supplier_bic": string,
+  "supplier_email": string,
+  "supplier_phone": string,
+  "supplier_address": string,
+  "supplier_city": string,
+  "supplier_postal_code": string,
+  "supplier_country": string,
   "customer_name": string,
   "invoice_number": string,
   "invoice_date": "YYYY-MM-DD" | "",
@@ -292,16 +318,17 @@ async function computeRouting(
   const supplierMatchesUs = similarity(supplierName, ourName) > 0.7 || (ourVat && vat && ourVat === vat);
   const customerMatchesUs = similarity(customerName, ourName) > 0.7;
 
-  let bestContact: { id: string; name: string; type: string; score: number } | null = null;
+  const scored: Array<{ id: string; name: string; type: string; score: number; vat_number: string | null }> = [];
   for (const c of (contacts as Array<{ id: string; name: string; vat_number: string | null; contact_type: string }>) || []) {
     let score = similarity(supplierName, c.name);
     score = Math.max(score, similarity(customerName, c.name));
     if (vat && c.vat_number && vat === c.vat_number) score = Math.max(score, 0.95);
-    if (score > (bestContact?.score ?? 0)) {
-      bestContact = { id: c.id, name: c.name, type: c.contact_type, score };
-    }
+    scored.push({ id: c.id, name: c.name, type: c.contact_type, score, vat_number: c.vat_number });
   }
-  if (bestContact && bestContact.score < 0.55) bestContact = null;
+  scored.sort((a, b) => b.score - a.score);
+  const topCandidates = scored.filter((s) => s.score >= 0.45).slice(0, 3);
+  let bestContact = scored[0] && scored[0].score >= 0.55 ? scored[0] : null;
+  const bestScore = bestContact?.score ?? 0;
 
   let suggested: Routing["suggested_kind"] = ex.document_nature_guess || "unknown";
 
@@ -321,6 +348,11 @@ async function computeRouting(
   if (role === "depot") reasonParts.push("Roli depo — supozohet fletepranim");
   if (reasonParts.length === 0) reasonParts.push("U klasifikua ne baze te permbajtjes se dokumentit");
 
+  let routingDecision: Routing["routing_decision"];
+  if (bestContact && bestScore >= 0.8) routingDecision = "auto_saved";
+  else if (topCandidates.length > 0) routingDecision = "pending_confirmation";
+  else routingDecision = "new_company_required";
+
   return {
     suggested_kind: suggested,
     matched_contact_id: bestContact?.id ?? null,
@@ -329,6 +361,8 @@ async function computeRouting(
     match_reason: reasonParts.join(". "),
     confidence: Math.min(1, (ex.confidence || 0.5) + (bestContact ? 0.15 : 0) + (customerMatchesUs || supplierMatchesUs ? 0.1 : 0)),
     company_match: customerMatchesUs || supplierMatchesUs,
+    routing_decision: routingDecision,
+    candidates: topCandidates.map((c) => ({ id: c.id, name: c.name, score: Math.round(c.score * 1000) / 1000, vat_number: c.vat_number, contact_type: c.type })),
   };
 }
 
@@ -393,6 +427,9 @@ Deno.serve(async (req: Request) => {
 
     const routing = await computeRouting(supabase, scan.company_id, extracted, role);
 
+    const needsNewCompany = routing.routing_decision === "new_company_required";
+    const counterpartyName = extracted.supplier_name || extracted.customer_name || "";
+
     await supabase
       .from("acc_scanned_documents")
       .update({
@@ -400,6 +437,19 @@ Deno.serve(async (req: Request) => {
         detected_type: routing.suggested_kind !== "unknown" ? routing.suggested_kind : extracted.document_nature_guess,
         extracted_json: { ...extracted, _routing: routing },
         raw_ocr_text: rawText.slice(0, 8000),
+        match_confidence: routing.confidence,
+        routing_decision: routing.routing_decision,
+        suggested_contact_name: needsNewCompany ? counterpartyName : "",
+        suggested_contact_vat: needsNewCompany ? extracted.supplier_vat || "" : "",
+        suggested_contact_tax: needsNewCompany ? extracted.supplier_tax || "" : "",
+        suggested_contact_email: needsNewCompany ? extracted.supplier_email || "" : "",
+        suggested_contact_phone: needsNewCompany ? extracted.supplier_phone || "" : "",
+        suggested_contact_address: needsNewCompany ? extracted.supplier_address || "" : "",
+        suggested_contact_city: needsNewCompany ? extracted.supplier_city || "" : "",
+        suggested_contact_postal_code: needsNewCompany ? extracted.supplier_postal_code || "" : "",
+        suggested_contact_country: needsNewCompany ? extracted.supplier_country || "" : "",
+        suggested_contact_iban: needsNewCompany ? extracted.supplier_iban || "" : "",
+        suggested_contact_bic: needsNewCompany ? extracted.supplier_bic || "" : "",
         updated_at: new Date().toISOString(),
       })
       .eq("id", scanId);
