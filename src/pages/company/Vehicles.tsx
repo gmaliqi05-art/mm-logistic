@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Search, Plus, AlertTriangle, X, Loader2, ChevronRight, Container, ShieldCheck } from 'lucide-react';
+import { Truck, Search, Plus, AlertTriangle, X, Loader2, ChevronRight, Container, ShieldCheck, ScanLine } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
+import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import { daysUntil } from '../../lib/fleetCompliance';
 
 interface Vehicle {
@@ -86,6 +87,7 @@ export default function CompanyVehicles() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [form, setForm] = useState<VehicleForm>(emptyForm);
   const [saving, setSaving] = useState(false);
 
@@ -244,10 +246,15 @@ export default function CompanyVehicles() {
             Menaxhimi i kamioneve (LKW) dhe rimorkiove (Anhanger) sipas ligjit gjerman (StVZO, § 29 StVZO per HU).
           </p>
         </div>
-        <button onClick={() => openAdd(tab)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
-          <Plus className="w-4 h-4" />
-          {tab === 'truck' ? 'Shto Kamion' : 'Shto Rimorkio'}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowScanner(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 font-medium">
+            <ScanLine className="w-4 h-4" /> Skano Zulassung
+          </button>
+          <button onClick={() => openAdd(tab)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
+            <Plus className="w-4 h-4" />
+            {tab === 'truck' ? 'Shto Kamion' : 'Shto Rimorkio'}
+          </button>
+        </div>
       </div>
 
       {criticalCount > 0 && (
@@ -438,6 +445,15 @@ export default function CompanyVehicles() {
             </div>
           </div>
         </div>
+      )}
+
+      {showScanner && (
+        <FleetDocScanner
+          mode="vehicle"
+          defaultCategory="zulassung"
+          onClose={() => setShowScanner(false)}
+          onSaved={() => { setShowScanner(false); fetchData(); }}
+        />
       )}
     </div>
   );

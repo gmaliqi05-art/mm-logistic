@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Search, Plus, CreditCard as Edit2, ToggleLeft, ToggleRight, AlertTriangle, X, Users, Loader2, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Truck, Search, Plus, CreditCard as Edit2, ToggleLeft, ToggleRight, AlertTriangle, X, Users, Loader2, ChevronRight, ShieldCheck, ScanLine } from 'lucide-react';
+import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -36,6 +37,7 @@ export default function CompanyDrivers() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Profile | null>(null);
   const [form, setForm] = useState<DriverForm>(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -196,10 +198,15 @@ export default function CompanyDrivers() {
             )}
           </p>
         </div>
-        <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
-          <Plus className="w-4 h-4" />
-          {t('company.drivers.addDriver')}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowScanner(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 font-medium">
+            <ScanLine className="w-4 h-4" /> Skano dokument
+          </button>
+          <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
+            <Plus className="w-4 h-4" />
+            {t('company.drivers.addDriver')}
+          </button>
+        </div>
       </div>
 
       {criticalCount > 0 && (
@@ -350,6 +357,14 @@ export default function CompanyDrivers() {
             </div>
           </div>
         </div>
+      )}
+
+      {showScanner && (
+        <FleetDocScanner
+          mode="driver"
+          onClose={() => setShowScanner(false)}
+          onSaved={() => { setShowScanner(false); fetchData(); }}
+        />
       )}
     </div>
   );

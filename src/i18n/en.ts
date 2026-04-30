@@ -168,6 +168,7 @@ export const en: typeof sq = {
     drivers: 'Drivers',
     fleet: 'Fleet (LKW)',
     compliance: 'Compliance',
+    fleetScans: 'Fleet Scans',
     stock: 'Stock',
     categories: 'Category/Products',
     documents: 'Documents',

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { LICENSE_CATEGORIES, COMPLIANCE_TYPES, daysUntil } from '../../lib/fleetCompliance';
+import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 
 interface DriverProfile { id: string; full_name: string; email: string; phone: string; is_active: boolean; depot_id: string | null; }
 interface License { id: string; license_number: string; license_categories: string[]; issued_date: string | null; issued_country: string; expiry_date: string; }
@@ -24,6 +25,8 @@ export default function DriverDetail() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'license' | 'qualifications' | 'medical' | 'vehicles'>('license');
   const [addMode, setAddMode] = useState<null | 'license' | 'qualification' | 'medical'>(null);
+  const [scannerCat, setScannerCat] = useState<string | null>(null);
+  const [scans, setScans] = useState<Array<{ id: string; detected_category: string; doc_category: string; file_name: string; storage_path: string; created_at: string; status: string }>>([]);
 
   useEffect(() => { if (id) fetchAll(); }, [id]);
 
@@ -44,7 +47,19 @@ export default function DriverDetail() {
       ...x,
       vehicle: Array.isArray(x.vehicle) ? x.vehicle[0] : x.vehicle,
     })) as Assignment[]);
+    const { data: sd } = await supabase
+      .from('fleet_scanned_documents')
+      .select('id, detected_category, doc_category, file_name, storage_path, created_at, status')
+      .eq('mode', 'driver')
+      .or(`linked_entity_id.eq.${id},target_entity_id.eq.${id}`)
+      .order('created_at', { ascending: false });
+    setScans((sd as typeof scans) || []);
     setLoading(false);
+  }
+
+  async function openScanFile(path: string) {
+    const { data } = await supabase.storage.from('fleet-scans').createSignedUrl(path, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   }
 
   async function removeRow(table: string, rid: string) {
@@ -120,9 +135,14 @@ export default function DriverDetail() {
             <>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">Patenta sipas FeV (Fahrerlaubnis-Verordnung). Kategorite e zakonshme per kamione: C1, C1E, C, CE.</p>
-                <button onClick={() => setAddMode('license')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                  <Plus className="w-3.5 h-3.5" /> Shto
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setScannerCat('fuehrerschein')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
+                    <ScanLine className="w-3.5 h-3.5" /> Skano
+                  </button>
+                  <button onClick={() => setAddMode('license')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+                    <Plus className="w-3.5 h-3.5" /> Shto
+                  </button>
+                </div>
               </div>
               {addMode === 'license' && (
                 <LicenseAddForm companyId={profile!.company_id!} driverId={id!} onDone={() => { setAddMode(null); fetchAll(); }} />
@@ -158,9 +178,14 @@ export default function DriverDetail() {
             <>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">Kod 95 (BKrFQG): 35 ore trajnim cdo 5 vjet. ADR per mallra te rrezikshme.</p>
-                <button onClick={() => setAddMode('qualification')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                  <Plus className="w-3.5 h-3.5" /> Shto
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setScannerCat('kod95')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
+                    <ScanLine className="w-3.5 h-3.5" /> Skano
+                  </button>
+                  <button onClick={() => setAddMode('qualification')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+                    <Plus className="w-3.5 h-3.5" /> Shto
+                  </button>
+                </div>
               </div>
               {addMode === 'qualification' && (
                 <QualAddForm companyId={profile!.company_id!} driverId={id!} onDone={() => { setAddMode(null); fetchAll(); }} />
@@ -191,9 +216,14 @@ export default function DriverDetail() {
             <>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">Ekzaminimi G25 (Fahr-, Steuer- und Überwachungstätigkeiten) behet nga mjeku i pune.</p>
-                <button onClick={() => setAddMode('medical')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                  <Plus className="w-3.5 h-3.5" /> Shto
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setScannerCat('g25_medical')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
+                    <ScanLine className="w-3.5 h-3.5" /> Skano
+                  </button>
+                  <button onClick={() => setAddMode('medical')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+                    <Plus className="w-3.5 h-3.5" /> Shto
+                  </button>
+                </div>
               </div>
               {addMode === 'medical' && (
                 <MedicalAddForm companyId={profile!.company_id!} driverId={id!} onDone={() => { setAddMode(null); fetchAll(); }} />
@@ -247,6 +277,50 @@ export default function DriverDetail() {
           )}
         </div>
       </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-teal-600" /> Dokumente te skanuara
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">PDF-te origjinale te arkivuara</p>
+          </div>
+          <button onClick={() => setScannerCat('other')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+            <ScanLine className="w-3.5 h-3.5" /> Skano te ri
+          </button>
+        </div>
+        {scans.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-6">Asnje dokument i skanuar.</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {scans.map(s => (
+              <div key={s.id} className="flex items-center justify-between py-2.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{COMPLIANCE_TYPES[s.detected_category || s.doc_category] || s.doc_category}</p>
+                    <p className="text-xs text-gray-500 truncate">{s.file_name} • {new Date(s.created_at).toLocaleDateString('de-DE')}</p>
+                  </div>
+                </div>
+                <button onClick={() => openScanFile(s.storage_path)} className="p-1.5 text-gray-500 hover:text-teal-600 hover:bg-teal-50 rounded">
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {scannerCat && (
+        <FleetDocScanner
+          mode="driver"
+          defaultCategory={scannerCat}
+          presetTargetId={id!}
+          onClose={() => setScannerCat(null)}
+          onSaved={() => { setScannerCat(null); fetchAll(); }}
+        />
+      )}
     </div>
   );
 }

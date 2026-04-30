@@ -28,6 +28,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { DeliveryNote } from '../../types';
 import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/SmartDocScanner';
+import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 
 export type T = (key: string) => string;
 
@@ -71,6 +72,7 @@ export default function DriverDashboard() {
   const [range, setRange] = useState<'default' | 'today' | '7d' | '30d' | 'all'>('default');
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmErrors, setConfirmErrors] = useState<Record<string, string>>({});
+  const [showMyDocsScanner, setShowMyDocsScanner] = useState(false);
 
   async function handleQuickConfirm(id: string) {
     setConfirmingId(id);
@@ -228,6 +230,20 @@ export default function DriverDashboard() {
           </button>
         </div>
       )}
+
+      <button
+        onClick={() => setShowMyDocsScanner(true)}
+        className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-2xl p-4 shadow-sm text-left flex items-center gap-3 hover:from-teal-700 hover:to-teal-800 transition-colors"
+      >
+        <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
+          <ScanLine className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm">Skano dokumentet e mia</p>
+          <p className="text-xs text-teal-50 mt-0.5">Patente, Kod 95, G25, ADR — AI ekstrakton te dhenat</p>
+        </div>
+        <ChevronRight className="w-5 h-5 flex-shrink-0 opacity-75" />
+      </button>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm space-y-2">
         <div className="relative">
@@ -387,6 +403,15 @@ export default function DriverDashboard() {
           <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm font-medium">{toast}</span>
         </div>
+      )}
+
+      {showMyDocsScanner && profile?.id && (
+        <FleetDocScanner
+          mode="driver"
+          presetTargetId={profile.id}
+          onClose={() => setShowMyDocsScanner(false)}
+          onSaved={() => { setShowMyDocsScanner(false); setToast('Dokumenti u skanua dhe u dergua tek admin.'); }}
+        />
       )}
     </div>
   );

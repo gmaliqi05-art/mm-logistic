@@ -24,6 +24,7 @@ import {
   Building2,
   Wrench,
   ShieldCheck,
+  ScanLine,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,6 +49,7 @@ const allNavItems = [
   { to: '/company/drivers', icon: Truck, labelKey: 'nav.drivers', end: false, premium: false, bottomNav: false },
   { to: '/company/vehicles', icon: Truck, labelKey: 'nav.fleet', end: false, premium: false, bottomNav: false },
   { to: '/company/compliance', icon: ShieldCheck, labelKey: 'nav.compliance', end: false, premium: false, bottomNav: false },
+  { to: '/company/fleet-scans', icon: ScanLine, labelKey: 'nav.fleetScans', end: false, premium: false, bottomNav: false },
   { to: '/company/categories', icon: Tags, labelKey: 'nav.categories', end: false, premium: false, bottomNav: false },
   { to: '/company/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, premium: false, bottomNav: false },
   { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, premium: false, bottomNav: false },

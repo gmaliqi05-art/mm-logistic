@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Truck, Plus, Trash2, Loader2, ShieldCheck, Receipt, ClipboardCheck, Users as UsersIcon } from 'lucide-react';
+import { ArrowLeft, Truck, Plus, Trash2, Loader2, ShieldCheck, Receipt, ClipboardCheck, Users as UsersIcon, ScanLine, FileText, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { COMPLIANCE_TYPES } from '../../lib/fleetCompliance';
+import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 
 interface Vehicle {
   id: string; vehicle_type: string; brand: string; model: string; license_plate: string;
@@ -31,6 +32,8 @@ export default function VehicleDetail() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'inspections' | 'insurance' | 'taxes' | 'drivers'>('inspections');
   const [addForm, setAddForm] = useState<{ type: string; value: string; value2: string; provider: string } | null>(null);
+  const [scannerCat, setScannerCat] = useState<string | null>(null);
+  const [scans, setScans] = useState<Array<{ id: string; detected_category: string; doc_category: string; file_name: string; storage_path: string; created_at: string; status: string }>>([]);
 
   useEffect(() => { if (id) fetchAll(); }, [id]);
 
@@ -54,7 +57,20 @@ export default function VehicleDetail() {
       driver: Array.isArray(x.driver) ? x.driver[0] : x.driver,
     })) as Assignment[]);
     setDrivers((d.data || []) as DriverOption[]);
+    const { data: sd } = await supabase
+      .from('fleet_scanned_documents')
+      .select('id, detected_category, doc_category, file_name, storage_path, created_at, status')
+      .eq('company_id', cid)
+      .eq('mode', 'vehicle')
+      .or(`linked_entity_id.eq.${id},target_entity_id.eq.${id}`)
+      .order('created_at', { ascending: false });
+    setScans((sd as typeof scans) || []);
     setLoading(false);
+  }
+
+  async function openScanFile(path: string) {
+    const { data } = await supabase.storage.from('fleet-scans').createSignedUrl(path, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   }
 
   async function addInspection(type: string, date: string, provider: string) {
@@ -155,9 +171,14 @@ export default function VehicleDetail() {
             <>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">HU/TUV cdo 2 vjet, AU bashke me HU, UVV vjetore, SP (rimorkio {'>'}10t) cdo 6 muaj.</p>
-                <button onClick={() => setAddForm({ type: 'hu_tuv', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                  <Plus className="w-3.5 h-3.5" /> Shto
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setScannerCat('hu_tuv')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
+                    <ScanLine className="w-3.5 h-3.5" /> Skano
+                  </button>
+                  <button onClick={() => setAddForm({ type: 'hu_tuv', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+                    <Plus className="w-3.5 h-3.5" /> Shto
+                  </button>
+                </div>
               </div>
               {addForm && ['hu_tuv', 'au', 'uvv', 'sp', 'tacho'].includes(addForm.type) && (
                 <InspectionAddRow
@@ -177,9 +198,14 @@ export default function VehicleDetail() {
             <>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">Haftpflicht eshte i detyrueshem sipas PflVG.</p>
-                <button onClick={() => setAddForm({ type: 'haftpflicht', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                  <Plus className="w-3.5 h-3.5" /> Shto
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setScannerCat('haftpflicht')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
+                    <ScanLine className="w-3.5 h-3.5" /> Skano
+                  </button>
+                  <button onClick={() => setAddForm({ type: 'haftpflicht', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+                    <Plus className="w-3.5 h-3.5" /> Shto
+                  </button>
+                </div>
               </div>
               {addForm && ['haftpflicht', 'vollkasko', 'teilkasko', 'ladung'].includes(addForm.type) && (
                 <InsuranceAddRow
@@ -199,9 +225,14 @@ export default function VehicleDetail() {
             <>
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">Kfz-Steuer paguhet vjetore pranë Hauptzollamt.</p>
-                <button onClick={() => setAddForm({ type: 'tax', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                  <Plus className="w-3.5 h-3.5" /> Shto
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => setScannerCat('kfz_steuer')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
+                    <ScanLine className="w-3.5 h-3.5" /> Skano
+                  </button>
+                  <button onClick={() => setAddForm({ type: 'tax', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+                    <Plus className="w-3.5 h-3.5" /> Shto
+                  </button>
+                </div>
               </div>
               {addForm?.type === 'tax' && (
                 <TaxAddRow onCancel={() => setAddForm(null)} onSave={(d, a) => addTax(d, a)} />
@@ -252,6 +283,50 @@ export default function VehicleDetail() {
           )}
         </div>
       </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-teal-600" /> Dokumente te skanuara
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">PDF-te origjinale te ruajtura per arkivim GoBD</p>
+          </div>
+          <button onClick={() => setScannerCat('other')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
+            <ScanLine className="w-3.5 h-3.5" /> Skano te ri
+          </button>
+        </div>
+        {scans.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-6">Asnje dokument i skanuar.</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {scans.map(s => (
+              <div key={s.id} className="flex items-center justify-between py-2.5">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{COMPLIANCE_TYPES[s.detected_category || s.doc_category] || s.doc_category}</p>
+                    <p className="text-xs text-gray-500 truncate">{s.file_name} • {new Date(s.created_at).toLocaleDateString('de-DE')}</p>
+                  </div>
+                </div>
+                <button onClick={() => openScanFile(s.storage_path)} className="p-1.5 text-gray-500 hover:text-teal-600 hover:bg-teal-50 rounded">
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {scannerCat && (
+        <FleetDocScanner
+          mode="vehicle"
+          defaultCategory={scannerCat}
+          presetTargetId={id!}
+          onClose={() => setScannerCat(null)}
+          onSaved={() => { setScannerCat(null); fetchAll(); }}
+        />
+      )}
     </div>
   );
 }

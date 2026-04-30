@@ -166,6 +166,7 @@ export const sq = {
     drivers: 'Shoferet',
     fleet: 'Flota (LKW)',
     compliance: 'Perputhshmeria',
+    fleetScans: 'Skanime Flote',
     stock: 'Stoku',
     categories: 'Kategoria/Produktet',
     documents: 'Dokumentet',
