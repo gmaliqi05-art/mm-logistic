@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   AlertCircle,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -20,6 +21,7 @@ const navItems = [
   { to: '/driver/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false },
   { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false },
   { to: '/driver/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false },
+  { to: '/driver/settings', icon: SettingsIcon, labelKey: 'nav.settings', end: false },
 ];
 
 export default function DriverLayout() {
@@ -46,9 +48,18 @@ export default function DriverLayout() {
           <h1 className="text-lg font-bold whitespace-nowrap truncate">{brandName}</h1>
         </div>
 
-        <div className="px-4 py-4 border-b border-teal-800">
-          <p className="text-sm font-semibold truncate">{profile?.full_name ?? ''}</p>
-          <p className="text-xs text-teal-300 truncate">{roleLabel}</p>
+        <div className="px-4 py-4 border-b border-teal-800 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-teal-700 ring-2 ring-teal-600 flex items-center justify-center flex-shrink-0">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-sm font-bold text-white">{profile?.full_name?.charAt(0).toUpperCase() ?? 'U'}</span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold truncate">{profile?.full_name ?? ''}</p>
+            <p className="text-xs text-teal-300 truncate">{roleLabel}</p>
+          </div>
         </div>
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
@@ -173,8 +184,12 @@ export default function DriverLayout() {
 
           <div className="p-4 border-b border-gray-100 bg-gray-50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm">
-                {profile?.full_name?.charAt(0) ?? 'U'}
+              <div className="w-10 h-10 rounded-full bg-teal-600 overflow-hidden flex items-center justify-center text-white font-bold text-sm">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  profile?.full_name?.charAt(0) ?? 'U'
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">{profile?.full_name ?? ''}</p>

@@ -79,6 +79,7 @@ const DriverDashboard = lazy(() => import('./pages/driver/Dashboard'));
 const DriverChat = lazy(() => import('./pages/driver/Chat'));
 const DriverDocuments = lazy(() => import('./pages/driver/Documents'));
 const DriverOverdue = lazy(() => import('./pages/driver/Overdue'));
+const DriverSettings = lazy(() => import('./pages/driver/Settings'));
 
 const AccDashboard = lazy(() => import('./pages/accounting/Dashboard'));
 const AccContacts = lazy(() => import('./pages/accounting/Contacts'));
@@ -222,6 +223,7 @@ function AppRoutes() {
           <Route path="overdue" element={<DriverOverdue />} />
           <Route path="documents" element={<DriverDocuments />} />
           <Route path="chat" element={<DriverChat />} />
+          <Route path="settings" element={<DriverSettings />} />
         </Route>
 
         <Route path="/accounting" element={
