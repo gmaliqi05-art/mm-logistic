@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Truck,
@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   X,
+  ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -27,7 +28,9 @@ export default function LogisticsLayout() {
   const { t } = useTranslation();
   const { name: brandName, logo: brandLogo } = useCompanyBranding();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isCompanyAdmin = profile?.role === 'company_admin';
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -47,6 +50,18 @@ export default function LogisticsLayout() {
           <p className="text-sm font-semibold truncate">{profile?.full_name ?? ''}</p>
           <p className="text-xs text-teal-300 truncate">{t('roles.logistics_admin')}</p>
         </div>
+
+        {isCompanyAdmin && (
+          <div className="px-2 pt-3">
+            <button
+              onClick={() => navigate('/company')}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg bg-teal-800/60 text-teal-50 hover:bg-teal-700 hover:text-white transition-colors font-medium"
+            >
+              <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+              <span className="whitespace-nowrap text-sm">Admin Kompani</span>
+            </button>
+          </div>
+        )}
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
           {navItems.map((item) => (
@@ -93,6 +108,26 @@ export default function LogisticsLayout() {
             >
               <Menu className="w-5 h-5" />
             </button>
+            {isCompanyAdmin && (
+              <button
+                onClick={() => navigate('/company')}
+                className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-teal-700 hover:bg-teal-50 transition-colors text-sm font-medium"
+                title="Kthehu ne Admin Kompani"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Admin Kompani</span>
+              </button>
+            )}
+            {isCompanyAdmin && (
+              <button
+                onClick={() => navigate('/company')}
+                className="lg:hidden p-1.5 rounded-lg text-teal-700 hover:bg-teal-50 transition-colors"
+                aria-label="Admin Kompani"
+                title="Admin Kompani"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            )}
             <div className="flex items-center gap-2 lg:hidden">
               {brandLogo && <img src={brandLogo} alt={brandName} className="w-7 h-7 rounded object-cover" />}
               <span className="font-semibold text-gray-900 text-sm">{brandName}</span>
@@ -155,6 +190,15 @@ export default function LogisticsLayout() {
             </button>
           </div>
           <div className="p-4 space-y-2">
+            {isCompanyAdmin && (
+              <button
+                onClick={() => { setMobileMenuOpen(false); navigate('/company'); }}
+                className="flex items-center gap-3 w-full p-4 rounded-xl bg-teal-50 text-teal-700 font-medium"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="text-sm">Admin Kompani</span>
+              </button>
+            )}
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
