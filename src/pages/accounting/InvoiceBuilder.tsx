@@ -63,6 +63,38 @@ interface BankAccount {
   is_default: boolean;
 }
 
+interface CatalogItem {
+  id: string;
+  source: 'accounting' | 'stock';
+  name: string;
+  description: string | null;
+  sku: string | null;
+  unit: string | null;
+  price_net: number;
+  vat_rate: number;
+}
+
+function mapUnitToUnece(unit: string | null | undefined): string {
+  if (!unit) return 'H87';
+  const u = unit.toLowerCase().trim();
+  const map: Record<string, string> = {
+    pc: 'H87', pcs: 'H87', piece: 'H87', cope: 'H87', stk: 'H87', stueck: 'H87', st: 'H87', ea: 'H87',
+    kg: 'KGM', g: 'GRM', t: 'TNE', ton: 'TNE',
+    l: 'LTR', liter: 'LTR', litre: 'LTR', ml: 'MLT',
+    m: 'MTR', meter: 'MTR', metre: 'MTR', cm: 'CMT', mm: 'MMT', km: 'KMT',
+    m2: 'MTK', 'm²': 'MTK', sqm: 'MTK',
+    m3: 'MTQ', 'm³': 'MTQ', cbm: 'MTQ',
+    h: 'HUR', hour: 'HUR', ore: 'HUR',
+    day: 'DAY', ditw: 'DAY', dite: 'DAY',
+    pkg: 'XPP', pack: 'XPP', paketim: 'XPP', box: 'XBX', carton: 'XCT',
+    set: 'SET', service: 'HUR',
+  };
+  if (map[u]) return map[u];
+  const upper = unit.toUpperCase().trim();
+  if (['H87', 'KGM', 'LTR', 'MTR', 'HUR', 'XPP', 'MTK', 'MTQ', 'TNE', 'XBX', 'XCT', 'SET', 'DAY', 'GRM', 'MLT', 'CMT', 'MMT', 'KMT'].includes(upper)) return upper;
+  return 'H87';
+}
+
 const CURRENCIES = ['EUR', 'CHF', 'USD', 'GBP', 'PLN', 'SEK', 'DKK', 'CZK', 'HUF', 'RON', 'BGN'];
 
 function newItem(): Item {
@@ -98,6 +130,7 @@ export default function InvoiceBuilder() {
   const [banks, setBanks] = useState<BankAccount[]>([]);
   const [countries, setCountries] = useState<EuCountry[]>([]);
   const [vatRates, setVatRates] = useState<EuVatRate[]>([]);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
 
   const [invoiceType, setInvoiceType] = useState<'invoice' | 'credit_note' | 'proforma'>('invoice');
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -125,7 +158,7 @@ export default function InvoiceBuilder() {
   async function bootstrap() {
     if (!profile?.company_id) return;
     setLoading(true);
-    const [{ data: co }, { data: cs }, { data: bs }, { data: countryRows }, { data: rates }] = await Promise.all([
+    const [{ data: co }, { data: cs }, { data: bs }, { data: countryRows }, { data: rates }, { data: accProds }, { data: catProds }] = await Promise.all([
       supabase.from('companies').select('*').eq('id', profile.company_id).maybeSingle(),
       supabase.from('acc_contacts').select('id, name, address, postal_code, city, country, vat_number, email, contact_type')
         .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
@@ -133,7 +166,30 @@ export default function InvoiceBuilder() {
         .eq('company_id', profile.company_id).eq('is_active', true),
       supabase.from('eu_countries').select('*').order('name'),
       supabase.from('eu_vat_rates').select('*').order('rate', { ascending: false }),
+      supabase.from('acc_products').select('id, name, description, sku, unit, price_net, vat_rate, is_active')
+        .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
+      supabase.from('category_products').select('id, name, description, sku, unit, price_net, vat_rate, is_active')
+        .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
     ]);
+
+    const merged: CatalogItem[] = [];
+    const seen = new Set<string>();
+    const pushRow = (r: any, source: 'accounting' | 'stock') => {
+      const key = `${(r.sku ?? '').toLowerCase().trim()}|${(r.name ?? '').toLowerCase().trim()}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push({
+        id: r.id, source,
+        name: r.name ?? '', description: r.description ?? null, sku: r.sku ?? null,
+        unit: r.unit ?? null,
+        price_net: Number(r.price_net ?? 0),
+        vat_rate: Number(r.vat_rate ?? 19),
+      });
+    };
+    ((accProds as any[]) ?? []).forEach((r) => pushRow(r, 'accounting'));
+    ((catProds as any[]) ?? []).forEach((r) => pushRow(r, 'stock'));
+    merged.sort((a, b) => a.name.localeCompare(b.name));
+    setCatalog(merged);
 
     setCompany((co as Company) ?? null);
     setContacts((cs as Contact[]) ?? []);
@@ -290,6 +346,22 @@ export default function InvoiceBuilder() {
   function updateItem(id: string, patch: Partial<Item>) {
     dirtyRef.current = true;
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  }
+  function selectProductForItem(itemId: string, product: CatalogItem) {
+    dirtyRef.current = true;
+    setItems((prev) => prev.map((it) => {
+      if (it.id !== itemId) return it;
+      const desc = [product.name, product.description].filter(Boolean).join(' — ');
+      return {
+        ...it,
+        description: desc || product.name || it.description,
+        product_code: product.sku ?? it.product_code,
+        unit_code: mapUnitToUnece(product.unit),
+        unit_price: product.price_net || it.unit_price,
+        vat_rate: product.vat_rate ?? it.vat_rate,
+        quantity: it.quantity > 0 ? it.quantity : 1,
+      };
+    }));
   }
   function addItem() { dirtyRef.current = true; setItems((prev) => [...prev, newItem()]); }
   function duplicateItem(id: string) {
@@ -579,7 +651,13 @@ export default function InvoiceBuilder() {
                   <div key={it.id} className="rounded-lg border border-slate-200 p-3 bg-slate-50/50">
                     <div className="grid grid-cols-12 gap-2">
                       <div className="col-span-12">
-                        <input placeholder="Pershkrimi" value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} className={inputCls} />
+                        <ProductAutocomplete
+                          value={it.description}
+                          catalog={catalog}
+                          onChange={(v) => updateItem(it.id, { description: v })}
+                          onSelect={(p) => selectProductForItem(it.id, p)}
+                          inputCls={inputCls}
+                        />
                       </div>
                       <input placeholder="Kodi" value={it.product_code} onChange={(e) => updateItem(it.id, { product_code: e.target.value })} className={`${inputCls} col-span-3`} />
                       <input type="number" step="0.001" placeholder="Sasia" value={it.quantity} onChange={(e) => updateItem(it.id, { quantity: Number(e.target.value) })} className={`${inputCls} col-span-2`} />
@@ -697,4 +775,101 @@ function RegimeBadge({ regime }: { regime: string }) {
   };
   const m = map[regime] ?? map.not_applicable;
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${m.cls}`}>{m.label}</span>;
+}
+
+function ProductAutocomplete({ value, onChange, onSelect, catalog, inputCls }: {
+  value: string;
+  onChange: (v: string) => void;
+  onSelect: (p: CatalogItem) => void;
+  catalog: CatalogItem[];
+  inputCls: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const suggestions = useMemo(() => {
+    if (!catalog.length) return [] as CatalogItem[];
+    const q = value.trim().toLowerCase();
+    if (!q) return catalog.slice(0, 8);
+    return catalog.filter((p) => {
+      const hay = `${p.name} ${p.description ?? ''} ${p.sku ?? ''}`.toLowerCase();
+      return hay.includes(q);
+    }).slice(0, 8);
+  }, [catalog, value]);
+
+  useEffect(() => {
+    function onDocDown(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocDown);
+    return () => document.removeEventListener('mousedown', onDocDown);
+  }, []);
+
+  function pick(p: CatalogItem) {
+    onSelect(p);
+    setOpen(false);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!open || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx((i) => Math.max(i - 1, 0)); }
+    else if (e.key === 'Enter') {
+      if (suggestions[activeIdx]) { e.preventDefault(); pick(suggestions[activeIdx]); }
+    }
+    else if (e.key === 'Escape') { setOpen(false); }
+  }
+
+  const showDropdown = open && suggestions.length > 0;
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setActiveIdx(0); }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={onKeyDown}
+        placeholder={catalog.length ? 'Pershkrimi — shkruaj per te kerkuar nga katalogu' : 'Pershkrimi'}
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={showDropdown}
+        aria-autocomplete="list"
+        className={inputCls}
+      />
+      {showDropdown && (
+        <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-72 overflow-auto">
+          {suggestions.map((p, idx) => (
+            <button
+              type="button"
+              key={`${p.source}-${p.id}`}
+              onMouseDown={(e) => { e.preventDefault(); pick(p); }}
+              onMouseEnter={() => setActiveIdx(idx)}
+              className={`w-full text-left px-3 py-2 text-sm flex items-start gap-3 border-b border-slate-100 last:border-0 ${idx === activeIdx ? 'bg-teal-50' : 'hover:bg-slate-50'}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-slate-900 truncate">{p.name || '(pa emer)'}</span>
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${p.source === 'stock' ? 'bg-emerald-100 text-emerald-700' : 'bg-teal-100 text-teal-700'}`}>
+                    {p.source === 'stock' ? 'Stoku' : 'Kontabiliteti'}
+                  </span>
+                </div>
+                {(p.description || p.sku) && (
+                  <div className="text-xs text-slate-500 truncate">
+                    {p.sku && <span className="font-mono">{p.sku}</span>}
+                    {p.sku && p.description ? ' · ' : ''}
+                    {p.description ?? ''}
+                  </div>
+                )}
+              </div>
+              <div className="text-right flex-shrink-0">
+                <div className="text-sm font-bold text-slate-800">{p.price_net.toFixed(2)}</div>
+                <div className="text-[10px] text-slate-500">{p.unit ?? 'pc'} · TVSH {p.vat_rate}%</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
