@@ -56,6 +56,10 @@ const CompanySettings = lazy(() => import('./pages/company/Settings'));
 const CompanyOverdueDocuments = lazy(() => import('./pages/company/OverdueDocuments'));
 const CompanyPartners = lazy(() => import('./pages/company/Partners'));
 const CompanyReview = lazy(() => import('./pages/company/Review'));
+const CompanyVehicles = lazy(() => import('./pages/company/Vehicles'));
+const CompanyVehicleDetail = lazy(() => import('./pages/company/VehicleDetail'));
+const CompanyDriverDetail = lazy(() => import('./pages/company/DriverDetail'));
+const CompanyCompliance = lazy(() => import('./pages/company/Compliance'));
 
 const DepotDashboard = lazy(() => import('./pages/depot/Dashboard'));
 const DepotStock = lazy(() => import('./pages/depot/Stock'));
@@ -161,6 +165,10 @@ function AppRoutes() {
           <Route index element={<CompanyDashboard />} />
           <Route path="depots" element={<CompanyDepots />} />
           <Route path="drivers" element={<CompanyDrivers />} />
+          <Route path="drivers/:id" element={<CompanyDriverDetail />} />
+          <Route path="vehicles" element={<CompanyVehicles />} />
+          <Route path="vehicles/:id" element={<CompanyVehicleDetail />} />
+          <Route path="compliance" element={<CompanyCompliance />} />
           <Route path="stock" element={<CompanyStock />} />
           <Route path="categories" element={<CompanyCategories />} />
           <Route path="documents" element={<CompanyDocuments />} />

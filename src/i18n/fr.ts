@@ -166,6 +166,8 @@ export const fr: typeof sq = {
     notifications: 'Notifications',
     depots: 'D\u00e9p\u00f4ts / Personnel',
     drivers: 'Chauffeurs',
+    fleet: 'Flotte (PL)',
+    compliance: 'Conformite',
     stock: 'Stock',
     categories: 'Cat\u00e9gorie/Produits',
     documents: 'Documents',

@@ -164,6 +164,8 @@ export const sq = {
     notifications: 'Njoftimet',
     depots: 'Depo/Puntor',
     drivers: 'Shoferet',
+    fleet: 'Flota (LKW)',
+    compliance: 'Perputhshmeria',
     stock: 'Stoku',
     categories: 'Kategoria/Produktet',
     documents: 'Dokumentet',

@@ -166,6 +166,8 @@ export const de: typeof sq = {
     notifications: 'Benachrichtigungen',
     depots: 'Lager / Personal',
     drivers: 'Fahrer',
+    fleet: 'Fuhrpark (LKW)',
+    compliance: 'Compliance',
     stock: 'Bestand',
     categories: 'Kategorie/Produkte',
     documents: 'Dokumente',
