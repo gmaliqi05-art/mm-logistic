@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mm-logistic-v2';
+const CACHE_NAME = 'mm-logistic-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -48,8 +48,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
       body: body || '',
-      icon: icon || '/mm-logistic-logo.png',
-      badge: badge || '/mm-logistic-logo.png',
+      icon: icon || '/mm-logistic-logo.png?v=3',
+      badge: badge || '/mm-logistic-logo.png?v=3',
       tag: tag || 'default',
       data: actionData || {},
       vibrate: [200, 100, 200],

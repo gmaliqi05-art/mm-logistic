@@ -649,8 +649,12 @@ const stats = [
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 grid md:grid-cols-4 gap-10">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2.5">
-              {platformSettings.logo ? (
-                <img src={platformSettings.logo} alt={platformName} className="w-9 h-9 rounded-lg object-contain" />
+              {platformSettings.logoSocial || platformSettings.logo ? (
+                <img
+                  src={platformSettings.logoSocial || platformSettings.logo}
+                  alt={platformName}
+                  className="w-9 h-9 rounded-lg object-contain"
+                />
               ) : (
                 <div className="p-2 rounded-lg bg-teal-600 text-white">
                   <Package className="h-5 w-5" />

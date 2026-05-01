@@ -7,6 +7,7 @@ interface PlatformLogoProps {
   nameClassName?: string;
   containerClassName?: string;
   iconContainerClassName?: string;
+  variant?: 'light' | 'dark';
 }
 
 const sizeMap = {
@@ -21,15 +22,17 @@ export default function PlatformLogo({
   nameClassName = 'text-lg font-bold text-slate-800',
   containerClassName = 'flex items-center gap-2.5',
   iconContainerClassName = 'bg-teal-600 rounded-xl',
+  variant = 'light',
 }: PlatformLogoProps) {
   const { settings } = usePlatformSettings();
   const s = sizeMap[size];
+  const src = variant === 'dark' ? settings.logoSocial || settings.logo : settings.logo;
 
   return (
     <div className={containerClassName}>
-      {settings.logo ? (
+      {src ? (
         <img
-          src={settings.logo}
+          src={src}
           alt={settings.name}
           className={`${s.img} rounded-xl object-contain`}
         />
