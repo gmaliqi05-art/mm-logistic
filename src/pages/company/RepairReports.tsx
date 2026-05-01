@@ -19,6 +19,8 @@ import {
   Users,
   Clock,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BarChart3 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -373,16 +375,25 @@ export default function CompanyRepairReports() {
           </h1>
           <p className="text-gray-500 mt-1">{t('company.repairReports.subtitle')}</p>
         </div>
-        {selectedPendingIds.length > 0 && (
-          <button
-            onClick={() => sendToStock(selectedPendingIds)}
-            disabled={selectedPendingIds.every((id) => sending.has(id))}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-sm"
+        <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            to="/company/worker-repair-stats"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
           >
-            <Send className="w-4 h-4" />
-            {t('company.repairReports.sendSelected').replace('{count}', String(selectedPendingIds.length))}
-          </button>
-        )}
+            <BarChart3 className="w-4 h-4" />
+            {t('company.workerRepairStats.title')}
+          </Link>
+          {selectedPendingIds.length > 0 && (
+            <button
+              onClick={() => sendToStock(selectedPendingIds)}
+              disabled={selectedPendingIds.every((id) => sending.has(id))}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-sm"
+            >
+              <Send className="w-4 h-4" />
+              {t('company.repairReports.sendSelected').replace('{count}', String(selectedPendingIds.length))}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -786,6 +797,7 @@ function ReportDetailModal({
           <div className="space-y-3">
             {workers.map((w) => {
               const open = expandedWorker === w.worker_id;
+              const pct = report.total_quantity > 0 ? (w.total_quantity / report.total_quantity) * 100 : 0;
               return (
                 <div
                   key={w.worker_id}
@@ -799,8 +811,17 @@ function ReportDetailModal({
                       <Wrench className="w-5 h-5 text-teal-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{w.worker_name}</p>
-                      <p className="text-xs text-gray-500">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-gray-900 truncate">{w.worker_name}</p>
+                        <span className="text-[10px] font-semibold text-teal-700">{pct.toFixed(1)}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mt-1.5">
+                        <div
+                          className="h-full bg-gradient-to-r from-teal-400 to-emerald-500 rounded-full"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
                         {w.entry_count} {t('company.repairReports.entries').toLowerCase()}
                       </p>
                     </div>

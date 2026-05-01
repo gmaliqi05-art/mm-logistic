@@ -48,6 +48,7 @@ const CompanyCategories = lazy(() => import('./pages/company/Categories'));
 const CompanyDeliveryNotes = lazy(() => import('./pages/company/DeliveryNotes'));
 const CompanyReports = lazy(() => import('./pages/company/Reports'));
 const CompanyRepairReports = lazy(() => import('./pages/company/RepairReports'));
+const CompanyWorkerRepairStats = lazy(() => import('./pages/company/WorkerRepairStats'));
 const CompanyChat = lazy(() => import('./pages/company/Chat'));
 const CompanyDocuments = lazy(() => import('./pages/company/Documents'));
 const CompanyAuditLog = lazy(() => import('./pages/company/AuditLog'));
@@ -187,6 +188,7 @@ function AppRoutes() {
           <Route path="partners" element={<CompanyPartners />} />
           <Route path="reports" element={<CompanyReports />} />
           <Route path="repair-reports" element={<CompanyRepairReports />} />
+          <Route path="worker-repair-stats" element={<CompanyWorkerRepairStats />} />
           <Route path="chat" element={<CompanyChat />} />
           <Route path="audit-log" element={<CompanyAuditLog />} />
           <Route path="stock-alerts" element={<CompanyStockAlerts />} />
