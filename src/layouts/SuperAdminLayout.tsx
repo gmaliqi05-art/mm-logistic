@@ -69,6 +69,7 @@ const navSections: NavSection[] = [
       { to: '/super-admin/pwa-settings', icon: Smartphone, labelKey: 'nav.pwaSettings', end: false },
       { to: '/super-admin/user-manual', icon: BookOpen, labelKey: 'nav.userManual', end: false },
       { to: '/super-admin/test-notifications', icon: BellRing, labelKey: 'nav.testNotifications', end: false },
+      { to: '/super-admin/push-notifications', icon: Bell, labelKey: 'nav.pushNotifications', end: false, badgeKey: 'common.new' },
     ],
   },
   {

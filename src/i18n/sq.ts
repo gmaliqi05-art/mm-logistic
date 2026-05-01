@@ -202,6 +202,7 @@ export const sq = {
     pwaSettings: 'PWA & App Install',
     userManual: 'Manuali',
     testNotifications: 'Test Notifications',
+    pushNotifications: 'Njoftime Push',
     homepageCms: 'Homepage & CMS',
     appTools: 'App & Tools',
     accounting: 'Kontabiliteti',

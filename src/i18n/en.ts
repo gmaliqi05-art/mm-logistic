@@ -204,6 +204,7 @@ export const en: typeof sq = {
     pwaSettings: 'PWA & App Install',
     userManual: 'Manual',
     testNotifications: 'Test Notifications',
+    pushNotifications: 'Push Notifications',
     homepageCms: 'Homepage & CMS',
     appTools: 'App & Tools',
     accounting: 'Accounting',
