@@ -12,25 +12,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png",
+      "src": "/mm-logistic-logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png",
+      "src": "/mm-logistic-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png",
+      "src": "/mm-logistic-logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png",
+      "src": "/mm-logistic-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

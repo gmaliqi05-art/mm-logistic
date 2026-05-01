@@ -9,7 +9,7 @@ interface PlatformSettings {
 
 export function usePlatformSettings() {
   const [settings, setSettings] = useState<PlatformSettings>({
-    logo: '/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png',
+    logo: '/mm-logistic-logo.png',
     name: 'MM Logistic',
     shortName: 'MML',
   });
@@ -31,7 +31,7 @@ export function usePlatformSettings() {
         .in('key', ['platform_logo', 'platform_name', 'platform_short_name']);
 
       if (data) {
-        const fallbackLogo = '/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png';
+        const fallbackLogo = '/mm-logistic-logo.png';
         const newSettings: PlatformSettings = {
           logo: fallbackLogo,
           name: 'MM Logistic',
@@ -54,7 +54,7 @@ export function usePlatformSettings() {
   }
 
   function updateDynamicMetaTags() {
-    const logoUrl = settings.logo || '/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png';
+    const logoUrl = settings.logo || '/mm-logistic-logo.png';
     const platformName = settings.name || 'MM Logistic';
     const tagline = 'Smart Logistics. Clear Numbers.';
 
