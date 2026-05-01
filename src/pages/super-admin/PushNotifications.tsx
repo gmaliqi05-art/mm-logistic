@@ -893,8 +893,16 @@ function LogsTab() {
   );
 }
 
+interface ConfigStatus {
+  web: { configured: boolean; vapid_public_key: boolean; vapid_private_key: boolean; vapid_subject: boolean };
+  android: { configured: boolean; fcm_service_account_json: boolean };
+  ios: { configured: boolean; apns_key_p8: boolean; apns_key_id: boolean; apns_team_id: boolean; apns_bundle_id: boolean };
+  email: { configured: boolean; resend_api_key: boolean };
+}
+
 function PlatformTab() {
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
+  const [status, setStatus] = useState<ConfigStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -902,8 +910,15 @@ function PlatformTab() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from('push_platform_settings').select('*').eq('id', 1).maybeSingle();
-    setSettings(data as PlatformSettings);
+    const { data: { session } } = await supabase.auth.getSession();
+    const [settingsRes, statusRes] = await Promise.all([
+      supabase.from('push_platform_settings').select('*').eq('id', 1).maybeSingle(),
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notification-config-status`, {
+        headers: { Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+      }).then((r) => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    setSettings(settingsRes.data as PlatformSettings);
+    setStatus(statusRes as ConfigStatus | null);
     setLoading(false);
   }
 
@@ -928,6 +943,54 @@ function PlatformTab() {
 
   return (
     <div className="space-y-6 max-w-2xl">
+      {status && (
+        <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Live Secret Status</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <PlatformStatusCard
+              label="Web Push"
+              icon={<Globe className="w-4 h-4" />}
+              configured={status.web.configured}
+              details={[
+                { key: 'VAPID_PUBLIC_KEY', ok: status.web.vapid_public_key },
+                { key: 'VAPID_PRIVATE_KEY', ok: status.web.vapid_private_key },
+                { key: 'VAPID_SUBJECT', ok: status.web.vapid_subject },
+              ]}
+            />
+            <PlatformStatusCard
+              label="Android FCM"
+              icon={<Smartphone className="w-4 h-4" />}
+              configured={status.android.configured}
+              details={[
+                { key: 'FCM_SERVICE_ACCOUNT_JSON', ok: status.android.fcm_service_account_json },
+              ]}
+            />
+            <PlatformStatusCard
+              label="iOS APNs"
+              icon={<Smartphone className="w-4 h-4" />}
+              configured={status.ios.configured}
+              details={[
+                { key: 'APNS_KEY_P8', ok: status.ios.apns_key_p8 },
+                { key: 'APNS_KEY_ID', ok: status.ios.apns_key_id },
+                { key: 'APNS_TEAM_ID', ok: status.ios.apns_team_id },
+                { key: 'APNS_BUNDLE_ID', ok: status.ios.apns_bundle_id },
+              ]}
+            />
+            <PlatformStatusCard
+              label="Email (Resend)"
+              icon={<AlertCircle className="w-4 h-4" />}
+              configured={status.email.configured}
+              details={[
+                { key: 'RESEND_API_KEY', ok: status.email.resend_api_key },
+              ]}
+            />
+          </div>
+          <p className="text-xs text-slate-500 mt-3">
+            Secrets are read live from Supabase Edge Function environment. Update in the secrets settings panel; changes take effect immediately.
+          </p>
+        </div>
+      )}
+
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Globe className="w-5 h-5 text-teal-600" />
@@ -1106,6 +1169,46 @@ function DevicesTab() {
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+function PlatformStatusCard({
+  label, icon, configured, details,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  configured: boolean;
+  details: { key: string; ok: boolean }[];
+}) {
+  return (
+    <div className={`rounded-lg border p-3 ${configured ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className={`flex items-center gap-1.5 text-xs font-semibold ${configured ? 'text-emerald-800' : 'text-amber-800'}`}>
+          {icon}
+          {label}
+        </div>
+        {configured ? (
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        ) : (
+          <AlertCircle className="w-4 h-4 text-amber-600" />
+        )}
+      </div>
+      <p className={`text-[10px] font-medium uppercase tracking-wide mb-1.5 ${configured ? 'text-emerald-700' : 'text-amber-700'}`}>
+        {configured ? 'Ready' : 'Incomplete'}
+      </p>
+      <ul className="space-y-1">
+        {details.map((d) => (
+          <li key={d.key} className="flex items-center gap-1.5 text-[11px]">
+            {d.ok ? (
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 flex-shrink-0" />
+            ) : (
+              <XCircle className="w-3 h-3 text-slate-400 flex-shrink-0" />
+            )}
+            <code className="text-slate-700 truncate">{d.key}</code>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
