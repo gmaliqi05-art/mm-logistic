@@ -86,6 +86,56 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* Chat page responsive container.
+     Mobile: fill the viewport minus the sticky top header (~10rem) and bottom
+     navigation (64px) + iOS safe-area. Uses dynamic viewport units on
+     supporting browsers so the input does not get hidden by the mobile URL
+     bar or the bottom tab bar. */
+  .chat-root {
+    height: calc(100vh - 9rem);
+    max-height: calc(100vh - 9rem);
+  }
+
+  @supports (height: 100dvh) {
+    .chat-root {
+      height: calc(100dvh - 9rem);
+      max-height: calc(100dvh - 9rem);
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .chat-root {
+      height: calc(100vh - 11rem - env(safe-area-inset-bottom, 0px));
+      max-height: calc(100vh - 11rem - env(safe-area-inset-bottom, 0px));
+    }
+
+    @supports (height: 100dvh) {
+      .chat-root {
+        height: calc(100dvh - 11rem - env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 11rem - env(safe-area-inset-bottom, 0px));
+      }
+    }
+  }
+
+  /* iPad / tablet portrait tweak: a touch more breathing room */
+  @media (min-width: 640px) and (max-width: 1023px) {
+    .chat-root {
+      height: calc(100vh - 10rem - env(safe-area-inset-bottom, 0px));
+      max-height: calc(100vh - 10rem - env(safe-area-inset-bottom, 0px));
+    }
+
+    @supports (height: 100dvh) {
+      .chat-root {
+        height: calc(100dvh - 10rem - env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 10rem - env(safe-area-inset-bottom, 0px));
+      }
+    }
+  }
+
+  .chat-composer {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  }
+
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
   }

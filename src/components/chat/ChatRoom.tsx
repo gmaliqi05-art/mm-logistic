@@ -63,7 +63,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const deleteChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -598,7 +598,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
   }
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 10rem)', maxHeight: 'calc(100dvh - 10rem)' }}>
+    <div className="flex flex-col chat-root">
       <div className="mb-2 flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{t('nav.chat')}</h1>
@@ -783,7 +783,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
                 )}
               </div>
 
-              <div className="p-3 border-t border-gray-100 bg-white">
+              <div className="chat-composer border-t border-gray-100 bg-white px-3 pt-2 pb-2 sm:pb-3">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -791,11 +791,13 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
                   className="hidden"
                   onChange={handleFileSend}
                 />
-                <div className="flex items-center gap-1">
+
+                {/* Desktop / tablet layout: single row */}
+                <div className="hidden sm:flex items-end gap-2">
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
                     title={t('common.file')}
                   >
                     {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
@@ -809,17 +811,24 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
                       }
                     }}
                     disabled={uploading}
-                    className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
                     title={t('common.upload')}
                   >
                     <Image className="w-5 h-5" />
                   </button>
-                  <EmojiPicker onSelect={handleEmojiSelect} />
-                  <input
+                  <div className="flex-shrink-0">
+                    <EmojiPicker onSelect={handleEmojiSelect} />
+                  </div>
+                  <textarea
                     ref={inputRef}
-                    type="text"
+                    rows={1}
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={(e) => {
+                      setNewMessage(e.target.value);
+                      const el = e.currentTarget;
+                      el.style.height = 'auto';
+                      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -827,19 +836,79 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
                       }
                     }}
                     placeholder={t('chat.typeMessage')}
-                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                    className="flex-1 min-w-0 resize-none px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm leading-5 max-h-[120px]"
                   />
                   <button
                     onClick={sendMessage}
                     disabled={!newMessage.trim() || sending}
-                    className="p-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-sm"
                   >
-                    {sending ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5" />
-                    )}
+                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   </button>
+                </div>
+
+                {/* Mobile layout: textarea on top, toolbar + send below */}
+                <div className="sm:hidden flex flex-col gap-2">
+                  <textarea
+                    ref={inputRef}
+                    rows={1}
+                    value={newMessage}
+                    onChange={(e) => {
+                      setNewMessage(e.target.value);
+                      const el = e.currentTarget;
+                      el.style.height = 'auto';
+                      el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                    placeholder={t('chat.typeMessage')}
+                    className="w-full resize-none px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-[15px] leading-5 max-h-[140px] bg-gray-50"
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-teal-50 active:text-teal-600 rounded-full transition-colors disabled:opacity-50"
+                        title={t('common.file')}
+                      >
+                        {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (fileInputRef.current) {
+                            fileInputRef.current.accept = 'image/*';
+                            fileInputRef.current.click();
+                            fileInputRef.current.accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip';
+                          }
+                        }}
+                        disabled={uploading}
+                        className="w-10 h-10 flex items-center justify-center text-gray-500 active:bg-teal-50 active:text-teal-600 rounded-full transition-colors disabled:opacity-50"
+                        title={t('common.upload')}
+                      >
+                        <Image className="w-5 h-5" />
+                      </button>
+                      <EmojiPicker onSelect={handleEmojiSelect} />
+                    </div>
+                    <button
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim() || sending}
+                      className="inline-flex items-center gap-2 px-5 h-11 bg-teal-600 text-white rounded-full hover:bg-teal-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-medium text-sm"
+                    >
+                      {sending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <span>{t('chat.send') || 'Send'}</span>
+                          <Send className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
