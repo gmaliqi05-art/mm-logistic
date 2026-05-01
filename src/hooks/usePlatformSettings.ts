@@ -9,7 +9,7 @@ interface PlatformSettings {
 
 export function usePlatformSettings() {
   const [settings, setSettings] = useState<PlatformSettings>({
-    logo: '/whatsapp_image_2026-02-09_at_00.35.32.jpeg',
+    logo: '/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png',
     name: 'MM Logistic',
     shortName: 'MML',
   });
@@ -31,14 +31,15 @@ export function usePlatformSettings() {
         .in('key', ['platform_logo', 'platform_name', 'platform_short_name']);
 
       if (data) {
+        const fallbackLogo = '/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png';
         const newSettings: PlatformSettings = {
-          logo: '/whatsapp_image_2026-02-09_at_00.35.32.jpeg',
+          logo: fallbackLogo,
           name: 'MM Logistic',
           shortName: 'MML',
         };
 
         data.forEach((setting) => {
-          if (setting.key === 'platform_logo') newSettings.logo = setting.value || '/whatsapp_image_2026-02-09_at_00.35.32.jpeg';
+          if (setting.key === 'platform_logo') newSettings.logo = setting.value || fallbackLogo;
           if (setting.key === 'platform_name') newSettings.name = setting.value || 'MM Logistic';
           if (setting.key === 'platform_short_name') newSettings.shortName = setting.value || 'MML';
         });
@@ -53,8 +54,9 @@ export function usePlatformSettings() {
   }
 
   function updateDynamicMetaTags() {
-    const logoUrl = settings.logo || '/whatsapp_image_2026-02-09_at_00.35.32.jpeg';
+    const logoUrl = settings.logo || '/ChatGPT_Image_May_1,_2026,_11_16_07_AM.png';
     const platformName = settings.name || 'MM Logistic';
+    const tagline = 'Smart Logistics. Clear Numbers.';
 
     const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
     if (favicon) {
@@ -66,11 +68,11 @@ export function usePlatformSettings() {
       appleTouchIcon.href = logoUrl;
     }
 
-    document.title = `${platformName} - Logistics Management System`;
+    document.title = `${platformName} - ${tagline}`;
 
-    updateMetaTag('property', 'og:title', `${platformName} - Logistics Management System`);
+    updateMetaTag('property', 'og:title', `${platformName} - ${tagline}`);
     updateMetaTag('property', 'og:image', logoUrl);
-    updateMetaTag('name', 'twitter:title', `${platformName} - Logistics Management System`);
+    updateMetaTag('name', 'twitter:title', `${platformName} - ${tagline}`);
     updateMetaTag('name', 'twitter:image', logoUrl);
     updateMetaTag('name', 'apple-mobile-web-app-title', platformName);
   }

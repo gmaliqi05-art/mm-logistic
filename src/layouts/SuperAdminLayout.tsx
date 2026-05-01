@@ -251,7 +251,7 @@ export default function SuperAdminLayout() {
 
         <footer className="border-t border-gray-200 bg-white px-4 lg:px-6 py-3 text-center">
           <p className="text-gray-400 text-xs">
-            {t('common.createdBy')} <span className="text-gray-500 font-medium">MarGroup Germany</span>
+            {t('common.createdBy')} <span className="text-gray-500 font-medium">MM Logistic</span>
           </p>
         </footer>
       </div>

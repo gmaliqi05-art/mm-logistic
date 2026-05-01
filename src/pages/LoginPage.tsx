@@ -392,7 +392,7 @@ export default function LoginPage() {
                 onClick={handleSecretClick}
                 className="text-slate-500 font-medium cursor-default select-none"
               >
-                MarGroup Germany
+                MM Logistic
               </span>
             </p>
           </div>

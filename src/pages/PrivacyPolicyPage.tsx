@@ -99,7 +99,7 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-slate-500 text-sm">
-              &copy; {new Date().getFullYear()} Booking Shpk (Berber Life). Te gjitha te drejtat e rezervuara.
+              &copy; {new Date().getFullYear()} MM Logistic. Te gjitha te drejtat e rezervuara.
             </p>
             <Link to="/" className="text-slate-500 hover:text-teal-600 text-sm transition-colors">
               {t('privacy.backToHome')}
@@ -107,7 +107,7 @@ export default function PrivacyPolicyPage() {
           </div>
           <div className="mt-4 pt-4 border-t border-slate-100 text-center">
             <p className="text-slate-400 text-xs">
-              Krijuar nga <span className="text-slate-500 font-medium">MarGroup Germany</span>
+              Krijuar nga <span className="text-slate-500 font-medium">MM Logistic</span>
             </p>
           </div>
         </div>
