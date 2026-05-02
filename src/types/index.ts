@@ -52,11 +52,46 @@ export interface Depot {
   created_at: string;
 }
 
+export type SortingMode = 'none' | 'class' | 'type';
+
 export interface ProductCategory {
   id: string;
   company_id: string;
   name: string;
   description: string;
+  sorting_mode: SortingMode;
+  aliases: string[];
+  created_at: string;
+}
+
+export type SortingBatchStatus = 'in_progress' | 'completed' | 'cancelled';
+
+export interface PalletSortingBatch {
+  id: string;
+  company_id: string;
+  depot_id: string;
+  category_id: string;
+  source_delivery_note_id: string | null;
+  total_received: number;
+  status: SortingBatchStatus;
+  notes: string;
+  created_by: string;
+  completed_by: string | null;
+  completed_at: string | null;
+  committed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  category?: ProductCategory;
+  depot?: Depot;
+  items?: PalletSortingItem[];
+}
+
+export interface PalletSortingItem {
+  id: string;
+  batch_id: string;
+  category_product_id: string;
+  quantity: number;
+  condition: 'good' | 'damaged' | 'repaired';
   created_at: string;
 }
 

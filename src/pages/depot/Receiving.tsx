@@ -513,6 +513,20 @@ export default function DepotReceiving() {
         <div className="p-6">
           {activeTab === 'receiving' ? (
             <form onSubmit={handleReceiving} className="space-y-4">
+              {receivingRows.some((r) => {
+                const c = categories.find((x) => x.id === r.category_id);
+                return c && c.sorting_mode && c.sorting_mode !== 'none';
+              }) && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <Sparkles className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-amber-800 flex-1">
+                    {t('depot.receiving.sortingHint')}{' '}
+                    <a href="/depot/sorting" className="underline font-medium">
+                      {t('nav.sorting')}
+                    </a>
+                  </p>
+                </div>
+              )}
               <div className="space-y-3">
                 {receivingRows.map((row) => {
                   const rowProducts = productsForCategory(row.category_id);

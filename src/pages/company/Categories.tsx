@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import FeatureGate from '../../components/subscription/FeatureGate';
-import type { ProductCategory } from '../../types';
+import type { ProductCategory, SortingMode } from '../../types';
 import { compareCategoriesByPriority, compareProducts } from '../../utils/productSort';
 
 interface CategoryProduct {
@@ -53,6 +53,8 @@ function CategoriesContent() {
   const [formVat, setFormVat] = useState<number>(19);
   const [formUnit, setFormUnit] = useState<string>('pcs');
   const [formSku, setFormSku] = useState('');
+  const [formSortingMode, setFormSortingMode] = useState<SortingMode>('none');
+  const [formAliases, setFormAliases] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -106,6 +108,8 @@ function CategoriesContent() {
     setFormVat(19);
     setFormUnit('pcs');
     setFormSku('');
+    setFormSortingMode('none');
+    setFormAliases('');
     setEditingCategory(null);
     setEditingProduct(null);
   }
@@ -123,6 +127,8 @@ function CategoriesContent() {
     setAddMode('category');
     setFormName(cat.name);
     setFormDesc(cat.description || '');
+    setFormSortingMode(cat.sorting_mode || 'none');
+    setFormAliases((cat.aliases || []).join(', '));
     setShowModal(true);
   }
 
@@ -152,10 +158,19 @@ function CategoriesContent() {
       const companyId = profile!.company_id!;
 
       if (addMode === 'category') {
+        const aliasesArr = formAliases
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
         if (editingCategory) {
           const { error: err } = await supabase
             .from('product_categories')
-            .update({ name: formName.trim(), description: formDesc })
+            .update({
+              name: formName.trim(),
+              description: formDesc,
+              sorting_mode: formSortingMode,
+              aliases: aliasesArr,
+            })
             .eq('id', editingCategory.id);
           if (err) throw err;
         } else {
@@ -163,6 +178,8 @@ function CategoriesContent() {
             company_id: companyId,
             name: formName.trim(),
             description: formDesc,
+            sorting_mode: formSortingMode,
+            aliases: aliasesArr,
           });
           if (err) throw err;
         }
@@ -601,6 +618,48 @@ function CategoriesContent() {
                   placeholder={t('common.description')}
                 />
               </div>
+
+              {addMode === 'category' && (
+                <div className="rounded-lg border border-teal-100 bg-teal-50/40 p-3 space-y-3">
+                  <p className="text-xs font-semibold text-teal-700 uppercase tracking-wide">
+                    {t('company.categories.sortingSection')}
+                  </p>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {t('company.categories.sortingMode')}
+                    </label>
+                    <select
+                      value={formSortingMode}
+                      onChange={(e) => setFormSortingMode(e.target.value as SortingMode)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white"
+                    >
+                      <option value="none">{t('company.categories.sortingNone')}</option>
+                      <option value="class">{t('company.categories.sortingClass')}</option>
+                      <option value="type">{t('company.categories.sortingType')}</option>
+                    </select>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      {formSortingMode === 'class' && t('company.categories.sortingClassHint')}
+                      {formSortingMode === 'type' && t('company.categories.sortingTypeHint')}
+                      {formSortingMode === 'none' && t('company.categories.sortingNoneHint')}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      {t('company.categories.aliases')}
+                    </label>
+                    <input
+                      type="text"
+                      value={formAliases}
+                      onChange={(e) => setFormAliases(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white"
+                      placeholder="EPAL, UIC, Euro Palette"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      {t('company.categories.aliasesHint')}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {addMode === 'product' && (
                 <div className="rounded-lg border border-teal-100 bg-teal-50/40 p-3 space-y-3">

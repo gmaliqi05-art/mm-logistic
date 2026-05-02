@@ -70,6 +70,7 @@ const AccountingRoute = lazy(() => import('./components/subscription/AccountingR
 const DepotDashboard = lazy(() => import('./pages/depot/Dashboard'));
 const DepotStock = lazy(() => import('./pages/depot/Stock'));
 const DepotReceiving = lazy(() => import('./pages/depot/Receiving'));
+const DepotSorting = lazy(() => import('./pages/depot/Sorting'));
 const DepotRepairs = lazy(() => import('./pages/depot/Repairs'));
 const DepotRepairWorkers = lazy(() => import('./pages/depot/RepairWorkers'));
 const WorkerRepairEntry = lazy(() => import('./pages/depot/WorkerRepairEntry'));
@@ -210,6 +211,7 @@ function AppRoutes() {
           <Route index element={<DepotDashboard />} />
           <Route path="stock" element={<DepotStock />} />
           <Route path="receiving" element={<DepotReceiving />} />
+          <Route path="sorting" element={<DepotSorting />} />
           <Route path="delivery-notes" element={<DepotDeliveryNotes />} />
           <Route path="repairs" element={<DepotRepairs />} />
           <Route path="repair-workers" element={<DepotRepairWorkers />} />
