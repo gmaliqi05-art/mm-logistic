@@ -1,5 +1,20 @@
 import { lazy, Suspense } from 'react';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
+
+function lazyWithRetry<T extends ComponentType<unknown>>(factory: () => Promise<{ default: T }>) {
+  return lazy(async () => {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        return await factory();
+      } catch (err) {
+        const isChunkError = err instanceof Error && /dynamically imported module|Failed to fetch|Importing a module script failed/i.test(err.message);
+        if (!isChunkError || attempt === 2) throw err;
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      }
+    }
+    return factory();
+  });
+}
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
@@ -41,13 +56,13 @@ const SuperAdminUserManual = lazy(() => import('./pages/super-admin/UserManual')
 const SuperAdminTestNotifications = lazy(() => import('./pages/super-admin/TestNotifications'));
 const SuperAdminPushNotifications = lazy(() => import('./pages/super-admin/PushNotifications'));
 const SuperAdminPlatformBranding = lazy(() => import('./pages/super-admin/PlatformBranding'));
-const SuperAdminEmailTemplates = lazy(() => import('./pages/super-admin/EmailTemplates'));
-const SuperAdminEmailTemplateEditor = lazy(() => import('./pages/super-admin/EmailTemplateEditor'));
-const SuperAdminEmailCampaigns = lazy(() => import('./pages/super-admin/EmailCampaigns'));
-const SuperAdminEmailCampaignNew = lazy(() => import('./pages/super-admin/EmailCampaignNew'));
-const SuperAdminEmailCampaignDetail = lazy(() => import('./pages/super-admin/EmailCampaignDetail'));
-const SuperAdminEmailLog = lazy(() => import('./pages/super-admin/EmailLog'));
-const SuperAdminEmailSettings = lazy(() => import('./pages/super-admin/EmailSettings'));
+const SuperAdminEmailTemplates = lazyWithRetry(() => import('./pages/super-admin/EmailTemplates'));
+const SuperAdminEmailTemplateEditor = lazyWithRetry(() => import('./pages/super-admin/EmailTemplateEditor'));
+const SuperAdminEmailCampaigns = lazyWithRetry(() => import('./pages/super-admin/EmailCampaigns'));
+const SuperAdminEmailCampaignNew = lazyWithRetry(() => import('./pages/super-admin/EmailCampaignNew'));
+const SuperAdminEmailCampaignDetail = lazyWithRetry(() => import('./pages/super-admin/EmailCampaignDetail'));
+const SuperAdminEmailLog = lazyWithRetry(() => import('./pages/super-admin/EmailLog'));
+const SuperAdminEmailSettings = lazyWithRetry(() => import('./pages/super-admin/EmailSettings'));
 
 const CompanyDashboard = lazy(() => import('./pages/company/Dashboard'));
 const CompanyDepots = lazy(() => import('./pages/company/Depots'));
