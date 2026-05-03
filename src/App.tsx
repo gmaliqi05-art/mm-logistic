@@ -10,6 +10,8 @@ import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import InstallPromptBanner from './components/InstallPromptBanner';
+import PushAutoSubscribe from './components/PushAutoSubscribe';
+import PushEnableBanner from './components/PushEnableBanner';
 
 const SuperAdminLayout = lazy(() => import('./layouts/SuperAdminLayout'));
 const CompanyAdminLayout = lazy(() => import('./layouts/CompanyAdminLayout'));
@@ -285,6 +287,8 @@ export default function App() {
         <AuthProvider>
           <SubscriptionProvider>
             <AppRoutes />
+            <PushAutoSubscribe />
+            <PushEnableBanner />
             <InstallPromptBanner />
           </SubscriptionProvider>
         </AuthProvider>

@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
-const VAPID_PUBLIC_KEY = 'BH8kRGpVrV5wnQSN8PB_vJ9dF_VvOqk3MJ7iV0xmNPmLz8FqQ5xF3p7J1V9qV9iV3J7Z5F3xF3V9F5F3F5F3F5F3';
+async function fetchVapidPublicKey(): Promise<string | null> {
+  const { data } = await supabase
+    .from('push_platform_settings')
+    .select('vapid_public_key')
+    .eq('id', 1)
+    .maybeSingle();
+  const key = data?.vapid_public_key?.trim();
+  return key && key.length > 0 ? key : null;
+}
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -58,6 +66,12 @@ export function usePushNotifications() {
     if (!isSupported || !profile?.id) return false;
 
     try {
+      const vapidKey = await fetchVapidPublicKey();
+      if (!vapidKey) {
+        console.error('VAPID public key is not configured');
+        return false;
+      }
+
       const permissionResult = await Notification.requestPermission();
       setPermission(permissionResult);
 
@@ -67,21 +81,31 @@ export function usePushNotifications() {
 
       const registration = await navigator.serviceWorker.ready;
 
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) {
+        await existing.unsubscribe();
+      }
+
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
       });
 
       const subscriptionJSON = subscription.toJSON();
 
-      await supabase.from('push_subscriptions').insert({
-        user_id: profile.id,
-        endpoint: subscription.endpoint,
-        p256dh_key: subscriptionJSON.keys?.p256dh || '',
-        auth_key: subscriptionJSON.keys?.auth || '',
-        user_agent: navigator.userAgent,
-        device_name: getDeviceName(),
-      });
+      await supabase.from('push_subscriptions').upsert(
+        {
+          user_id: profile.id,
+          endpoint: subscription.endpoint,
+          p256dh_key: subscriptionJSON.keys?.p256dh || '',
+          auth_key: subscriptionJSON.keys?.auth || '',
+          user_agent: navigator.userAgent,
+          device_name: getDeviceName(),
+          is_active: true,
+          last_used_at: new Date().toISOString(),
+        },
+        { onConflict: 'endpoint' },
+      );
 
       setIsSubscribed(true);
       return true;
