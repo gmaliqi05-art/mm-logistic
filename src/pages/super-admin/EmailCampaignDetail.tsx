@@ -250,15 +250,15 @@ export default function EmailCampaignDetail() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[720px]">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full">
           <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Gjuha</th>
               <th className="px-4 py-3">Statusi</th>
-              <th className="hidden px-4 py-3 md:table-cell">Gabim</th>
-              <th className="hidden px-4 py-3 md:table-cell">Dergua</th>
+              <th className="px-4 py-3">Gabim</th>
+              <th className="px-4 py-3">Dergua</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
@@ -274,8 +274,8 @@ export default function EmailCampaignDetail() {
                       {r.status}
                     </span>
                   </td>
-                  <td className="hidden max-w-sm truncate px-4 py-2.5 text-xs text-red-600 md:table-cell" title={r.error ?? ""}>{r.error ?? "—"}</td>
-                  <td className="hidden px-4 py-2.5 text-xs text-slate-500 md:table-cell">{r.sent_at ? new Date(r.sent_at).toLocaleString() : "—"}</td>
+                  <td className="px-4 py-2.5 max-w-sm truncate text-xs text-red-600" title={r.error ?? ""}>{r.error ?? "—"}</td>
+                  <td className="px-4 py-2.5 text-xs text-slate-500">{r.sent_at ? new Date(r.sent_at).toLocaleString() : "—"}</td>
                 </tr>
               ))
             )}

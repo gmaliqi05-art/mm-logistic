@@ -5,12 +5,6 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
-    include: [
-      '@tiptap/react',
-      '@tiptap/starter-kit',
-      '@tiptap/extension-link',
-      '@tiptap/extension-placeholder',
-    ],
   },
   build: {
     rollupOptions: {

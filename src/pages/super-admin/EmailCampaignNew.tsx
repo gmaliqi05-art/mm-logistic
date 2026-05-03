@@ -185,42 +185,42 @@ export default function EmailCampaignNew() {
   const canSubmit = schedule === "now" || (schedule === "later" && !!scheduledAt);
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-6">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex items-center gap-3">
           <Link to="/super-admin/email/campaigns" className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-bold text-slate-900">Fushate e re emaili</h1>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Fushate e re emaili</h1>
             <p className="text-sm text-slate-500">Hapi {step} nga 3</p>
           </div>
         </div>
       </div>
 
-      <div className="mb-6 flex items-center gap-1 overflow-x-auto sm:gap-2">
+      <div className="mb-6 flex items-center gap-2">
         {steps.map((s, i) => {
           const Icon = s.icon;
           const done = step > s.n;
           const active = step === s.n;
           return (
-            <div key={s.n} className="flex flex-shrink-0 items-center gap-2">
-              <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 sm:h-9 sm:w-9 ${
+            <div key={s.n} className="flex items-center gap-2">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-full border-2 ${
                 done ? "border-teal-600 bg-teal-600 text-white" : active ? "border-teal-600 text-teal-600" : "border-slate-300 text-slate-400"
               }`}>
                 {done ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
               </div>
-              <span className={`hidden text-sm font-medium sm:inline ${active ? "text-slate-900" : "text-slate-500"}`}>{s.label}</span>
-              {i < steps.length - 1 && <div className={`h-0.5 w-6 sm:mx-2 sm:w-10 ${done ? "bg-teal-600" : "bg-slate-200"}`} />}
+              <span className={`text-sm font-medium ${active ? "text-slate-900" : "text-slate-500"}`}>{s.label}</span>
+              {i < steps.length - 1 && <div className={`mx-2 h-0.5 w-10 ${done ? "bg-teal-600" : "bg-slate-200"}`} />}
             </div>
           );
         })}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         {step === 1 && (
           <div className="space-y-5">
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-700">Emri i fushates</label>
                 <input

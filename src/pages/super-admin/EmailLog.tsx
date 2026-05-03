@@ -135,15 +135,15 @@ export default function EmailLog() {
       {loading ? (
         <div className="flex items-center justify-center p-10"><Loader2 className="h-6 w-6 animate-spin text-teal-600" /></div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[900px]">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="hidden px-4 py-3 md:table-cell">Koha</th>
+                <th className="px-4 py-3">Koha</th>
                 <th className="px-4 py-3">Marres</th>
-                <th className="hidden px-4 py-3 lg:table-cell">Template</th>
+                <th className="px-4 py-3">Template</th>
                 <th className="px-4 py-3">Subject</th>
-                <th className="hidden px-4 py-3 lg:table-cell">Gjuha</th>
+                <th className="px-4 py-3">Gjuha</th>
                 <th className="px-4 py-3">Statusi</th>
                 <th className="px-4 py-3 text-right">Detaje</th>
               </tr>
@@ -154,15 +154,15 @@ export default function EmailLog() {
               ) : (
                 filtered.map((d) => (
                   <tr key={d.id} className="hover:bg-slate-50">
-                    <td className="hidden whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 md:table-cell">
+                    <td className="px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">
                       {new Date(d.created_at).toLocaleString()}
                     </td>
                     <td className="px-4 py-2.5 font-mono text-xs text-slate-700">{d.recipient_email}</td>
-                    <td className="hidden px-4 py-2.5 lg:table-cell">
+                    <td className="px-4 py-2.5">
                       <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">{d.template_code}</code>
                     </td>
-                    <td className="max-w-xs truncate px-4 py-2.5 text-slate-700" title={d.subject}>{d.subject}</td>
-                    <td className="hidden px-4 py-2.5 text-xs uppercase text-slate-500 lg:table-cell">{d.locale}</td>
+                    <td className="px-4 py-2.5 max-w-xs truncate text-slate-700" title={d.subject}>{d.subject}</td>
+                    <td className="px-4 py-2.5 text-xs uppercase text-slate-500">{d.locale}</td>
                     <td className="px-4 py-2.5">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLS[d.status] ?? "bg-slate-100 text-slate-600"}`}>
                         {d.status === "sent" ? <CheckCircle2 className="h-3 w-3" /> : d.status === "failed" ? <XCircle className="h-3 w-3" /> : null}

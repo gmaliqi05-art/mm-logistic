@@ -135,15 +135,15 @@ export default function EmailTemplates() {
           <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[720px]">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Emri</th>
                 <th className="px-4 py-3">Kodi</th>
                 <th className="px-4 py-3">Kategoria</th>
                 <th className="px-4 py-3">Statusi</th>
-                <th className="hidden px-4 py-3 md:table-cell">Perditesuar</th>
+                <th className="px-4 py-3">Perditesuar</th>
                 <th className="px-4 py-3 text-right">Veprime</th>
               </tr>
             </thead>
@@ -182,7 +182,7 @@ export default function EmailTemplates() {
                         {t.is_active ? "Aktiv" : "Joaktiv"}
                       </button>
                     </td>
-                    <td className="hidden px-4 py-3 text-xs text-slate-500 md:table-cell">
+                    <td className="px-4 py-3 text-xs text-slate-500">
                       {new Date(t.updated_at).toLocaleString()}
                     </td>
                     <td className="px-4 py-3">
