@@ -132,16 +132,16 @@ Deno.serve(async (req: Request) => {
 
     let notificationsCreated = 0;
 
-    const companyAdminsByCompany = new Map<string, string[]>();
+    const companyAdminsByCompany = new Map<string, { id: string; email: string | null; locale: string }[]>();
     const { data: admins } = await supabase
       .from("profiles")
-      .select("id, company_id")
+      .select("id, company_id, email, locale")
       .in("role", ["company_admin", "logistics_admin"])
       .eq("is_active", true);
     (admins || []).forEach((a) => {
       if (!a.company_id) return;
       const list = companyAdminsByCompany.get(a.company_id) || [];
-      list.push(a.id);
+      list.push({ id: a.id, email: a.email ?? null, locale: a.locale ?? "sq" });
       companyAdminsByCompany.set(a.company_id, list);
     });
 
@@ -204,9 +204,12 @@ Deno.serve(async (req: Request) => {
             : `${typeLabel} skadon per ${days} dite`;
         const message = `${subject} ${item.label}: ${typeLabel} - data ${item.expiryDate}.`;
 
-        for (const adminId of admins) {
+        const sendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+        for (const admin of admins) {
           await supabase.from("notifications").insert({
-            user_id: adminId,
+            user_id: admin.id,
             title,
             message,
             type: "compliance",
@@ -219,6 +222,34 @@ Deno.serve(async (req: Request) => {
             },
           });
           notificationsCreated++;
+
+          if (admin.email) {
+            try {
+              await fetch(sendUrl, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${serviceKey}`,
+                  apikey: serviceKey,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  template_code: "compliance_expiring",
+                  to: admin.email,
+                  user_id: admin.id,
+                  company_id: item.companyId,
+                  locale: admin.locale,
+                  data: {
+                    type_label: typeLabel,
+                    subject_label: `${subject} ${item.label}`,
+                    days_remaining: days,
+                    expiry_date: item.expiryDate,
+                  },
+                }),
+              });
+            } catch (_e) {
+              // best-effort
+            }
+          }
         }
 
         await supabase
