@@ -75,8 +75,29 @@ type RowState = {
   intended_action: 'stock' | 'sorting' | 'repair';
   notes: string | null;
   auto_matched?: boolean;
-  match_type?: 'sku' | 'product_name' | 'category_name' | null;
+  match_type?: 'sku' | 'product_name' | 'category_name' | 'combined' | null;
+  match_confidence?: 'high' | 'medium' | 'low' | 'none';
 };
+
+function deriveConditionAction(desc: string): { condition: string; intended_action: 'stock' | 'sorting' | 'repair' } {
+  const d = (desc || '').toLowerCase();
+  if (/\b(defekt|damage|damaged|kaputt|broken|repair)\b/i.test(d)) {
+    return { condition: 'damaged', intended_action: 'repair' };
+  }
+  if (/\b(sortier|sortir|sorting|mix|mischt|gemischt)\b/i.test(d)) {
+    return { condition: 'sorting', intended_action: 'sorting' };
+  }
+  if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b)/i.test(d)) {
+    return { condition: 'ready_a', intended_action: 'stock' };
+  }
+  if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b)/i.test(d)) {
+    return { condition: 'ready_b', intended_action: 'stock' };
+  }
+  if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b)/i.test(d)) {
+    return { condition: 'ready_c', intended_action: 'stock' };
+  }
+  return { condition: 'good', intended_action: 'stock' };
+}
 
 interface Category {
   id: string;
@@ -336,17 +357,31 @@ function ReviewModal({
 
     const built: RowState[] = rawItems.map((it, idx) => {
       const existingProd = it.category_product_id || null;
-      let m: { productId: string | null; categoryId: string | null; matchedOn: any } = {
-        productId: existingProd,
-        categoryId: it.category_id,
-        matchedOn: null,
-      };
+      let categoryId = it.category_id;
+      let productId = existingProd;
+      let matchedOn: RowState['match_type'] = null;
+      let confidence: RowState['match_confidence'] = 'none';
       let autoMatched = false;
-      if (!it.category_id && !existingProd) {
-        const mm = matchProduct(it.notes || '', prods, cats);
-        m = { productId: mm.productId, categoryId: mm.categoryId, matchedOn: mm.matchedOn };
-        autoMatched = !!(mm.productId || mm.categoryId);
+      let condition = it.condition || '';
+      let action: 'stock' | 'sorting' | 'repair' = (it.intended_action as any) || 'stock';
+
+      if (!categoryId && !productId && it.notes) {
+        const mm = matchProduct(it.notes, prods, cats);
+        if (mm.confidence !== 'none') {
+          categoryId = mm.categoryId;
+          productId = mm.productId;
+          matchedOn = mm.matchedOn;
+          confidence = mm.confidence;
+          autoMatched = !!(mm.productId || mm.categoryId);
+        }
       }
+
+      if (!condition || (!it.intended_action && it.notes)) {
+        const d = deriveConditionAction(it.notes || '');
+        if (!condition) condition = d.condition;
+        if (!it.intended_action) action = d.intended_action;
+      }
+
       return {
         _key: it.id,
         _persistedId: it.id,
@@ -354,14 +389,15 @@ function ReviewModal({
         _isChild: false,
         _sourceDescription: it.notes || '',
         _sourceQuantity: it.quantity || 0,
-        category_id: m.categoryId,
-        product_id: m.productId,
+        category_id: categoryId,
+        product_id: productId,
         quantity: it.quantity,
-        condition: it.condition || 'good',
-        intended_action: (it.intended_action as any) || 'stock',
+        condition: condition || 'good',
+        intended_action: action,
         notes: it.notes,
         auto_matched: autoMatched,
-        match_type: m.matchedOn,
+        match_type: matchedOn,
+        match_confidence: confidence,
       };
     });
 
@@ -1010,7 +1046,7 @@ function SplitRow({
         >
           <option value="">{row.category_id ? '-- Produkti --' : 'Zgjidh kategorine'}</option>
           {productsForCategory.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}{p.sku ? ` (${p.sku})` : ''}</option>
+            <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
         <input
@@ -1044,12 +1080,28 @@ function SplitRow({
             );
           })}
         </div>
-        {row.auto_matched && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
-            <Sparkles className="w-2.5 h-2.5" />
-            {row.match_type === 'sku' ? 'SKU' : row.match_type === 'product_name' ? 'Produkt' : 'Kategori'}
-          </span>
-        )}
+        {row.auto_matched && (() => {
+          const tone =
+            row.match_confidence === 'high' ? 'bg-emerald-100 text-emerald-700' :
+            row.match_confidence === 'medium' ? 'bg-amber-100 text-amber-800' :
+            'bg-gray-100 text-gray-600';
+          const label =
+            row.match_type === 'sku' ? 'AI - SKU' :
+            row.match_type === 'combined' ? 'AI - Kategori + Produkt' :
+            row.match_type === 'product_name' ? 'AI - Produkt' :
+            'AI - Kategori';
+          return (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tone}`}>
+              <Sparkles className="w-2.5 h-2.5" />
+              {label}
+              {row.match_confidence && row.match_confidence !== 'none' && (
+                <span className="opacity-75">
+                  {row.match_confidence === 'high' ? '(e larte)' : row.match_confidence === 'medium' ? '(e mesme)' : '(e ulet)'}
+                </span>
+              )}
+            </span>
+          );
+        })()}
       </div>
 
       <div className="flex items-center gap-1 flex-wrap">
