@@ -26,6 +26,10 @@ import {
   BookOpen,
   BellRing,
   Image as ImageIcon,
+  Mail,
+  Megaphone,
+  ListChecks,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -70,6 +74,15 @@ const navSections: NavSection[] = [
       { to: '/super-admin/user-manual', icon: BookOpen, labelKey: 'nav.userManual', end: false },
       { to: '/super-admin/test-notifications', icon: BellRing, labelKey: 'nav.testNotifications', end: false },
       { to: '/super-admin/push-notifications', icon: Bell, labelKey: 'nav.pushNotifications', end: false, badgeKey: 'common.new' },
+    ],
+  },
+  {
+    titleKey: 'nav.email',
+    items: [
+      { to: '/super-admin/email/templates', icon: Mail, labelKey: 'nav.emailTemplates', end: false },
+      { to: '/super-admin/email/campaigns', icon: Megaphone, labelKey: 'nav.emailCampaigns', end: false },
+      { to: '/super-admin/email/log', icon: ListChecks, labelKey: 'nav.emailLog', end: false },
+      { to: '/super-admin/email/settings', icon: SlidersHorizontal, labelKey: 'nav.emailSettings', end: false },
     ],
   },
   {

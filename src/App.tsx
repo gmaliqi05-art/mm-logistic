@@ -41,6 +41,13 @@ const SuperAdminUserManual = lazy(() => import('./pages/super-admin/UserManual')
 const SuperAdminTestNotifications = lazy(() => import('./pages/super-admin/TestNotifications'));
 const SuperAdminPushNotifications = lazy(() => import('./pages/super-admin/PushNotifications'));
 const SuperAdminPlatformBranding = lazy(() => import('./pages/super-admin/PlatformBranding'));
+const SuperAdminEmailTemplates = lazy(() => import('./pages/super-admin/EmailTemplates'));
+const SuperAdminEmailTemplateEditor = lazy(() => import('./pages/super-admin/EmailTemplateEditor'));
+const SuperAdminEmailCampaigns = lazy(() => import('./pages/super-admin/EmailCampaigns'));
+const SuperAdminEmailCampaignNew = lazy(() => import('./pages/super-admin/EmailCampaignNew'));
+const SuperAdminEmailCampaignDetail = lazy(() => import('./pages/super-admin/EmailCampaignDetail'));
+const SuperAdminEmailLog = lazy(() => import('./pages/super-admin/EmailLog'));
+const SuperAdminEmailSettings = lazy(() => import('./pages/super-admin/EmailSettings'));
 
 const CompanyDashboard = lazy(() => import('./pages/company/Dashboard'));
 const CompanyDepots = lazy(() => import('./pages/company/Depots'));
@@ -167,6 +174,14 @@ function AppRoutes() {
           <Route path="user-manual" element={<SuperAdminUserManual />} />
           <Route path="test-notifications" element={<SuperAdminTestNotifications />} />
           <Route path="push-notifications" element={<SuperAdminPushNotifications />} />
+          <Route path="email/templates" element={<SuperAdminEmailTemplates />} />
+          <Route path="email/templates/new" element={<SuperAdminEmailTemplateEditor />} />
+          <Route path="email/templates/:code" element={<SuperAdminEmailTemplateEditor />} />
+          <Route path="email/campaigns" element={<SuperAdminEmailCampaigns />} />
+          <Route path="email/campaigns/new" element={<SuperAdminEmailCampaignNew />} />
+          <Route path="email/campaigns/:id" element={<SuperAdminEmailCampaignDetail />} />
+          <Route path="email/log" element={<SuperAdminEmailLog />} />
+          <Route path="email/settings" element={<SuperAdminEmailSettings />} />
         </Route>
 
         <Route path="/company" element={
