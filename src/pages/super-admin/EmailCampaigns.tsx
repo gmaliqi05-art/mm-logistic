@@ -90,8 +90,8 @@ export default function EmailCampaigns() {
       {loading ? (
         <div className="flex items-center justify-center p-10"><Loader2 className="h-6 w-6 animate-spin text-teal-600" /></div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full min-w-[820px]">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Fushata</th>
@@ -99,7 +99,7 @@ export default function EmailCampaigns() {
                 <th className="px-4 py-3">Marres</th>
                 <th className="px-4 py-3">Dergua</th>
                 <th className="px-4 py-3">Deshtuan</th>
-                <th className="px-4 py-3">Planifikuar</th>
+                <th className="hidden px-4 py-3 md:table-cell">Planifikuar</th>
                 <th className="px-4 py-3 text-right">Veprime</th>
               </tr>
             </thead>
@@ -127,7 +127,7 @@ export default function EmailCampaigns() {
                       <td className="px-4 py-3 text-slate-700">{c.total_recipients}</td>
                       <td className="px-4 py-3 text-emerald-700">{c.sent_count}</td>
                       <td className="px-4 py-3 text-red-700">{c.failed_count}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
+                      <td className="hidden px-4 py-3 text-xs text-slate-500 md:table-cell">
                         {c.scheduled_at ? new Date(c.scheduled_at).toLocaleString() : "—"}
                       </td>
                       <td className="px-4 py-3">
