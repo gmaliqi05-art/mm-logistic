@@ -21,7 +21,6 @@ import type { ChatRoom as ChatRoomType, ChatMessage, ChatParticipant, Profile } 
 import EmojiPicker from './EmojiPicker';
 import MessageBubble from './MessageBubble';
 import ProfilePhotoUpload from './ProfilePhotoUpload';
-import { notifyMultipleUsers } from '../../utils/pushNotifications';
 
 interface RoomWithMeta extends ChatRoomType {
   participants: (ChatParticipant & { profile?: Profile })[];
@@ -371,20 +370,6 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
         throw err;
       }
 
-      const recipientIds = selectedRoom.participants
-        .filter((p) => p.user_id !== profile!.id)
-        .map((p) => p.user_id);
-
-      if (recipientIds.length > 0) {
-        const chatUrl = isSuperAdmin ? '/super-admin/chat' : '/chat';
-        await notifyMultipleUsers(
-          recipientIds,
-          'chat',
-          `${profile!.full_name}`,
-          text.substring(0, 100),
-          chatUrl
-        );
-      }
     } catch (err: any) {
       setError(err.message || t('common.errorSending'));
     } finally {
@@ -437,21 +422,6 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
         throw msgErr;
       }
 
-      const recipientIds = selectedRoom.participants
-        .filter((p) => p.user_id !== profile!.id)
-        .map((p) => p.user_id);
-
-      if (recipientIds.length > 0) {
-        const chatUrl = isSuperAdmin ? '/super-admin/chat' : '/chat';
-        const messageText = isImage ? 'Dërgoi një foto' : `Dërgoi dokumentin: ${file.name}`;
-        await notifyMultipleUsers(
-          recipientIds,
-          'chat',
-          `${profile!.full_name}`,
-          messageText,
-          chatUrl
-        );
-      }
     } catch (err: any) {
       setError(err.message || t('common.errorSending'));
     } finally {

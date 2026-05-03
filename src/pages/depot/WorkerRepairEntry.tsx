@@ -272,7 +272,7 @@ export default function WorkerRepairEntry() {
             user_id: a.id,
             title: 'Raport reparaturash per shqyrtim',
             message: `${total} cope u raportuan dhe presin miratim.`,
-            type: 'system',
+            type: 'document',
             reference_id: reportRow.id,
           })) as any,
         );

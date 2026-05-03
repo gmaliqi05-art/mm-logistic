@@ -774,7 +774,7 @@ export function TaskDetailSheet({
             user_id: a.id,
             title: 'Dergese pa dokument',
             message: `${note.note_number} u mbyll nga shoferi pa skanim - dokumenti pritet me email.`,
-            type: 'system',
+            type: 'delivery',
             reference_id: note.id,
           }));
           await supabase.from('notifications').insert(rows as any);
@@ -905,7 +905,7 @@ export function TaskDetailSheet({
             user_id: a.id,
             title: 'Dergese per shqyrtim',
             message: `${note.note_number} u skanua nga shoferi dhe pret miratim.`,
-            type: 'system',
+            type: 'delivery',
             reference_id: note.id,
           }));
           await supabase.from('notifications').insert(rows as any);

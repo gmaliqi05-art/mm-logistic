@@ -138,7 +138,7 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
         await supabase.from('notifications').insert({
           user_id: form.assigned_driver_id,
           company_id: note.company_id,
-          type: 'delivery_assigned',
+          type: 'assignment',
           title: t('notifications.deliveryAssignedTitle') || 'New delivery assigned',
           message: note.note_number,
           data: { delivery_note_id: note.id, note_number: note.note_number },

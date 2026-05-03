@@ -582,7 +582,7 @@ function ReviewModal({
               user_id: u.id,
               title: 'Dergese per stok',
               message: `${note.note_number} u miratua. Verifikoni dhe regjistrojeni ne stok.`,
-              type: 'system',
+              type: 'delivery',
               reference_id: note.id,
             })) as any,
           );
@@ -627,7 +627,7 @@ function ReviewModal({
             user_id: uid,
             title: 'Dergesa u regjistrua ne stok',
             message: `${note.note_number} u mbyll dhe u regjistrua ne stok.`,
-            type: 'system',
+            type: 'delivery',
             reference_id: note.id,
           })) as any,
         );
@@ -664,7 +664,7 @@ function ReviewModal({
           user_id: note.assigned_driver_id,
           title: 'Dergesa u kthye',
           message: `${note.note_number}: ${reason.trim()}`,
-          type: 'system',
+          type: 'delivery',
           reference_id: note.id,
         });
       }

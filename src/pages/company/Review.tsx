@@ -286,7 +286,7 @@ function RepairReviewModal({
           user_id: report.created_by,
           title: t('review.repair.notifyApprovedTitle'),
           message: `${new Date(report.report_date).toLocaleDateString()} - ${report.total_quantity} ${t('common.pieces')}`,
-          type: 'system',
+          type: 'document',
           reference_id: report.id,
         });
       }
@@ -321,7 +321,7 @@ function RepairReviewModal({
           user_id: report.created_by,
           title: t('review.repair.notifyRejectedTitle'),
           message: reason.trim(),
-          type: 'system',
+          type: 'document',
           reference_id: report.id,
         });
       }

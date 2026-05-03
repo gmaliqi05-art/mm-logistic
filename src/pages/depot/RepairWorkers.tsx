@@ -417,7 +417,7 @@ export default function DepotRepairWorkers() {
           user_id: a.id,
           title,
           message,
-          type: 'system',
+          type: 'document',
         }));
         await supabase.from('notifications').insert(rows);
       }
