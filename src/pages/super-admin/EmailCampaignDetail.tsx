@@ -139,7 +139,7 @@ export default function EmailCampaignDetail() {
   const canCancel = campaign.status === "scheduled" || campaign.status === "sending" || campaign.status === "draft";
 
   return (
-    <div className="p-6">
+    <div className="p-4 lg:p-6">
       <div className="mb-4 flex items-center gap-3">
         <Link to="/super-admin/email/campaigns" className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900">
           <ArrowLeft className="h-5 w-5" />
@@ -235,13 +235,13 @@ export default function EmailCampaignDetail() {
         )}
       </div>
 
-      <div className="mb-3 flex flex-wrap gap-1">
+      <div className="mb-3 -mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
         {(["all", "pending", "sent", "failed", "skipped"] as const).map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setFilter(s)}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               filter === s ? "border-teal-500 bg-teal-50 text-teal-700" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
             }`}
           >
@@ -250,38 +250,58 @@ export default function EmailCampaignDetail() {
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full">
-          <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Gjuha</th>
-              <th className="px-4 py-3">Statusi</th>
-              <th className="px-4 py-3">Gabim</th>
-              <th className="px-4 py-3">Dergua</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
-            {filtered.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-500">Pa marres.</td></tr>
-            ) : (
-              filtered.map((r) => (
-                <tr key={r.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-2.5 font-mono text-xs text-slate-700">{r.email}</td>
-                  <td className="px-4 py-2.5 text-xs uppercase text-slate-500">{r.locale}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${RCPT_STATUS[r.status] ?? "bg-slate-100 text-slate-600"}`}>
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 max-w-sm truncate text-xs text-red-600" title={r.error ?? ""}>{r.error ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-500">{r.sent_at ? new Date(r.sent_at).toLocaleString() : "—"}</td>
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">Pa marres.</div>
+      ) : (
+        <>
+          <div className="grid gap-2 lg:hidden">
+            {filtered.map((r) => (
+              <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1 font-mono text-xs text-slate-800 break-all">{r.email}</div>
+                  <span className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${RCPT_STATUS[r.status] ?? "bg-slate-100 text-slate-600"}`}>
+                    {r.status}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                  <span className="uppercase">{r.locale}</span>
+                  {r.sent_at && <span>{new Date(r.sent_at).toLocaleString()}</span>}
+                </div>
+                {r.error && <div className="mt-2 break-words text-xs text-red-600">{r.error}</div>}
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:block">
+            <table className="w-full">
+              <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Gjuha</th>
+                  <th className="px-4 py-3">Statusi</th>
+                  <th className="px-4 py-3">Gabim</th>
+                  <th className="px-4 py-3">Dergua</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {filtered.map((r) => (
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-2.5 font-mono text-xs text-slate-700">{r.email}</td>
+                    <td className="px-4 py-2.5 text-xs uppercase text-slate-500">{r.locale}</td>
+                    <td className="px-4 py-2.5">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${RCPT_STATUS[r.status] ?? "bg-slate-100 text-slate-600"}`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 max-w-sm truncate text-xs text-red-600" title={r.error ?? ""}>{r.error ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-slate-500">{r.sent_at ? new Date(r.sent_at).toLocaleString() : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

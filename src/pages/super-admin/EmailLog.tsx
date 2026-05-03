@@ -80,17 +80,17 @@ export default function EmailLog() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-4 lg:p-6">
       <div className="mb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+        <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900 sm:text-2xl">
           <Mail className="h-6 w-6 text-teal-600" />
           Log-u i emaileve
         </h1>
         <p className="mt-1 text-sm text-slate-500">Historia dhe statusi i cdo emaili te derguar.</p>
       </div>
 
-      <div className="mb-4 grid gap-3 lg:grid-cols-4">
-        <div className="relative lg:col-span-2">
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="relative sm:col-span-2">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -117,13 +117,13 @@ export default function EmailLog() {
         </select>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-1">
+      <div className="mb-4 -mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
         {(["all", "sent", "failed", "skipped", "queued"] as const).map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setStatus(s)}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               status === s ? "border-teal-500 bg-teal-50 text-teal-700" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
             }`}
           >
@@ -134,9 +134,44 @@ export default function EmailLog() {
 
       {loading ? (
         <div className="flex items-center justify-center p-10"><Loader2 className="h-6 w-6 animate-spin text-teal-600" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">Pa te dhena.</div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full">
+        <>
+          <div className="grid gap-3 xl:hidden">
+            {filtered.map((d) => (
+              <div key={d.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-sm text-slate-800 break-all">{d.recipient_email}</div>
+                    <div className="mt-0.5 text-sm text-slate-700 break-words line-clamp-2" title={d.subject}>{d.subject}</div>
+                  </div>
+                  <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLS[d.status] ?? "bg-slate-100 text-slate-600"}`}>
+                    {d.status === "sent" ? <CheckCircle2 className="h-3 w-3" /> : d.status === "failed" ? <XCircle className="h-3 w-3" /> : null}
+                    {d.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <code className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">{d.template_code}</code>
+                  <span className="uppercase">{d.locale}</span>
+                  <span>{new Date(d.created_at).toLocaleString()}</span>
+                </div>
+                <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setDetail(d)}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Detaje
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm xl:block">
+            <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Koha</th>
@@ -149,10 +184,7 @@ export default function EmailLog() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-slate-500">Pa te dhena.</td></tr>
-              ) : (
-                filtered.map((d) => (
+              {filtered.map((d) => (
                   <tr key={d.id} className="hover:bg-slate-50">
                     <td className="px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">
                       {new Date(d.created_at).toLocaleString()}
@@ -180,11 +212,11 @@ export default function EmailLog() {
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
+                ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
 
       {detail && (

@@ -85,10 +85,10 @@ export default function EmailTemplates() {
   });
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+    <div className="p-4 lg:p-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900 sm:text-2xl">
             <Mail className="h-6 w-6 text-teal-600" />
             Template-t e emailit
           </h1>
@@ -96,15 +96,15 @@ export default function EmailTemplates() {
         </div>
         <Link
           to="/super-admin/email/templates/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           Template i ri
         </Link>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px]">
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -114,13 +114,13 @@ export default function EmailTemplates() {
             className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
           />
         </div>
-        <div className="flex gap-1 rounded-lg border border-slate-300 bg-white p-0.5">
+        <div className="-mx-1 flex gap-1 overflow-x-auto rounded-lg border border-slate-300 bg-white p-0.5 md:mx-0 md:flex-none">
           {(["all", "transactional", "marketing", "system"] as const).map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setCategory(c)}
-              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`whitespace-nowrap rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 category === c ? "bg-teal-600 text-white" : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -134,28 +134,82 @@ export default function EmailTemplates() {
         <div className="flex items-center justify-center p-10">
           <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
+          Nuk u gjet template.
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full">
-            <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Emri</th>
-                <th className="px-4 py-3">Kodi</th>
-                <th className="px-4 py-3">Kategoria</th>
-                <th className="px-4 py-3">Statusi</th>
-                <th className="px-4 py-3">Perditesuar</th>
-                <th className="px-4 py-3 text-right">Veprime</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
-              {filtered.length === 0 ? (
+        <>
+          <div className="grid gap-3 xl:hidden">
+            {filtered.map((t) => (
+              <div key={t.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-slate-900">{t.name}</div>
+                    {t.description && <div className="mt-0.5 text-xs text-slate-500">{t.description}</div>}
+                  </div>
+                  <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${CATEGORY_BADGE[t.category]}`}>
+                    <Tag className="h-3 w-3" />
+                    {CATEGORY_LABEL[t.category]}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700 break-all">{t.code}</code>
+                  <button
+                    type="button"
+                    onClick={() => toggleActive(t)}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      t.is_active ? "bg-teal-100 text-teal-700" : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <Power className="h-3 w-3" />
+                    {t.is_active ? "Aktiv" : "Joaktiv"}
+                  </button>
+                  <span className="text-xs text-slate-400">{new Date(t.updated_at).toLocaleDateString()}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">
+                  <Link
+                    to={`/super-admin/email/templates/${t.code}`}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600"
+                  >
+                    <Edit3 className="h-3.5 w-3.5" />
+                    Edito
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setTestCode(t.code)}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Test
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => duplicate(t)}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Dyfisho
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm xl:block">
+            <table className="w-full">
+              <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">
-                    Nuk u gjet template.
-                  </td>
+                  <th className="px-4 py-3">Emri</th>
+                  <th className="px-4 py-3">Kodi</th>
+                  <th className="px-4 py-3">Kategoria</th>
+                  <th className="px-4 py-3">Statusi</th>
+                  <th className="px-4 py-3">Perditesuar</th>
+                  <th className="px-4 py-3 text-right">Veprime</th>
                 </tr>
-              ) : (
-                filtered.map((t) => (
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {filtered.map((t) => (
                   <tr key={t.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-slate-900">{t.name}</div>
@@ -213,11 +267,11 @@ export default function EmailTemplates() {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <TestSendDialog
