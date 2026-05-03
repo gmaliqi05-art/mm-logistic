@@ -31,6 +31,7 @@ interface SendRequest {
   preview?: boolean;
   test?: boolean;
   campaign_id?: string | null;
+  from_override?: string;
 }
 
 const supabase = createClient(
@@ -201,9 +202,9 @@ async function ensureUnsubscribeUrl(userId: string | null | undefined, brand: Br
   }
 }
 
-async function sendViaResend(to: string[], from: string, replyTo: string, subject: string, html: string, attachments?: SendRequest["attachments"]): Promise<{ ok: boolean; id?: string; error?: string }> {
+async function sendViaResend(to: string[], from: string, replyTo: string, subject: string, html: string, attachments?: SendRequest["attachments"]): Promise<{ ok: boolean; id?: string; error?: string; error_type?: string; error_name?: string }> {
   const key = Deno.env.get("RESEND_API_KEY");
-  if (!key) return { ok: false, error: "RESEND_API_KEY not configured" };
+  if (!key) return { ok: false, error: "RESEND_API_KEY not configured", error_type: "no_key" };
   try {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -211,10 +212,22 @@ async function sendViaResend(to: string[], from: string, replyTo: string, subjec
       body: JSON.stringify({ from, to, reply_to: replyTo, subject, html, attachments }),
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: j?.message || `HTTP ${r.status}` };
+    if (!r.ok) {
+      const msg = j?.message || `HTTP ${r.status}`;
+      const name = j?.name || "";
+      let type = "send_failed";
+      if (/domain is not verified|verify your domain/i.test(msg) || name === "validation_error") {
+        type = "domain_unverified";
+      } else if (/invalid.*api.?key|unauthorized/i.test(msg) || r.status === 401) {
+        type = "invalid_api_key";
+      } else if (/testing emails.*only.*your own/i.test(msg) || /you can only send testing emails/i.test(msg)) {
+        type = "testing_restriction";
+      }
+      return { ok: false, error: msg, error_type: type, error_name: name };
+    }
     return { ok: true, id: j?.id };
   } catch (e) {
-    return { ok: false, error: String(e) };
+    return { ok: false, error: String(e), error_type: "network" };
   }
 }
 
@@ -310,9 +323,10 @@ Deno.serve(async (req: Request) => {
     const finalHtml = "error" in finalRendered ? rendered.html : finalRendered.html;
     const finalSubject = "error" in finalRendered ? rendered.subject : finalRendered.subject;
 
-    const { ok, id, error } = await sendViaResend(
+    const fromAddress = body.from_override?.trim() || brand.fromAddress;
+    const { ok, id, error, error_type, error_name } = await sendViaResend(
       recipients,
-      brand.fromAddress,
+      fromAddress,
       brand.replyTo,
       finalSubject,
       finalHtml,
@@ -337,7 +351,7 @@ Deno.serve(async (req: Request) => {
       await supabase.from("email_deliveries").insert(logRows);
     }
 
-    return new Response(JSON.stringify({ ok, id, error }), {
+    return new Response(JSON.stringify({ ok, id, error, error_type, error_name, from: fromAddress }), {
       status: ok ? 200 : 202,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

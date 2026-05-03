@@ -86,7 +86,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
   const [email, setEmail] = useState("");
   const [locale, setLocale] = useState<"sq" | "de" | "en">(defaultLocale);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{ ok: boolean; message: string; errorType?: string } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [dataJson, setDataJson] = useState("{}");
@@ -155,7 +155,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
 
   const brandIncomplete = brand && (!brand.from_address || !brand.brand_name);
 
-  async function send() {
+  async function send(opts?: { useResendSandbox?: boolean }) {
     setSending(true);
     setResult(null);
     try {
@@ -185,13 +185,14 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
           locale,
           data,
           test: true,
+          from_override: opts?.useResendSandbox ? `${brand?.brand_name || "MM Logistic"} <onboarding@resend.dev>` : undefined,
         }),
       });
       const j = await resp.json();
       if (resp.ok && j.ok) {
-        setResult({ ok: true, message: `U dergua tek ${email}. Kontrollo inbox-in.` });
+        setResult({ ok: true, message: `U dergua tek ${email}. Kontrollo inbox-in (mund te jete edhe ne Spam).` });
       } else {
-        setResult({ ok: false, message: j.error || "Dergimi deshtoi" });
+        setResult({ ok: false, message: j.error || "Dergimi deshtoi", errorType: j.error_type });
       }
     } catch (e) {
       setResult({ ok: false, message: e instanceof Error ? e.message : String(e) });
@@ -322,9 +323,56 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
           </div>
 
           {result && (
-            <div className={`flex items-start gap-2 rounded-lg p-3 text-sm ${result.ok ? "bg-teal-50 text-teal-800" : "bg-red-50 text-red-800"}`}>
-              {result.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
-              <span className="break-words">{result.message}</span>
+            <div className={`rounded-lg p-3 text-sm ${result.ok ? "bg-teal-50 text-teal-800" : "bg-red-50 text-red-800"}`}>
+              <div className="flex items-start gap-2">
+                {result.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                <span className="break-words">{result.message}</span>
+              </div>
+              {!result.ok && result.errorType === "domain_unverified" && (
+                <div className="mt-3 space-y-2 border-t border-red-200 pt-3 text-xs">
+                  <div className="font-medium text-red-900">Si te rregullosh:</div>
+                  <ol className="list-inside list-decimal space-y-1 text-red-800">
+                    <li>
+                      Verifiko domain-in ne{" "}
+                      <a href="https://resend.com/domains" target="_blank" rel="noreferrer" className="underline hover:text-red-900">
+                        resend.com/domains
+                      </a>{" "}
+                      (shto SPF + DKIM), ose
+                    </li>
+                    <li>
+                      Ndrysho <code className="rounded bg-red-100 px-1">email_from_address</code> ne{" "}
+                      <Link to="/super-admin/email/settings" className="underline hover:text-red-900" onClick={onClose}>
+                        Parametrat e emailit
+                      </Link>{" "}
+                      me nje adrese te domain-it te verifikuar.
+                    </li>
+                  </ol>
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => send({ useResendSandbox: true })}
+                      disabled={sending}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                      Dergo tani me onboarding@resend.dev (test)
+                    </button>
+                    <p className="mt-1 text-[11px] text-red-700">
+                      Perdor adresen e testit te Resend per te pare si duket email-i. Per prodhim, verifiko domain-in.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!result.ok && result.errorType === "invalid_api_key" && (
+                <div className="mt-2 border-t border-red-200 pt-2 text-xs text-red-800">
+                  Kontrollo <code className="rounded bg-red-100 px-1">RESEND_API_KEY</code> ne secrets e Supabase.
+                </div>
+              )}
+              {!result.ok && result.errorType === "testing_restriction" && (
+                <div className="mt-2 border-t border-red-200 pt-2 text-xs text-red-800">
+                  Resend ne testim lejon dergim vetem te adresa e pronarit te llogarise. Verifiko domain-in per te derguar kudo.
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -339,7 +387,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
           </button>
           <button
             type="button"
-            onClick={send}
+            onClick={() => send()}
             disabled={sending || !email}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
