@@ -209,7 +209,9 @@ function renderLayout(params: {
   const whyLine = (isMarketing ? L.why_marketing : L.why_transactional).replace("{{brand}}", brandEsc);
 
   const logoBlock = brand.logoUrl
-    ? `<img src="${escape(brand.logoUrl)}" alt="${brandEsc}" height="56" style="display:block;max-height:56px;width:auto;border:0;outline:none;text-decoration:none;background:#ffffff;border-radius:8px;padding:6px 10px;" />`
+    ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td style="background:#ffffff;border-radius:10px;padding:8px 14px;">
+         <img src="${escape(brand.logoUrl)}" alt="${brandEsc}" width="160" style="display:block;width:160px;max-width:160px;height:auto;border:0;outline:none;text-decoration:none;" />
+       </td></tr></table>`
     : `<div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">${brandEsc}</div>`;
 
   const ctaBlock = ctaLabel && ctaUrl
@@ -232,8 +234,7 @@ function renderLayout(params: {
       </td></tr>
     </table>`;
 
-  const privacyUrl = brand.appBaseUrl ? `${brand.appBaseUrl.replace(/\/$/, "")}/privacy` : "";
-  const termsUrl = brand.appBaseUrl ? `${brand.appBaseUrl.replace(/\/$/, "")}/terms` : "";
+  const privacyUrl = brand.appBaseUrl ? `${brand.appBaseUrl.replace(/\/$/, "")}/privacy-policy` : "";
 
   const legalFinePrint = `
     <div style="font-family:Georgia,'Times New Roman',serif;font-size:11px;line-height:1.6;color:#94a3b8;font-style:italic;margin-top:14px;">
@@ -241,10 +242,7 @@ function renderLayout(params: {
       <div style="margin-bottom:4px;">${L.confidentiality}</div>
       <div style="margin-bottom:6px;">${L.wrong_recipient}</div>
       <div style="font-style:normal;font-family:Arial,Helvetica,sans-serif;color:#64748b;">
-        ${privacyUrl ? `<a href="${escape(privacyUrl)}" style="color:#64748b;text-decoration:underline;">${L.privacy}</a>` : ""}
-        ${privacyUrl && termsUrl ? ` &middot; ` : ""}
-        ${termsUrl ? `<a href="${escape(termsUrl)}" style="color:#64748b;text-decoration:underline;">${L.terms}</a>` : ""}
-        ${(privacyUrl || termsUrl) ? ` &middot; ` : ""}
+        ${privacyUrl ? `<a href="${escape(privacyUrl)}" style="color:#64748b;text-decoration:underline;">${L.privacy}</a> &middot; ` : ""}
         &copy; ${year} ${brandEsc}. ${L.rights}
       </div>
     </div>`;
@@ -403,13 +401,14 @@ async function renderTemplate(
   const ctaLabel = interpolate(pickLocale(locale, t.cta_label_sq, t.cta_label_de, t.cta_label_en), data, brand);
   const ctaUrl = interpolate(t.cta_url, data, brand);
 
+  const isMarketing = t.category === "marketing";
   const html = renderLayout({
     brand, preheader, heading, intro, bodyHtml,
     ctaLabel: ctaLabel || undefined,
     ctaUrl: ctaUrl || undefined,
-    unsubscribeUrl,
+    unsubscribeUrl: isMarketing ? unsubscribeUrl : undefined,
     locale,
-    isMarketing: t.category === "marketing",
+    isMarketing,
   });
 
   return { subject, html, preheader, heading, intro, bodyHtml, ctaLabel, ctaUrl };
