@@ -10,7 +10,10 @@ import {
   Clock,
   Loader2,
   AlertTriangle,
+  Layers,
+  Wrench,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -32,15 +35,24 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
   confirmed: { bg: 'bg-teal-100', text: 'text-teal-700', label: 'Konfirmuar' },
 };
 
+type DeliveryItemSummary = {
+  intended_action: 'stock' | 'sorting' | 'repair';
+  quantity: number;
+};
+
+type SortingBatchRef = { id: string; status: string; source_delivery_note_id: string };
+
 type DeliveryNoteWithRels = DeliveryNote & {
   driver?: { full_name: string } | null;
   depot?: { name: string } | null;
+  items?: DeliveryItemSummary[];
 };
 
 export default function DepotDeliveryNotes() {
   const { profile } = useAuth();
   const { t } = useTranslation();
   const [notes, setNotes] = useState<DeliveryNoteWithRels[]>([]);
+  const [batchesByNote, setBatchesByNote] = useState<Record<string, SortingBatchRef>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -56,13 +68,27 @@ export default function DepotDeliveryNotes() {
       setError(null);
       const { data, error: err } = await supabase
         .from('delivery_notes')
-        .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(name)')
+        .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(name), items:delivery_note_items(intended_action, quantity)')
         .eq('company_id', profile!.company_id!)
         .neq('status', 'draft')
         .order('created_at', { ascending: false })
         .limit(100);
       if (err) throw err;
-      setNotes((data as any) ?? []);
+      const rows = (data as any) ?? [];
+      setNotes(rows);
+
+      const noteIds = rows.map((r: any) => r.id);
+      if (noteIds.length > 0) {
+        const { data: batchRows } = await supabase
+          .from('pallet_sorting_batches')
+          .select('id, status, source_delivery_note_id')
+          .in('source_delivery_note_id', noteIds);
+        const map: Record<string, SortingBatchRef> = {};
+        for (const b of (batchRows as SortingBatchRef[] | null) ?? []) {
+          if (b.source_delivery_note_id) map[b.source_delivery_note_id] = b;
+        }
+        setBatchesByNote(map);
+      }
     } catch (err: any) {
       setError(err.message || t('common.errorLoading'));
     } finally {
@@ -186,6 +212,42 @@ export default function DepotDeliveryNotes() {
                           {n.type === 'pickup' ? n.pickup_address : n.delivery_address}
                         </p>
                       )}
+                      {(() => {
+                        const items = n.items ?? [];
+                        const totals = items.reduce(
+                          (acc, it) => {
+                            acc[it.intended_action] = (acc[it.intended_action] ?? 0) + (it.quantity ?? 0);
+                            return acc;
+                          },
+                          { stock: 0, sorting: 0, repair: 0 } as Record<string, number>,
+                        );
+                        const batch = batchesByNote[n.id];
+                        return (
+                          <div className="flex items-center gap-2 flex-wrap mt-2">
+                            {totals.stock > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700 border border-green-100">
+                                <Package className="w-3 h-3" /> Stok: {totals.stock}
+                              </span>
+                            )}
+                            {totals.sorting > 0 && (
+                              <Link
+                                to={batch ? `/depot/sorting?batch=${batch.id}` : '/depot/sorting'}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-50 text-teal-700 border border-teal-100 hover:bg-teal-100"
+                              >
+                                <Layers className="w-3 h-3" /> Sortire: {totals.sorting}
+                              </Link>
+                            )}
+                            {totals.repair > 0 && (
+                              <Link
+                                to="/depot/repairs"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-100 hover:bg-red-100"
+                              >
+                                <Wrench className="w-3 h-3" /> Defekt: {totals.repair}
+                              </Link>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="text-right flex-shrink-0 text-[11px]">
                       <p className="text-gray-500">{new Date(n.created_at).toLocaleDateString()}</p>

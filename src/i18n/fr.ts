@@ -677,6 +677,9 @@ export const fr: typeof sq = {
       productLabel: 'Produit',
       productPlaceholder: 'S\u00e9lectionner un produit (optionnel)',
       categorySearchPlaceholder: 'Rechercher une cat\u00e9gorie...',
+      actionStock: 'Stock',
+      actionSorting: 'Tri',
+      actionRepair: 'D\u00e9fectueux',
       quantityLabel: 'Quantit\u00e9',
       noteNumber: 'Num\u00e9ro du bon',
       driver: 'Chauffeur',
@@ -970,6 +973,7 @@ export const fr: typeof sq = {
       cancelBatch: 'Annuler',
       confirmCancel: 'Annuler ce lot de tri?',
       noProductsForCategory: 'Cette cat\u00e9gorie n\'a pas de produits configur\u00e9s',
+      fromNote: 'Du bon de livraison',
       goesToRepair: 'Va en r\u00e9paration',
       status: {
         in_progress: 'En cours',

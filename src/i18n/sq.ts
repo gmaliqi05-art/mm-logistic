@@ -675,6 +675,9 @@ export const sq = {
       productLabel: 'Produkti',
       productPlaceholder: 'Zgjedh produktin (opsional)',
       categorySearchPlaceholder: 'Kerko kategorine...',
+      actionStock: 'Stok',
+      actionSorting: 'Sortire',
+      actionRepair: 'Defekt',
       quantityLabel: 'Sasia',
       noteNumber: 'Numri i Fletederges',
       driver: 'Shoferi',
@@ -968,6 +971,7 @@ export const sq = {
       cancelBatch: 'Anulo',
       confirmCancel: 'Anulo kete grup selektimi?',
       noProductsForCategory: 'Kjo kategori nuk ka produkte te konfiguruara',
+      fromNote: 'Nga fletderga',
       goesToRepair: 'Shkon per reparatur',
       status: {
         in_progress: 'Ne vazhdim',

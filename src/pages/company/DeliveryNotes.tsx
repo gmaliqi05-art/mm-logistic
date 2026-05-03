@@ -31,6 +31,7 @@ interface NoteItemForm {
   quantity: number;
   condition: string;
   notes: string;
+  intended_action: 'stock' | 'sorting' | 'repair';
 }
 
 interface CompanyProduct {
@@ -68,7 +69,7 @@ interface Contact {
   contact_type: 'customer' | 'supplier' | 'both';
 }
 
-const emptyItem: NoteItemForm = { category_id: '', product_id: '', quantity: 1, condition: 'good', notes: '' };
+const emptyItem: NoteItemForm = { category_id: '', product_id: '', quantity: 1, condition: 'good', notes: '', intended_action: 'stock' };
 
 function todayLocalDate() {
   const d = new Date();
@@ -278,6 +279,7 @@ export default function CompanyDeliveryNotes() {
           quantity: item.quantity,
           condition: item.condition,
           notes: item.notes,
+          intended_action: item.intended_action,
         }));
 
       if (itemsPayload.length > 0) {
@@ -1206,7 +1208,7 @@ function ItemRow({ item, categories, products, onChange, onRemove, canRemove, t 
 
   return (
     <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
         <div ref={catRef} className="relative lg:col-span-2">
           <button
             type="button"
@@ -1269,6 +1271,21 @@ function ItemRow({ item, categories, products, onChange, onRemove, canRemove, t 
           className="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           placeholder={t('company.deliveryNotes.quantityLabel')}
         />
+        <select
+          value={item.intended_action}
+          onChange={(e) => {
+            const v = e.target.value as 'stock' | 'sorting' | 'repair';
+            onChange('intended_action', v);
+            if (v === 'repair') onChange('condition', 'damaged');
+            else if (v === 'sorting') onChange('condition', 'sorting');
+            else onChange('condition', 'good');
+          }}
+          className="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+        >
+          <option value="stock">{t('company.deliveryNotes.actionStock')}</option>
+          <option value="sorting">{t('company.deliveryNotes.actionSorting')}</option>
+          <option value="repair">{t('company.deliveryNotes.actionRepair')}</option>
+        </select>
         <select
           value={item.condition}
           onChange={(e) => onChange('condition', e.target.value)}

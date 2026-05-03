@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Layers,
   Plus,
@@ -25,6 +26,8 @@ interface CategoryProduct {
 
 interface BatchWithItems extends PalletSortingBatch {
   items: PalletSortingItem[];
+  source_delivery_note_id?: string | null;
+  reference_number_snapshot?: string | null;
 }
 
 interface ItemInput {
@@ -42,6 +45,7 @@ function isDefectProduct(name: string) {
 export default function DepotSorting() {
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +67,13 @@ export default function DepotSorting() {
   useEffect(() => {
     if (profile?.depot_id && profile?.company_id) fetchAll();
   }, [profile?.depot_id, profile?.company_id]);
+
+  useEffect(() => {
+    const batchId = searchParams.get('batch');
+    if (!batchId || batches.length === 0) return;
+    const b = batches.find((x) => x.id === batchId);
+    if (b && activeBatchId !== b.id) openBatch(b);
+  }, [searchParams, batches]);
 
   async function fetchAll() {
     try {
@@ -536,6 +547,11 @@ export default function DepotSorting() {
                     {t(`depot.sorting.mode.${currentCategory.sorting_mode}`)} &middot;{' '}
                     {new Date(currentBatch.created_at).toLocaleString()}
                   </p>
+                  {currentBatch.reference_number_snapshot && (
+                    <p className="text-xs text-teal-700 mt-0.5 font-medium">
+                      {t('depot.sorting.fromNote')}: {currentBatch.reference_number_snapshot}
+                    </p>
+                  )}
                 </div>
               </div>
               <button

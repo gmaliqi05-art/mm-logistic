@@ -677,6 +677,9 @@ export const en: typeof sq = {
       productLabel: 'Product',
       productPlaceholder: 'Select product (optional)',
       categorySearchPlaceholder: 'Search category...',
+      actionStock: 'Stock',
+      actionSorting: 'Sorting',
+      actionRepair: 'Defective',
       quantityLabel: 'Quantity',
       noteNumber: 'Note Number',
       driver: 'Driver',
@@ -970,6 +973,7 @@ export const en: typeof sq = {
       cancelBatch: 'Cancel',
       confirmCancel: 'Cancel this sorting batch?',
       noProductsForCategory: 'This category has no configured products',
+      fromNote: 'From note',
       goesToRepair: 'Goes to repair',
       status: {
         in_progress: 'In progress',

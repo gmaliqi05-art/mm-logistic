@@ -677,6 +677,9 @@ export const de: typeof sq = {
       productLabel: 'Produkt',
       productPlaceholder: 'Produkt w\u00e4hlen (optional)',
       categorySearchPlaceholder: 'Kategorie suchen...',
+      actionStock: 'Lager',
+      actionSorting: 'Sortierung',
+      actionRepair: 'Defekt',
       quantityLabel: 'Menge',
       noteNumber: 'Lieferscheinnummer',
       driver: 'Fahrer',
@@ -970,6 +973,7 @@ export const de: typeof sq = {
       cancelBatch: 'Abbrechen',
       confirmCancel: 'Diesen Sortiervorgang abbrechen?',
       noProductsForCategory: 'Diese Kategorie hat keine Produkte',
+      fromNote: 'Aus Lieferschein',
       goesToRepair: 'Geht in Reparatur',
       status: {
         in_progress: 'Laufend',
