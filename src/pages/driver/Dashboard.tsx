@@ -671,6 +671,14 @@ export function TaskDetailSheet({
     category_product?: { name: string } | null;
   }>>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState<string>(note.notes || '');
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [itemEdits, setItemEdits] = useState<Record<string, { quantity: number; condition: string }>>({});
+  const [savingItems, setSavingItems] = useState(false);
+  const [closingWithout, setClosingWithout] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [closeNote, setCloseNote] = useState<string>('');
 
   useEffect(() => {
     let active = true;
@@ -686,6 +694,101 @@ export function TaskDetailSheet({
     })();
     return () => { active = false; };
   }, [note.id]);
+
+  useEffect(() => {
+    setNotesDraft(note.notes || '');
+    setItemEdits({});
+    setEditingNotes(false);
+    setShowCloseConfirm(false);
+    setCloseNote('');
+  }, [note.id, note.notes]);
+
+  async function handleSaveNotes() {
+    setSavingNotes(true);
+    setLocalError(null);
+    try {
+      const { error } = await supabase
+        .from('delivery_notes')
+        .update({ notes: notesDraft || null, updated_at: new Date().toISOString() })
+        .eq('id', note.id);
+      if (error) throw error;
+      setEditingNotes(false);
+      await onUpdated();
+    } catch (err: any) {
+      setLocalError(err.message || t('driver.taskDetail.errorSaving'));
+    } finally {
+      setSavingNotes(false);
+    }
+  }
+
+  async function handleSaveItemEdits() {
+    const entries = Object.entries(itemEdits);
+    if (entries.length === 0) return;
+    setSavingItems(true);
+    setLocalError(null);
+    try {
+      for (const [id, patch] of entries) {
+        const { error } = await supabase
+          .from('delivery_note_items')
+          .update({ quantity: patch.quantity, condition: patch.condition })
+          .eq('id', id);
+        if (error) throw error;
+      }
+      setItems((prev) => prev.map((it) => itemEdits[it.id] ? { ...it, ...itemEdits[it.id] } : it));
+      setItemEdits({});
+    } catch (err: any) {
+      setLocalError(err.message || t('driver.taskDetail.errorSaving'));
+    } finally {
+      setSavingItems(false);
+    }
+  }
+
+  async function handleCloseWithoutDocument() {
+    setClosingWithout(true);
+    setLocalError(null);
+    try {
+      const prefix = note.notes ? `${note.notes}\n\n` : '';
+      const markerParts = ['[Pa skanim]'];
+      if (closeNote.trim()) markerParts.push(closeNote.trim());
+      const mergedNotes = `${prefix}${markerParts.join('\n')}`;
+
+      const { error } = await supabase
+        .from('delivery_notes')
+        .update({
+          status: 'pending_company_review',
+          notes: mergedNotes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', note.id);
+      if (error) throw error;
+
+      if (note.company_id) {
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('company_id', note.company_id)
+          .eq('role', 'company_admin')
+          .eq('is_active', true);
+        if (admins && admins.length > 0) {
+          const rows = admins.map((a) => ({
+            user_id: a.id,
+            title: 'Dergese pa dokument',
+            message: `${note.note_number} u mbyll nga shoferi pa skanim - dokumenti pritet me email.`,
+            type: 'system',
+            reference_id: note.id,
+          }));
+          await supabase.from('notifications').insert(rows as any);
+        }
+      }
+
+      await onUpdated(t('driver.taskDetail.closeWithoutDocSuccess'));
+    } catch (err: any) {
+      setLocalError(err.message || t('driver.taskDetail.errorSaving'));
+    } finally {
+      setClosingWithout(false);
+      setShowCloseConfirm(false);
+    }
+  }
 
   const isPickup = note.type === 'pickup';
   const scheduled = isPickup ? (note as any).scheduled_pickup_at : (note as any).scheduled_delivery_at;
@@ -884,12 +987,51 @@ export function TaskDetailSheet({
             />
           )}
 
-          {note.notes && (
-            <div className="bg-gray-50 rounded-xl p-3">
+          <div className="bg-gray-50 rounded-xl p-3">
+            <div className="flex items-center justify-between">
               <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{t('driver.documents.labelNotes')}</p>
-              <p className="text-sm text-gray-800 mt-1 whitespace-pre-wrap">{note.notes}</p>
+              {!alreadyDelivered && !editingNotes && (
+                <button
+                  onClick={() => setEditingNotes(true)}
+                  className="text-[11px] font-semibold text-teal-700 hover:text-teal-800"
+                >
+                  {t('driver.taskDetail.editNotes')}
+                </button>
+              )}
             </div>
-          )}
+            {editingNotes ? (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  value={notesDraft}
+                  onChange={(e) => setNotesDraft(e.target.value)}
+                  rows={5}
+                  className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  placeholder={t('driver.taskDetail.notesPlaceholder')}
+                />
+                <div className="flex items-center gap-2 justify-end">
+                  <button
+                    onClick={() => { setNotesDraft(note.notes || ''); setEditingNotes(false); }}
+                    disabled={savingNotes}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={handleSaveNotes}
+                    disabled={savingNotes}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-60"
+                  >
+                    {savingNotes ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                    {t('common.save')}
+                  </button>
+                </div>
+              </div>
+            ) : note.notes ? (
+              <p className="text-sm text-gray-800 mt-1 whitespace-pre-wrap">{note.notes}</p>
+            ) : (
+              <p className="text-xs text-gray-400 mt-1 italic">{t('driver.taskDetail.noNotes')}</p>
+            )}
+          </div>
 
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center gap-2">
@@ -908,11 +1050,9 @@ export function TaskDetailSheet({
             ) : (
               <ul className="divide-y divide-gray-100">
                 {items.map((it) => {
-                  const condCls =
-                    it.condition === 'good' ? 'bg-emerald-100 text-emerald-700' :
-                    it.condition === 'damaged' ? 'bg-red-100 text-red-700' :
-                    it.condition === 'needs_repair' ? 'bg-amber-100 text-amber-700' :
-                    'bg-gray-100 text-gray-700';
+                  const editable = !alreadyDelivered;
+                  const effQty = itemEdits[it.id]?.quantity ?? it.quantity;
+                  const effCond = itemEdits[it.id]?.condition ?? it.condition;
                   return (
                     <li key={it.id} className="px-3 py-2.5 flex items-start gap-3">
                       <div className="min-w-0 flex-1">
@@ -923,17 +1063,69 @@ export function TaskDetailSheet({
                           <p className="text-[11px] text-gray-500 truncate">{it.category.name}</p>
                         )}
                         {it.notes && <p className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-wrap">{it.notes}</p>}
+                        {editable && (
+                          <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                            {[
+                              { v: 'good', label: 'I mire', cls: 'bg-emerald-600' },
+                              { v: 'damaged', label: 'Defekt', cls: 'bg-red-600' },
+                              { v: 'sorting', label: 'Sortim', cls: 'bg-teal-600' },
+                              { v: 'ready_a', label: 'Klasse A', cls: 'bg-emerald-700' },
+                              { v: 'ready_b', label: 'Klasse B', cls: 'bg-sky-600' },
+                              { v: 'ready_c', label: 'Klasse C', cls: 'bg-amber-600' },
+                            ].map((o) => {
+                              const active = effCond === o.v;
+                              return (
+                                <button
+                                  key={o.v}
+                                  onClick={() => setItemEdits((p) => ({ ...p, [it.id]: { quantity: effQty, condition: o.v } }))}
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${active ? `${o.cls} text-white` : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                >
+                                  {o.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <span className="text-sm font-bold text-gray-900">x{it.quantity}</span>
-                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${condCls}`}>
-                          {it.condition}
-                        </span>
+                        {editable ? (
+                          <input
+                            type="number"
+                            min={0}
+                            value={effQty || ''}
+                            onChange={(e) => setItemEdits((p) => ({
+                              ...p,
+                              [it.id]: { quantity: parseInt(e.target.value) || 0, condition: effCond },
+                            }))}
+                            className="w-16 text-right text-sm font-bold text-gray-900 bg-white border border-gray-200 rounded-md px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-gray-900">x{effQty}</span>
+                        )}
                       </div>
                     </li>
                   );
                 })}
               </ul>
+            )}
+            {!alreadyDelivered && Object.keys(itemEdits).length > 0 && (
+              <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setItemEdits({})}
+                  disabled={savingItems}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={handleSaveItemEdits}
+                  disabled={savingItems}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-60"
+                >
+                  {savingItems ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {t('common.save')}
+                </button>
+              </div>
             )}
           </div>
 
@@ -1016,6 +1208,46 @@ export function TaskDetailSheet({
                 <p className="text-[11px] text-gray-500 text-center leading-snug">
                   {t('driver.taskDetail.scanHint')}
                 </p>
+                {!showCloseConfirm ? (
+                  <button
+                    onClick={() => setShowCloseConfirm(true)}
+                    disabled={uploading || dispatching || closingWithout}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-50 active:scale-95 transition-transform disabled:opacity-60"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    {t('driver.taskDetail.closeWithoutDoc')}
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+                    <p className="text-[11px] font-semibold text-amber-800">
+                      {t('driver.taskDetail.closeWithoutDocConfirm')}
+                    </p>
+                    <textarea
+                      value={closeNote}
+                      onChange={(e) => setCloseNote(e.target.value)}
+                      rows={2}
+                      className="w-full text-sm bg-white border border-amber-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      placeholder={t('driver.taskDetail.closeWithoutDocNotePlaceholder')}
+                    />
+                    <div className="flex items-center gap-2 justify-end">
+                      <button
+                        onClick={() => { setShowCloseConfirm(false); setCloseNote(''); }}
+                        disabled={closingWithout}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:bg-white"
+                      >
+                        {t('common.cancel')}
+                      </button>
+                      <button
+                        onClick={handleCloseWithoutDocument}
+                        disabled={closingWithout}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
+                      >
+                        {closingWithout ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                        {t('driver.taskDetail.closeWithoutDocConfirmBtn')}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 

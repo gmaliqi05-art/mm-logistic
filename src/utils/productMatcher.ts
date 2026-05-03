@@ -54,6 +54,59 @@ function normalize(s: string): string {
     .trim();
 }
 
+/**
+ * Extracts pallet dimension pairs (length x width) from free text and
+ * normalises them to millimetres. Accepts: 1200x800, 1200×800, 120x80 cm,
+ * 80x120cm, 800mm x 1200mm, 1,2 m x 0,8 m, 1.2x0.8m.
+ * The returned strings are always sorted ascending ("800x1200") so that
+ * 1200x800 and 800x1200 compare equal.
+ */
+export function extractDimensions(text: string): string[] {
+  if (!text) return [];
+  const out = new Set<string>();
+  const clean = text.toLowerCase().replace(/×/g, 'x').replace(/,/g, '.');
+
+  const re = /(\d+(?:\.\d+)?)\s*(mm|cm|m)?\s*x\s*(\d+(?:\.\d+)?)\s*(mm|cm|m)?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(clean)) !== null) {
+    const a = parseFloat(m[1]);
+    const b = parseFloat(m[3]);
+    const unitA = m[2] || m[4] || '';
+    const unitB = m[4] || m[2] || '';
+    const toMm = (v: number, u: string): number => {
+      if (!u) {
+        if (v < 10) return Math.round(v * 1000);
+        if (v < 300) return Math.round(v * 10);
+        return Math.round(v);
+      }
+      if (u === 'mm') return Math.round(v);
+      if (u === 'cm') return Math.round(v * 10);
+      if (u === 'm') return Math.round(v * 1000);
+      return Math.round(v);
+    };
+    const ax = toMm(a, unitA);
+    const bx = toMm(b, unitB);
+    if (ax > 0 && bx > 0) {
+      const lo = Math.min(ax, bx);
+      const hi = Math.max(ax, bx);
+      out.add(`${lo}x${hi}`);
+    }
+  }
+  return Array.from(out);
+}
+
+function extractQualityClass(text: string): 'a' | 'b' | 'c' | null {
+  const d = (text || '').toLowerCase();
+  if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b|a[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*a)/i.test(d)) return 'a';
+  if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b|b[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*b)/i.test(d)) return 'b';
+  if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b|c[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*c)/i.test(d)) return 'c';
+  return null;
+}
+
+function countDimTokens(name: string): number {
+  return extractDimensions(name).length;
+}
+
 function stemGerman(w: string): string {
   if (w.length <= 3) return w;
   if (w.endsWith('etten')) return w.slice(0, -2);
@@ -96,6 +149,8 @@ export function matchProduct(
     return { productId: null, categoryId: null, score: 0, matchedOn: null, confidence: 'none', signals: 0 };
   }
   const descTokens = expandTokens(description);
+  const descDims = extractDimensions(description);
+  const descClass = extractQualityClass(description);
 
   let bestCat: { c: CategoryLike; score: number; hits: number } | null = null;
   for (const c of categories) {
@@ -107,7 +162,7 @@ export function matchProduct(
     if (!bestCat || total > bestCat.score) bestCat = { c, score: total, hits };
   }
 
-  let bestProduct: { p: ProductLike; score: number; hits: number; matchedSku: boolean } | null = null;
+  let bestProduct: { p: ProductLike; score: number; hits: number; matchedSku: boolean; dimMatch: boolean } | null = null;
   for (const p of products) {
     const pTokens = expandTokens(p.name);
     const { hits, ratio } = overlap(descTokens, pTokens);
@@ -117,11 +172,36 @@ export function matchProduct(
     const sku = normalize(p.sku || '');
     const skuHit = sku && sku.length >= 3 && desc.includes(sku);
 
+    const prodDims = extractDimensions(`${p.name} ${p.sku || ''}`);
+    const dimMatch = descDims.length > 0 && prodDims.length > 0
+      && prodDims.some((d) => descDims.includes(d));
+
     const inCatBonus = bestCat && p.category_id === bestCat.c.id ? 0.15 : 0;
-    const total = ratio + contained + (skuHit ? 0.6 : 0) + inCatBonus;
+    const dimBonus = dimMatch ? 0.8 : 0;
+    const dimMismatchPenalty = descDims.length > 0 && prodDims.length > 0 && !dimMatch ? -0.5 : 0;
+    const total = ratio + contained + (skuHit ? 0.6 : 0) + inCatBonus + dimBonus + dimMismatchPenalty;
 
     if (!bestProduct || total > bestProduct.score) {
-      bestProduct = { p, score: total, hits, matchedSku: !!skuHit };
+      bestProduct = { p, score: total, hits, matchedSku: !!skuHit, dimMatch };
+    }
+  }
+
+  // Quality/class fallback: when the description carries "A-Qualität" / "Klasse B" etc.
+  // but no dimensions, prefer a product whose name encodes the same class and keeps
+  // the fewest extra dimension tokens (the "plain default" for that class).
+  if (descClass && bestCat) {
+    const classToken = `klasse ${descClass}`;
+    const candidates = products.filter((p) => {
+      if (bestCat && p.category_id !== bestCat.c.id) return false;
+      const n = normalize(p.name);
+      return n.includes(classToken) || new RegExp(`\\bkl\\.?\\s*${descClass}\\b`).test(n);
+    });
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => countDimTokens(a.name) - countDimTokens(b.name));
+      const pick = candidates[0];
+      if (!bestProduct || bestProduct.score < 0.7 || bestProduct.p.category_id !== bestCat.c.id) {
+        bestProduct = { p: pick, score: Math.max(bestProduct?.score ?? 0, 0.95), hits: 1, matchedSku: false, dimMatch: false };
+      }
     }
   }
 
@@ -137,7 +217,8 @@ export function matchProduct(
   const combined = (bestCat?.score ?? 0) * 0.4 + (bestProduct?.score ?? 0) * 0.4 + (skuOk ? 0.2 : 0);
 
   let confidence: MatchResult['confidence'] = 'none';
-  if (signals >= 3 || (prodOk && combined >= 0.9)) confidence = 'high';
+  if (bestProduct?.dimMatch && catOk) confidence = 'high';
+  else if (signals >= 3 || (prodOk && combined >= 0.9)) confidence = 'high';
   else if (signals >= 2) confidence = 'high';
   else if (signals === 1 && combined >= 0.45) confidence = 'medium';
   else if (combined > 0) confidence = 'low';

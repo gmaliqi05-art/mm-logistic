@@ -678,6 +678,7 @@ function ReviewModal({
 
   const ex = note.ai_extracted_json || {};
   const isPickup = note.type === 'pickup';
+  const noScanFlag = !scannedUrl && /\[Pa skanim\]/i.test(note.notes || '');
 
   return (
     <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -687,7 +688,14 @@ function ReviewModal({
       >
         <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
           <div className="min-w-0">
-            <h3 className="text-base font-bold text-gray-900">{note.note_number}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base font-bold text-gray-900">{note.note_number}</h3>
+              {noScanFlag && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                  <AlertCircle className="w-3 h-3" /> Pa skanim
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-500 mt-0.5">
               {isPickup ? 'Fletemarrje' : 'Fletedergese'}
               {note.partner_name ? ` - ${note.partner_name}` : ''}
@@ -753,6 +761,13 @@ function ReviewModal({
                   </div>
                 </div>
               ) : role === 'company_admin' ? (
+                <>
+                {noScanFlag && (
+                  <div className="mb-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <p className="text-xs font-semibold text-amber-800">Shoferi e mbylli pa skanim</p>
+                    <p className="text-[11px] text-amber-700 mt-0.5">Ngarkoni dokumentin qe ju erdhi me email kur te vij.</p>
+                  </div>
+                )}
                 <label className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/40 hover:bg-sky-50 transition-colors p-6 text-center cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
                   {uploading ? (
                     <Loader2 className="w-6 h-6 text-sky-500 animate-spin" />
@@ -775,9 +790,10 @@ function ReviewModal({
                     disabled={uploading}
                   />
                 </label>
+                </>
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-xs text-gray-400">
-                  Nuk ka dokument te skanuar
+                  {noScanFlag ? 'Shoferi e mbylli pa skanim - pritet ngarkimi nga kompania' : 'Nuk ka dokument te skanuar'}
                 </div>
               )}
             </div>
