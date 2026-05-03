@@ -18,6 +18,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
+import PushNotificationSettings from '../../components/PushNotificationSettings';
 
 type RecentDoc = {
   id: string;
@@ -288,6 +289,14 @@ export default function DriverSettings() {
             </ul>
           )}
         </div>
+      </section>
+
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Shield className="w-5 h-5 text-teal-600" />
+          <h3 className="text-base font-bold text-gray-900">Njoftimet</h3>
+        </div>
+        <PushNotificationSettings />
       </section>
 
       {toast && (

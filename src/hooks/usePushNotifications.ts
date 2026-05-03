@@ -62,7 +62,7 @@ export function usePushNotifications() {
     }
   }
 
-  async function subscribe(): Promise<boolean> {
+  async function subscribe(options?: { silent?: boolean }): Promise<boolean> {
     if (!isSupported || !profile?.id) return false;
 
     try {
@@ -72,7 +72,11 @@ export function usePushNotifications() {
         return false;
       }
 
-      const permissionResult = await Notification.requestPermission();
+      let permissionResult: NotificationPermission = Notification.permission;
+      if (permissionResult !== 'granted') {
+        if (options?.silent) return false;
+        permissionResult = await Notification.requestPermission();
+      }
       setPermission(permissionResult);
 
       if (permissionResult !== 'granted') {

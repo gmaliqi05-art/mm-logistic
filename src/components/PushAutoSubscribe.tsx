@@ -16,7 +16,7 @@ export default function PushAutoSubscribe() {
     }
     if (permission === 'granted') {
       attempted.current = profile.id;
-      void subscribe();
+      void subscribe({ silent: true });
     }
   }, [profile?.id, loading, isSupported, isSubscribed, permission, subscribe]);
 

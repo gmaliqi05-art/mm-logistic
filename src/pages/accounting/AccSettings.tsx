@@ -18,6 +18,7 @@ import type { AccBankAccount, AccCurrency } from '../../types/accounting';
 import { CitySelect, PostalCodeSelect, emptyLocationSelection } from '../../components/location/LocationSelector';
 import type { LocationSelection } from '../../types/location';
 import { clearComplianceCache } from '../../lib/complianceEngine';
+import PushNotificationSettings from '../../components/PushNotificationSettings';
 
 interface CompanyForm {
   name: string;
@@ -279,6 +280,21 @@ export default function AccSettings() {
           </button>
         </div>
       )}
+
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+          <div className="bg-teal-100 p-2 rounded-lg">
+            <Settings className="w-5 h-5 text-teal-600" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Njoftimet</h2>
+            <p className="text-xs text-gray-500">Aktivizo njoftimet push ne browser dhe PWA</p>
+          </div>
+        </div>
+        <div className="p-6">
+          <PushNotificationSettings />
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">

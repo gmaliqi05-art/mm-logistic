@@ -68,16 +68,6 @@ export async function createNotificationAndPush(
       return false;
     }
 
-    if (type === 'chat' || type === 'document' || type === 'delivery') {
-      await sendPushNotification({
-        recipientIds: [userId],
-        title,
-        body: message,
-        type,
-        url,
-      });
-    }
-
     return true;
   } catch (error) {
     console.error('Error creating notification:', error);
@@ -107,16 +97,6 @@ export async function notifyMultipleUsers(
     if (error) {
       console.error('Error creating notifications:', error);
       return;
-    }
-
-    if (type === 'chat' || type === 'document' || type === 'delivery') {
-      await sendPushNotification({
-        recipientIds: userIds,
-        title,
-        body: message,
-        type,
-        url,
-      });
     }
   } catch (error) {
     console.error('Error notifying users:', error);
