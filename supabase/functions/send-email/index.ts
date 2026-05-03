@@ -18,6 +18,9 @@ interface BrandConfig {
   supportUrl: string;
   legalAddress: string;
   appBaseUrl: string;
+  companyPhone: string;
+  companyWebsite: string;
+  companyRegistration: string;
 }
 
 interface SendRequest {
@@ -53,6 +56,9 @@ async function loadBrand(): Promise<BrandConfig> {
       "email_legal_address",
       "email_support_url",
       "email_app_base_url",
+      "email_company_phone",
+      "email_company_website",
+      "email_company_registration",
     ]);
   const m = new Map((data ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
   return {
@@ -60,11 +66,14 @@ async function loadBrand(): Promise<BrandConfig> {
     logoUrl: m.get("email_brand_logo_url") || "",
     primary: m.get("email_brand_primary_color") || "#0f766e",
     secondary: m.get("email_brand_secondary_color") || "#0f172a",
-    fromAddress: m.get("email_from_address") || "noreply@margroup.app",
-    replyTo: m.get("email_reply_to") || "support@margroup.app",
+    fromAddress: m.get("email_from_address") || "info@mm-logistic.eu",
+    replyTo: m.get("email_reply_to") || "info@mm-logistic.eu",
     supportUrl: m.get("email_support_url") || "",
     legalAddress: m.get("email_legal_address") || "",
     appBaseUrl: m.get("email_app_base_url") || "",
+    companyPhone: m.get("email_company_phone") || "",
+    companyWebsite: m.get("email_company_website") || "",
+    companyRegistration: m.get("email_company_registration") || "",
   };
 }
 
@@ -94,6 +103,11 @@ function interpolate(template: string, data: Record<string, unknown>, brand: Bra
     brand_name: brand.brandName,
     app_base_url: brand.appBaseUrl,
     support_url: brand.supportUrl,
+    company_phone: brand.companyPhone,
+    company_website: brand.companyWebsite,
+    company_registration: brand.companyRegistration,
+    legal_address: brand.legalAddress,
+    current_year: String(new Date().getFullYear()),
     ...data,
   };
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_m, key) => {
@@ -113,23 +127,134 @@ function renderLayout(params: {
   footerNote?: string;
   unsubscribeUrl?: string;
   locale: Locale;
+  isMarketing?: boolean;
 }): string {
-  const { brand, preheader, heading, intro, bodyHtml, ctaLabel, ctaUrl, footerNote, unsubscribeUrl, locale } = params;
-  const footerLabels: Record<Locale, { unsubscribe: string; support: string; sent: string }> = {
-    sq: { unsubscribe: "Cregjistrohu", support: "Mbeshtetje", sent: "Ky email ju eshte derguar nga" },
-    de: { unsubscribe: "Abmelden", support: "Support", sent: "Diese E-Mail wurde Ihnen gesendet von" },
-    en: { unsubscribe: "Unsubscribe", support: "Support", sent: "This email was sent to you by" },
+  const { brand, preheader, heading, intro, bodyHtml, ctaLabel, ctaUrl, footerNote, unsubscribeUrl, locale, isMarketing } = params;
+  const year = new Date().getFullYear();
+  const l: Record<Locale, {
+    tagline: string;
+    unsubscribe: string;
+    support: string;
+    website: string;
+    phone: string;
+    contact: string;
+    legal_title: string;
+    confidentiality: string;
+    wrong_recipient: string;
+    privacy: string;
+    terms: string;
+    rights: string;
+    why_received: string;
+    why_marketing: string;
+    why_transactional: string;
+    sent_by: string;
+  }> = {
+    sq: {
+      tagline: "Smart logistics, clear numbers",
+      unsubscribe: "Cregjistrohu",
+      support: "Mbeshtetje",
+      website: "Website",
+      phone: "Tel",
+      contact: "Na kontaktoni",
+      legal_title: "Shenim ligjor",
+      confidentiality: "Ky mesazh dhe bashkengjitjet e tij jane konfidenciale dhe te destinuara vetem per marresin e emertuar.",
+      wrong_recipient: "Nese nuk jeni marresi i duhur, ju lutem njoftoni derguesin menjehere dhe fshini kete email pa e ndare ose kopjuar.",
+      privacy: "Politika e privatesise",
+      terms: "Kushtet e perdorimit",
+      rights: "Te gjitha te drejtat e rezervuara.",
+      why_received: "Pse e mora kete email?",
+      why_marketing: "E morre kete email sepse je pajtuar per lajme dhe oferta nga {{brand}}.",
+      why_transactional: "Ky eshte nje email transaksional qe lidhet me llogarine tende ne {{brand}}.",
+      sent_by: "Ky email ju eshte derguar nga",
+    },
+    de: {
+      tagline: "Smart logistics, clear numbers",
+      unsubscribe: "Abmelden",
+      support: "Support",
+      website: "Webseite",
+      phone: "Tel",
+      contact: "Kontaktieren Sie uns",
+      legal_title: "Rechtlicher Hinweis",
+      confidentiality: "Diese Nachricht und ihre Anhaenge sind vertraulich und ausschliesslich fuer den genannten Empfaenger bestimmt.",
+      wrong_recipient: "Falls Sie nicht der richtige Empfaenger sind, benachrichtigen Sie bitte sofort den Absender und loeschen Sie diese E-Mail, ohne sie weiterzugeben oder zu kopieren.",
+      privacy: "Datenschutzerklaerung",
+      terms: "Nutzungsbedingungen",
+      rights: "Alle Rechte vorbehalten.",
+      why_received: "Warum erhalte ich diese E-Mail?",
+      why_marketing: "Sie erhalten diese E-Mail, weil Sie Neuigkeiten und Angebote von {{brand}} abonniert haben.",
+      why_transactional: "Dies ist eine transaktionale E-Mail im Zusammenhang mit Ihrem Konto bei {{brand}}.",
+      sent_by: "Diese E-Mail wurde Ihnen gesendet von",
+    },
+    en: {
+      tagline: "Smart logistics, clear numbers",
+      unsubscribe: "Unsubscribe",
+      support: "Support",
+      website: "Website",
+      phone: "Phone",
+      contact: "Contact us",
+      legal_title: "Legal notice",
+      confidentiality: "This message and its attachments are confidential and intended solely for the named recipient.",
+      wrong_recipient: "If you are not the intended recipient, please notify the sender immediately and delete this email without sharing or copying it.",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service",
+      rights: "All rights reserved.",
+      why_received: "Why did I receive this email?",
+      why_marketing: "You received this email because you subscribed to news and offers from {{brand}}.",
+      why_transactional: "This is a transactional email related to your account at {{brand}}.",
+      sent_by: "This email was sent to you by",
+    },
   };
-  const labels = footerLabels[locale] || footerLabels.sq;
+  const L = l[locale] || l.sq;
+  const brandEsc = escape(brand.brandName);
+  const whyLine = (isMarketing ? L.why_marketing : L.why_transactional).replace("{{brand}}", brandEsc);
+
   const logoBlock = brand.logoUrl
-    ? `<img src="${escape(brand.logoUrl)}" alt="${escape(brand.brandName)}" width="140" style="display:block;max-height:48px;width:auto;border:0;outline:none;text-decoration:none;" />`
-    : `<div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.3px;">${escape(brand.brandName)}</div>`;
+    ? `<img src="${escape(brand.logoUrl)}" alt="${brandEsc}" height="56" style="display:block;max-height:56px;width:auto;border:0;outline:none;text-decoration:none;background:#ffffff;border-radius:8px;padding:6px 10px;" />`
+    : `<div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.3px;">${brandEsc}</div>`;
+
   const ctaBlock = ctaLabel && ctaUrl
-    ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:28px 0;">
-        <tr><td style="border-radius:8px;background-color:${brand.primary};">
-          <a href="${escape(ctaUrl)}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">${escape(ctaLabel)}</a>
+    ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:28px 0 8px 0;">
+        <tr><td style="border-radius:10px;background-color:${brand.primary};">
+          <a href="${escape(ctaUrl)}" style="display:inline-block;padding:14px 30px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.2px;">${escape(ctaLabel)}</a>
         </td></tr>
       </table>`
+    : "";
+
+  const companyCard = `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:8px;">
+      <tr><td style="padding:18px 24px;background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;line-height:1.65;color:#475569;">
+        <div style="font-weight:700;color:${brand.secondary};font-size:14px;margin-bottom:6px;letter-spacing:0.2px;">${brandEsc}</div>
+        ${brand.legalAddress ? `<div style="margin-bottom:3px;">${escape(brand.legalAddress)}</div>` : ""}
+        ${brand.companyPhone ? `<div style="margin-bottom:3px;">${L.phone}: <a href="tel:${escape(brand.companyPhone.replace(/\s+/g, ""))}" style="color:#475569;text-decoration:none;">${escape(brand.companyPhone)}</a></div>` : ""}
+        <div style="margin-bottom:3px;">Email: <a href="mailto:${escape(brand.replyTo)}" style="color:${brand.primary};text-decoration:none;">${escape(brand.replyTo)}</a></div>
+        ${brand.companyWebsite ? `<div style="margin-bottom:3px;">${L.website}: <a href="${escape(brand.companyWebsite)}" style="color:${brand.primary};text-decoration:none;">${escape(brand.companyWebsite.replace(/^https?:\/\//, ""))}</a></div>` : ""}
+        ${brand.companyRegistration ? `<div style="color:#64748b;font-size:12px;margin-top:6px;">${escape(brand.companyRegistration)}</div>` : ""}
+      </td></tr>
+    </table>`;
+
+  const privacyUrl = brand.appBaseUrl ? `${brand.appBaseUrl.replace(/\/$/, "")}/privacy` : "";
+  const termsUrl = brand.appBaseUrl ? `${brand.appBaseUrl.replace(/\/$/, "")}/terms` : "";
+
+  const legalFinePrint = `
+    <div style="font-family:Georgia,'Times New Roman',serif;font-size:11px;line-height:1.6;color:#94a3b8;font-style:italic;margin-top:14px;">
+      <div style="font-weight:600;font-style:normal;color:#64748b;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;font-size:10px;font-family:Arial,Helvetica,sans-serif;">${L.legal_title}</div>
+      <div style="margin-bottom:4px;">${L.confidentiality}</div>
+      <div style="margin-bottom:6px;">${L.wrong_recipient}</div>
+      <div style="font-style:normal;font-family:Arial,Helvetica,sans-serif;color:#64748b;">
+        ${privacyUrl ? `<a href="${escape(privacyUrl)}" style="color:#64748b;text-decoration:underline;">${L.privacy}</a>` : ""}
+        ${privacyUrl && termsUrl ? ` &middot; ` : ""}
+        ${termsUrl ? `<a href="${escape(termsUrl)}" style="color:#64748b;text-decoration:underline;">${L.terms}</a>` : ""}
+        ${(privacyUrl || termsUrl) ? ` &middot; ` : ""}
+        &copy; ${year} ${brandEsc}. ${L.rights}
+      </div>
+    </div>`;
+
+  const whyBox = isMarketing
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:12px;">
+         <tr><td style="padding:12px 16px;background-color:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;line-height:1.55;color:#92400e;">
+           <strong>${L.why_received}</strong> ${whyLine}
+         </td></tr>
+       </table>`
     : "";
 
   return `<!DOCTYPE html>
@@ -140,31 +265,39 @@ function renderLayout(params: {
 <meta name="supported-color-schemes" content="light" />
 <title>${escape(heading)}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+<body style="margin:0;padding:0;background-color:#eef2f6;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escape(preheader)}</div>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f1f5f9;padding:32px 12px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#eef2f6;padding:32px 12px;">
   <tr><td align="center">
-    <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,0.08);">
-      <tr><td style="background-color:${brand.secondary};padding:24px 32px;">
-        ${logoBlock}
+    <table role="presentation" width="620" cellspacing="0" cellpadding="0" border="0" style="max-width:620px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,0.08);">
+      <tr><td style="background:linear-gradient(135deg, ${brand.secondary} 0%, #1e293b 100%);padding:28px 36px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+          <td>${logoBlock}</td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase;">${L.tagline}</td>
+        </tr></table>
       </td></tr>
-      <tr><td style="padding:36px 32px 8px 32px;">
-        <h1 style="margin:0 0 12px 0;font-size:22px;line-height:1.3;color:${brand.secondary};font-weight:700;">${escape(heading)}</h1>
-        <p style="margin:0 0 18px 0;font-size:15px;line-height:1.6;color:#334155;">${intro}</p>
+      <tr><td style="height:4px;background:linear-gradient(90deg, ${brand.primary} 0%, #fbbf24 100%);line-height:4px;">&nbsp;</td></tr>
+      <tr><td style="padding:40px 36px 8px 36px;">
+        <h1 style="margin:0 0 14px 0;font-size:24px;line-height:1.3;color:${brand.secondary};font-weight:800;letter-spacing:-0.2px;">${escape(heading)}</h1>
+        <p style="margin:0 0 20px 0;font-size:15px;line-height:1.65;color:#334155;">${intro}</p>
       </td></tr>
-      <tr><td style="padding:0 32px 8px 32px;font-size:15px;line-height:1.6;color:#334155;">
+      <tr><td style="padding:0 36px 8px 36px;font-size:15px;line-height:1.65;color:#334155;">
         ${bodyHtml}
         ${ctaBlock}
       </td></tr>
-      ${footerNote ? `<tr><td style="padding:8px 32px 32px 32px;font-size:13px;line-height:1.5;color:#64748b;">${footerNote}</td></tr>` : ""}
-      <tr><td style="background-color:#f8fafc;padding:20px 32px;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.5;color:#64748b;">
-        <div style="margin-bottom:6px;">${labels.sent} <strong style="color:${brand.secondary};">${escape(brand.brandName)}</strong>.</div>
-        ${brand.legalAddress ? `<div style="margin-bottom:6px;">${escape(brand.legalAddress)}</div>` : ""}
-        <div>
-          ${brand.supportUrl ? `<a href="${escape(brand.supportUrl)}" style="color:${brand.primary};text-decoration:none;">${labels.support}</a>` : ""}
-          ${brand.supportUrl && unsubscribeUrl ? ` &middot; ` : ""}
-          ${unsubscribeUrl ? `<a href="${escape(unsubscribeUrl)}" style="color:#64748b;text-decoration:underline;">${labels.unsubscribe}</a>` : ""}
+      ${footerNote ? `<tr><td style="padding:8px 36px 24px 36px;font-size:13px;line-height:1.55;color:#64748b;">${footerNote}</td></tr>` : `<tr><td style="padding:0 36px 24px 36px;">&nbsp;</td></tr>`}
+      <tr><td style="padding:0 36px 24px 36px;">${companyCard}</td></tr>
+      <tr><td style="background-color:#f8fafc;padding:22px 36px;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.55;color:#64748b;">
+        <div style="margin-bottom:8px;">${L.sent_by} <strong style="color:${brand.secondary};">${brandEsc}</strong>.</div>
+        <div style="margin-bottom:4px;">
+          ${brand.supportUrl ? `<a href="${escape(brand.supportUrl)}" style="color:${brand.primary};text-decoration:none;font-weight:600;">${L.support}</a>` : ""}
+          ${brand.supportUrl && brand.companyWebsite ? ` &middot; ` : ""}
+          ${brand.companyWebsite ? `<a href="${escape(brand.companyWebsite)}" style="color:${brand.primary};text-decoration:none;font-weight:600;">${L.website}</a>` : ""}
+          ${(brand.supportUrl || brand.companyWebsite) && unsubscribeUrl ? ` &middot; ` : ""}
+          ${unsubscribeUrl ? `<a href="${escape(unsubscribeUrl)}" style="color:#64748b;text-decoration:underline;">${L.unsubscribe}</a>` : ""}
         </div>
+        ${whyBox}
+        ${legalFinePrint}
       </td></tr>
     </table>
   </td></tr>
@@ -175,6 +308,7 @@ function renderLayout(params: {
 interface TemplateRow {
   code: string;
   is_active: boolean;
+  category: string;
   preheader_sq: string; preheader_de: string; preheader_en: string;
   subject_sq: string; subject_de: string; subject_en: string;
   heading_sq: string; heading_de: string; heading_en: string;
@@ -275,6 +409,7 @@ async function renderTemplate(
     ctaUrl: ctaUrl || undefined,
     unsubscribeUrl,
     locale,
+    isMarketing: t.category === "marketing",
   });
 
   return { subject, html, preheader, heading, intro, bodyHtml, ctaLabel, ctaUrl };
