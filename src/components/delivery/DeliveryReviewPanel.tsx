@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
   ClipboardList,
   Download,
+  Layers,
   Loader2,
   MapPin,
+  Minus,
   Package,
+  Plus,
   Sparkles,
   Trash2,
   Truck,
@@ -15,6 +18,7 @@ import {
   Upload,
   User,
   Warehouse,
+  Wrench,
   X,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -47,13 +51,32 @@ interface NoteItem {
   delivery_note_id: string;
   category_id: string | null;
   product_id: string | null;
+  category_product_id: string | null;
   quantity: number;
   condition: string;
+  intended_action: 'stock' | 'sorting' | 'repair';
   notes: string | null;
   auto_matched?: boolean;
   match_score?: number;
   match_type?: 'sku' | 'product_name' | 'category_name' | null;
 }
+
+type RowState = {
+  _key: string;
+  _persistedId: string | null;
+  _groupKey: string;
+  _isChild: boolean;
+  _sourceDescription: string;
+  _sourceQuantity: number;
+  category_id: string | null;
+  product_id: string | null;
+  quantity: number;
+  condition: string;
+  intended_action: 'stock' | 'sorting' | 'repair';
+  notes: string | null;
+  auto_matched?: boolean;
+  match_type?: 'sku' | 'product_name' | 'category_name' | null;
+};
 
 interface Category {
   id: string;
@@ -239,10 +262,11 @@ function ReviewModal({
   onDone: () => void | Promise<void>;
 }) {
   const { profile } = useAuth();
-  const [items, setItems] = useState<NoteItem[]>([]);
+  const [rows, setRows] = useState<RowState[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState<'approve' | 'complete' | 'reject' | null>(null);
   const [reason, setReason] = useState('');
   const [showRejectReason, setShowRejectReason] = useState(false);
@@ -302,49 +326,154 @@ function ReviewModal({
   async function load() {
     setLoading(true);
     const [itemsRes, catsRes, prodsRes] = await Promise.all([
-      supabase.from('delivery_note_items').select('*').eq('delivery_note_id', note.id),
+      supabase.from('delivery_note_items').select('*').eq('delivery_note_id', note.id).order('created_at', { ascending: true }),
       supabase.from('product_categories').select('id, name').eq('company_id', note.company_id).order('name'),
-      supabase.from('acc_products').select('id, name, sku, category_id').eq('company_id', note.company_id),
+      supabase.from('category_products').select('id, name, sku, category_id').eq('company_id', note.company_id).order('name'),
     ]);
     const cats = (catsRes.data as Category[]) ?? [];
     const prods = (prodsRes.data as Product[]) ?? [];
     const rawItems = (itemsRes.data as NoteItem[]) ?? [];
 
-    const enriched = rawItems.map((it) => {
-      if (it.category_id || it.product_id) return it;
-      const m = matchProduct(it.notes || '', prods, cats);
+    const built: RowState[] = rawItems.map((it, idx) => {
+      const existingProd = it.category_product_id || null;
+      let m: { productId: string | null; categoryId: string | null; matchedOn: any } = {
+        productId: existingProd,
+        categoryId: it.category_id,
+        matchedOn: null,
+      };
+      let autoMatched = false;
+      if (!it.category_id && !existingProd) {
+        const mm = matchProduct(it.notes || '', prods, cats);
+        m = { productId: mm.productId, categoryId: mm.categoryId, matchedOn: mm.matchedOn };
+        autoMatched = !!(mm.productId || mm.categoryId);
+      }
       return {
-        ...it,
-        product_id: m.productId,
+        _key: it.id,
+        _persistedId: it.id,
+        _groupKey: `g-${idx}-${it.id}`,
+        _isChild: false,
+        _sourceDescription: it.notes || '',
+        _sourceQuantity: it.quantity || 0,
         category_id: m.categoryId,
-        auto_matched: !!(m.productId || m.categoryId),
-        match_score: m.score,
+        product_id: m.productId,
+        quantity: it.quantity,
+        condition: it.condition || 'good',
+        intended_action: (it.intended_action as any) || 'stock',
+        notes: it.notes,
+        auto_matched: autoMatched,
         match_type: m.matchedOn,
       };
     });
 
     setCategories(cats);
     setProducts(prods);
-    setItems(enriched);
+    setRows(built);
+    setDeletedIds([]);
     setLoading(false);
   }
 
-  function updateItem(id: string, patch: Partial<NoteItem>) {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+  function updateRow(key: string, patch: Partial<RowState>) {
+    setRows((prev) => prev.map((r) => (r._key === key ? { ...r, ...patch } : r)));
+  }
+
+  function addSplit(groupKey: string) {
+    setRows((prev) => {
+      const lastIdx = prev.map((r) => r._groupKey).lastIndexOf(groupKey);
+      if (lastIdx < 0) return prev;
+      const parent = prev[lastIdx];
+      const newRow: RowState = {
+        ...parent,
+        _key: `new-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        _persistedId: null,
+        _isChild: true,
+        quantity: 0,
+        condition: 'good',
+        intended_action: 'stock',
+        auto_matched: false,
+        match_type: null,
+      };
+      const next = prev.slice();
+      next.splice(lastIdx + 1, 0, newRow);
+      return next;
+    });
+  }
+
+  function removeRow(key: string) {
+    setRows((prev) => {
+      const row = prev.find((r) => r._key === key);
+      if (row?._persistedId) setDeletedIds((d) => [...d, row._persistedId!]);
+      return prev.filter((r) => r._key !== key);
+    });
+  }
+
+  function addNewItem() {
+    const key = `new-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const row: RowState = {
+      _key: key,
+      _persistedId: null,
+      _groupKey: key,
+      _isChild: false,
+      _sourceDescription: '',
+      _sourceQuantity: 0,
+      category_id: null,
+      product_id: null,
+      quantity: 0,
+      condition: 'good',
+      intended_action: 'stock',
+      notes: null,
+    };
+    setRows((prev) => [...prev, row]);
   }
 
   async function persistItems() {
-    for (const it of items) {
+    if (deletedIds.length > 0) {
+      await supabase.from('delivery_note_items').delete().in('id', deletedIds);
+      setDeletedIds([]);
+    }
+    const updates = rows.filter((r) => r._persistedId);
+    const inserts = rows.filter((r) => !r._persistedId);
+
+    for (const r of updates) {
       await supabase
         .from('delivery_note_items')
         .update({
-          product_id: it.product_id,
-          category_id: it.category_id,
-          quantity: it.quantity,
-          condition: it.condition,
-          notes: it.notes,
+          category_product_id: r.product_id,
+          category_id: r.category_id,
+          quantity: r.quantity,
+          condition: r.condition,
+          intended_action: r.intended_action,
+          notes: r.notes,
         })
-        .eq('id', it.id);
+        .eq('id', r._persistedId!);
+    }
+
+    if (inserts.length > 0) {
+      const payload = inserts.map((r) => ({
+        delivery_note_id: note.id,
+        category_product_id: r.product_id,
+        category_id: r.category_id,
+        quantity: r.quantity,
+        condition: r.condition,
+        intended_action: r.intended_action,
+        notes: r.notes,
+      }));
+      const { data: inserted } = await supabase
+        .from('delivery_note_items')
+        .insert(payload as any)
+        .select('id');
+      if (inserted) {
+        setRows((prev) => {
+          const ids = inserted as Array<{ id: string }>;
+          let pos = 0;
+          return prev.map((r) => {
+            if (!r._persistedId && pos < ids.length) {
+              const id = ids[pos++].id;
+              return { ...r, _persistedId: id };
+            }
+            return r;
+          });
+        });
+      }
     }
   }
 
@@ -395,7 +524,7 @@ function ReviewModal({
     setSaving('complete');
     setError(null);
     try {
-      const missing = items.filter((i) => !i.category_id || !i.quantity || i.quantity <= 0);
+      const missing = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
       if (missing.length > 0) {
         throw new Error('Caktoni kategorine dhe sasine per cdo artikull para regjistrimit ne stok.');
       }
@@ -404,80 +533,12 @@ function ReviewModal({
       const depotId = note.assigned_depot_id || profile?.depot_id;
       if (!depotId) throw new Error('Depoja nuk eshte caktuar per kete dergese.');
 
-      const productIds = items.map((i) => i.product_id).filter((x): x is string => !!x);
-      const validProductIds = new Set<string>();
-      if (productIds.length > 0) {
-        const { data: cps } = await supabase
-          .from('category_products')
-          .select('id')
-          .in('id', productIds);
-        (cps ?? []).forEach((p) => validProductIds.add(p.id));
-      }
-
-      const isPickup = note.type === 'pickup';
-      for (const it of items) {
-        const signedQty = isPickup ? -Math.abs(it.quantity) : Math.abs(it.quantity);
-        const stockProductId = it.product_id && validProductIds.has(it.product_id) ? it.product_id : null;
-
-        let lookup = supabase
-          .from('stock')
-          .select('id, quantity')
-          .eq('company_id', note.company_id)
-          .eq('depot_id', depotId)
-          .eq('category_id', it.category_id)
-          .eq('condition', it.condition);
-        lookup = stockProductId ? lookup.eq('category_product_id', stockProductId) : lookup.is('category_product_id', null);
-        const { data: existing } = await lookup.maybeSingle();
-
-        if (existing) {
-          await supabase
-            .from('stock')
-            .update({ quantity: Math.max(0, (existing.quantity || 0) + signedQty) })
-            .eq('id', existing.id);
-        } else if (!isPickup) {
-          await supabase.from('stock').insert({
-            company_id: note.company_id,
-            depot_id: depotId,
-            category_id: it.category_id,
-            category_product_id: stockProductId,
-            condition: it.condition,
-            quantity: signedQty,
-          });
-        }
-
-        await supabase.from('stock_movements').insert({
-          company_id: note.company_id,
-          depot_id: depotId,
-          category_id: it.category_id,
-          category_product_id: stockProductId,
-          movement_type: isPickup ? 'exit' : 'entry',
-          quantity: Math.abs(it.quantity),
-          condition_after: it.condition,
-          notes: `${note.note_number}${note.partner_name ? ' / ' + note.partner_name : ''}${it.notes ? ' / ' + it.notes : ''}`,
-          performed_by: profile!.id,
-        });
-
-        if (it.product_id) {
-          const { data: prod } = await supabase
-            .from('acc_products')
-            .select('current_stock')
-            .eq('id', it.product_id)
-            .maybeSingle();
-          const newStock = Math.max(0, Number(prod?.current_stock || 0) + signedQty);
-          await supabase
-            .from('acc_products')
-            .update({ current_stock: newStock, updated_at: new Date().toISOString() })
-            .eq('id', it.product_id);
-        }
-      }
-
       const { error: upErr } = await supabase
         .from('delivery_notes')
         .update({
-          status: 'completed',
+          status: 'confirmed',
           stock_confirmed_by: profile!.id,
           stock_confirmed_at: new Date().toISOString(),
-          stock_posted: true,
           updated_at: new Date().toISOString(),
         })
         .eq('id', note.id);
@@ -664,81 +725,36 @@ function ReviewModal({
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Artikujt {role === 'depot_worker' && '(caktoni kategorine dhe sasine)'}
-            </p>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                Artikujt
+              </p>
+              <button
+                type="button"
+                onClick={addNewItem}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-sky-700 bg-sky-50 border border-sky-100 rounded-lg hover:bg-sky-100 transition-colors"
+              >
+                <Plus className="w-3 h-3" /> Shto artikull
+              </button>
+            </div>
             {loading ? (
               <div className="text-center py-6"><Loader2 className="w-5 h-5 animate-spin text-teal-600 inline" /></div>
-            ) : items.length === 0 ? (
+            ) : rows.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-200 p-5 text-center text-xs text-gray-400">
                 AI nuk gjeti artikuj. Mund t'i shtoni manualisht gjate verifikimit ne stok.
               </div>
             ) : (
-              <div className="space-y-2">
-                {items.map((it) => (
-                  <div key={it.id} className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs text-gray-600 flex-1 break-words">{it.notes}</p>
-                      {it.auto_matched && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 flex-shrink-0">
-                          <Sparkles className="w-2.5 h-2.5" />
-                          {it.match_type === 'sku' ? 'SKU' : it.match_type === 'product_name' ? 'Produkt' : 'Kategori'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-6 gap-2">
-                      <select
-                        value={it.product_id || ''}
-                        onChange={(e) => {
-                          const prod = products.find((p) => p.id === e.target.value);
-                          updateItem(it.id, {
-                            product_id: e.target.value || null,
-                            category_id: prod?.category_id ?? it.category_id,
-                            auto_matched: false,
-                          });
-                        }}
-                        className="col-span-3 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      >
-                        <option value="">-- Produkti --</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>{p.name}{p.sku ? ` (${p.sku})` : ''}</option>
-                        ))}
-                      </select>
-                      <select
-                        value={it.category_id || ''}
-                        onChange={(e) => updateItem(it.id, { category_id: e.target.value || null, auto_matched: false })}
-                        className="col-span-2 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      >
-                        <option value="">-- Kategoria --</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min={0}
-                        value={it.quantity}
-                        onChange={(e) => updateItem(it.id, { quantity: parseInt(e.target.value) || 0 })}
-                        className="bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        placeholder="Sasia"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {['good', 'damaged', 'repaired'].map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => updateItem(it.id, { condition: c })}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
-                            it.condition === c
-                              ? 'bg-teal-600 text-white border-teal-600'
-                              : 'bg-white text-gray-600 border-gray-200'
-                          }`}
-                        >
-                          {c === 'good' ? 'I mire' : c === 'damaged' ? 'Me defekt' : 'I riparuar'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              <div className="space-y-3">
+                {groupRows(rows).map((group) => (
+                  <ItemGroupBlock
+                    key={group.key}
+                    group={group}
+                    categories={categories}
+                    products={products}
+                    onUpdate={updateRow}
+                    onRemoveRow={removeRow}
+                    onAddSplit={() => addSplit(group.key)}
+                  />
                 ))}
               </div>
             )}
@@ -807,6 +823,261 @@ function DataRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-start gap-3 py-1.5 border-b border-gray-100 last:border-0">
       <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide w-28 flex-shrink-0 pt-0.5">{label}</p>
       <p className="text-sm text-gray-900 break-words flex-1">{value}</p>
+    </div>
+  );
+}
+
+interface Group {
+  key: string;
+  sourceDescription: string;
+  sourceQuantity: number;
+  rows: RowState[];
+}
+
+function groupRows(rows: RowState[]): Group[] {
+  const map = new Map<string, Group>();
+  const order: string[] = [];
+  for (const r of rows) {
+    if (!map.has(r._groupKey)) {
+      map.set(r._groupKey, {
+        key: r._groupKey,
+        sourceDescription: r._sourceDescription,
+        sourceQuantity: r._sourceQuantity,
+        rows: [],
+      });
+      order.push(r._groupKey);
+    }
+    map.get(r._groupKey)!.rows.push(r);
+  }
+  return order.map((k) => map.get(k)!);
+}
+
+const CONDITION_OPTIONS: { value: string; label: string; tone: string }[] = [
+  { value: 'good', label: 'I mire', tone: 'bg-emerald-600' },
+  { value: 'damaged', label: 'Me defekt', tone: 'bg-red-600' },
+  { value: 'sorting', label: 'Per sortim', tone: 'bg-teal-600' },
+  { value: 'ready_a', label: 'Klasse A', tone: 'bg-blue-600' },
+  { value: 'ready_b', label: 'Klasse B', tone: 'bg-sky-600' },
+  { value: 'ready_c', label: 'Klasse C', tone: 'bg-amber-600' },
+];
+
+const ACTION_OPTIONS: {
+  value: 'stock' | 'sorting' | 'repair';
+  label: string;
+  icon: typeof Package;
+  tone: string;
+}[] = [
+  { value: 'stock', label: 'Stok', icon: Package, tone: 'bg-emerald-600' },
+  { value: 'sorting', label: 'Sortire', icon: Layers, tone: 'bg-teal-600' },
+  { value: 'repair', label: 'Defekt', icon: Wrench, tone: 'bg-red-600' },
+];
+
+function ItemGroupBlock({
+  group,
+  categories,
+  products,
+  onUpdate,
+  onRemoveRow,
+  onAddSplit,
+}: {
+  group: Group;
+  categories: Category[];
+  products: Product[];
+  onUpdate: (key: string, patch: Partial<RowState>) => void;
+  onRemoveRow: (key: string) => void;
+  onAddSplit: () => void;
+}) {
+  const sumQty = useMemo(() => group.rows.reduce((s, r) => s + (r.quantity || 0), 0), [group.rows]);
+  const hasSource = group.sourceQuantity > 0;
+  const diff = group.sourceQuantity - sumQty;
+
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-3">
+      {group.sourceDescription && (
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5 flex items-center gap-1">
+              <Sparkles className="w-2.5 h-2.5 text-emerald-500" /> AI nga dokumenti
+            </p>
+            <p className="text-xs text-gray-700 break-words">{group.sourceDescription}</p>
+          </div>
+          {hasSource && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-[11px] text-gray-500">
+                AI: <span className="font-bold text-gray-700">{group.sourceQuantity}</span>
+              </span>
+              <span className="text-[11px] text-gray-500">
+                Ndare: <span className={`font-bold ${diff === 0 ? 'text-emerald-700' : 'text-amber-700'}`}>{sumQty}</span>
+              </span>
+              {diff !== 0 && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">
+                  {diff > 0 ? `+${diff}` : diff}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {group.rows.map((row, idx) => (
+          <SplitRow
+            key={row._key}
+            row={row}
+            categories={categories}
+            products={products}
+            onUpdate={onUpdate}
+            onRemove={group.rows.length > 1 || !row._persistedId ? () => onRemoveRow(row._key) : null}
+            isFirst={idx === 0}
+          />
+        ))}
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onAddSplit}
+          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-lg hover:bg-teal-100 transition-colors"
+        >
+          <Plus className="w-3 h-3" /> Shto ndarje
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SplitRow({
+  row,
+  categories,
+  products,
+  onUpdate,
+  onRemove,
+  isFirst,
+}: {
+  row: RowState;
+  categories: Category[];
+  products: Product[];
+  onUpdate: (key: string, patch: Partial<RowState>) => void;
+  onRemove: (() => void) | null;
+  isFirst: boolean;
+}) {
+  const productsForCategory = useMemo(
+    () => (row.category_id ? products.filter((p) => p.category_id === row.category_id) : []),
+    [products, row.category_id],
+  );
+  const invalid = !row.category_id || !row.quantity || row.quantity <= 0;
+
+  function handleCategoryChange(val: string) {
+    const cur = products.find((p) => p.id === row.product_id);
+    const keepProduct = cur && cur.category_id === val;
+    onUpdate(row._key, {
+      category_id: val || null,
+      product_id: keepProduct ? row.product_id : null,
+      auto_matched: false,
+    });
+  }
+
+  function handleActionChange(val: 'stock' | 'sorting' | 'repair') {
+    let condition = row.condition;
+    if (val === 'repair') condition = 'damaged';
+    else if (val === 'sorting') condition = 'sorting';
+    else if (condition === 'damaged' || condition === 'sorting') condition = 'good';
+    onUpdate(row._key, { intended_action: val, condition });
+  }
+
+  return (
+    <div
+      className={`bg-white border rounded-lg p-2.5 space-y-2 ${
+        invalid ? 'border-red-200 ring-1 ring-red-100' : 'border-gray-200'
+      } ${!isFirst ? 'ml-4 border-l-4 border-l-teal-200' : ''}`}
+    >
+      <div className="grid grid-cols-12 gap-2">
+        <select
+          value={row.category_id || ''}
+          onChange={(e) => handleCategoryChange(e.target.value)}
+          className="col-span-5 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+        >
+          <option value="">-- Kategoria --</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <select
+          value={row.product_id || ''}
+          onChange={(e) => onUpdate(row._key, { product_id: e.target.value || null, auto_matched: false })}
+          disabled={!row.category_id}
+          className="col-span-5 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50 disabled:text-gray-400"
+        >
+          <option value="">{row.category_id ? '-- Produkti --' : 'Zgjidh kategorine'}</option>
+          {productsForCategory.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}{p.sku ? ` (${p.sku})` : ''}</option>
+          ))}
+        </select>
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          value={row.quantity || ''}
+          onChange={(e) => onUpdate(row._key, { quantity: parseInt(e.target.value) || 0 })}
+          className="col-span-2 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs text-right font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500"
+          placeholder="Sasia"
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1 flex-wrap">
+          {ACTION_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const active = row.intended_action === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleActionChange(opt.value)}
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold border transition-colors ${
+                  active ? `${opt.tone} text-white border-transparent` : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+        {row.auto_matched && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
+            <Sparkles className="w-2.5 h-2.5" />
+            {row.match_type === 'sku' ? 'SKU' : row.match_type === 'product_name' ? 'Produkt' : 'Kategori'}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1 flex-wrap">
+        {CONDITION_OPTIONS.map((opt) => {
+          const active = row.condition === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onUpdate(row._key, { condition: opt.value })}
+              className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
+                active ? `${opt.tone} text-white border-transparent` : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <Minus className="w-3 h-3" /> Hiq
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -783,7 +783,7 @@ export function TaskDetailSheet({
 
       if (ex.line_items && ex.line_items.length > 0) {
         const [{ data: products }, { data: cats }] = await Promise.all([
-          supabase.from('acc_products').select('id, name, sku, category_id').eq('company_id', note.company_id),
+          supabase.from('category_products').select('id, name, sku, category_id').eq('company_id', note.company_id),
           supabase.from('product_categories').select('id, name').eq('company_id', note.company_id),
         ]);
 
@@ -791,12 +791,29 @@ export function TaskDetailSheet({
           .filter((li) => li.description && (li.quantity ?? 0) > 0)
           .map((li) => {
             const match = matchProduct(li.description, products ?? [], cats ?? []);
+            const d = (li.description || '').toLowerCase();
+            let condition = 'good';
+            let intended_action: 'stock' | 'sorting' | 'repair' = 'stock';
+            if (/(defekt|damage|kaputt|broken)/i.test(d)) {
+              condition = 'damaged';
+              intended_action = 'repair';
+            } else if (/klasse\s*a|\bkl\.?\s*a\b|class\s*a/i.test(d)) {
+              condition = 'ready_a';
+            } else if (/klasse\s*b|\bkl\.?\s*b\b|class\s*b/i.test(d)) {
+              condition = 'ready_b';
+            } else if (/klasse\s*c|\bkl\.?\s*c\b|class\s*c/i.test(d)) {
+              condition = 'ready_c';
+            } else if (/sortir|sortier|sorting|mix/i.test(d)) {
+              condition = 'sorting';
+              intended_action = 'sorting';
+            }
             return {
               delivery_note_id: note.id,
               product_id: match.productId,
               category_id: match.categoryId,
               quantity: Math.round(li.quantity || 0),
-              condition: 'good',
+              condition,
+              intended_action,
               notes: `${li.description}${li.unit ? ' (' + li.unit + ')' : ''}`,
             };
           });
