@@ -24,6 +24,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchProduct } from '../../utils/productMatcher';
+import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
 
 type Role = 'company_admin' | 'depot_worker';
 
@@ -79,22 +80,25 @@ type RowState = {
   match_confidence?: 'high' | 'medium' | 'low' | 'none';
 };
 
-function deriveConditionAction(desc: string): { condition: string; intended_action: 'stock' | 'sorting' | 'repair' } {
-  const d = (desc || '').toLowerCase();
-  if (/\b(defekt|damage|damaged|kaputt|broken|repair)\b/i.test(d)) {
+function deriveConditionAction(
+  desc: string,
+  productName?: string | null,
+): { condition: string; intended_action: 'stock' | 'sorting' | 'repair' } {
+  const d = `${desc || ''} ${productName || ''}`.toLowerCase();
+  if (/\b(defekt|defect|damage|damaged|kaputt|broken|repair|riparim)\b/i.test(d)) {
     return { condition: 'damaged', intended_action: 'repair' };
   }
-  if (/\b(sortier|sortir|sorting|mix|mischt|gemischt)\b/i.test(d)) {
+  if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b|a[- ]?qualit(a|ä)t|qualit(a|ä)t\s*a)/i.test(d)) {
+    return { condition: 'ready_a', intended_action: 'sorting' };
+  }
+  if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b|b[- ]?qualit(a|ä)t|qualit(a|ä)t\s*b)/i.test(d)) {
+    return { condition: 'ready_b', intended_action: 'sorting' };
+  }
+  if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b|c[- ]?qualit(a|ä)t|qualit(a|ä)t\s*c)/i.test(d)) {
+    return { condition: 'ready_c', intended_action: 'sorting' };
+  }
+  if (/\b(sortier|sortir|sorting|mix|mischt|gemischt|mischpalette)\b/i.test(d)) {
     return { condition: 'sorting', intended_action: 'sorting' };
-  }
-  if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b)/i.test(d)) {
-    return { condition: 'ready_a', intended_action: 'stock' };
-  }
-  if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b)/i.test(d)) {
-    return { condition: 'ready_b', intended_action: 'stock' };
-  }
-  if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b)/i.test(d)) {
-    return { condition: 'ready_c', intended_action: 'stock' };
   }
   return { condition: 'good', intended_action: 'stock' };
 }
@@ -376,8 +380,9 @@ function ReviewModal({
         }
       }
 
+      const matchedProdName = productId ? prods.find((p) => p.id === productId)?.name : null;
       if (!condition || (!it.intended_action && it.notes)) {
-        const d = deriveConditionAction(it.notes || '');
+        const d = deriveConditionAction(it.notes || '', matchedProdName);
         if (!condition) condition = d.condition;
         if (!it.intended_action) action = d.intended_action;
       }
@@ -400,6 +405,41 @@ function ReviewModal({
         match_confidence: confidence,
       };
     });
+
+    if (built.length === 0) {
+      const ex = note.ai_extracted_json as any;
+      const rawLineItems: Array<{ description?: string; quantity?: number; unit?: string }> =
+        (ex && Array.isArray(ex.line_items) && ex.line_items.length > 0)
+          ? ex.line_items
+          : parseLineItemsFromNotes(note.notes);
+
+      rawLineItems
+        .filter((li) => (li.description || '').trim() && (li.quantity ?? 0) > 0)
+        .forEach((li, idx) => {
+          const desc = (li.description || '').trim();
+          const mm = matchProduct(desc, prods, cats);
+          const matchedName = mm.productId ? prods.find((p) => p.id === mm.productId)?.name : null;
+          const d = deriveConditionAction(desc, matchedName);
+          const key = `synthetic-${idx}-${Date.now()}`;
+          built.push({
+            _key: key,
+            _persistedId: null,
+            _groupKey: key,
+            _isChild: false,
+            _sourceDescription: desc,
+            _sourceQuantity: Math.max(1, Math.round(li.quantity || 0)),
+            category_id: mm.categoryId,
+            product_id: mm.productId,
+            quantity: Math.max(1, Math.round(li.quantity || 0)),
+            condition: d.condition,
+            intended_action: d.intended_action,
+            notes: `${desc}${li.unit ? ' (' + li.unit + ')' : ''}`,
+            auto_matched: !!(mm.productId || mm.categoryId),
+            match_type: mm.matchedOn,
+            match_confidence: mm.confidence,
+          });
+        });
+    }
 
     setCategories(cats);
     setProducts(prods);
@@ -1040,7 +1080,17 @@ function SplitRow({
         </select>
         <select
           value={row.product_id || ''}
-          onChange={(e) => onUpdate(row._key, { product_id: e.target.value || null, auto_matched: false })}
+          onChange={(e) => {
+            const newId = e.target.value || null;
+            const newProd = newId ? products.find((p) => p.id === newId) ?? null : null;
+            const d = deriveConditionAction(row._sourceDescription || row.notes || '', newProd?.name);
+            onUpdate(row._key, {
+              product_id: newId,
+              auto_matched: false,
+              condition: d.condition,
+              intended_action: d.intended_action,
+            });
+          }}
           disabled={!row.category_id}
           className="col-span-5 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50 disabled:text-gray-400"
         >
