@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
   .split(",")
@@ -49,6 +50,10 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const ip = getClientIp(req);
+    const rl = await checkRateLimit(`register-company:ip=${ip}`, 10, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
+
     const payload: RegisterPayload = await req.json();
     const {
       companyName,

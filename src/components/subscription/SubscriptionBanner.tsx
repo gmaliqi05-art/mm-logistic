@@ -4,11 +4,24 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 
 export default function SubscriptionBanner() {
-  const { isExpired, isTrial, daysRemaining } = useSubscription();
+  const { isExpired, isInvalid, isTrial, daysRemaining } = useSubscription();
   const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;
+
+  if (isInvalid) {
+    return (
+      <div className="bg-red-700 text-white px-4 py-3">
+        <div className="flex items-center justify-center gap-3">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+          <div className="text-sm font-medium">
+            Subscription configuration is invalid. Please contact support.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isExpired) {
     return (

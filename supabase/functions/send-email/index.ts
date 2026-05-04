@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -419,6 +420,10 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
   try {
+    const ip = getClientIp(req);
+    const rl = await checkRateLimit(`send-email:ip=${ip}`, 10, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
+
     const body = (await req.json()) as SendRequest;
     if (!body.template_code) {
       return new Response(JSON.stringify({ error: "template_code required" }), {

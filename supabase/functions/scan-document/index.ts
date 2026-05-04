@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import mammoth from "npm:mammoth@1.8.0";
 import * as XLSX from "npm:xlsx@0.18.5";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -372,6 +373,10 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const ip = getClientIp(req);
+    const rl = await checkRateLimit(`scan-document:ip=${ip}`, 10, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
+
     const { scanId, role }: ScanPayload = await req.json();
     if (!scanId) throw new Error("scanId required");
 

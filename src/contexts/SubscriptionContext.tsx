@@ -1,31 +1,8 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
+import { logger } from '../utils/logger';
 import { useAuth } from './AuthContext';
 import type { CompanySubscription, SubscriptionPlan, Feature, PlanTier, CompanyFeature } from '../types';
-
-const PLAN_FEATURES: Record<PlanTier, Set<Feature>> = {
-  free_trial: new Set([
-    'basic_reports',
-  ]),
-  standard: new Set([
-    'documents_signing',
-    'basic_reports',
-    'categories',
-    'export_pdf',
-  ]),
-  premium: new Set([
-    'documents_signing',
-    'basic_reports',
-    'categories',
-    'advanced_reports',
-    'export_pdf',
-    'export_excel',
-    'audit_log',
-    'bulk_operations',
-    'stock_alerts',
-    'data_export',
-  ]),
-};
 
 interface SubscriptionContextType {
   subscription: CompanySubscription | null;
@@ -33,6 +10,7 @@ interface SubscriptionContextType {
   planTier: PlanTier;
   loading: boolean;
   isExpired: boolean;
+  isInvalid: boolean;
   isTrial: boolean;
   daysRemaining: number;
   companyFeatures: CompanyFeature[];
@@ -46,13 +24,22 @@ interface SubscriptionContextType {
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
+type PlanRow = SubscriptionPlan & { feature_keys?: string[] | null };
+
+function extractPlanFeatures(plan: PlanRow | null): Set<Feature> {
+  if (!plan) return new Set();
+  const keys = Array.isArray(plan.feature_keys) ? plan.feature_keys : [];
+  return new Set(keys as Feature[]);
+}
+
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
   const [subscription, setSubscription] = useState<CompanySubscription | null>(null);
-  const [plan, setPlan] = useState<SubscriptionPlan | null>(null);
+  const [plan, setPlan] = useState<PlanRow | null>(null);
   const [companyFeatures, setCompanyFeatures] = useState<CompanyFeature[]>([]);
   const [accountingEnabled, setAccountingEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const companyIdRef = useRef<string | null>(null);
 
   const fetchSubscription = async (companyId: string) => {
     try {
@@ -65,7 +52,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        console.error('Failed to fetch subscription:', error);
+        logger.error('Failed to fetch subscription', { error });
         setSubscription(null);
         setPlan(null);
         return;
@@ -73,7 +60,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
       if (data) {
         setSubscription(data);
-        setPlan(data.plan as SubscriptionPlan);
+        setPlan((data.plan ?? null) as PlanRow | null);
       } else {
         setSubscription(null);
         setPlan(null);
@@ -82,11 +69,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const { data: featuresData, error: featuresError } = await supabase
         .from('company_features')
         .select('*')
-        .eq('company_id', companyId)
-        .eq('is_enabled', true);
+        .eq('company_id', companyId);
 
       if (featuresError) {
-        console.error('Failed to fetch company features:', featuresError);
+        logger.error('Failed to fetch company features', { error: featuresError });
         setCompanyFeatures([]);
       } else {
         setCompanyFeatures(featuresData ?? []);
@@ -99,7 +85,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
       setAccountingEnabled(Boolean((companyRow as { accounting_enabled?: boolean } | null)?.accounting_enabled));
     } catch (err) {
-      console.error('Unexpected error fetching subscription:', err);
+      logger.error('Unexpected error fetching subscription', { error: err });
       setSubscription(null);
       setPlan(null);
       setCompanyFeatures([]);
@@ -108,22 +94,56 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    companyIdRef.current = profile?.company_id ?? null;
     if (profile?.company_id) {
       fetchSubscription(profile.company_id).finally(() => setLoading(false));
-    } else if (profile?.role === 'super_admin') {
-      setLoading(false);
     } else {
       setLoading(false);
     }
   }, [profile?.company_id, profile?.role]);
 
-  const planTier: PlanTier = (plan?.name as PlanTier) || 'free_trial';
+  // Realtime updates for plan definitions, company subscription, and feature overrides
+  useEffect(() => {
+    const companyId = profile?.company_id;
+    if (!companyId) return;
 
+    const channel = supabase
+      .channel(`subscription-${companyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_plans' }, () => {
+        if (companyIdRef.current) fetchSubscription(companyIdRef.current);
+      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'company_subscriptions', filter: `company_id=eq.${companyId}` },
+        () => {
+          if (companyIdRef.current) fetchSubscription(companyIdRef.current);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'company_features', filter: `company_id=eq.${companyId}` },
+        () => {
+          if (companyIdRef.current) fetchSubscription(companyIdRef.current);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.company_id]);
+
+  const planTier: PlanTier = (plan?.name as PlanTier) || 'free_trial';
   const isTrial = subscription?.status === 'trial';
+
+  const isInvalid = Boolean(
+    subscription && subscription.status === 'active' && !subscription.current_period_end,
+  );
 
   const isExpired = (() => {
     if (!subscription) return false;
     if (subscription.status === 'expired' || subscription.status === 'cancelled') return true;
+    if (isInvalid) return true;
     if (isTrial && subscription.trial_end) {
       return new Date(subscription.trial_end) < new Date();
     }
@@ -150,7 +170,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
 
     if (isExpired) return false;
-    return PLAN_FEATURES[planTier]?.has(feature) ?? false;
+    return extractPlanFeatures(plan).has(feature);
   };
 
   const isWithinLimit = (type: 'drivers' | 'depots', currentCount: number): boolean => {
@@ -170,7 +190,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     action: string,
     entityType: string,
     entityId?: string,
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ) => {
     if (!profile?.company_id || !canAccess('audit_log')) return;
     await supabase.from('audit_logs').insert({
@@ -197,6 +217,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         planTier,
         loading,
         isExpired,
+        isInvalid,
         isTrial,
         daysRemaining,
         companyFeatures,

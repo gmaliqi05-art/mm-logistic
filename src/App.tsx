@@ -24,6 +24,7 @@ import LoginPage from './pages/LoginPage';
 import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+const SecuritySettings = lazy(() => import('./pages/SecuritySettings'));
 import InstallPromptBanner from './components/InstallPromptBanner';
 import PushAutoSubscribe from './components/PushAutoSubscribe';
 import PushEnableBanner from './components/PushEnableBanner';
@@ -162,6 +163,11 @@ function AppRoutes() {
         <Route path="/sa-access" element={<SuperAdminLoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/settings/security" element={
+          <ProtectedRoute>
+            <SecuritySettings />
+          </ProtectedRoute>
+        } />
 
         <Route path="/super-admin" element={
           <ProtectedRoute roles={['super_admin']}>

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
+import { logger } from '../utils/logger';
 import type { Profile } from '../types';
 import type { Session } from '@supabase/supabase-js';
 
@@ -28,14 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        console.error('Failed to fetch profile:', error);
+        logger.error('Failed to fetch profile', { error });
         setProfile(null);
         return;
       }
 
       setProfile(data);
     } catch (err) {
-      console.error('Unexpected error fetching profile:', err);
+      logger.error('Unexpected error fetching profile', { error: err });
       setProfile(null);
     }
   };
