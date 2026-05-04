@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import SmartDocScanner, { SmartScanResult } from '../../components/scanner/SmartDocScanner';
+import PalletScanner from '../../components/scanner/PalletScanner';
 import type { StockMovement, ProductCategory } from '../../types';
 import { epalClassRank } from '../../utils/productSort';
 
@@ -55,6 +56,31 @@ export default function DepotReceiving() {
   const [shippingNotes, setShippingNotes] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [showPalletScanner, setShowPalletScanner] = useState(false);
+
+  function normalizeForMatch(s: string) {
+    return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  }
+
+  function handlePalletScan(code: string) {
+    const needle = normalizeForMatch(code);
+    const matchedProduct = products.find(
+      (p) => normalizeForMatch(p.name) === needle || normalizeForMatch(p.name).includes(needle)
+    );
+    if (matchedProduct) {
+      setReceivingRows((prev) => {
+        const blank = prev.find((r) => !r.category_id);
+        if (blank) {
+          return prev.map((r) => r.id === blank.id
+            ? { ...r, category_id: matchedProduct.category_id, category_product_id: matchedProduct.id, quantity: r.quantity || '1' }
+            : r);
+        }
+        return [...prev, { id: crypto.randomUUID(), category_id: matchedProduct.category_id, category_product_id: matchedProduct.id, quantity: '1', condition: 'good' }];
+      });
+    } else {
+      setError(`Kodi "${code}" nuk u gjet`);
+    }
+  }
   const [aiNotice, setAiNotice] = useState<string | null>(null);
 
   function normalize(s: string): string {
@@ -422,14 +448,32 @@ export default function DepotReceiving() {
           <h1 className="text-2xl font-bold text-gray-900">{t('depot.receiving.title')}</h1>
           <p className="text-gray-500 mt-1">{t('depot.receiving.subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowScanner(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium"
-        >
-          <Sparkles className="w-4 h-4" />
-          {t('common.scanner.title')}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowPalletScanner(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+          >
+            <Sparkles className="w-4 h-4" />
+            Skano paleten
+          </button>
+          <button
+            onClick={() => setShowScanner(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium"
+          >
+            <Sparkles className="w-4 h-4" />
+            {t('common.scanner.title')}
+          </button>
+        </div>
       </div>
+
+      <PalletScanner
+        open={showPalletScanner}
+        onClose={() => setShowPalletScanner(false)}
+        onScan={handlePalletScan}
+        context="receiving"
+        continuous
+        title="Skano paletat per pranim"
+      />
 
       {aiNotice && (
         <div className="flex items-start gap-2 p-3 rounded-lg bg-teal-50 border border-teal-200">

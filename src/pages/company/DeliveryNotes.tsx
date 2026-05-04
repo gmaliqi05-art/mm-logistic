@@ -57,6 +57,9 @@ interface NoteForm {
   notes: string;
   items: NoteItemForm[];
   attachment_url: string;
+  pallets_delivered: string;
+  pallets_returned: string;
+  pallet_type: string;
 }
 
 interface Contact {
@@ -103,6 +106,9 @@ const emptyForm: NoteForm = {
   notes: '',
   items: [{ ...emptyItem }],
   attachment_url: '',
+  pallets_delivered: '',
+  pallets_returned: '',
+  pallet_type: 'EPAL',
 };
 
 export default function CompanyDeliveryNotes() {
@@ -264,6 +270,10 @@ export default function CompanyDeliveryNotes() {
           scheduled_delivery_time_set: !!form.scheduled_delivery_time,
           notes: form.notes,
           attachment_url: form.attachment_url || null,
+          pallets_delivered: parseInt(form.pallets_delivered, 10) || 0,
+          pallets_returned: parseInt(form.pallets_returned, 10) || 0,
+          pallet_type: form.pallet_type || 'EPAL',
+          pallet_partner_contact_id: form.partner_id || null,
         })
         .select()
         .single();
@@ -833,6 +843,47 @@ export default function CompanyDeliveryNotes() {
                   </div>
                 </div>
               )}
+
+              <div className="border border-teal-100 bg-teal-50/50 rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-teal-900">Shkembim paletash (EPAL)</span>
+                  <select
+                    value={form.pallet_type}
+                    onChange={(e) => setForm({ ...form, pallet_type: e.target.value })}
+                    className="px-2 py-1 text-xs border border-teal-200 rounded bg-white"
+                  >
+                    <option value="EPAL">EPAL</option>
+                    <option value="UIC">UIC</option>
+                    <option value="CHEP">CHEP</option>
+                    <option value="Disposable">Disposable</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Paleta te dorezuara</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.pallets_delivered}
+                      onChange={(e) => setForm({ ...form, pallets_delivered: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Paleta te kthyera</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.pallets_returned}
+                      onChange={(e) => setForm({ ...form, pallets_returned: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-teal-800">Regjistri i paletave azhurnohet automatikisht kur porosia konfirmohet.</p>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.notes')}</label>

@@ -11,7 +11,9 @@ import {
   Package,
   Trash2,
   ArrowRight,
+  ScanLine,
 } from 'lucide-react';
+import PalletScanner from '../../components/scanner/PalletScanner';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -56,6 +58,7 @@ export default function DepotSorting() {
   const [submitting, setSubmitting] = useState(false);
 
   const [showNewBatch, setShowNewBatch] = useState(false);
+  const [showPalletScanner, setShowPalletScanner] = useState(false);
   const [newCategoryId, setNewCategoryId] = useState('');
   const [newTotalReceived, setNewTotalReceived] = useState('');
   const [newNotes, setNewNotes] = useState('');
@@ -287,6 +290,34 @@ export default function DepotSorting() {
     }
   }
 
+  function normalizeMatch(s: string) {
+    return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  }
+
+  function handlePalletScan(code: string) {
+    const key = normalizeMatch(code);
+    if (!key) return;
+    const prod = products.find((p) => normalizeMatch(p.name) === key || normalizeMatch(p.name).includes(key));
+    const cat = prod
+      ? categories.find((c) => c.id === prod.category_id)
+      : categories.find((c) => normalizeMatch(c.name) === key || normalizeMatch(c.name).includes(key));
+    if (!cat) {
+      setError(t('common.error') + ': ' + code);
+      return;
+    }
+    const existing = batches.find((b) => b.status === 'in_progress' && b.category_id === cat.id);
+    if (existing) {
+      setShowPalletScanner(false);
+      openBatch(existing);
+    } else {
+      setNewCategoryId(cat.id);
+      setNewTotalReceived('');
+      setNewNotes('');
+      setShowPalletScanner(false);
+      setShowNewBatch(true);
+    }
+  }
+
   const currentBatch = useMemo(
     () => batches.find((b) => b.id === activeBatchId) ?? null,
     [batches, activeBatchId],
@@ -323,14 +354,24 @@ export default function DepotSorting() {
           </h1>
           <p className="text-gray-500 mt-1 text-sm">{t('depot.sorting.subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowNewBatch(true)}
-          disabled={categories.length === 0}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="w-4 h-4" />
-          {t('depot.sorting.newBatch')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPalletScanner(true)}
+            disabled={categories.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ScanLine className="w-4 h-4" />
+            {t('scanner.title') || 'Skano'}
+          </button>
+          <button
+            onClick={() => setShowNewBatch(true)}
+            disabled={categories.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4" />
+            {t('depot.sorting.newBatch')}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -695,6 +736,15 @@ export default function DepotSorting() {
           </div>
         </div>
       )}
+
+      <PalletScanner
+        open={showPalletScanner}
+        onClose={() => setShowPalletScanner(false)}
+        onScan={handlePalletScan}
+        context="sorting"
+        continuous={false}
+        title={t('scanner.title') || 'Skano paleten'}
+      />
     </div>
   );
 }
