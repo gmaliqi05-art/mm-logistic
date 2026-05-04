@@ -114,39 +114,6 @@ Deno.serve(async (req: Request) => {
     optionalStringMax(legalForm, 100, "Forma ligjore");
     optionalStringMax(registrationCourt, 200, "Gjykata");
 
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (typeof adminEmail !== "string" || !emailRe.test(adminEmail) || adminEmail.length > 254) {
-      throw new Error("Email i pavlefshem");
-    }
-    if (typeof adminPassword !== "string" || adminPassword.length < 8 || adminPassword.length > 128) {
-      throw new Error("Fjalekalimi duhet te kete 8 deri 128 karaktere");
-    }
-    if (typeof companyName !== "string" || companyName.trim().length === 0 || companyName.length > 200) {
-      throw new Error("Emri i kompanise i pavlefshem");
-    }
-    if (typeof planName !== "string" || planName.length > 100) {
-      throw new Error("Plani i pavlefshem");
-    }
-    const optionalStringMax = (v: unknown, max: number, label: string) => {
-      if (v === undefined || v === null || v === "") return;
-      if (typeof v !== "string" || v.length > max) {
-        throw new Error(`${label} i pavlefshem`);
-      }
-    };
-    optionalStringMax(adminName, 200, "Emri i adminit");
-    optionalStringMax(companyEmail, 254, "Email-i i kompanise");
-    optionalStringMax(companyPhone, 50, "Telefoni");
-    optionalStringMax(companyAddress, 500, "Adresa");
-    optionalStringMax(country, 100, "Shteti");
-    optionalStringMax(city, 100, "Qyteti");
-    optionalStringMax(postalCode, 20, "Kodi postar");
-    optionalStringMax(website, 500, "Faqja web");
-    optionalStringMax(vatNumber, 50, "VAT");
-    optionalStringMax(taxNumber, 50, "Tax");
-    optionalStringMax(commercialRegister, 100, "Regjistri tregtar");
-    optionalStringMax(legalForm, 100, "Forma ligjore");
-    optionalStringMax(registrationCourt, 200, "Gjykata");
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!

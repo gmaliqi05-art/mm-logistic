@@ -108,6 +108,10 @@ const DriverChat = lazy(() => import('./pages/driver/Chat'));
 const DriverDocuments = lazy(() => import('./pages/driver/Documents'));
 const DriverOverdue = lazy(() => import('./pages/driver/Overdue'));
 const DriverSettings = lazy(() => import('./pages/driver/Settings'));
+const DriverTracking = lazy(() => import('./pages/driver/Tracking'));
+const LogisticsLiveMap = lazy(() => import('./pages/logistics/LiveMap'));
+const CompanyPalletAccounts = lazy(() => import('./pages/company/PalletAccounts'));
+const CompanyPalletAccountDetail = lazy(() => import('./pages/company/PalletAccountDetail'));
 
 const AccDashboard = lazy(() => import('./pages/accounting/Dashboard'));
 const AccContacts = lazy(() => import('./pages/accounting/Contacts'));
@@ -227,6 +231,9 @@ function AppRoutes() {
           <Route path="review" element={<CompanyReview />} />
           <Route path="overdue" element={<CompanyOverdueDocuments />} />
           <Route path="partners" element={<CompanyPartners />} />
+          <Route path="pallet-accounts" element={<CompanyPalletAccounts />} />
+          <Route path="pallet-accounts/:id" element={<CompanyPalletAccountDetail />} />
+          <Route path="live-map" element={<LogisticsLiveMap />} />
           <Route path="reports" element={<CompanyReports />} />
           <Route path="repair-reports" element={<CompanyRepairReports />} />
           <Route path="worker-repair-stats" element={<CompanyWorkerRepairStats />} />
@@ -266,6 +273,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }>
           <Route index element={<DriverDashboard />} />
+          <Route path="tracking" element={<DriverTracking />} />
           <Route path="overdue" element={<DriverOverdue />} />
           <Route path="documents" element={<DriverDocuments />} />
           <Route path="chat" element={<DriverChat />} />
@@ -311,6 +319,7 @@ function AppRoutes() {
           <Route index element={<LogisticsDashboard />} />
           <Route path="dispatch" element={<LogisticsDispatch />} />
           <Route path="active" element={<LogisticsActive />} />
+          <Route path="live-map" element={<LogisticsLiveMap />} />
           <Route path="drivers" element={<LogisticsDrivers />} />
         </Route>
 

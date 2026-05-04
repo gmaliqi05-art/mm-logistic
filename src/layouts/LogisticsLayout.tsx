@@ -5,6 +5,7 @@ import {
   Truck,
   Users,
   ClipboardList,
+  Map,
   LogOut,
   Menu,
   X,
@@ -20,6 +21,7 @@ const navItems = [
   { to: '/logistics', icon: LayoutDashboard, label: 'Ballina', end: true },
   { to: '/logistics/dispatch', icon: ClipboardList, label: 'Dispeçeria', end: false },
   { to: '/logistics/active', icon: Truck, label: 'Caktimet aktive', end: false },
+  { to: '/logistics/live-map', icon: Map, label: 'Harta live', end: false },
   { to: '/logistics/drivers', icon: Users, label: 'Shoferët', end: false },
 ];
 

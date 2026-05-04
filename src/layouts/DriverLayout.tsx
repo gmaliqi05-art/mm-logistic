@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   AlertCircle,
+  MapPin,
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +19,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const navItems = [
   { to: '/driver', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true },
+  { to: '/driver/tracking', icon: MapPin, labelKey: 'nav.tracking', end: false },
   { to: '/driver/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false },
   { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false },
   { to: '/driver/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false },

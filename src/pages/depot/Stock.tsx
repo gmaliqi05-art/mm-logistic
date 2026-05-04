@@ -12,12 +12,14 @@ import {
   CheckCircle,
   ShieldAlert,
   ShieldCheck,
+  ScanLine,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { Stock as StockType, StockMovement, ProductCategory } from '../../types';
 import { compareCategoriesByPriority, compareProducts } from '../../utils/productSort';
+import PalletScanner from '../../components/scanner/PalletScanner';
 
 export default function DepotStock() {
   const { profile } = useAuth();
@@ -36,6 +38,19 @@ export default function DepotStock() {
   const [formConditionBefore, setFormConditionBefore] = useState('good');
   const [formConditionAfter, setFormConditionAfter] = useState('good');
   const [formNotes, setFormNotes] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+
+  const handleScan = (code: string) => {
+    const match = categories.find(
+      (c) => c.name?.toLowerCase() === code.toLowerCase() || (c as unknown as { aliases?: string[] }).aliases?.includes?.(code)
+    );
+    if (match) {
+      setFormCategory(match.id);
+      setShowForm(true);
+    } else {
+      setError(`Code "${code}" did not match any category`);
+    }
+  };
 
   const conditionConfig: Record<string, { label: string; className: string }> = {
     good: { label: t('company.stock.good'), className: 'bg-green-100 text-green-700' },
@@ -253,14 +268,31 @@ export default function DepotStock() {
           <h1 className="text-2xl font-bold text-gray-900">{t('depot.stock.title')}</h1>
           <p className="text-gray-500 mt-1">{t('depot.stock.subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          {t('depot.stock.newMovement')}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowScanner(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium"
+          >
+            <ScanLine className="w-4 h-4" />
+            Scan
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            {t('depot.stock.newMovement')}
+          </button>
+        </div>
       </div>
+
+      <PalletScanner
+        open={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleScan}
+        context="stock"
+        title="Scan pallet for stocktake"
+      />
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
