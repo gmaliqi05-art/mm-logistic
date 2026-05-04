@@ -123,6 +123,8 @@ const AccExpenseCategories = lazy(() => import('./pages/accounting/ExpenseCatego
 const AccBankAccounts = lazy(() => import('./pages/accounting/BankAccounts'));
 const AccReports = lazy(() => import('./pages/accounting/Reports'));
 const AccSettings = lazy(() => import('./pages/accounting/AccSettings'));
+const AccDatevExport = lazy(() => import('./pages/accounting/DatevExport'));
+const AccTestExport = lazy(() => import('./pages/accounting/TestExport'));
 const AccFixedAssets = lazy(() => import('./pages/accounting/FixedAssets'));
 const AccScans = lazy(() => import('./pages/accounting/Scans'));
 const AccClientInvoices = lazy(() => import('./pages/accounting/ClientInvoices'));
@@ -297,6 +299,8 @@ function AppRoutes() {
           <Route path="assets" element={<AccFixedAssets />} />
           <Route path="scans" element={<AccScans />} />
           <Route path="settings" element={<AccSettings />} />
+          <Route path="datev-export" element={<AccDatevExport />} />
+          <Route path="test-export" element={<AccTestExport />} />
         </Route>
 
         <Route path="/logistics" element={

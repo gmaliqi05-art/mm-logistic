@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Printer, Loader2 } from 'lucide-react';
+import { ArrowLeft, Printer, Loader2, FileCode2, FileText, Download, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { logger } from '../../utils/logger';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import type {
@@ -161,13 +162,16 @@ export default function InvoicePrint() {
             <ArrowLeft className="w-4 h-4" />
             Zurück
           </button>
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
-          >
-            <Printer className="w-4 h-4" />
-            Drucken
-          </button>
+          <div className="flex items-center gap-2">
+            <EInvoiceButtons invoiceId={id ?? ''} />
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Drucken
+            </button>
+          </div>
         </div>
       </div>
 
@@ -352,5 +356,90 @@ export default function InvoicePrint() {
         )}
       </div>
     </>
+  );
+}
+
+function EInvoiceButtons({ invoiceId }: { invoiceId: string }) {
+  const [busy, setBusy] = useState<'xrechnung' | 'zugferd' | null>(null);
+  const [result, setResult] = useState<{ status: 'valid' | 'invalid' | 'pending'; errors: Array<{ field: string; message: string }>; xml_url: string | null; pdf_url: string | null } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async (format: 'xrechnung' | 'zugferd') => {
+    if (!invoiceId) return;
+    try {
+      setBusy(format);
+      setError(null);
+      setResult(null);
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-einvoice`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ invoice_id: invoiceId, format }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error ?? 'Generation failed');
+      setResult({
+        status: json.validation.status,
+        errors: json.validation.errors,
+        xml_url: json.xml_url,
+        pdf_url: json.pdf_url,
+      });
+      const url = format === 'xrechnung' ? json.xml_url : json.pdf_url;
+      if (url) window.open(url as string, '_blank');
+    } catch (err) {
+      logger.error('e-invoice button failed', { error: err });
+      setError(err instanceof Error ? err.message : 'Error');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => handleGenerate('xrechnung')}
+        disabled={busy !== null}
+        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+      >
+        {busy === 'xrechnung' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileCode2 className="w-4 h-4" />}
+        XRechnung XML
+      </button>
+      <button
+        onClick={() => handleGenerate('zugferd')}
+        disabled={busy !== null}
+        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50"
+      >
+        {busy === 'zugferd' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+        ZUGFeRD PDF
+      </button>
+      {error && (
+        <span className="inline-flex items-center gap-1 text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded">
+          <AlertTriangle className="w-3 h-3" /> {error}
+        </span>
+      )}
+      {result && result.status === 'invalid' && (
+        <span className="inline-flex items-center gap-1 text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded" title={result.errors.map((e) => `${e.field}: ${e.message}`).join('\n')}>
+          <AlertTriangle className="w-3 h-3" /> {result.errors.length} issue(s)
+        </span>
+      )}
+      {result && result.status === 'valid' && (
+        <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+          <CheckCircle2 className="w-3 h-3" /> valid
+        </span>
+      )}
+      {result && (result.xml_url || result.pdf_url) && (
+        <a
+          href={(result.pdf_url || result.xml_url) as string}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900"
+        >
+          <Download className="w-3 h-3" /> open
+        </a>
+      )}
+    </div>
   );
 }

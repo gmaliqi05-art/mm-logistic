@@ -19,6 +19,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { formatCurrency } from '../../types/accounting';
 import { exportDatevCSV, exportUstvaCSV } from '../../utils/germanCompliance';
+import { Link } from 'react-router-dom';
+import { FileCode2, Globe as Globe2 } from 'lucide-react';
 
 type TabKey = 'profit_loss' | 'by_customer' | 'by_category' | 'vat' | 'products';
 
@@ -93,6 +95,47 @@ export default function Reports() {
   const [vatBreakdowns, setVatBreakdowns] = useState<VatBreakdown[]>([]);
 
   const [productRows, setProductRows] = useState<ProductRow[]>([]);
+  const [companyCountry, setCompanyCountry] = useState<string | null>(null);
+  const [saftOpen, setSaftOpen] = useState(false);
+  const [saftBusy, setSaftBusy] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.company_id) return;
+    supabase.from('companies').select('country').eq('id', profile.company_id).maybeSingle()
+      .then(({ data }) => setCompanyCountry(((data as { country?: string } | null)?.country ?? null)));
+  }, [profile?.company_id]);
+
+  const saftEligible = companyCountry === 'RO' || companyCountry === 'PL';
+
+  const handleGenerateSaft = async () => {
+    if (!profile?.company_id || !saftEligible) return;
+    try {
+      setSaftBusy(true);
+      setError(null);
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-saft`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          company_id: profile.company_id,
+          country_code: companyCountry,
+          date_from: dateFrom,
+          date_to: dateTo,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error ?? 'SAF-T generation failed');
+      if (json.download_url) window.open(json.download_url as string, '_blank');
+      setSaftOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'SAF-T error');
+    } finally {
+      setSaftBusy(false);
+    }
+  };
 
   const fetchReport = useCallback(async () => {
     if (!profile?.company_id) return;
@@ -979,8 +1022,59 @@ export default function Reports() {
             <Download className="w-4 h-4" />
             UStVA
           </button>
+          <Link
+            to="/accounting/datev-export"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm"
+            title="Detailed DATEV export (EXTF v700)"
+          >
+            <FileCode2 className="w-4 h-4" />
+            DATEV Detailed
+          </Link>
+          {saftEligible && (
+            <button
+              onClick={() => setSaftOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-white bg-emerald-700 rounded-lg hover:bg-emerald-800 transition-colors font-medium text-sm"
+              title={`SAF-T export (${companyCountry})`}
+            >
+              <Globe2 className="w-4 h-4" />
+              SAF-T {companyCountry}
+            </button>
+          )}
+          <Link
+            to="/accounting/test-export"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-slate-600 hover:text-slate-900 font-medium text-sm"
+          >
+            Test Exports
+          </Link>
         </div>
       </div>
+
+      {saftOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setSaftOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">SAF-T Export ({companyCountry})</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Generate and download the SAF-T XML for the selected period.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">From</label>
+                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">To</label>
+                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setSaftOpen(false)} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700">Cancel</button>
+              <button onClick={handleGenerateSaft} disabled={saftBusy} className="px-4 py-2 rounded-lg bg-emerald-700 text-white disabled:opacity-50">
+                {saftBusy ? 'Generating...' : 'Generate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
