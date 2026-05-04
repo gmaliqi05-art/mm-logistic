@@ -173,6 +173,7 @@ export const sq = {
     tracking: 'Gjurmimi',
     liveMap: 'Harta Direkt',
     palletAccounts: 'Llogaritë e Paletave',
+    apiWebhooks: 'API & Webhooks',
     deliveryNotes: 'Porosit e Reja',
     review: 'Per Shqyrtim',
     overdue: 'Te Vonuara',

@@ -175,6 +175,7 @@ export const en: typeof sq = {
     tracking: 'Tracking',
     liveMap: 'Live Map',
     palletAccounts: 'Pallet Accounts',
+    apiWebhooks: 'API & Webhooks',
     deliveryNotes: 'New Orders',
     review: 'For Review',
     overdue: 'Overdue',

@@ -80,6 +80,7 @@ const CompanyAuditLog = lazy(() => import('./pages/company/AuditLog'));
 const CompanyStockAlerts = lazy(() => import('./pages/company/StockAlerts'));
 const CompanyDataExport = lazy(() => import('./pages/company/DataExport'));
 const CompanySettings = lazy(() => import('./pages/company/Settings'));
+const CompanyApiWebhooks = lazy(() => import('./pages/company/ApiWebhooks'));
 const CompanyOverdueDocuments = lazy(() => import('./pages/company/OverdueDocuments'));
 const CompanyPartners = lazy(() => import('./pages/company/Partners'));
 const CompanyReview = lazy(() => import('./pages/company/Review'));
@@ -125,6 +126,7 @@ const AccDeliveryNotes = lazy(() => import('./pages/accounting/AccDeliveryNotes'
 const AccTransactions = lazy(() => import('./pages/accounting/Transactions'));
 const AccExpenseCategories = lazy(() => import('./pages/accounting/ExpenseCategories'));
 const AccBankAccounts = lazy(() => import('./pages/accounting/BankAccounts'));
+const AccBankReconciliation = lazy(() => import('./pages/accounting/BankReconciliation'));
 const AccReports = lazy(() => import('./pages/accounting/Reports'));
 const AccSettings = lazy(() => import('./pages/accounting/AccSettings'));
 const AccDatevExport = lazy(() => import('./pages/accounting/DatevExport'));
@@ -242,6 +244,7 @@ function AppRoutes() {
           <Route path="stock-alerts" element={<CompanyStockAlerts />} />
           <Route path="data-export" element={<CompanyDataExport />} />
           <Route path="settings" element={<CompanySettings />} />
+          <Route path="settings/api-webhooks" element={<CompanyApiWebhooks />} />
           <Route path="financial-summary" element={<CompanyFinancialSummary />} />
           <Route path="accounting-upgrade" element={<CompanyAccountingUpgrade />} />
           <Route path="invoices" element={<AccInvoices />} />
@@ -300,6 +303,7 @@ function AppRoutes() {
           <Route path="transactions" element={<AccTransactions />} />
           <Route path="expenses" element={<AccExpenseCategories />} />
           <Route path="bank-accounts" element={<AccBankAccounts />} />
+          <Route path="bank-reconciliation" element={<AccBankReconciliation />} />
           <Route path="reports" element={<AccReports />} />
           <Route path="financials" element={<AccGermanFinancials />} />
           <Route path="imports" element={<AccImports />} />

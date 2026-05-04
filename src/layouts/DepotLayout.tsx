@@ -19,19 +19,34 @@ import { useCompanyBranding } from '../hooks/useCompanyBranding';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
-const allNavItems = [
+type WorkerCategory = 'depoist' | 'reparature';
+
+const allNavItems: Array<{
+  to: string;
+  icon: typeof LayoutDashboard;
+  labelKey: string;
+  end: boolean;
+  bottomNav: boolean;
+  categories?: WorkerCategory[];
+}> = [
   { to: '/depot', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, bottomNav: true },
-  { to: '/depot/stock', icon: Package, labelKey: 'nav.stock', end: false, bottomNav: true },
-  { to: '/depot/receiving', icon: ArrowLeftRight, labelKey: 'nav.receiving', end: false, bottomNav: true },
-  { to: '/depot/sorting', icon: Layers, labelKey: 'nav.sorting', end: false, bottomNav: false },
-  { to: '/depot/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, bottomNav: false },
-  { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false },
-  { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: true },
+  { to: '/depot/stock', icon: Package, labelKey: 'nav.stock', end: false, bottomNav: true, categories: ['depoist'] },
+  { to: '/depot/receiving', icon: ArrowLeftRight, labelKey: 'nav.receiving', end: false, bottomNav: true, categories: ['depoist'] },
+  { to: '/depot/sorting', icon: Layers, labelKey: 'nav.sorting', end: false, bottomNav: false, categories: ['depoist'] },
+  { to: '/depot/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, bottomNav: false, categories: ['depoist'] },
+  { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false, categories: ['reparature'] },
+  { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: true, categories: ['reparature'] },
   { to: '/depot/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/depot/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
 ];
 
-const bottomNavItems = allNavItems.filter(i => i.bottomNav);
+function filterByCategory(cat: WorkerCategory | null | undefined) {
+  return allNavItems.filter((item) => {
+    if (!item.categories) return true;
+    if (!cat) return true;
+    return item.categories.includes(cat);
+  });
+}
 
 export default function DepotLayout() {
   const { profile, signOut } = useAuth();
@@ -45,6 +60,9 @@ export default function DepotLayout() {
   }, [location.pathname]);
 
   const roleLabel = t(`roles.${profile?.role ?? ''}`);
+  const workerCategory = profile?.worker_category as WorkerCategory | null | undefined;
+  const navItems = filterByCategory(workerCategory);
+  const bottomNavItems = navItems.filter((i) => i.bottomNav);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
@@ -63,7 +81,7 @@ export default function DepotLayout() {
         </div>
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
-          {allNavItems.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -195,7 +213,7 @@ export default function DepotLayout() {
           </div>
 
           <div className="p-4 space-y-2">
-            {allNavItems.map((item) => {
+            {navItems.map((item) => {
               const isActive = item.end
                 ? location.pathname === item.to
                 : location.pathname.startsWith(item.to);

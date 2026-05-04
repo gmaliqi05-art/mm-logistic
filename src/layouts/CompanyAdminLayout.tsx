@@ -27,6 +27,7 @@ import {
   Wrench,
   ShieldCheck,
   ScanLine,
+  Key,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,6 +67,7 @@ const allNavItems = [
   { to: '/company/financial-summary', icon: BarChart3, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
   { to: '/logistics', icon: Truck, labelKey: 'nav.logistics', end: false, premium: false, bottomNav: false },
   { to: '/company/settings', icon: Settings, labelKey: 'nav.settings', end: false, premium: false, bottomNav: false },
+  { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', end: false, premium: false, bottomNav: false },
 ];
 
 const bottomNavItems = allNavItems.filter(i => i.bottomNav);

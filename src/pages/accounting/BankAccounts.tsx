@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, AlertTriangle, X, Loader2, Landmark, Star, CreditCard, CreditCard as Edit3, ArrowLeft, ArrowUpRight, ArrowDownRight, ArrowRightLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, AlertTriangle, X, Loader2, Landmark, Star, CreditCard, CreditCard as Edit3, ArrowLeft, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Upload, FileCheck2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { AccBankAccount, AccTransaction, AccCurrency } from '../../types/accounting';
-import { formatCurrency } from '../../types/accounting';
+import { formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
 
 interface BankForm {
   name: string;
@@ -47,6 +48,58 @@ export default function BankAccounts() {
   const [selectedAccount, setSelectedAccount] = useState<AccBankAccount | null>(null);
   const [accountTransactions, setAccountTransactions] = useState<AccTransaction[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
+
+  const [importOpen, setImportOpen] = useState(false);
+  const [importAccountId, setImportAccountId] = useState<string>('');
+  const [importFileName, setImportFileName] = useState<string>('');
+  const [importContent, setImportContent] = useState<string>('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
+
+  const openImport = (accountId: string) => {
+    setImportAccountId(accountId);
+    setImportFileName('');
+    setImportContent('');
+    setImportResult(null);
+    setImportOpen(true);
+  };
+
+  const handleImportFile = async (file: File) => {
+    setImportFileName(file.name);
+    setImportContent(await file.text());
+  };
+
+  const handleImport = async () => {
+    if (!importAccountId || !importContent) return;
+    try {
+      setImporting(true);
+      setError(null);
+      setImportResult(null);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-bank-statement`;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bank_account_id: importAccountId,
+          file_name: importFileName,
+          content: importContent,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Import failed');
+      setImportResult(`${json.line_count} rreshta te importuar, ${json.matches_suggested} sugjerime perputhjeje (${json.format}).`);
+    } catch (err: any) {
+      setError(err.message || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   useEffect(() => {
     if (profile?.company_id) fetchAccounts();
@@ -380,26 +433,83 @@ export default function BankAccounts() {
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => openEdit(account)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Ndrysho
                 </button>
+                <button
+                  onClick={() => openImport(account.id)}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Importo ekstrakt
+                </button>
+                <Link
+                  to={`/accounting/bank-reconciliation?account=${account.id}`}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <FileCheck2 className="w-3.5 h-3.5" />
+                  Pajto
+                </Link>
                 {!account.is_default && (
                   <button
                     onClick={() => setAsDefault(account.id)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
                   >
                     <Star className="w-3.5 h-3.5" />
-                    Vendos Default
+                    Default
                   </button>
                 )}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setImportOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">Importo ekstrakt bankar</h2>
+              <button onClick={() => setImportOpen(false)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">Ngarkoni nje skedar CAMT.053 (XML) ose MT940 (.sta / .txt). Sistemi do te nxjerre transaksionet dhe te sugjeroje perputhjet.</p>
+              <input
+                type="file"
+                accept=".xml,.sta,.txt,.mt940"
+                onChange={(e) => e.target.files && handleImportFile(e.target.files[0])}
+                className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+              />
+              {importFileName && (
+                <div className="text-xs text-gray-500">Zgjedhur: {importFileName} ({Math.round(importContent.length / 1024)} KB)</div>
+              )}
+              {importResult && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">{importResult}</div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+              <button onClick={() => setImportOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                Mbyll
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={importing || !importContent}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {importing && <Loader2 className="w-4 h-4 animate-spin" />}
+                <Upload className="w-4 h-4" />
+                Importo
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -458,8 +568,9 @@ export default function BankAccounts() {
                     onChange={(e) => setForm({ ...form, currency: e.target.value as AccCurrency })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                   >
-                    <option value="EUR">EUR</option>
-                    <option value="CHF">CHF</option>
+                    {ACC_CURRENCIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
                   </select>
                 </div>
               </div>

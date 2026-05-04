@@ -2,7 +2,9 @@ export type AccContactType = 'customer' | 'supplier' | 'both';
 export type AccInvoiceStatus = 'draft' | 'sent' | 'paid' | 'partial' | 'overdue' | 'cancelled';
 export type AccPurchaseStatus = 'draft' | 'received' | 'paid' | 'overdue' | 'cancelled';
 export type AccInvoiceType = 'invoice' | 'credit_note' | 'proforma';
-export type AccCurrency = 'EUR' | 'CHF';
+export type AccCurrency = 'EUR' | 'CHF' | 'ALL' | 'RSD' | 'BAM' | 'MKD' | 'RON' | 'BGN' | 'PLN' | 'GBP' | 'USD';
+
+export const ACC_CURRENCIES: AccCurrency[] = ['EUR', 'CHF', 'ALL', 'RSD', 'BAM', 'MKD', 'RON', 'BGN', 'PLN', 'GBP', 'USD'];
 export type AccUnit = 'pcs' | 'kg' | 'liter' | 'hour' | 'meter' | 'package' | 'set';
 export type AccVatRate = 0 | 7 | 19;
 export type AccPaymentMethod = '' | 'bank_transfer' | 'cash' | 'card' | 'paypal' | 'other';
