@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,10 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!apiKey || apiKey.revoked_at) return json({ error: "Invalid or revoked API key" }, 401);
+
+    const rl = await checkRateLimit(`api-v1:${apiKey.id}`, 60, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
+
     await admin.from("company_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", apiKey.id);
 
     const companyId = apiKey.company_id;

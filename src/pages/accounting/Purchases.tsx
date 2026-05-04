@@ -13,7 +13,7 @@ import type {
   AccBankAccount,
   AccCurrency,
 } from '../../types/accounting';
-import { VAT_RATES, UNITS, formatCurrency } from '../../types/accounting';
+import { VAT_RATES, UNITS, formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
 
 type TabFilter = 'all' | AccPurchaseStatus;
 
@@ -551,8 +551,9 @@ export default function Purchases() {
               className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
             >
               <option value="">{t('accounting.purchases.allCurrencies')}</option>
-              <option value="EUR">EUR</option>
-              <option value="CHF">CHF</option>
+              {ACC_CURRENCIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -816,8 +817,9 @@ export default function Purchases() {
                       onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value as AccCurrency }))}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                     >
-                      <option value="EUR">EUR</option>
-                      <option value="CHF">CHF</option>
+                      {ACC_CURRENCIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
                     </select>
                   </div>
 

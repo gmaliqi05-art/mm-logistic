@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { AccBankAccount, AccCurrency } from '../../types/accounting';
+import { ACC_CURRENCIES } from '../../types/accounting';
 import { CitySelect, PostalCodeSelect, emptyLocationSelection } from '../../components/location/LocationSelector';
 import type { LocationSelection } from '../../types/location';
 import { clearComplianceCache } from '../../lib/complianceEngine';
@@ -498,8 +499,9 @@ export default function AccSettings() {
                 onChange={(e) => handleCurrencyChange(e.target.value as AccCurrency)}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
               >
-                <option value="EUR">EUR - Euro</option>
-                <option value="CHF">CHF - Franc Zvicran</option>
+                {ACC_CURRENCIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
             </div>
             <div>

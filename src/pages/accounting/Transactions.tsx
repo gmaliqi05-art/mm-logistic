@@ -25,7 +25,7 @@ import type {
   AccExpenseCategory,
   AccBankAccount,
 } from '../../types/accounting';
-import { formatCurrency } from '../../types/accounting';
+import { formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
 
 interface TransactionForm {
   transaction_type: AccTransactionType;
@@ -563,8 +563,9 @@ export default function Transactions() {
                       onChange={(e) => setForm({ ...form, currency: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="EUR">EUR</option>
-                      <option value="CHF">CHF</option>
+                      {ACC_CURRENCIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
