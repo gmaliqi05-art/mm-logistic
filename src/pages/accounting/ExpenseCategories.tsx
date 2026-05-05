@@ -63,9 +63,9 @@ export default function ExpenseCategories() {
 
   const getTypeBadge = (type: CategoryType) => {
     const styles: Record<CategoryType, { bg: string; label: string }> = {
-      income: { bg: 'bg-green-100 text-green-700', label: 'Te ardhura' },
-      expense: { bg: 'bg-red-100 text-red-700', label: 'Shpenzim' },
-      other: { bg: 'bg-gray-100 text-gray-700', label: 'Tjeter' },
+      income: { bg: 'bg-green-100 text-green-700', label: t('accounting.expenseCategories.income') },
+      expense: { bg: 'bg-red-100 text-red-700', label: t('accounting.expenseCategories.expense') },
+      other: { bg: 'bg-gray-100 text-gray-700', label: t('accounting.expenseCategories.other') },
     };
     const s = styles[type];
     return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.bg}`}>{s.label}</span>;
@@ -89,7 +89,7 @@ export default function ExpenseCategories() {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      setError('Emri i kategorise eshte i detyrueshem');
+      setError(t('accounting.expenseCategories.nameRequired'));
       return;
     }
     try {
@@ -118,14 +118,14 @@ export default function ExpenseCategories() {
       setForm(emptyForm);
       await fetchCategories();
     } catch (err: any) {
-      setError(err.message || 'Gabim gjate ruajtjes');
+      setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('A jeni i sigurt qe deshironi te fshini kete kategori?')) return;
+    if (!window.confirm(t('accounting.expenseCategories.confirmDelete'))) return;
     try {
       setError(null);
       const { error: err } = await supabase
@@ -135,7 +135,7 @@ export default function ExpenseCategories() {
       if (err) throw err;
       await fetchCategories();
     } catch (err: any) {
-      setError(err.message || 'Gabim gjate fshirjes');
+      setError(err.message || t('common.error'));
     }
   };
 
@@ -151,15 +151,15 @@ export default function ExpenseCategories() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Kategorite e Shpenzimeve</h1>
-          <p className="text-gray-500 mt-1">Menaxho kategorite e te ardhurave dhe shpenzimeve</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('accounting.expenseCategories.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('accounting.expenseCategories.subtitle')}</p>
         </div>
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm"
         >
           <Plus className="w-4 h-4" />
-          Shto Kategori
+          {t('accounting.expenseCategories.addCategory')}
         </button>
       </div>
 
@@ -180,7 +180,7 @@ export default function ExpenseCategories() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Kerko kategorine..."
+            placeholder={t('accounting.expenseCategories.searchPlaceholder')}
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           />
         </div>
@@ -190,8 +190,8 @@ export default function ExpenseCategories() {
         {filteredCategories.length === 0 ? (
           <div className="py-16 text-center">
             <Tags className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500 font-medium">Asnje kategori</p>
-            <p className="text-gray-400 text-sm mt-1">Shto kategorine e pare per te filluar</p>
+            <p className="text-gray-500 font-medium">{t('accounting.expenseCategories.noCategories')}</p>
+            <p className="text-gray-400 text-sm mt-1">{t('accounting.expenseCategories.noCategoriesHint')}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -235,7 +235,7 @@ export default function ExpenseCategories() {
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900">
-                {editingId ? 'Ndrysho Kategorine' : 'Shto Kategori te Re'}
+                {editingId ? t('accounting.expenseCategories.editCategory') : t('accounting.expenseCategories.newCategory')}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -246,35 +246,35 @@ export default function ExpenseCategories() {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Emri *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.name')} *</label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                  placeholder="Emri i kategorise"
+                  placeholder={t('accounting.expenseCategories.namePlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.description')}</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                  placeholder="Pershkrimi i kategorise..."
+                  placeholder={t('accounting.expenseCategories.descriptionPlaceholder')}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lloji</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.type')}</label>
                 <select
                   value={form.category_type}
                   onChange={(e) => setForm({ ...form, category_type: e.target.value as CategoryType })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 >
-                  <option value="income">Te ardhura</option>
-                  <option value="expense">Shpenzim</option>
-                  <option value="other">Tjeter</option>
+                  <option value="income">{t('accounting.expenseCategories.income')}</option>
+                  <option value="expense">{t('accounting.expenseCategories.expense')}</option>
+                  <option value="other">{t('accounting.expenseCategories.other')}</option>
                 </select>
               </div>
             </div>
@@ -283,7 +283,7 @@ export default function ExpenseCategories() {
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Anulo
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -291,7 +291,7 @@ export default function ExpenseCategories() {
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {editingId ? 'Ruaj Ndryshimet' : 'Shto Kategorine'}
+                {editingId ? t('common.saveChanges') : t('accounting.expenseCategories.addCategory')}
               </button>
             </div>
           </div>
