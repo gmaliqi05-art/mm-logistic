@@ -4,86 +4,20 @@ export type Pt = { x: number; y: number };
 export type Quad = [Pt, Pt, Pt, Pt];
 
 function orderQuad(pts: Pt[]): Quad {
-  const sorted = pts.slice().sort((a, b) => a.y - b.y);
-  const top = sorted.slice(0, 2).sort((a, b) => a.x - b.x);
-  const bot = sorted.slice(2, 4).sort((a, b) => a.x - b.x);
-  return [top[0], top[1], bot[1], bot[0]];
-}
-
-export async function detectDocumentQuadCV(source: HTMLCanvasElement | ImageData): Promise<Quad | null> {
-  const cv = await loadOpenCV();
-  let src: any = null;
-  let gray: any = null;
-  let blurred: any = null;
-  let edges: any = null;
-  let dilated: any = null;
-  let hierarchy: any = null;
-  let contours: any = null;
-  try {
-    if (source instanceof HTMLCanvasElement) {
-      src = cv.imread(source);
-    } else {
-      src = cv.matFromImageData(source);
-    }
-
-    const srcW = src.cols;
-    const srcH = src.rows;
-
-    gray = new cv.Mat();
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-
-    blurred = new cv.Mat();
-    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-
-    edges = new cv.Mat();
-    cv.Canny(blurred, edges, 50, 150, 3, false);
-
-    dilated = new cv.Mat();
-    const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-    cv.dilate(edges, dilated, kernel);
-    kernel.delete();
-
-    contours = new cv.MatVector();
-    hierarchy = new cv.Mat();
-    cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-    const imgArea = srcW * srcH;
-    let best: Quad | null = null;
-    let bestArea = 0;
-
-    for (let i = 0; i < contours.size(); i++) {
-      const c = contours.get(i);
-      const area = cv.contourArea(c, false);
-      if (area < imgArea * 0.1) { c.delete(); continue; }
-
-      const peri = cv.arcLength(c, true);
-      const approx = new cv.Mat();
-      cv.approxPolyDP(c, approx, 0.02 * peri, true);
-
-      if (approx.rows === 4) {
-        const pts: Pt[] = [];
-        for (let k = 0; k < 4; k++) {
-          pts.push({ x: approx.data32S[k * 2], y: approx.data32S[k * 2 + 1] });
-        }
-        if (isConvex(pts) && area > bestArea) {
-          bestArea = area;
-          best = orderQuad(pts);
-        }
-      }
-      approx.delete();
-      c.delete();
-    }
-
-    return best;
-  } finally {
-    src?.delete();
-    gray?.delete();
-    blurred?.delete();
-    edges?.delete();
-    dilated?.delete();
-    hierarchy?.delete();
-    contours?.delete();
+  const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+  const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+  const withAngle = pts.map((p) => ({ p, a: Math.atan2(p.y - cy, p.x - cx) }));
+  withAngle.sort((a, b) => a.a - b.a);
+  const ordered = withAngle.map((w) => w.p);
+  let startIdx = 0;
+  let best = Infinity;
+  for (let i = 0; i < 4; i++) {
+    const s = ordered[i].x + ordered[i].y;
+    if (s < best) { best = s; startIdx = i; }
   }
+  const out: Pt[] = [];
+  for (let i = 0; i < 4; i++) out.push(ordered[(startIdx + i) % 4]);
+  return out as Quad;
 }
 
 function isConvex(pts: Pt[]): boolean {
@@ -103,6 +37,139 @@ function isConvex(pts: Pt[]): boolean {
   return true;
 }
 
+function validQuadShape(pts: Pt[], imgW: number, imgH: number): boolean {
+  const sides = [];
+  for (let i = 0; i < 4; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % 4];
+    sides.push(Math.hypot(a.x - b.x, a.y - b.y));
+  }
+  const minSide = Math.min(...sides);
+  const maxSide = Math.max(...sides);
+  if (minSide < Math.min(imgW, imgH) * 0.15) return false;
+  if (maxSide / minSide > 6) return false;
+  return true;
+}
+
+export async function detectDocumentQuadCV(source: HTMLCanvasElement | ImageData): Promise<Quad | null> {
+  const cv = await loadOpenCV();
+  let src: any = null;
+  let gray: any = null;
+  let blurred: any = null;
+  let enhanced: any = null;
+  let edges: any = null;
+  let closed: any = null;
+  let hierarchy: any = null;
+  let contours: any = null;
+  let kernel: any = null;
+
+  try {
+    if (source instanceof HTMLCanvasElement) {
+      src = cv.imread(source);
+    } else {
+      src = cv.matFromImageData(source);
+    }
+
+    const srcW = src.cols;
+    const srcH = src.rows;
+    const imgArea = srcW * srcH;
+
+    gray = new cv.Mat();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+    const meanScalar = cv.mean(gray);
+    const meanLum = meanScalar[0];
+    const lowLight = meanLum < 80;
+
+    enhanced = new cv.Mat();
+    if (lowLight) {
+      const clahe = new cv.CLAHE(3.0, new cv.Size(8, 8));
+      clahe.apply(gray, enhanced);
+      clahe.delete();
+    } else {
+      gray.copyTo(enhanced);
+    }
+
+    blurred = new cv.Mat();
+    const kSize = lowLight ? 7 : 5;
+    cv.GaussianBlur(enhanced, blurred, new cv.Size(kSize, kSize), 0);
+
+    const otsu = new cv.Mat();
+    const otsuThresh = cv.threshold(blurred, otsu, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+    otsu.delete();
+    const low = Math.max(10, Math.round(otsuThresh * 0.4));
+    const high = Math.max(30, Math.round(otsuThresh));
+
+    edges = new cv.Mat();
+    cv.Canny(blurred, edges, low, high, 3, false);
+
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(5, 5));
+    closed = new cv.Mat();
+    cv.morphologyEx(edges, closed, cv.MORPH_CLOSE, kernel);
+
+    contours = new cv.MatVector();
+    hierarchy = new cv.Mat();
+    cv.findContours(closed, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+    const candidates: { quad: Quad; area: number }[] = [];
+
+    for (let i = 0; i < contours.size(); i++) {
+      const c = contours.get(i);
+      const area = cv.contourArea(c, false);
+      if (area < imgArea * 0.08) { c.delete(); continue; }
+
+      const peri = cv.arcLength(c, true);
+      for (const eps of [0.015, 0.02, 0.03, 0.04, 0.05]) {
+        const approx = new cv.Mat();
+        cv.approxPolyDP(c, approx, eps * peri, true);
+        if (approx.rows === 4) {
+          const pts: Pt[] = [];
+          for (let k = 0; k < 4; k++) {
+            pts.push({ x: approx.data32S[k * 2], y: approx.data32S[k * 2 + 1] });
+          }
+          if (isConvex(pts) && validQuadShape(pts, srcW, srcH)) {
+            candidates.push({ quad: orderQuad(pts), area });
+            approx.delete();
+            break;
+          }
+        }
+        approx.delete();
+      }
+
+      if (candidates.length === 0) {
+        const rect = cv.minAreaRect(c);
+        const box = cv.RotatedRect.points(rect);
+        const pts: Pt[] = box.map((p: any) => ({ x: p.x, y: p.y }));
+        if (validQuadShape(pts, srcW, srcH)) {
+          const rectArea = rect.size.width * rect.size.height;
+          const overlap = area / Math.max(1, rectArea);
+          if (overlap > 0.75 && rectArea > imgArea * 0.1) {
+            candidates.push({ quad: orderQuad(pts), area: rectArea });
+          }
+        }
+      }
+
+      c.delete();
+    }
+
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => b.area - a.area);
+    return candidates[0].quad;
+  } catch {
+    return null;
+  } finally {
+    src?.delete();
+    gray?.delete();
+    blurred?.delete();
+    enhanced?.delete();
+    edges?.delete();
+    closed?.delete();
+    hierarchy?.delete();
+    contours?.delete();
+    kernel?.delete();
+  }
+}
+
 export async function warpQuadCV(srcCanvas: HTMLCanvasElement, quad: Quad): Promise<HTMLCanvasElement> {
   const cv = await loadOpenCV();
   const [tl, tr, br, bl] = quad;
@@ -110,8 +177,8 @@ export async function warpQuadCV(srcCanvas: HTMLCanvasElement, quad: Quad): Prom
   const wBot = Math.hypot(br.x - bl.x, br.y - bl.y);
   const hLeft = Math.hypot(bl.x - tl.x, bl.y - tl.y);
   const hRight = Math.hypot(br.x - tr.x, br.y - tr.y);
-  const outW = Math.max(400, Math.round(Math.max(wTop, wBot)));
-  const outH = Math.max(400, Math.round(Math.max(hLeft, hRight)));
+  const outW = Math.max(600, Math.round(Math.max(wTop, wBot)));
+  const outH = Math.max(600, Math.round(Math.max(hLeft, hRight)));
 
   const src = cv.imread(srcCanvas);
   const dst = new cv.Mat();
@@ -122,7 +189,7 @@ export async function warpQuadCV(srcCanvas: HTMLCanvasElement, quad: Quad): Prom
     0, 0, outW, 0, outW, outH, 0, outH,
   ]);
   const M = cv.getPerspectiveTransform(srcTri, dstTri);
-  cv.warpPerspective(src, dst, M, new cv.Size(outW, outH), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  cv.warpPerspective(src, dst, M, new cv.Size(outW, outH), cv.INTER_CUBIC, cv.BORDER_CONSTANT, new cv.Scalar());
 
   const out = document.createElement('canvas');
   out.width = outW;
@@ -136,9 +203,10 @@ export async function warpQuadCV(srcCanvas: HTMLCanvasElement, quad: Quad): Prom
 export async function applyCLAHE(canvas: HTMLCanvasElement): Promise<void> {
   const cv = await loadOpenCV();
   const src = cv.imread(canvas);
+  const rgb = new cv.Mat();
+  cv.cvtColor(src, rgb, cv.COLOR_RGBA2RGB);
   const lab = new cv.Mat();
-  cv.cvtColor(src, lab, cv.COLOR_RGBA2RGB);
-  cv.cvtColor(lab, lab, cv.COLOR_RGB2Lab);
+  cv.cvtColor(rgb, lab, cv.COLOR_RGB2Lab);
   const channels = new cv.MatVector();
   cv.split(lab, channels);
   const L = channels.get(0);
@@ -146,10 +214,10 @@ export async function applyCLAHE(canvas: HTMLCanvasElement): Promise<void> {
   clahe.apply(L, L);
   channels.set(0, L);
   cv.merge(channels, lab);
-  cv.cvtColor(lab, lab, cv.COLOR_Lab2RGB);
-  cv.cvtColor(lab, src, cv.COLOR_RGB2RGBA);
+  cv.cvtColor(lab, rgb, cv.COLOR_Lab2RGB);
+  cv.cvtColor(rgb, src, cv.COLOR_RGB2RGBA);
   cv.imshow(canvas, src);
-  src.delete(); lab.delete(); channels.delete(); L.delete(); clahe.delete();
+  src.delete(); rgb.delete(); lab.delete(); channels.delete(); L.delete(); clahe.delete();
 }
 
 export async function adaptiveBinarize(canvas: HTMLCanvasElement): Promise<void> {
