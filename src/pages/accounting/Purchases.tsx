@@ -13,7 +13,10 @@ import type {
   AccBankAccount,
   AccCurrency,
 } from '../../types/accounting';
-import { VAT_RATES, UNITS, formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
+import { UNITS, formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
+import { useCountryVatRates } from '../../hooks/useCountryVatRates';
+import { useCompliance } from '../../hooks/useCompliance';
+import { taxAuthority } from '../../lib/complianceEngine';
 
 type TabFilter = 'all' | AccPurchaseStatus;
 
@@ -39,26 +42,30 @@ interface PurchaseForm {
   items: PurchaseItemForm[];
 }
 
-const emptyItem: PurchaseItemForm = {
-  product_id: '',
-  description: '',
-  quantity: 1,
-  unit: 'pcs',
-  unit_price: 0,
-  vat_rate: 19,
-  line_total: 0,
-};
+function makeEmptyItem(defaultVatRate: number = 0): PurchaseItemForm {
+  return {
+    product_id: '',
+    description: '',
+    quantity: 1,
+    unit: 'pcs',
+    unit_price: 0,
+    vat_rate: defaultVatRate,
+    line_total: 0,
+  };
+}
 
-const emptyForm: PurchaseForm = {
-  contact_id: '',
-  purchase_date: new Date().toISOString().split('T')[0],
-  due_date: '',
-  external_invoice_number: '',
-  currency: 'EUR',
-  bank_account_id: '',
-  notes: '',
-  items: [{ ...emptyItem }],
-};
+function makeEmptyForm(defaultVatRate: number = 0): PurchaseForm {
+  return {
+    contact_id: '',
+    purchase_date: new Date().toISOString().split('T')[0],
+    due_date: '',
+    external_invoice_number: '',
+    currency: 'EUR',
+    bank_account_id: '',
+    notes: '',
+    items: [makeEmptyItem(defaultVatRate)],
+  };
+}
 
 function calcLineTotal(qty: number, price: number, vat: number): number {
   return qty * price * (1 + vat / 100);
@@ -67,6 +74,9 @@ function calcLineTotal(qty: number, price: number, vat: number): number {
 export default function Purchases() {
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const { rates: vatRates, standardRate: defaultVat } = useCountryVatRates();
+  const { ctx: complianceCtx } = useCompliance();
+  const complianceAuthority = taxAuthority(complianceCtx);
 
   const [purchases, setPurchases] = useState<AccPurchase[]>([]);
   const [contacts, setContacts] = useState<AccContact[]>([]);
@@ -78,7 +88,7 @@ export default function Purchases() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<AccPurchase | null>(null);
-  const [form, setForm] = useState<PurchaseForm>(emptyForm);
+  const [form, setForm] = useState<PurchaseForm>(() => makeEmptyForm(defaultVat));
 
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -215,7 +225,7 @@ export default function Purchases() {
   }
 
   function addItem() {
-    setForm((prev) => ({ ...prev, items: [...prev.items, { ...emptyItem }] }));
+    setForm((prev) => ({ ...prev, items: [...prev.items, makeEmptyItem(defaultVat)] }));
   }
 
   function removeItem(index: number) {
@@ -227,7 +237,7 @@ export default function Purchases() {
 
   function openCreate() {
     setEditingPurchase(null);
-    setForm(emptyForm);
+    setForm(makeEmptyForm(defaultVat));
     setShowModal(true);
   }
 
@@ -252,7 +262,7 @@ export default function Purchases() {
             vat_rate: item.vat_rate,
             line_total: item.line_total,
           }))
-        : [{ ...emptyItem }],
+        : [makeEmptyItem(defaultVat)],
     });
     setShowModal(true);
   }
@@ -260,7 +270,7 @@ export default function Purchases() {
   function closeModal() {
     setShowModal(false);
     setEditingPurchase(null);
-    setForm(emptyForm);
+    setForm(makeEmptyForm(defaultVat));
   }
 
   async function handleSave() {
@@ -762,6 +772,12 @@ export default function Purchases() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+              {complianceCtx?.country_code && (
+                <div className="px-6 py-2 bg-emerald-50 border-b border-emerald-100 text-xs text-emerald-800">
+                  Faturim sipas: {complianceCtx.country_name || complianceCtx.country_code}
+                  {complianceAuthority?.name ? ` — ${complianceAuthority.name}` : ''}
+                </div>
+              )}
 
               <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -923,8 +939,8 @@ export default function Purchases() {
                               onChange={(e) => updateItem(index, 'vat_rate', Number(e.target.value))}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                             >
-                              {VAT_RATES.map((v) => (
-                                <option key={v.value} value={v.value}>{v.label}</option>
+                              {vatRates.map((v) => (
+                                <option key={`${v.rate_type}-${v.value}`} value={v.value}>{v.label}</option>
                               ))}
                             </select>
                           </div>

@@ -234,12 +234,6 @@ export interface AccDeliveryNoteItem {
   product?: AccProduct;
 }
 
-export const VAT_RATES = [
-  { value: 19, label: '19%' },
-  { value: 7, label: '7%' },
-  { value: 0, label: '0%' },
-];
-
 export const UNITS: { value: AccUnit; label: string }[] = [
   { value: 'pcs', label: 'Cope' },
   { value: 'kg', label: 'Kg' },

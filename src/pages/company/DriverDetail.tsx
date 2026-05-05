@@ -4,7 +4,8 @@ import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stet
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
-import { LICENSE_CATEGORIES, COMPLIANCE_TYPES, daysUntil } from '../../lib/fleetCompliance';
+import { LICENSE_CATEGORIES, daysUntil } from '../../lib/fleetCompliance';
+import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 
 interface DriverProfile { id: string; full_name: string; email: string; phone: string; is_active: boolean; depot_id: string | null; }
@@ -17,6 +18,7 @@ export default function DriverDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { labelOf } = useFleetComplianceTypes('driver');
   const [driver, setDriver] = useState<DriverProfile | null>(null);
   const [licenses, setLicenses] = useState<License[]>([]);
   const [quals, setQuals] = useState<Qualification[]>([]);
@@ -197,7 +199,7 @@ export default function DriverDetail() {
                   {quals.map(q => (
                     <div key={q.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900">{COMPLIANCE_TYPES[q.qualification_type] || q.qualification_type}</div>
+                        <div className="text-sm font-medium text-gray-900">{labelOf(q.qualification_type)}</div>
                         <div className="text-xs text-gray-500">
                           {q.module_hours ? `${q.module_hours}h` : ''}
                           {q.issued_date && ` • leshuar ${new Date(q.issued_date).toLocaleDateString('de-DE')}`}
@@ -299,7 +301,7 @@ export default function DriverDetail() {
                 <div className="flex items-center gap-3 min-w-0">
                   <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{COMPLIANCE_TYPES[s.detected_category || s.doc_category] || s.doc_category}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{labelOf(s.detected_category || s.doc_category)}</p>
                     <p className="text-xs text-gray-500 truncate">{s.file_name} • {new Date(s.created_at).toLocaleDateString('de-DE')}</p>
                   </div>
                 </div>

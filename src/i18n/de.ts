@@ -2278,4 +2278,14 @@ export const de: typeof sq = {
       notifyRejectedTitle: 'Bericht zur\u00fcckgewiesen',
     },
   },
+  fleet: {
+    filter: {
+      all: 'Alle',
+      expired: 'Abgelaufen',
+      critical: 'Kritisch (7T)',
+      warning: 'Warnung (30T)',
+      soon: 'Bald (90T)',
+      ok: 'OK',
+    },
+  },
 };

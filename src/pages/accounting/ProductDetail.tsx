@@ -12,7 +12,8 @@ import type {
   AccPurchaseItem,
   AccMovementType,
 } from '../../types/accounting';
-import { VAT_RATES, UNITS, formatCurrency } from '../../types/accounting';
+import { UNITS, formatCurrency } from '../../types/accounting';
+import { useCountryVatRates } from '../../hooks/useCountryVatRates';
 
 type TabKey = 'stock' | 'sales' | 'purchases' | 'movements';
 
@@ -47,22 +48,25 @@ interface PurchaseItemRow extends AccPurchaseItem {
   };
 }
 
-const initialFormData: ProductFormData = {
-  name: '',
-  sku: '',
-  description: '',
-  unit: 'pcs',
-  price_net: 0,
-  vat_rate: 19,
-  category_id: '',
-  min_stock: 0,
-};
+function makeInitialFormData(defaultVatRate: number = 0): ProductFormData {
+  return {
+    name: '',
+    sku: '',
+    description: '',
+    unit: 'pcs',
+    price_net: 0,
+    vat_rate: defaultVatRate,
+    category_id: '',
+    min_stock: 0,
+  };
+}
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const { rates: vatRates, standardRate: defaultVat } = useCountryVatRates();
 
   const [product, setProduct] = useState<AccProduct | null>(null);
   const [categories, setCategories] = useState<AccProductCategory[]>([]);
@@ -76,7 +80,7 @@ export default function ProductDetail() {
   const [activeTab, setActiveTab] = useState<TabKey>('stock');
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [formData, setFormData] = useState<ProductFormData>(initialFormData);
+  const [formData, setFormData] = useState<ProductFormData>(() => makeInitialFormData(defaultVat));
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -213,7 +217,7 @@ export default function ProductDetail() {
 
   const closeEditModal = () => {
     setShowEditModal(false);
-    setFormData(initialFormData);
+    setFormData(makeInitialFormData(defaultVat));
     setSelectedFile(null);
     setImagePreview(null);
     setShowNewCategory(false);
@@ -1249,8 +1253,8 @@ export default function ProductDetail() {
                       onChange={(e) => setFormData({ ...formData, vat_rate: Number(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      {VAT_RATES.map((v) => (
-                        <option key={v.value} value={v.value}>
+                      {vatRates.map((v) => (
+                        <option key={`${v.rate_type}-${v.value}`} value={v.value}>
                           {v.label}
                         </option>
                       ))}

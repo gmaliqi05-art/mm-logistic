@@ -2278,4 +2278,14 @@ export const en: typeof sq = {
       notifyRejectedTitle: 'Report returned',
     },
   },
+  fleet: {
+    filter: {
+      all: 'All',
+      expired: 'Expired',
+      critical: 'Critical (7d)',
+      warning: 'Warning (30d)',
+      soon: 'Soon (90d)',
+      ok: 'OK',
+    },
+  },
 };

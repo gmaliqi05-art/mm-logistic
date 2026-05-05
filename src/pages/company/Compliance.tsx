@@ -4,7 +4,9 @@ import { ShieldCheck, Download, Loader2, Filter, Truck, User } from 'lucide-reac
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
-import { COMPLIANCE_TYPES, daysUntil, expiryLevel, type ExpiryLevel } from '../../lib/fleetCompliance';
+import { daysUntil, expiryLevel, type ExpiryLevel } from '../../lib/fleetCompliance';
+import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
+import { useTranslation } from '../../i18n';
 
 interface Row {
   entity: 'vehicle' | 'driver';
@@ -17,17 +19,21 @@ interface Row {
   linkTo: string;
 }
 
-const STATUS_FILTER: { value: ExpiryLevel | 'all'; label: string }[] = [
-  { value: 'all', label: 'Te gjitha' },
-  { value: 'expired', label: 'Te skaduara' },
-  { value: 'critical', label: 'Kritike (7d)' },
-  { value: 'warning', label: 'Paralajmerim (30d)' },
-  { value: 'soon', label: 'Se shpejti (90d)' },
-  { value: 'ok', label: 'Ne rregull' },
-];
-
 export default function Compliance() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
+  const vehicleTypes = useFleetComplianceTypes('vehicle');
+  const driverTypes = useFleetComplianceTypes('driver');
+  const labelForType = (key: string): string =>
+    vehicleTypes.byKey[key]?.label ?? driverTypes.byKey[key]?.label ?? key;
+  const STATUS_FILTER: { value: ExpiryLevel | 'all'; label: string }[] = [
+    { value: 'all', label: t('fleet.filter.all') },
+    { value: 'expired', label: t('fleet.filter.expired') },
+    { value: 'critical', label: t('fleet.filter.critical') },
+    { value: 'warning', label: t('fleet.filter.warning') },
+    { value: 'soon', label: t('fleet.filter.soon') },
+    { value: 'ok', label: t('fleet.filter.ok') },
+  ];
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterEntity, setFilterEntity] = useState<'all' | 'vehicle' | 'driver'>('all');
@@ -145,7 +151,7 @@ export default function Compliance() {
     const body = filtered.map(r => [
       r.entity === 'vehicle' ? 'Mjet' : 'Shofer',
       r.entityLabel, r.entitySub,
-      COMPLIANCE_TYPES[r.type] || r.type,
+      labelForType(r.type),
       r.expiryDate,
       String(daysUntil(r.expiryDate) ?? ''),
       r.extra || '',
@@ -200,7 +206,7 @@ export default function Compliance() {
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
             <option value="all">Te gjitha llojet</option>
-            {allTypes.map(t => <option key={t} value={t}>{COMPLIANCE_TYPES[t] || t}</option>)}
+            {allTypes.map(tp => <option key={tp} value={tp}>{labelForType(tp)}</option>)}
           </select>
           <div className="ml-auto text-xs text-gray-500">{filtered.length} regjistrime</div>
         </div>
@@ -234,7 +240,7 @@ export default function Compliance() {
                       </div>
                     </Link>
                   </td>
-                  <td className="px-5 py-3 text-sm text-gray-700">{COMPLIANCE_TYPES[r.type] || r.type}</td>
+                  <td className="px-5 py-3 text-sm text-gray-700">{labelForType(r.type)}</td>
                   <td className="px-5 py-3 text-xs text-gray-500 hidden md:table-cell">{r.extra || '—'}</td>
                   <td className="px-5 py-3"><ExpiryBadge date={r.expiryDate} size="sm" /></td>
                 </tr>

@@ -2278,4 +2278,14 @@ export const fr: typeof sq = {
       notifyRejectedTitle: 'Rapport renvoy\u00e9',
     },
   },
+  fleet: {
+    filter: {
+      all: 'Tous',
+      expired: 'Expir\u00e9s',
+      critical: 'Critique (7j)',
+      warning: 'Avertissement (30j)',
+      soon: 'Bient\u00f4t (90j)',
+      ok: 'OK',
+    },
+  },
 };

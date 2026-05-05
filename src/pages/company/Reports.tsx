@@ -14,6 +14,13 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
+import { useCompliance } from '../../hooks/useCompliance';
+import {
+  chartOfAccounts,
+  currency as complianceCurrency,
+  taxAuthority,
+  vatStandardRate,
+} from '../../lib/complianceEngine';
 
 interface ReportData {
   totalNotes: number;
@@ -41,6 +48,11 @@ export default function CompanyReports() {
   const { profile } = useAuth();
   const { canAccess } = useSubscription();
   const { t } = useTranslation();
+  const { ctx: complianceCtx } = useCompliance();
+  const complianceCoa = chartOfAccounts(complianceCtx);
+  const complianceAuthority = taxAuthority(complianceCtx);
+  const complianceVat = vatStandardRate(complianceCtx);
+  const complianceCur = complianceCurrency(complianceCtx);
   const [data, setData] = useState<ReportData>({
     totalNotes: 0,
     totalStock: 0,
@@ -170,6 +182,46 @@ export default function CompanyReports() {
 
   return (
     <div className="space-y-6">
+      {complianceCtx.country_code && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-700 font-semibold text-sm">
+                {complianceCtx.country_code}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  {complianceCtx.country_name ?? complianceCtx.country_code}
+                </p>
+                <p className="text-xs text-gray-500">{t('accounting.compliance.title')}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 text-xs">
+              {complianceCoa && (
+                <div className="px-3 py-1.5 rounded-md bg-gray-50 border border-gray-100">
+                  <span className="text-gray-500">{t('accounting.compliance.chartOfAccounts')}:</span>{' '}
+                  <span className="font-semibold text-gray-900">{complianceCoa.code}</span>
+                </div>
+              )}
+              {complianceVat !== null && (
+                <div className="px-3 py-1.5 rounded-md bg-gray-50 border border-gray-100">
+                  <span className="text-gray-500">TVSH:</span>{' '}
+                  <span className="font-semibold text-gray-900">{complianceVat}%</span>
+                </div>
+              )}
+              <div className="px-3 py-1.5 rounded-md bg-gray-50 border border-gray-100">
+                <span className="text-gray-500">{t('common.currency') || 'Monedha'}:</span>{' '}
+                <span className="font-semibold text-gray-900">{complianceCur.code}</span>
+              </div>
+              {complianceAuthority && (
+                <div className="px-3 py-1.5 rounded-md bg-emerald-50 border border-emerald-100 text-emerald-800">
+                  {complianceAuthority.name}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('company.reports.title')}</h1>

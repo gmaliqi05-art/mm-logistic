@@ -4,7 +4,7 @@ import { ArrowLeft, Truck, Plus, Trash2, Loader2, ShieldCheck, Receipt, Clipboar
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
-import { COMPLIANCE_TYPES } from '../../lib/fleetCompliance';
+import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 
 interface Vehicle {
@@ -23,6 +23,7 @@ export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { labelOf } = useFleetComplianceTypes('vehicle');
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [insurance, setInsurance] = useState<Insurance[]>([]);
@@ -188,7 +189,7 @@ export default function VehicleDetail() {
                 />
               )}
               <ItemList items={inspections.map(x => ({
-                id: x.id, title: COMPLIANCE_TYPES[x.inspection_type] || x.inspection_type,
+                id: x.id, title: labelOf(x.inspection_type),
                 subtitle: x.provider || x.certificate_number || '—', date: x.expiry_date,
               }))} onDelete={(rid) => removeRow('vehicle_inspections', rid)} />
             </>
@@ -215,7 +216,7 @@ export default function VehicleDetail() {
                 />
               )}
               <ItemList items={insurance.map(x => ({
-                id: x.id, title: COMPLIANCE_TYPES[x.insurance_type] || x.insurance_type,
+                id: x.id, title: labelOf(x.insurance_type),
                 subtitle: [x.provider, x.policy_number].filter(Boolean).join(' • ') || '—', date: x.end_date,
               }))} onDelete={(rid) => removeRow('vehicle_insurance', rid)} />
             </>
@@ -305,7 +306,7 @@ export default function VehicleDetail() {
                 <div className="flex items-center gap-3 min-w-0">
                   <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{COMPLIANCE_TYPES[s.detected_category || s.doc_category] || s.doc_category}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{labelOf(s.detected_category || s.doc_category)}</p>
                     <p className="text-xs text-gray-500 truncate">{s.file_name} • {new Date(s.created_at).toLocaleDateString('de-DE')}</p>
                   </div>
                 </div>

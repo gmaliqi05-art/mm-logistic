@@ -2276,4 +2276,14 @@ export const sq = {
       notifyRejectedTitle: 'Raporti u kthye',
     },
   },
+  fleet: {
+    filter: {
+      all: 'Te gjitha',
+      expired: 'Te skaduara',
+      critical: 'Kritike (7d)',
+      warning: 'Paralajmerim (30d)',
+      soon: 'Se shpejti (90d)',
+      ok: 'Ne rregull',
+    },
+  },
 };

@@ -16,7 +16,10 @@ import type {
   AccProduct,
   AccBankAccount,
 } from '../../types/accounting';
-import { VAT_RATES, UNITS, formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
+import { UNITS, formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
+import { useCountryVatRates } from '../../hooks/useCountryVatRates';
+import { useCompliance } from '../../hooks/useCompliance';
+import { taxAuthority } from '../../lib/complianceEngine';
 import { exportXRechnung } from '../../utils/germanCompliance';
 
 type TabFilter = 'all' | AccInvoiceStatus;
@@ -45,7 +48,7 @@ interface InvoiceForm {
   items: ItemForm[];
 }
 
-function emptyItem(): ItemForm {
+function emptyItem(defaultVatRate: number = 0): ItemForm {
   return {
     id: crypto.randomUUID(),
     product_id: '',
@@ -53,7 +56,7 @@ function emptyItem(): ItemForm {
     quantity: 1,
     unit: 'pcs',
     unit_price: 0,
-    vat_rate: 19,
+    vat_rate: defaultVatRate,
     line_discount: 0,
     line_total: 0,
   };
@@ -121,6 +124,9 @@ export default function Invoices() {
   const { hasLogistics } = useCompanySubscriptions();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { rates: vatRates, standardRate: defaultVat } = useCountryVatRates();
+  const { ctx: complianceCtx } = useCompliance();
+  const complianceAuthority = taxAuthority(complianceCtx);
   const [deliveryPrompt, setDeliveryPrompt] = useState<AccInvoice | null>(null);
   const [creatingDeliveryNote, setCreatingDeliveryNote] = useState(false);
 
@@ -341,10 +347,10 @@ export default function Invoices() {
   }, [invoices, activeTab, searchQuery, currencyFilter]);
 
   const runningTotals = useMemo(() => {
-    const totals: Record<AccCurrency, number> = { EUR: 0, CHF: 0 };
+    const totals: Partial<Record<AccCurrency, number>> = {};
     for (const inv of filteredInvoices) {
       if (inv.status !== 'cancelled') {
-        totals[inv.currency] += inv.total;
+        totals[inv.currency] = (totals[inv.currency] ?? 0) + inv.total;
       }
     }
     return totals;
@@ -386,7 +392,7 @@ export default function Invoices() {
 
   function openAdd() {
     setEditingId(null);
-    setForm({ ...emptyForm, items: [emptyItem()] });
+    setForm({ ...emptyForm, items: [emptyItem(defaultVat)] });
     setContactSearch('');
     fetchFormData();
     setShowModal(true);
@@ -423,7 +429,7 @@ export default function Invoices() {
       due_date: invoice.due_date || '',
       discount: invoice.discount,
       notes: invoice.notes,
-      items: mappedItems.length > 0 ? mappedItems : [emptyItem()],
+      items: mappedItems.length > 0 ? mappedItems : [emptyItem(defaultVat)],
     });
 
     const selectedContact = contacts.find((c) => c.id === invoice.contact_id);
@@ -459,7 +465,7 @@ export default function Invoices() {
   }
 
   function addItem() {
-    setForm((prev) => ({ ...prev, items: [...prev.items, emptyItem()] }));
+    setForm((prev) => ({ ...prev, items: [...prev.items, emptyItem(defaultVat)] }));
   }
 
   function removeItem(idx: number) {
@@ -1072,15 +1078,12 @@ export default function Invoices() {
             </div>
 
             <div className="border-t border-gray-100 px-6 py-3 flex items-center justify-end gap-6">
-              {runningTotals.EUR > 0 && (
-                <span className="text-sm font-semibold text-gray-700">
-                  Totali EUR: {formatCurrency(runningTotals.EUR, 'EUR')}
-                </span>
-              )}
-              {runningTotals.CHF > 0 && (
-                <span className="text-sm font-semibold text-gray-700">
-                  Totali CHF: {formatCurrency(runningTotals.CHF, 'CHF')}
-                </span>
+              {Object.entries(runningTotals).map(([cur, amount]) =>
+                amount && amount > 0 ? (
+                  <span key={cur} className="text-sm font-semibold text-gray-700">
+                    Totali {cur}: {formatCurrency(amount, cur as AccCurrency)}
+                  </span>
+                ) : null
               )}
             </div>
           </div>
@@ -1135,15 +1138,12 @@ export default function Invoices() {
             ))}
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-end gap-6">
-              {runningTotals.EUR > 0 && (
-                <span className="text-sm font-semibold text-gray-700">
-                  EUR: {formatCurrency(runningTotals.EUR, 'EUR')}
-                </span>
-              )}
-              {runningTotals.CHF > 0 && (
-                <span className="text-sm font-semibold text-gray-700">
-                  CHF: {formatCurrency(runningTotals.CHF, 'CHF')}
-                </span>
+              {Object.entries(runningTotals).map(([cur, amount]) =>
+                amount && amount > 0 ? (
+                  <span key={cur} className="text-sm font-semibold text-gray-700">
+                    {cur}: {formatCurrency(amount, cur as AccCurrency)}
+                  </span>
+                ) : null
               )}
             </div>
           </div>
@@ -1308,6 +1308,12 @@ export default function Invoices() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+              {complianceCtx?.country_code && (
+                <div className="px-6 py-2 bg-emerald-50 border-b border-emerald-100 text-xs text-emerald-800">
+                  Faturim sipas: {complianceCtx.country_name || complianceCtx.country_code}
+                  {complianceAuthority?.name ? ` — ${complianceAuthority.name}` : ''}
+                </div>
+              )}
 
               <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1497,8 +1503,8 @@ export default function Invoices() {
                               onChange={(e) => updateItem(idx, 'vat_rate', Number(e.target.value))}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                             >
-                              {VAT_RATES.map((v) => (
-                                <option key={v.value} value={v.value}>{v.label}</option>
+                              {vatRates.map((v) => (
+                                <option key={`${v.rate_type}-${v.value}`} value={v.value}>{v.label}</option>
                               ))}
                             </select>
                           </div>

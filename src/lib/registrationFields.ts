@@ -119,19 +119,87 @@ const BE_LEGAL_FORMS: LegalFormOption[] = [
   { value: 'Other', label: 'Overig / Autre' },
 ];
 
-const GB_LEGAL_FORMS: LegalFormOption[] = [
-  { value: 'LTD', label: 'Ltd (Private Limited Company)' },
-  { value: 'PLC', label: 'PLC (Public Limited Company)' },
-  { value: 'LLP', label: 'LLP (Limited Liability Partnership)' },
-  { value: 'Sole', label: 'Sole Trader' },
-  { value: 'Other', label: 'Other' },
-];
-
 const PL_LEGAL_FORMS: LegalFormOption[] = [
   { value: 'sp.zoo', label: 'Sp. z o.o.' },
   { value: 'SA', label: 'S.A.' },
   { value: 'JDG', label: 'JDG (Jednoosobowa Działalność Gospodarcza)' },
   { value: 'Other', label: 'Inne / Other' },
+];
+
+const HR_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'doo', label: 'd.o.o. (Društvo s ograničenom odgovornošću)' },
+  { value: 'dd', label: 'd.d. (Dioničko društvo)' },
+  { value: 'obrt', label: 'Obrt' },
+  { value: 'Other', label: 'Ostalo' },
+];
+
+const RS_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'doo', label: 'd.o.o.' },
+  { value: 'ad', label: 'a.d.' },
+  { value: 'pr', label: 'Preduzetnik' },
+  { value: 'Other', label: 'Drugo' },
+];
+
+const MK_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'dooel', label: 'DOOEL' },
+  { value: 'doo', label: 'DOO' },
+  { value: 'ad', label: 'AD' },
+  { value: 'tp', label: 'TP (Trgovec poedinec)' },
+  { value: 'Other', label: 'Drugo' },
+];
+
+const BG_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'EOOD', label: 'ЕООД / EOOD' },
+  { value: 'OOD', label: 'ООД / OOD' },
+  { value: 'AD', label: 'АД / AD' },
+  { value: 'ET', label: 'ET (Едноличен търговец)' },
+  { value: 'Other', label: 'Друго' },
+];
+
+const RO_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'SRL', label: 'S.R.L.' },
+  { value: 'SA', label: 'S.A.' },
+  { value: 'PFA', label: 'PFA (Persoană Fizică Autorizată)' },
+  { value: 'II', label: 'Întreprindere Individuală' },
+  { value: 'Other', label: 'Altul' },
+];
+
+const SI_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'doo', label: 'd.o.o.' },
+  { value: 'dd', label: 'd.d.' },
+  { value: 'sp', label: 's.p. (Samostojni podjetnik)' },
+  { value: 'Other', label: 'Drugo' },
+];
+
+const GR_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'IKE', label: 'Ι.Κ.Ε. (Ιδιωτική Κεφαλαιουχική Εταιρεία)' },
+  { value: 'EPE', label: 'Ε.Π.Ε.' },
+  { value: 'AE', label: 'Α.Ε.' },
+  { value: 'OE', label: 'Ο.Ε.' },
+  { value: 'Other', label: 'Άλλο' },
+];
+
+const CZ_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'sro', label: 's.r.o.' },
+  { value: 'as', label: 'a.s.' },
+  { value: 'osvc', label: 'OSVČ' },
+  { value: 'Other', label: 'Jiné' },
+];
+
+const SK_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'sro', label: 's.r.o.' },
+  { value: 'as', label: 'a.s.' },
+  { value: 'szco', label: 'SZČO' },
+  { value: 'Other', label: 'Iné' },
+];
+
+const HU_LEGAL_FORMS: LegalFormOption[] = [
+  { value: 'Kft', label: 'Kft. (Korlátolt Felelősségű Társaság)' },
+  { value: 'Zrt', label: 'Zrt.' },
+  { value: 'Nyrt', label: 'Nyrt.' },
+  { value: 'Bt', label: 'Bt.' },
+  { value: 'EV', label: 'Egyéni vállalkozó' },
+  { value: 'Other', label: 'Egyéb' },
 ];
 
 function field(
@@ -330,21 +398,6 @@ const PROFILES: Record<string, CountryRegistrationProfile> = {
     ],
     legalForms: BE_LEGAL_FORMS,
   },
-  GB: {
-    countryCode: 'GB',
-    fields: [
-      field('commercialRegister', 'Companies House Number', {
-        placeholder: '12345678',
-        required: true,
-      }),
-      field('vatNumber', 'VAT Number', {
-        placeholder: 'GB123456789',
-        hint: 'Required if VAT-registered (turnover > £85k)',
-      }),
-      field('legalForm', 'Legal Form'),
-    ],
-    legalForms: GB_LEGAL_FORMS,
-  },
   PL: {
     countryCode: 'PL',
     fields: [
@@ -354,6 +407,104 @@ const PROFILES: Record<string, CountryRegistrationProfile> = {
       field('legalForm', 'Forma prawna'),
     ],
     legalForms: PL_LEGAL_FORMS,
+  },
+  HR: {
+    countryCode: 'HR',
+    fields: [
+      field('taxNumber', 'OIB', { placeholder: '12345678901', required: true }),
+      field('vatNumber', 'PDV ID', { placeholder: 'HR12345678901' }),
+      field('commercialRegister', 'MBS / Sudski registar', { placeholder: '080123456' }),
+      field('legalForm', 'Pravni oblik'),
+    ],
+    legalForms: HR_LEGAL_FORMS,
+  },
+  RS: {
+    countryCode: 'RS',
+    fields: [
+      field('taxNumber', 'PIB', { placeholder: '123456789', required: true }),
+      field('commercialRegister', 'Matični broj (APR)', { placeholder: '12345678', required: true }),
+      field('vatNumber', 'PDV broj', { placeholder: '123456789' }),
+      field('legalForm', 'Pravna forma'),
+    ],
+    legalForms: RS_LEGAL_FORMS,
+  },
+  MK: {
+    countryCode: 'MK',
+    fields: [
+      field('taxNumber', 'EDB', { placeholder: 'MK4030000000000', required: true }),
+      field('commercialRegister', 'EMBS', { placeholder: '1234567' }),
+      field('vatNumber', 'ДДВ / VAT', { placeholder: 'MK4030000000000' }),
+      field('legalForm', 'Правна форма'),
+    ],
+    legalForms: MK_LEGAL_FORMS,
+  },
+  BG: {
+    countryCode: 'BG',
+    fields: [
+      field('taxNumber', 'ЕИК / BULSTAT', { placeholder: '123456789', required: true }),
+      field('vatNumber', 'ДДС номер', { placeholder: 'BG123456789' }),
+      field('legalForm', 'Правна форма'),
+    ],
+    legalForms: BG_LEGAL_FORMS,
+  },
+  RO: {
+    countryCode: 'RO',
+    fields: [
+      field('taxNumber', 'CUI / CIF', { placeholder: 'RO12345678', required: true }),
+      field('commercialRegister', 'Nr. Registrul Comerțului', { placeholder: 'J40/1234/2024', required: true }),
+      field('vatNumber', 'Cod TVA', { placeholder: 'RO12345678' }),
+      field('legalForm', 'Formă juridică'),
+    ],
+    legalForms: RO_LEGAL_FORMS,
+  },
+  SI: {
+    countryCode: 'SI',
+    fields: [
+      field('taxNumber', 'Davčna številka', { placeholder: 'SI12345678', required: true }),
+      field('commercialRegister', 'Matična številka', { placeholder: '1234567000' }),
+      field('vatNumber', 'ID za DDV', { placeholder: 'SI12345678' }),
+      field('legalForm', 'Pravna oblika'),
+    ],
+    legalForms: SI_LEGAL_FORMS,
+  },
+  GR: {
+    countryCode: 'GR',
+    fields: [
+      field('taxNumber', 'ΑΦΜ (AFM)', { placeholder: '123456789', required: true }),
+      field('vatNumber', 'ΦΠΑ / VAT', { placeholder: 'EL123456789' }),
+      field('commercialRegister', 'Γ.Ε.ΜΗ. (GEMI)', { placeholder: '123456789000' }),
+      field('legalForm', 'Νομική μορφή'),
+    ],
+    legalForms: GR_LEGAL_FORMS,
+  },
+  CZ: {
+    countryCode: 'CZ',
+    fields: [
+      field('taxNumber', 'IČO', { placeholder: '12345678', required: true }),
+      field('vatNumber', 'DIČ', { placeholder: 'CZ12345678' }),
+      field('legalForm', 'Právní forma'),
+    ],
+    legalForms: CZ_LEGAL_FORMS,
+  },
+  SK: {
+    countryCode: 'SK',
+    fields: [
+      field('taxNumber', 'IČO', { placeholder: '12345678', required: true }),
+      field('vatNumber', 'IČ DPH', { placeholder: 'SK1234567890' }),
+      field('commercialRegister', 'Obchodný register', { placeholder: 'Oddiel: Sro, Vložka č.: 12345/B' }),
+      field('legalForm', 'Právna forma'),
+    ],
+    legalForms: SK_LEGAL_FORMS,
+  },
+  HU: {
+    countryCode: 'HU',
+    fields: [
+      field('taxNumber', 'Adószám', { placeholder: '12345678-1-42', required: true }),
+      field('vatNumber', 'Közösségi adószám', { placeholder: 'HU12345678' }),
+      field('commercialRegister', 'Cégjegyzékszám', { placeholder: '01-09-123456' }),
+      field('legalForm', 'Cégforma'),
+    ],
+    legalForms: HU_LEGAL_FORMS,
   },
 };
 
