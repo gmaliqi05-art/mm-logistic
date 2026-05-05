@@ -159,6 +159,7 @@ export const sq = {
     logistics_admin: 'Admin Logjistike',
   },
   nav: {
+    dataIntegrity: 'Integriteti i te dhenave',
     chat: 'Chat',
     dashboard: 'Ballina',
     notifications: 'Njoftimet',
@@ -1053,6 +1054,17 @@ export const sq = {
     },
   },
   driver: {
+    directionDelivery: 'DOREZON',
+    directionDeliverySub: 'Mallrat dalin nga depoja',
+    directionPickup: 'MERR',
+    directionPickupSub: 'Mallrat hyjne ne depo',
+    dispatchConfirm: {
+      title: 'Konfirmo dergesen',
+      body: 'Pas konfirmimit, kjo fletenjoftimi do t\'i dergohet depos.',
+      stepDepot: 'Dergesa do te shkoje te depo per regjistrim',
+      stockInc: 'Stoku do te RRITET pas miratimit',
+      stockDec: 'Stoku do te ZVOGELOHET pas miratimit',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Permbledhje ditore',

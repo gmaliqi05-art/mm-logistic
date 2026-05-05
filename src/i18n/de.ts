@@ -161,6 +161,7 @@ export const de: typeof sq = {
     logistics_admin: 'Logistik Admin',
   },
   nav: {
+    dataIntegrity: 'Datenintegrität',
     chat: 'Chat',
     dashboard: 'Startseite',
     notifications: 'Benachrichtigungen',
@@ -1055,6 +1056,17 @@ export const de: typeof sq = {
     },
   },
   driver: {
+    directionDelivery: 'LIEFERN',
+    directionDeliverySub: 'Ware verlässt das Depot',
+    directionPickup: 'ABHOLEN',
+    directionPickupSub: 'Ware kommt ins Depot',
+    dispatchConfirm: {
+      title: 'Versand bestätigen',
+      body: 'Nach der Bestätigung wird diese Notiz an das Depot gesendet.',
+      stepDepot: 'Lieferung wird zur Registrierung an das Depot weitergeleitet',
+      stockInc: 'Bestand wird nach Freigabe ERHÖHT',
+      stockDec: 'Bestand wird nach Freigabe VERRINGERT',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Tagesübersicht',

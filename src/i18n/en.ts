@@ -161,6 +161,7 @@ export const en: typeof sq = {
     logistics_admin: 'Logistics Admin',
   },
   nav: {
+    dataIntegrity: 'Data Integrity',
     chat: 'Chat',
     dashboard: 'Home',
     notifications: 'Notifications',
@@ -1055,6 +1056,17 @@ export const en: typeof sq = {
     },
   },
   driver: {
+    directionDelivery: 'DELIVERING',
+    directionDeliverySub: 'Goods leaving the depot',
+    directionPickup: 'PICKING UP',
+    directionPickupSub: 'Goods entering the depot',
+    dispatchConfirm: {
+      title: 'Confirm dispatch',
+      body: 'After confirming, this note will be sent to the depot.',
+      stepDepot: 'Delivery will be routed to the depot for registration',
+      stockInc: 'Stock will INCREASE after approval',
+      stockDec: 'Stock will DECREASE after approval',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Daily overview',

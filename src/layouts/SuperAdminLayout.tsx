@@ -30,6 +30,7 @@ import {
   Megaphone,
   ListChecks,
   SlidersHorizontal,
+  ShieldAlert,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -52,6 +53,7 @@ const navSections: NavSection[] = [
       { to: '/super-admin/payment-settings', icon: CreditCard, labelKey: 'nav.payments', end: false },
       { to: '/super-admin/users', icon: Users, labelKey: 'nav.users', end: false },
       { to: '/super-admin/chat', icon: HelpCircle, labelKey: 'nav.support', end: false },
+      { to: '/super-admin/data-integrity', icon: ShieldAlert, labelKey: 'nav.dataIntegrity', end: false, badgeKey: 'common.new' },
     ],
   },
   {

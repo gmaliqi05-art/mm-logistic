@@ -161,6 +161,7 @@ export const fr: typeof sq = {
     logistics_admin: 'Admin Logistique',
   },
   nav: {
+    dataIntegrity: 'Integrite des donnees',
     chat: 'Chat',
     dashboard: 'Accueil',
     notifications: 'Notifications',
@@ -1055,6 +1056,17 @@ export const fr: typeof sq = {
     },
   },
   driver: {
+    directionDelivery: 'LIVRER',
+    directionDeliverySub: 'Marchandises quittant le depot',
+    directionPickup: 'COLLECTER',
+    directionPickupSub: 'Marchandises entrant au depot',
+    dispatchConfirm: {
+      title: 'Confirmer l\'envoi',
+      body: 'Apres confirmation, ce bon sera envoye au depot.',
+      stepDepot: 'La livraison sera dirigee vers le depot pour enregistrement',
+      stockInc: 'Le stock AUGMENTERA apres approbation',
+      stockDec: 'Le stock DIMINUERA apres approbation',
+    },
     dashboard: {
       title: 'Tableau de bord',
       subtitle: 'Aper\u00e7u quotidien',

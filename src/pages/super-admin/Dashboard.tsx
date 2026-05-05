@@ -15,6 +15,7 @@ import {
   Warehouse,
   MessageSquare,
   ArrowUpRight,
+  ShieldAlert,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
@@ -94,6 +95,7 @@ export default function SuperAdminDashboard() {
     openTickets: 0,
     inProgressTickets: 0,
   });
+  const [criticalIssues, setCriticalIssues] = useState<number>(0);
   const [roleCounts, setRoleCounts] = useState<RoleCount[]>([]);
   const [recentCompanies, setRecentCompanies] = useState<RecentCompanySub[]>([]);
   const [planDistribution, setPlanDistribution] = useState<PlanDist[]>([]);
@@ -109,7 +111,7 @@ export default function SuperAdminDashboard() {
       setLoading(true);
       setError(null);
 
-      const [companiesRes, subsRes, paymentsRes, plansRes, profilesRes, depotsRes, ticketsRes] = await Promise.all([
+      const [companiesRes, subsRes, paymentsRes, plansRes, profilesRes, depotsRes, ticketsRes, anomaliesRes] = await Promise.all([
         supabase.from('companies').select('id, name, email, is_active, created_at').order('created_at', { ascending: false }),
         supabase.from('company_subscriptions').select('id, company_id, status, trial_end, plan_id, plan:subscription_plans(name, display_name)'),
         supabase.from('payment_transactions').select('amount, status, created_at').eq('status', 'completed'),
@@ -117,7 +119,14 @@ export default function SuperAdminDashboard() {
         supabase.from('profiles').select('id, role'),
         supabase.from('depots').select('id'),
         supabase.from('support_tickets').select('id, status'),
+        supabase
+          .from('delivery_notes')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'confirmed')
+          .is('stock_posted_at', null),
       ]);
+
+      setCriticalIssues(anomaliesRes.count ?? 0);
 
       const companies = companiesRes.data ?? [];
       const subs = subsRes.data ?? [];
@@ -317,6 +326,24 @@ export default function SuperAdminDashboard() {
             {t('common.view')} <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
+      )}
+
+      {criticalIssues > 0 && (
+        <Link
+          to="/super-admin/data-integrity"
+          className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-4 hover:bg-red-100/70 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+            <ShieldAlert className="w-5 h-5 text-red-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-900">Critical data issues</p>
+            <p className="text-xs text-red-700 mt-0.5">
+              {criticalIssues} delivery notes marked confirmed without stock posting. Investigate now.
+            </p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-red-700" />
+        </Link>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

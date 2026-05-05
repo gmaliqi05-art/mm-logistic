@@ -20,6 +20,8 @@ import {
   Search,
   Calendar,
   AlertCircle,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { applyScanToDeliveryNote } from '../../utils/applyScanToDeliveryNote';
@@ -71,6 +73,13 @@ export default function DriverDashboard() {
   const [range, setRange] = useState<'default' | 'today' | '7d' | '30d' | 'all'>('default');
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmErrors, setConfirmErrors] = useState<Record<string, string>>({});
+  const [dispatchConfirm, setDispatchConfirm] = useState<NoteRow | null>(null);
+
+  function requestConfirm(id: string) {
+    const n = notes.find((x) => x.id === id);
+    if (n) setDispatchConfirm(n);
+  }
+
   async function handleQuickConfirm(id: string) {
     setConfirmingId(id);
     setConfirmErrors((prev) => {
@@ -301,7 +310,7 @@ export default function DriverDashboard() {
                     onClick={() => setSelected(n)}
                     kind={n.type === 'pickup' ? 'pickup' : 'delivery'}
                     t={t}
-                    onConfirm={handleQuickConfirm}
+                    onConfirm={requestConfirm}
                     confirming={confirmingId === n.id}
                     confirmError={confirmErrors[n.id] || null}
                   />
@@ -319,7 +328,7 @@ export default function DriverDashboard() {
         deliveries={todayDeliveries}
         pickups={todayPickups}
         onSelect={setSelected}
-        onConfirm={handleQuickConfirm}
+        onConfirm={requestConfirm}
         confirmingId={confirmingId}
         confirmErrors={confirmErrors}
         t={t}
@@ -332,7 +341,7 @@ export default function DriverDashboard() {
         deliveries={tomorrowDeliveries}
         pickups={tomorrowPickups}
         onSelect={setSelected}
-        onConfirm={handleQuickConfirm}
+        onConfirm={requestConfirm}
         confirmingId={confirmingId}
         confirmErrors={confirmErrors}
         t={t}
@@ -388,6 +397,70 @@ export default function DriverDashboard() {
         </div>
       )}
 
+      {dispatchConfirm && (
+        <DispatchConfirmModal
+          note={dispatchConfirm}
+          t={t}
+          onCancel={() => setDispatchConfirm(null)}
+          onConfirm={async () => {
+            const id = dispatchConfirm.id;
+            setDispatchConfirm(null);
+            await handleQuickConfirm(id);
+          }}
+        />
+      )}
+
+    </div>
+  );
+}
+
+function DispatchConfirmModal({ note, t, onCancel, onConfirm }: {
+  note: NoteRow;
+  t: T;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const isPickup = note.type === 'pickup';
+  const directionLabel = isPickup ? t('driver.directionPickup') : t('driver.directionDelivery');
+  const stockLine = isPickup
+    ? t('driver.dispatchConfirm.stockInc')
+    : t('driver.dispatchConfirm.stockDec');
+  return (
+    <div className="fixed inset-0 z-[70] bg-black/60 flex items-end sm:items-center justify-center p-4">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+        <div className={`px-5 py-4 text-white ${isPickup ? 'bg-gradient-to-r from-orange-500 to-amber-500' : 'bg-gradient-to-r from-blue-600 to-sky-500'}`}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+              {isPickup ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
+            </div>
+            <div>
+              <div className="text-xs font-medium uppercase tracking-wider opacity-90">{t('driver.dispatchConfirm.title')}</div>
+              <div className="text-lg font-bold leading-tight">{directionLabel} — {note.note_number}</div>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 space-y-3 text-sm text-gray-700">
+          <p>{t('driver.dispatchConfirm.body')}</p>
+          <ul className="space-y-2 bg-gray-50 border border-gray-100 rounded-lg p-3">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <span>{t('driver.dispatchConfirm.stepDepot')}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Package className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span className="font-semibold">{stockLine}</span>
+            </li>
+          </ul>
+        </div>
+        <div className="px-5 pb-5 flex items-center justify-end gap-3">
+          <button onClick={onCancel} className="px-4 py-2.5 text-sm font-medium bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-lg transition-colors">
+            {t('common.cancel')}
+          </button>
+          <button onClick={onConfirm} className="px-4 py-2.5 text-sm font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors inline-flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" /> {t('common.confirm')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -541,15 +614,42 @@ function TaskCard({
     : 'bg-white shadow-sm hover:shadow-md';
   const borderWidth = isInProcess ? 'border-l-8' : 'border-l-4';
 
+  const directionBanner = isPickup
+    ? {
+        bg: 'bg-gradient-to-r from-orange-500 to-amber-500',
+        Icon: ArrowDownLeft,
+        label: t('driver.directionPickup'),
+        sub: t('driver.directionPickupSub'),
+      }
+    : {
+        bg: 'bg-gradient-to-r from-blue-600 to-sky-500',
+        Icon: ArrowUpRight,
+        label: t('driver.directionDelivery'),
+        sub: t('driver.directionDeliverySub'),
+      };
+
   return (
     <div
-      className={`relative w-full rounded-xl border border-gray-100 ${borderWidth} ${accentRing} ${cardBg} transition-all duration-300`}
+      className={`relative w-full rounded-xl border border-gray-100 ${borderWidth} ${accentRing} ${cardBg} transition-all duration-300 overflow-hidden`}
     >
+      <div
+        className={`${directionBanner.bg} text-white px-3.5 flex items-center gap-3 shadow-sm`}
+        style={{ minHeight: 60 }}
+      >
+        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+          <directionBanner.Icon className="w-6 h-6" strokeWidth={2.5} />
+        </div>
+        <div className="flex-1 min-w-0 py-2">
+          <div className="text-base font-extrabold tracking-wide leading-tight">{directionBanner.label}</div>
+          <div className="text-[11px] font-medium text-white/90 leading-tight">{directionBanner.sub}</div>
+        </div>
+      </div>
+
       {isInProcess && (
-        <div className="absolute -top-2 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] font-bold shadow-md shadow-emerald-600/30 tracking-wider">
+        <div className="absolute top-2 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/95 text-emerald-700 text-[10px] font-bold shadow-md tracking-wider">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
           </span>
           {t('driver.home.inProcess')}
         </div>
@@ -558,7 +658,7 @@ function TaskCard({
       <button
         type="button"
         onClick={onClick}
-        className="w-full text-left p-3.5 active:scale-[0.99] transition-transform rounded-xl"
+        className="w-full text-left p-3.5 active:scale-[0.99] transition-transform"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -570,11 +670,6 @@ function TaskCard({
                 <span className={`w-1.5 h-1.5 rounded-full ${status.dot} ${isInProcess ? 'animate-pulse' : ''}`} />
                 {status.label}
               </span>
-              {isPickup && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700">
-                  <Package className="w-2.5 h-2.5" /> {t('driver.home.pickupBadge')}
-                </span>
-              )}
             </div>
             {(note as any).partner_name && (
               <p className={`text-sm font-medium mt-1.5 flex items-center gap-1.5 ${isInProcess ? 'text-emerald-900' : 'text-gray-800'}`}>
@@ -1277,6 +1372,7 @@ export function TaskDetailSheet({
         role="driver"
         title={t('driver.taskDetail.scanDocTitle').replace('{number}', note.note_number)}
         subtitle={isPickup ? t('driver.taskDetail.scanPickupSubtitle') : t('driver.taskDetail.scanDeliverySubtitle')}
+        allowedKinds={isPickup ? ['delivery_in'] : ['delivery_out']}
         onClose={() => setShowScanner(false)}
         onConfirm={handleSmartScanResult}
       />
