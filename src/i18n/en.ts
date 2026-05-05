@@ -1067,6 +1067,17 @@ export const en: typeof sq = {
       stockInc: 'Stock will INCREASE after approval',
       stockDec: 'Stock will DECREASE after approval',
     },
+    proof: {
+      capture: 'Capture delivery proof',
+      title: 'Delivery proof',
+      photo: 'Photo of goods',
+      photoRequired: 'Please take a photo of the delivered goods',
+      signature: 'Signature / stamp (optional)',
+      gps: 'GPS location',
+      gpsPending: 'Acquiring GPS...',
+      save: 'Save proof',
+      saved: 'Delivery proof saved',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Daily overview',

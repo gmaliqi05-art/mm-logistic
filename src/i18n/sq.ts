@@ -1065,6 +1065,17 @@ export const sq = {
       stockInc: 'Stoku do te RRITET pas miratimit',
       stockDec: 'Stoku do te ZVOGELOHET pas miratimit',
     },
+    proof: {
+      capture: 'Regjistro deshmine e dorezimit',
+      title: 'Deshmia e dorezimit',
+      photo: 'Foto e mallit',
+      photoRequired: 'Ju lutem beni nje foto te mallit te dorezuar',
+      signature: 'Nenshkrim / vule (opsionale)',
+      gps: 'Pozicioni GPS',
+      gpsPending: 'Po merret GPS...',
+      save: 'Ruaj deshmine',
+      saved: 'Deshmia u ruajt',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Permbledhje ditore',

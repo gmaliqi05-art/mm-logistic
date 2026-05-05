@@ -71,6 +71,7 @@ export default function DepotDeliveryNotes() {
         .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(name), items:delivery_note_items(intended_action, quantity)')
         .eq('company_id', profile!.company_id!)
         .neq('status', 'draft')
+        .or('type.eq.pickup,assigned_depot_id.not.is.null')
         .order('created_at', { ascending: false })
         .limit(100);
       if (err) throw err;

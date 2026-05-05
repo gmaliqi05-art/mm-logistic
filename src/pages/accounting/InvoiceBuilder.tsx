@@ -506,7 +506,14 @@ export default function InvoiceBuilder() {
         format_mask: '{prefix}{year}-{number:0000}',
       });
     }
-    await supabase.from('acc_invoices').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id);
+    const { error: sendErr } = await supabase
+      .from('acc_invoices')
+      .update({ status: 'sent', sent_at: new Date().toISOString() })
+      .eq('id', id);
+    if (sendErr) {
+      setError(sendErr.message || 'Dergimi deshtoi');
+      return;
+    }
     setFinalized(true);
     setShowPreview(true);
   }

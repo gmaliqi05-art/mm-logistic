@@ -1067,6 +1067,17 @@ export const de: typeof sq = {
       stockInc: 'Bestand wird nach Freigabe ERHÖHT',
       stockDec: 'Bestand wird nach Freigabe VERRINGERT',
     },
+    proof: {
+      capture: 'Liefernachweis erfassen',
+      title: 'Liefernachweis',
+      photo: 'Foto der Ware',
+      photoRequired: 'Bitte ein Foto der gelieferten Ware aufnehmen',
+      signature: 'Unterschrift / Stempel (optional)',
+      gps: 'GPS-Standort',
+      gpsPending: 'GPS wird ermittelt...',
+      save: 'Nachweis speichern',
+      saved: 'Liefernachweis gespeichert',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Tagesübersicht',

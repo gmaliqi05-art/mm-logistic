@@ -774,6 +774,7 @@ export function TaskDetailSheet({
   const [closingWithout, setClosingWithout] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [closeNote, setCloseNote] = useState<string>('');
+  const [showProofCapture, setShowProofCapture] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -1276,6 +1277,16 @@ export function TaskDetailSheet({
               </button>
             )}
 
+            {isInTransit && (
+              <button
+                onClick={() => setShowProofCapture(true)}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white font-semibold text-sm shadow-lg shadow-emerald-600/25 active:scale-95 transition-transform"
+              >
+                <ScanLine className="w-4 h-4" />
+                {t('driver.proof.capture')}
+              </button>
+            )}
+
             {(isInTransit || canDispatch) && (
               <>
                 {canDispatch && (
@@ -1377,7 +1388,144 @@ export function TaskDetailSheet({
         onConfirm={handleSmartScanResult}
       />
     )}
+    {showProofCapture && (
+      <DeliveryProofModal
+        note={note}
+        t={t}
+        onClose={() => setShowProofCapture(false)}
+        onSaved={async () => {
+          setShowProofCapture(false);
+          await onUpdated(t('driver.proof.saved'));
+        }}
+      />
+    )}
     </>
+  );
+}
+
+function DeliveryProofModal({ note, t, onClose, onSaved }: {
+  note: NoteRow;
+  t: T;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+}) {
+  const { profile } = useAuth();
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => setGps(null),
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }, []);
+
+  async function upload(file: File, prefix: string): Promise<string> {
+    const ext = file.name.split('.').pop() || 'jpg';
+    const path = `${note.company_id}/proof/${note.id}/${prefix}_${Date.now()}.${ext}`;
+    const { error: uErr } = await supabase.storage.from('attachments').upload(path, file, {
+      contentType: file.type || 'image/jpeg',
+      upsert: false,
+    });
+    if (uErr) throw uErr;
+    return supabase.storage.from('attachments').getPublicUrl(path).data.publicUrl;
+  }
+
+  async function save() {
+    if (!photoFile) {
+      setErr(t('driver.proof.photoRequired'));
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    try {
+      const photoUrl = await upload(photoFile, 'photo');
+      const signatureUrl = signatureFile ? await upload(signatureFile, 'signature') : '';
+      const { error: insErr } = await supabase.from('delivery_proofs').insert({
+        delivery_note_id: note.id,
+        company_id: note.company_id,
+        captured_by_profile_id: profile?.id,
+        photo_url: photoUrl,
+        signature_url: signatureUrl,
+        gps_lat: gps?.lat ?? null,
+        gps_lng: gps?.lng ?? null,
+      });
+      if (insErr) throw insErr;
+      await supabase
+        .from('delivery_notes')
+        .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+        .eq('id', note.id);
+      await onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : t('driver.taskDetail.errorGeneric'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] bg-black/60 flex items-end sm:items-center justify-center p-4">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+        <div className="px-5 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-wider opacity-90">{t('driver.proof.title')}</div>
+            <div className="text-lg font-bold">{note.note_number}</div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2">{t('driver.proof.photo')} *</label>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+              className="block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:font-semibold hover:file:bg-emerald-700"
+            />
+            {photoFile && <p className="text-[11px] text-emerald-700 mt-1">{photoFile.name}</p>}
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2">{t('driver.proof.signature')}</label>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => setSignatureFile(e.target.files?.[0] ?? null)}
+              className="block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-600 file:text-white file:font-semibold hover:file:bg-gray-700"
+            />
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600 flex items-start gap-2">
+            <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold text-gray-800">{t('driver.proof.gps')}</div>
+              <div>{gps ? `${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)}` : t('driver.proof.gpsPending')}</div>
+            </div>
+          </div>
+          {err && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" /> {err}
+            </div>
+          )}
+        </div>
+        <div className="px-5 pb-5 flex items-center justify-end gap-3">
+          <button onClick={onClose} disabled={saving} className="px-4 py-2.5 text-sm font-medium bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-60">
+            {t('common.cancel')}
+          </button>
+          <button onClick={save} disabled={saving || !photoFile} className="px-4 py-2.5 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 inline-flex items-center gap-2 disabled:opacity-60">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            {t('driver.proof.save')}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
