@@ -11,6 +11,7 @@ export type AccPaymentMethod = '' | 'bank_transfer' | 'cash' | 'card' | 'paypal'
 export type AccMovementType = 'in' | 'out' | 'adjustment' | 'return';
 export type AccTransactionType = 'income' | 'expense' | 'transfer';
 export type AccDeliveryNoteStatus = 'draft' | 'sent' | 'in_transit' | 'delivered' | 'confirmed';
+export type AccDeliveryNoteKind = 'sale' | 'purchase_receipt' | 'transfer' | 'return_in' | 'return_out';
 
 export interface AccContact {
   id: string;
@@ -213,6 +214,7 @@ export interface AccDeliveryNote {
   note_number: string;
   note_date: string;
   status: AccDeliveryNoteStatus;
+  kind: AccDeliveryNoteKind;
   shipping_address: string;
   notes: string;
   invoice_id: string | null;

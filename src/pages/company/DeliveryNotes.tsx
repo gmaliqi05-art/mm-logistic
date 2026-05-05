@@ -15,6 +15,8 @@ import {
   Upload,
   File,
   Trash2,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -472,18 +474,20 @@ export default function CompanyDeliveryNotes() {
       <div className="inline-flex bg-gray-100 rounded-lg p-1 gap-1">
         <button
           onClick={() => setTabType('delivery')}
-          className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
-            tabType === 'delivery' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+          className={`px-5 py-2 rounded-md text-sm font-medium transition-colors inline-flex items-center gap-2 ${
+            tabType === 'delivery' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
           }`}
         >
+          <ArrowUpRight className="w-4 h-4" />
           {t('company.deliveryNotes.tabDelivery')}
         </button>
         <button
           onClick={() => setTabType('pickup')}
-          className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
-            tabType === 'pickup' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+          className={`px-5 py-2 rounded-md text-sm font-medium transition-colors inline-flex items-center gap-2 ${
+            tabType === 'pickup' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
           }`}
         >
+          <ArrowDownLeft className="w-4 h-4" />
           {t('company.deliveryNotes.tabPickup')}
         </button>
       </div>

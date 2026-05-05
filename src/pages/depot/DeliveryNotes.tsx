@@ -185,7 +185,7 @@ export default function DepotDeliveryNotes() {
                         </span>
                         {n.type === 'pickup' && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700">
-                            <Package className="w-3 h-3" /> Marrje
+                            <Package className="w-3 h-3" /> Fletemarrje
                           </span>
                         )}
                       </div>
