@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { DeliveryNote, DeliveryNoteItem, Profile, Depot } from '../../types';
+import { notifyUsers } from '../../utils/notifications';
 
 interface Props {
   noteId: string;
@@ -135,13 +136,15 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
       if (upErr) throw upErr;
 
       if (form.assigned_driver_id && form.assigned_driver_id !== note.assigned_driver_id) {
-        await supabase.from('notifications').insert({
-          user_id: form.assigned_driver_id,
-          company_id: note.company_id,
+        await notifyUsers({
+          userIds: [form.assigned_driver_id],
           type: 'assignment',
-          title: t('notifications.deliveryAssignedTitle') || 'New delivery assigned',
-          message: note.note_number,
-          data: { delivery_note_id: note.id, note_number: note.note_number },
+          titleKey: 'notifications.templates.deliveryAssigned.title',
+          messageKey: 'notifications.templates.deliveryAssigned.body',
+          params: { number: note.note_number },
+          referenceId: note.id,
+          fallbackTitle: t('notifications.templates.deliveryAssigned.title') || 'Delivery assigned',
+          fallbackMessage: `${note.note_number}`,
         });
       }
 

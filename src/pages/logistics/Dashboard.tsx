@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface DashboardStats {
   pending: number;
@@ -24,15 +25,15 @@ interface DashboardStats {
 interface PendingNote {
   id: string;
   note_number: string;
-  note_date: string;
-  shipping_address: string;
+  created_at: string;
+  delivery_address: string | null;
   status: string;
-  invoice?: { invoice_number: string; total: number; currency: string } | null;
-  contact?: { name: string } | null;
+  partner_name: string | null;
 }
 
 export default function LogisticsDashboard() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats>({
     pending: 0,
     assigned: 0,
@@ -44,7 +45,21 @@ export default function LogisticsDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile?.company_id) load();
+    if (!profile?.company_id) return;
+    load();
+
+    const channel = supabase
+      .channel(`logistics-dashboard-${profile.company_id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'delivery_notes', filter: `company_id=eq.${profile.company_id}` },
+        () => load(),
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [profile?.company_id]);
 
   async function load() {
@@ -54,25 +69,27 @@ export default function LogisticsDashboard() {
 
       const [pendingRes, assignedRes, inTransitRes, deliveredRes, driversRes, listRes] = await Promise.all([
         supabase
-          .from('acc_delivery_notes')
+          .from('delivery_notes')
           .select('id', { count: 'exact', head: true })
           .eq('company_id', companyId)
-          .eq('status', 'pending_dispatch'),
+          .in('status', ['draft', 'sent'])
+          .is('assigned_driver_id', null),
         supabase
-          .from('acc_delivery_notes')
+          .from('delivery_notes')
           .select('id', { count: 'exact', head: true })
           .eq('company_id', companyId)
-          .eq('status', 'assigned'),
+          .eq('status', 'sent')
+          .not('assigned_driver_id', 'is', null),
         supabase
-          .from('acc_delivery_notes')
+          .from('delivery_notes')
           .select('id', { count: 'exact', head: true })
           .eq('company_id', companyId)
           .eq('status', 'in_transit'),
         supabase
-          .from('acc_delivery_notes')
+          .from('delivery_notes')
           .select('id', { count: 'exact', head: true })
           .eq('company_id', companyId)
-          .eq('status', 'delivered'),
+          .in('status', ['delivered', 'confirmed', 'completed']),
         supabase
           .from('profiles')
           .select('id', { count: 'exact', head: true })
@@ -80,11 +97,12 @@ export default function LogisticsDashboard() {
           .eq('role', 'driver')
           .eq('is_active', true),
         supabase
-          .from('acc_delivery_notes')
-          .select('id, note_number, note_date, shipping_address, status, invoice:acc_invoices(invoice_number, total, currency), contact:acc_contacts(name)')
+          .from('delivery_notes')
+          .select('id, note_number, created_at, delivery_address, status, partner_name')
           .eq('company_id', companyId)
-          .eq('status', 'pending_dispatch')
-          .order('dispatched_at', { ascending: false })
+          .in('status', ['draft', 'sent'])
+          .is('assigned_driver_id', null)
+          .order('created_at', { ascending: false })
           .limit(5),
       ]);
 
@@ -95,7 +113,7 @@ export default function LogisticsDashboard() {
         delivered: deliveredRes.count ?? 0,
         drivers: driversRes.count ?? 0,
       });
-      setRecentPending(((listRes.data as unknown) as PendingNote[]) ?? []);
+      setRecentPending((listRes.data as PendingNote[]) ?? []);
     } finally {
       setLoading(false);
     }
@@ -112,34 +130,34 @@ export default function LogisticsDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Ballina Logjistike</h1>
-        <p className="text-gray-500 mt-1">Permbledhje e dergesave dhe shoferëve</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('logistics.dashboard.title')}</h1>
+        <p className="text-gray-500 mt-1">{t('logistics.dashboard.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label="Ne pritje" value={stats.pending} tone="amber" icon={<ClipboardList className="w-5 h-5" />} />
-        <StatCard label="Caktuar" value={stats.assigned} tone="sky" icon={<Users className="w-5 h-5" />} />
-        <StatCard label="Ne transit" value={stats.inTransit} tone="blue" icon={<Truck className="w-5 h-5" />} />
-        <StatCard label="Dorezuar" value={stats.delivered} tone="emerald" icon={<CheckCircle2 className="w-5 h-5" />} />
-        <StatCard label="Shoferet" value={stats.drivers} tone="slate" icon={<Users className="w-5 h-5" />} />
+        <StatCard label={t('logistics.dashboard.pending')} value={stats.pending} tone="amber" icon={<ClipboardList className="w-5 h-5" />} />
+        <StatCard label={t('logistics.dashboard.assigned')} value={stats.assigned} tone="sky" icon={<Users className="w-5 h-5" />} />
+        <StatCard label={t('logistics.dashboard.inTransit')} value={stats.inTransit} tone="blue" icon={<Truck className="w-5 h-5" />} />
+        <StatCard label={t('logistics.dashboard.delivered')} value={stats.delivered} tone="emerald" icon={<CheckCircle2 className="w-5 h-5" />} />
+        <StatCard label={t('logistics.dashboard.drivers')} value={stats.drivers} tone="slate" icon={<Users className="w-5 h-5" />} />
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
           <ClipboardList className="w-4 h-4 text-amber-600" />
-          <h3 className="text-sm font-semibold text-gray-900">Dergesat ne pritje per caktim</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t('logistics.dashboard.pendingListTitle')}</h3>
           <Link
             to="/logistics/dispatch"
             className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-800"
           >
-            Shiko te gjitha
+            {t('logistics.dashboard.seeAll')}
             <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
         {recentPending.length === 0 ? (
           <div className="p-12 text-center">
             <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-emerald-300" />
-            <p className="text-sm text-gray-500">Nuk ka dergesa ne pritje</p>
+            <p className="text-sm text-gray-500">{t('logistics.dashboard.emptyPending')}</p>
           </div>
         ) : (
           <ul className="divide-y divide-gray-50">
@@ -149,24 +167,19 @@ export default function LogisticsDashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-gray-900">{n.note_number}</span>
-                      {n.invoice?.invoice_number && (
-                        <span className="text-xs text-gray-500">
-                          · Fatura {n.invoice.invoice_number}
-                        </span>
-                      )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{n.contact?.name ?? 'Pa klient'}</p>
-                    {n.shipping_address && (
+                    <p className="text-xs text-gray-500 mt-0.5">{n.partner_name ?? t('logistics.dashboard.noClient')}</p>
+                    {n.delivery_address && (
                       <p className="text-xs text-gray-400 mt-1 inline-flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        {n.shipping_address}
+                        {n.delivery_address}
                       </p>
                     )}
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-xs text-gray-400 inline-flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {n.note_date}
+                      {new Date(n.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>

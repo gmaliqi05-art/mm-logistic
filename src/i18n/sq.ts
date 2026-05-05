@@ -1533,6 +1533,36 @@ export const sq = {
         body: '{typeLower} {number} nuk eshte me ne ngarkesen tuaj.',
       },
     },
+    templates: {
+      deliveryForStock: {
+        title: 'Dergese per stok',
+        body: '{number} u miratua. Verifikoni dhe regjistrojeni ne stok.',
+      },
+      deliveryRegisteredInStock: {
+        title: 'Dergesa u regjistrua ne stok',
+        body: '{number} u mbyll dhe u regjistrua ne stok.',
+      },
+      deliveryReturned: {
+        title: 'Dergesa u kthye',
+        body: '{number}: {reason}',
+      },
+      deliveryAssigned: {
+        title: 'Dergese e caktuar',
+        body: 'Ju eshte caktuar dergesa {number}.',
+      },
+      repairReportPending: {
+        title: 'Raport reparaturash per shqyrtim',
+        body: '{date} - {quantity} cope nga {worker}',
+      },
+      repairReported: {
+        title: 'Raport reparaturash i ri',
+        body: '{worker}: {quantity} cope me {date}',
+      },
+      deliveryClosedNoDoc: {
+        title: 'Dergese pa dokument',
+        body: '{number} u mbyll nga shoferi pa skanim - dokumenti pritet me email.',
+      },
+    },
   },
   support: {
     title: 'Suport',
@@ -2349,6 +2379,51 @@ export const sq = {
       warning: 'Paralajmerim (30d)',
       soon: 'Se shpejti (90d)',
       ok: 'Ne rregull',
+    },
+    logistics: {
+      dashboard: {
+        title: 'Ballina Logjistike',
+        subtitle: 'Permbledhje e dergesave dhe shoferëve',
+        pending: 'Ne pritje',
+        assigned: 'Caktuar',
+        inTransit: 'Ne transit',
+        delivered: 'Dorezuar',
+        drivers: 'Shoferet',
+        pendingListTitle: 'Dergesat ne pritje per caktim',
+        seeAll: 'Shiko te gjitha',
+        emptyPending: 'Nuk ka dergesa ne pritje',
+        noClient: 'Pa klient',
+      },
+      dispatch: {
+        title: 'Dispecieria',
+        subtitle: 'Caktoni shoferin per dergesat ne pritje',
+        emptyTitle: 'Nuk ka dergesa ne pritje',
+        emptySubtitle: 'Te gjitha dergesat e fundit jane caktuar',
+        assignDriver: 'Caktoj Shofer',
+        driver: 'Shoferi',
+        selectDriver: 'Zgjidh shoferin...',
+        noActiveDrivers: 'Nuk ka shofere aktive',
+        assignError: 'Gabim gjate caktimit',
+      },
+      active: {
+        title: 'Caktimet aktive',
+        subtitle: 'Dergesat ne ekzekutim ose te dorezuara',
+        empty: 'Nuk ka dergesa aktive',
+        columnNote: 'Fletedergesa',
+        columnClient: 'Klienti',
+        columnDriver: 'Shoferi',
+        columnAddress: 'Adresa',
+      },
+      status: {
+        pending: 'Ne pritje',
+        draft: 'Draft',
+        sent: 'Caktuar',
+        in_transit: 'Ne transit',
+        delivered: 'Dorezuar',
+        confirmed: 'Konfirmuar',
+        completed: 'Perfunduar',
+        cancelled: 'Anuluar',
+      },
     },
   },
 };

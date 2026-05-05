@@ -30,6 +30,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { DeliveryNote } from '../../types';
 import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/SmartDocScanner';
+import { notifyUsers } from '../../utils/notifications';
 
 export type T = (key: string) => string;
 
@@ -866,14 +867,16 @@ export function TaskDetailSheet({
           .eq('role', 'company_admin')
           .eq('is_active', true);
         if (admins && admins.length > 0) {
-          const rows = admins.map((a) => ({
-            user_id: a.id,
-            title: 'Dergese pa dokument',
-            message: `${note.note_number} u mbyll nga shoferi pa skanim - dokumenti pritet me email.`,
+          await notifyUsers({
+            userIds: admins.map((a) => a.id),
             type: 'delivery',
-            reference_id: note.id,
-          }));
-          await supabase.from('notifications').insert(rows as any);
+            titleKey: 'notifications.templates.deliveryClosedNoDoc.title',
+            messageKey: 'notifications.templates.deliveryClosedNoDoc.body',
+            params: { number: note.note_number },
+            referenceId: note.id,
+            fallbackTitle: 'Dergese pa dokument',
+            fallbackMessage: `${note.note_number} u mbyll nga shoferi pa skanim - dokumenti pritet me email.`,
+          });
         }
       }
 
@@ -997,14 +1000,16 @@ export function TaskDetailSheet({
           .eq('role', 'company_admin')
           .eq('is_active', true);
         if (admins && admins.length > 0) {
-          const rows = admins.map((a) => ({
-            user_id: a.id,
-            title: 'Dergese per shqyrtim',
-            message: `${note.note_number} u skanua nga shoferi dhe pret miratim.`,
+          await notifyUsers({
+            userIds: admins.map((a) => a.id),
             type: 'delivery',
-            reference_id: note.id,
-          }));
-          await supabase.from('notifications').insert(rows as any);
+            titleKey: 'notifications.templates.deliveryClosedNoDoc.title',
+            messageKey: 'notifications.templates.deliveryClosedNoDoc.body',
+            params: { number: note.note_number },
+            referenceId: note.id,
+            fallbackTitle: 'Dergese per shqyrtim',
+            fallbackMessage: `${note.note_number} u skanua nga shoferi dhe pret miratim.`,
+          });
         }
       }
 

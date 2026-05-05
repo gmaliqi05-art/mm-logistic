@@ -25,6 +25,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchProduct } from '../../utils/productMatcher';
 import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
+import { notifyUsers } from '../../utils/notifications';
 
 type Role = 'company_admin' | 'depot_worker';
 
@@ -577,15 +578,16 @@ function ReviewModal({
           .eq('role', 'depot_worker')
           .eq('is_active', true);
         if (depotUsers && depotUsers.length > 0) {
-          await supabase.from('notifications').insert(
-            depotUsers.map((u) => ({
-              user_id: u.id,
-              title: 'Dergese per stok',
-              message: `${note.note_number} u miratua. Verifikoni dhe regjistrojeni ne stok.`,
-              type: 'delivery',
-              reference_id: note.id,
-            })) as any,
-          );
+          await notifyUsers({
+            userIds: depotUsers.map((u) => u.id),
+            type: 'delivery',
+            titleKey: 'notifications.templates.deliveryForStock.title',
+            messageKey: 'notifications.templates.deliveryForStock.body',
+            params: { number: note.note_number },
+            referenceId: note.id,
+            fallbackTitle: 'Dergese per stok',
+            fallbackMessage: `${note.note_number} u miratua. Verifikoni dhe regjistrojeni ne stok.`,
+          });
         }
       }
       await onDone();
@@ -622,15 +624,16 @@ function ReviewModal({
 
       const receivers = [note.assigned_driver_id].filter(Boolean) as string[];
       if (receivers.length > 0) {
-        await supabase.from('notifications').insert(
-          receivers.map((uid) => ({
-            user_id: uid,
-            title: 'Dergesa u regjistrua ne stok',
-            message: `${note.note_number} u mbyll dhe u regjistrua ne stok.`,
-            type: 'delivery',
-            reference_id: note.id,
-          })) as any,
-        );
+        await notifyUsers({
+          userIds: receivers,
+          type: 'delivery',
+          titleKey: 'notifications.templates.deliveryRegisteredInStock.title',
+          messageKey: 'notifications.templates.deliveryRegisteredInStock.body',
+          params: { number: note.note_number },
+          referenceId: note.id,
+          fallbackTitle: 'Dergesa u regjistrua ne stok',
+          fallbackMessage: `${note.note_number} u mbyll dhe u regjistrua ne stok.`,
+        });
       }
 
       await onDone();
@@ -660,12 +663,15 @@ function ReviewModal({
         .eq('id', note.id);
 
       if (note.assigned_driver_id && role === 'company_admin') {
-        await supabase.from('notifications').insert({
-          user_id: note.assigned_driver_id,
-          title: 'Dergesa u kthye',
-          message: `${note.note_number}: ${reason.trim()}`,
+        await notifyUsers({
+          userIds: [note.assigned_driver_id],
           type: 'delivery',
-          reference_id: note.id,
+          titleKey: 'notifications.templates.deliveryReturned.title',
+          messageKey: 'notifications.templates.deliveryReturned.body',
+          params: { number: note.note_number, reason: reason.trim() },
+          referenceId: note.id,
+          fallbackTitle: 'Dergesa u kthye',
+          fallbackMessage: `${note.note_number}: ${reason.trim()}`,
         });
       }
       await onDone();

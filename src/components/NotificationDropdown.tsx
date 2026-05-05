@@ -26,6 +26,9 @@ interface Notification {
     event?: string;
     note_type?: 'delivery' | 'pickup';
     note_number?: string;
+    titleKey?: string;
+    messageKey?: string;
+    params?: Record<string, string | number>;
   } | null;
 }
 
@@ -100,6 +103,20 @@ export default function NotificationDropdown() {
   }
 
   function translateNotif(n: Notification): { title: string; message: string } {
+    if (n.data?.titleKey && n.data?.messageKey) {
+      const params = n.data.params ?? {};
+      const fill = (s: string) =>
+        Object.entries(params).reduce(
+          (acc, [k, v]) => acc.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)),
+          s,
+        );
+      const tTitle = t(n.data.titleKey);
+      const tMsg = t(n.data.messageKey);
+      return {
+        title: tTitle === n.data.titleKey ? n.title : fill(tTitle),
+        message: tMsg === n.data.messageKey ? n.message : fill(tMsg),
+      };
+    }
     const event = n.data?.event;
     if (!event) return { title: n.title, message: n.message };
     const noteType = n.data?.note_type === 'pickup' ? 'pickup' : 'delivery';

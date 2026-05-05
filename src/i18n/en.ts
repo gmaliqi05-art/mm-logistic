@@ -1535,6 +1535,36 @@ export const en: typeof sq = {
         body: '{type} {number} is no longer in your tasks.',
       },
     },
+    templates: {
+      deliveryForStock: {
+        title: 'Delivery for stock',
+        body: '{number} was approved. Verify and register it in stock.',
+      },
+      deliveryRegisteredInStock: {
+        title: 'Delivery registered in stock',
+        body: '{number} was closed and registered in stock.',
+      },
+      deliveryReturned: {
+        title: 'Delivery returned',
+        body: '{number}: {reason}',
+      },
+      deliveryAssigned: {
+        title: 'Delivery assigned',
+        body: 'You have been assigned delivery {number}.',
+      },
+      repairReportPending: {
+        title: 'Repair report pending review',
+        body: '{date} - {quantity} pieces from {worker}',
+      },
+      repairReported: {
+        title: 'New repair report',
+        body: '{worker}: {quantity} pieces on {date}',
+      },
+      deliveryClosedNoDoc: {
+        title: 'Delivery without document',
+        body: '{number} was closed by the driver without scan - document expected by email.',
+      },
+    },
   },
   support: {
     title: 'Support',
@@ -2351,6 +2381,51 @@ export const en: typeof sq = {
       warning: 'Warning (30d)',
       soon: 'Soon (90d)',
       ok: 'OK',
+    },
+    logistics: {
+      dashboard: {
+        title: 'Logistics Dashboard',
+        subtitle: 'Overview of deliveries and drivers',
+        pending: 'Pending',
+        assigned: 'Assigned',
+        inTransit: 'In transit',
+        delivered: 'Delivered',
+        drivers: 'Drivers',
+        pendingListTitle: 'Deliveries pending assignment',
+        seeAll: 'See all',
+        emptyPending: 'No pending deliveries',
+        noClient: 'No client',
+      },
+      dispatch: {
+        title: 'Dispatch',
+        subtitle: 'Assign a driver to pending deliveries',
+        emptyTitle: 'No pending deliveries',
+        emptySubtitle: 'All recent deliveries are assigned',
+        assignDriver: 'Assign Driver',
+        driver: 'Driver',
+        selectDriver: 'Select driver...',
+        noActiveDrivers: 'No active drivers',
+        assignError: 'Error during assignment',
+      },
+      active: {
+        title: 'Active assignments',
+        subtitle: 'Deliveries in progress or delivered',
+        empty: 'No active deliveries',
+        columnNote: 'Delivery note',
+        columnClient: 'Client',
+        columnDriver: 'Driver',
+        columnAddress: 'Address',
+      },
+      status: {
+        pending: 'Pending',
+        draft: 'Draft',
+        sent: 'Assigned',
+        in_transit: 'In transit',
+        delivered: 'Delivered',
+        confirmed: 'Confirmed',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+      },
     },
   },
 };

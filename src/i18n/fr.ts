@@ -1535,6 +1535,36 @@ export const fr: typeof sq = {
         body: 'La {typeLower} {number} n\'est plus dans vos t\u00e2ches.',
       },
     },
+    templates: {
+      deliveryForStock: {
+        title: 'Livraison pour le stock',
+        body: '{number} a \u00e9t\u00e9 approuv\u00e9e. V\u00e9rifiez et enregistrez-la en stock.',
+      },
+      deliveryRegisteredInStock: {
+        title: 'Livraison enregistr\u00e9e en stock',
+        body: '{number} a \u00e9t\u00e9 cl\u00f4tur\u00e9e et enregistr\u00e9e en stock.',
+      },
+      deliveryReturned: {
+        title: 'Livraison retourn\u00e9e',
+        body: '{number} : {reason}',
+      },
+      deliveryAssigned: {
+        title: 'Livraison assign\u00e9e',
+        body: 'La livraison {number} vous a \u00e9t\u00e9 assign\u00e9e.',
+      },
+      repairReportPending: {
+        title: 'Rapport de r\u00e9paration \u00e0 valider',
+        body: '{date} - {quantity} pi\u00e8ces de {worker}',
+      },
+      repairReported: {
+        title: 'Nouveau rapport de r\u00e9paration',
+        body: '{worker} : {quantity} pi\u00e8ces le {date}',
+      },
+      deliveryClosedNoDoc: {
+        title: 'Livraison sans document',
+        body: '{number} a \u00e9t\u00e9 cl\u00f4tur\u00e9e par le chauffeur sans scan - document attendu par e-mail.',
+      },
+    },
   },
   support: {
     title: 'Support',
@@ -2351,6 +2381,51 @@ export const fr: typeof sq = {
       warning: 'Avertissement (30j)',
       soon: 'Bient\u00f4t (90j)',
       ok: 'OK',
+    },
+    logistics: {
+      dashboard: {
+        title: 'Tableau de bord logistique',
+        subtitle: 'Aper\u00e7u des livraisons et des chauffeurs',
+        pending: 'En attente',
+        assigned: 'Assign\u00e9',
+        inTransit: 'En transit',
+        delivered: 'Livr\u00e9',
+        drivers: 'Chauffeurs',
+        pendingListTitle: 'Livraisons en attente d\'affectation',
+        seeAll: 'Voir tout',
+        emptyPending: 'Aucune livraison en attente',
+        noClient: 'Aucun client',
+      },
+      dispatch: {
+        title: 'R\u00e9partition',
+        subtitle: 'Assignez un chauffeur aux livraisons en attente',
+        emptyTitle: 'Aucune livraison en attente',
+        emptySubtitle: 'Toutes les livraisons r\u00e9centes sont assign\u00e9es',
+        assignDriver: 'Assigner un chauffeur',
+        driver: 'Chauffeur',
+        selectDriver: 'S\u00e9lectionnez un chauffeur...',
+        noActiveDrivers: 'Aucun chauffeur actif',
+        assignError: 'Erreur lors de l\'affectation',
+      },
+      active: {
+        title: 'Affectations actives',
+        subtitle: 'Livraisons en cours ou livr\u00e9es',
+        empty: 'Aucune livraison active',
+        columnNote: 'Bon de livraison',
+        columnClient: 'Client',
+        columnDriver: 'Chauffeur',
+        columnAddress: 'Adresse',
+      },
+      status: {
+        pending: 'En attente',
+        draft: 'Brouillon',
+        sent: 'Assign\u00e9',
+        in_transit: 'En transit',
+        delivered: 'Livr\u00e9',
+        confirmed: 'Confirm\u00e9',
+        completed: 'Termin\u00e9',
+        cancelled: 'Annul\u00e9',
+      },
     },
   },
 };

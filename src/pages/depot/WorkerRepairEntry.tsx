@@ -20,6 +20,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { Profile, ProductCategory } from '../../types';
+import { notifyUsers } from '../../utils/notifications';
 
 interface RepairEntry {
   id: string;
@@ -267,15 +268,20 @@ export default function WorkerRepairEntry() {
         .eq('company_id', companyId)
         .in('role', ['company_admin']);
       if (admins && admins.length > 0 && reportRow?.id) {
-        await supabase.from('notifications').insert(
-          admins.map((a) => ({
-            user_id: a.id,
-            title: 'Raport reparaturash per shqyrtim',
-            message: `${total} cope u raportuan dhe presin miratim.`,
-            type: 'document',
-            reference_id: reportRow.id,
-          })) as any,
-        );
+        await notifyUsers({
+          userIds: admins.map((a) => a.id),
+          type: 'document',
+          titleKey: 'notifications.templates.repairReportPending.title',
+          messageKey: 'notifications.templates.repairReportPending.body',
+          params: {
+            date: new Date().toLocaleDateString(),
+            quantity: total,
+            worker: profile?.full_name ?? '',
+          },
+          referenceId: reportRow.id,
+          fallbackTitle: 'Raport reparaturash per shqyrtim',
+          fallbackMessage: `${total} cope u raportuan dhe presin miratim.`,
+        });
       }
 
       void reportRow;

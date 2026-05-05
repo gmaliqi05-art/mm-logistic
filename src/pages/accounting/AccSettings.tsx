@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Globe,
   Lock,
+  RefreshCw,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -68,6 +69,8 @@ export default function AccSettings() {
   const [sequences, setSequences] = useState<InvoiceSequence[]>([]);
   const [bankAccounts, setBankAccounts] = useState<AccBankAccount[]>([]);
 
+  const [ratesMessage, setRatesMessage] = useState<string | null>(null);
+  const [refreshingRates, setRefreshingRates] = useState(false);
   const [defaultCurrency, setDefaultCurrency] = useState<AccCurrency>(() => {
     return (localStorage.getItem('acc_default_currency') as AccCurrency) || 'EUR';
   });
@@ -230,6 +233,28 @@ export default function AccSettings() {
   const handleCurrencyChange = (value: AccCurrency) => {
     setDefaultCurrency(value);
     localStorage.setItem('acc_default_currency', value);
+  };
+
+  const refreshEcbRates = async () => {
+    setRefreshingRates(true);
+    setRatesMessage(null);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-ecb-rates`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json().catch(() => ({}));
+      setRatesMessage(json.message ?? t('common.done') ?? 'OK');
+    } catch (err) {
+      setRatesMessage((err as Error).message || 'Error');
+    } finally {
+      setRefreshingRates(false);
+    }
   };
 
   const handlePaymentDaysChange = (value: number) => {
@@ -494,15 +519,27 @@ export default function AccSettings() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Monedha e Parazgjedhur</label>
-              <select
-                value={defaultCurrency}
-                onChange={(e) => handleCurrencyChange(e.target.value as AccCurrency)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-              >
-                {ACC_CURRENCIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={defaultCurrency}
+                  onChange={(e) => handleCurrencyChange(e.target.value as AccCurrency)}
+                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                >
+                  {ACC_CURRENCIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={refreshEcbRates}
+                  disabled={refreshingRates}
+                  title={t('common.refreshRates') || 'Perditeso kurset ECB'}
+                  className="inline-flex items-center gap-1 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-sm disabled:opacity-50"
+                >
+                  {refreshingRates ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                </button>
+              </div>
+              {ratesMessage && <p className="text-xs text-gray-500 mt-1">{ratesMessage}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Dite Pagese (parazgjedhur)</label>

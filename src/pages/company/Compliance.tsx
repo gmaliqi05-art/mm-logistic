@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Download, Loader2, Filter, Truck, User } from 'lucide-react';
+import { ShieldCheck, Download, Loader2, Filter, Truck, User, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
@@ -39,6 +39,8 @@ export default function Compliance() {
   const [filterEntity, setFilterEntity] = useState<'all' | 'vehicle' | 'driver'>('all');
   const [filterStatus, setFilterStatus] = useState<ExpiryLevel | 'all'>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [checking, setChecking] = useState(false);
+  const [checkMessage, setCheckMessage] = useState<string | null>(null);
 
   useEffect(() => { if (profile?.company_id) fetchAll(); }, [profile?.company_id]);
 
@@ -166,6 +168,30 @@ export default function Compliance() {
     URL.revokeObjectURL(url);
   }
 
+  async function runComplianceCheck() {
+    setChecking(true);
+    setCheckMessage(null);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-compliance-expirations`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ companyId: profile?.company_id ?? null }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json().catch(() => ({}));
+      setCheckMessage(json.message ?? (t('common.done') || 'U krye'));
+      await fetchAll();
+    } catch (err) {
+      setCheckMessage((err as Error).message || 'Error');
+    } finally {
+      setChecking(false);
+    }
+  }
+
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-teal-600" /></div>;
 
   return (
@@ -177,9 +203,27 @@ export default function Compliance() {
             Te gjitha afatet per mjete dhe shofera sipas StVZO, FeV, BKrFQG, PflVG dhe ArbMedVV.
           </p>
         </div>
-        <button onClick={exportCsv} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium">
-          <Download className="w-4 h-4" /> Eksporto CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={runComplianceCheck}
+            disabled={checking}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium disabled:opacity-50"
+          >
+            {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            {t('common.checkNow') || 'Kontrollo tani'}
+          </button>
+          <button onClick={exportCsv} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium">
+            <Download className="w-4 h-4" /> Eksporto CSV
+          </button>
+        </div>
+      </div>
+      {checkMessage && (
+        <div className="bg-teal-50 border border-teal-200 text-teal-800 text-sm px-4 py-2 rounded-lg">
+          {checkMessage}
+        </div>
+      )}
+      <div className="hidden">
+        <span>{/* spacer */}</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

@@ -10,8 +10,7 @@ interface DriverPing {
   driver_name: string;
   lat: number;
   lng: number;
-  recorded_at: string;
-  speed_kmh: number | null;
+  last_location_at: string;
   delivery_note_id: string | null;
   note_number: string | null;
   status: string | null;
@@ -39,6 +38,40 @@ function FitBounds({ drivers }: { drivers: DriverPing[] }) {
   return null;
 }
 
+interface DeliveryRow {
+  id: string;
+  note_number: string;
+  status: string;
+  assigned_driver_id: string;
+  current_lat: number;
+  current_lng: number;
+  last_location_at: string;
+  driver?: { full_name: string } | null;
+}
+
+function rowsToPings(rows: DeliveryRow[]): Record<string, DriverPing> {
+  const byDriver: Record<string, DriverPing> = {};
+  for (const r of rows) {
+    if (r.current_lat == null || r.current_lng == null || !r.assigned_driver_id) continue;
+    const existing = byDriver[r.assigned_driver_id];
+    const at = r.last_location_at ? new Date(r.last_location_at).getTime() : 0;
+    const prevAt = existing?.last_location_at ? new Date(existing.last_location_at).getTime() : 0;
+    if (!existing || at > prevAt) {
+      byDriver[r.assigned_driver_id] = {
+        driver_id: r.assigned_driver_id,
+        driver_name: r.driver?.full_name ?? '',
+        lat: Number(r.current_lat),
+        lng: Number(r.current_lng),
+        last_location_at: r.last_location_at,
+        delivery_note_id: r.id,
+        note_number: r.note_number,
+        status: r.status,
+      };
+    }
+  }
+  return byDriver;
+}
+
 export default function LiveFleetMap({ companyId, height = '600px' }: Props) {
   const [drivers, setDrivers] = useState<Record<string, DriverPing>>({});
   const [loading, setLoading] = useState(true);
@@ -49,57 +82,23 @@ export default function LiveFleetMap({ companyId, height = '600px' }: Props) {
 
     const load = async () => {
       try {
-        const { data: locs, error } = await supabase
-          .from('driver_locations')
-          .select('driver_id, lat, lng, recorded_at, speed_kmh, delivery_note_id')
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data, error } = await supabase
+          .from('delivery_notes')
+          .select(
+            'id, note_number, status, assigned_driver_id, current_lat, current_lng, last_location_at, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name)',
+          )
           .eq('company_id', companyId)
-          .gte('recorded_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-          .order('recorded_at', { ascending: false })
+          .in('status', ['sent', 'in_transit', 'delivered'])
+          .not('assigned_driver_id', 'is', null)
+          .not('current_lat', 'is', null)
+          .not('current_lng', 'is', null)
+          .gte('last_location_at', cutoff)
+          .order('last_location_at', { ascending: false })
           .limit(500);
         if (error) throw error;
-
-        const byDriver: Record<string, DriverPing> = {};
-        for (const row of (locs ?? []) as Array<Record<string, unknown>>) {
-          const did = String(row.driver_id);
-          if (!byDriver[did]) {
-            byDriver[did] = {
-              driver_id: did,
-              driver_name: '',
-              lat: Number(row.lat),
-              lng: Number(row.lng),
-              recorded_at: String(row.recorded_at),
-              speed_kmh: row.speed_kmh === null ? null : Number(row.speed_kmh),
-              delivery_note_id: row.delivery_note_id ? String(row.delivery_note_id) : null,
-              note_number: null,
-              status: null,
-            };
-          }
-        }
-
-        const ids = Object.keys(byDriver);
-        if (ids.length > 0) {
-          const { data: profs } = await supabase.from('profiles').select('id, full_name').in('id', ids);
-          for (const p of (profs ?? []) as Array<{ id: string; full_name: string }>) {
-            if (byDriver[p.id]) byDriver[p.id].driver_name = p.full_name ?? '';
-          }
-          const deliveryIds = Object.values(byDriver).map((d) => d.delivery_note_id).filter(Boolean) as string[];
-          if (deliveryIds.length > 0) {
-            const { data: dns } = await supabase
-              .from('delivery_notes')
-              .select('id, note_number, status, assigned_driver_id')
-              .in('id', deliveryIds);
-            for (const dn of (dns ?? []) as Array<{ id: string; note_number: string; status: string; assigned_driver_id: string }>) {
-              const driver = Object.values(byDriver).find((d) => d.delivery_note_id === dn.id);
-              if (driver) {
-                driver.note_number = dn.note_number;
-                driver.status = dn.status;
-              }
-            }
-          }
-        }
-
         if (!cancelled) {
-          setDrivers(byDriver);
+          setDrivers(rowsToPings((data as unknown as DeliveryRow[]) ?? []));
           setLoading(false);
         }
       } catch (err) {
@@ -111,31 +110,13 @@ export default function LiveFleetMap({ companyId, height = '600px' }: Props) {
     void load();
 
     const channel = supabase
-      .channel(`driver_locations_${companyId}`)
+      .channel(`live_fleet_${companyId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'driver_locations', filter: `company_id=eq.${companyId}` },
-        (payload) => {
-          const row = payload.new as Record<string, unknown>;
-          setDrivers((prev) => {
-            const did = String(row.driver_id);
-            const existing = prev[did];
-            return {
-              ...prev,
-              [did]: {
-                driver_id: did,
-                driver_name: existing?.driver_name ?? '',
-                lat: Number(row.lat),
-                lng: Number(row.lng),
-                recorded_at: String(row.recorded_at),
-                speed_kmh: row.speed_kmh === null ? null : Number(row.speed_kmh),
-                delivery_note_id: row.delivery_note_id ? String(row.delivery_note_id) : existing?.delivery_note_id ?? null,
-                note_number: existing?.note_number ?? null,
-                status: existing?.status ?? null,
-              },
-            };
-          });
-        }
+        { event: 'UPDATE', schema: 'public', table: 'delivery_notes', filter: `company_id=eq.${companyId}` },
+        () => {
+          void load();
+        },
       )
       .subscribe();
 
@@ -149,7 +130,7 @@ export default function LiveFleetMap({ companyId, height = '600px' }: Props) {
   const center: [number, number] = list.length > 0 ? [list[0].lat, list[0].lng] : [50.1, 10.3];
 
   return (
-    <div className="rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ height }}>
+    <div className="rounded-xl overflow-hidden border border-slate-200 bg-white relative" style={{ height }}>
       {loading && list.length === 0 ? (
         <div className="h-full flex items-center justify-center text-sm text-slate-500">Loading map...</div>
       ) : (
@@ -166,8 +147,7 @@ export default function LiveFleetMap({ companyId, height = '600px' }: Props) {
                   <div className="font-semibold text-slate-900">{d.driver_name || 'Driver'}</div>
                   {d.note_number && <div className="text-xs text-slate-600">Delivery {d.note_number}</div>}
                   {d.status && <div className="text-xs text-slate-500">Status: {d.status}</div>}
-                  {d.speed_kmh !== null && <div className="text-xs text-slate-500">Speed: {Math.round(d.speed_kmh)} km/h</div>}
-                  <div className="text-[11px] text-slate-400 mt-1">{new Date(d.recorded_at).toLocaleTimeString()}</div>
+                  <div className="text-[11px] text-slate-400 mt-1">{new Date(d.last_location_at).toLocaleTimeString()}</div>
                 </div>
               </Popup>
             </Marker>

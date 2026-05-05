@@ -1535,6 +1535,36 @@ export const de: typeof sq = {
         body: '{type} {number} ist nicht mehr in Ihren Aufgaben.',
       },
     },
+    templates: {
+      deliveryForStock: {
+        title: 'Lieferung fuer Lager',
+        body: '{number} wurde genehmigt. Bitte pruefen und im Lager erfassen.',
+      },
+      deliveryRegisteredInStock: {
+        title: 'Lieferung im Lager erfasst',
+        body: '{number} wurde abgeschlossen und im Lager erfasst.',
+      },
+      deliveryReturned: {
+        title: 'Lieferung zurueckgegeben',
+        body: '{number}: {reason}',
+      },
+      deliveryAssigned: {
+        title: 'Lieferung zugewiesen',
+        body: 'Die Lieferung {number} wurde Ihnen zugewiesen.',
+      },
+      repairReportPending: {
+        title: 'Reparaturbericht zur Pruefung',
+        body: '{date} - {quantity} Stueck von {worker}',
+      },
+      repairReported: {
+        title: 'Neuer Reparaturbericht',
+        body: '{worker}: {quantity} Stueck am {date}',
+      },
+      deliveryClosedNoDoc: {
+        title: 'Lieferung ohne Beleg',
+        body: '{number} wurde vom Fahrer ohne Scan geschlossen - Beleg wird per E-Mail erwartet.',
+      },
+    },
   },
   support: {
     title: 'Support',
@@ -2351,6 +2381,51 @@ export const de: typeof sq = {
       warning: 'Warnung (30T)',
       soon: 'Bald (90T)',
       ok: 'OK',
+    },
+    logistics: {
+      dashboard: {
+        title: 'Logistik-Dashboard',
+        subtitle: 'Uebersicht ueber Lieferungen und Fahrer',
+        pending: 'Ausstehend',
+        assigned: 'Zugewiesen',
+        inTransit: 'Unterwegs',
+        delivered: 'Geliefert',
+        drivers: 'Fahrer',
+        pendingListTitle: 'Lieferungen zur Zuweisung',
+        seeAll: 'Alle anzeigen',
+        emptyPending: 'Keine ausstehenden Lieferungen',
+        noClient: 'Kein Kunde',
+      },
+      dispatch: {
+        title: 'Disposition',
+        subtitle: 'Weisen Sie ausstehenden Lieferungen einen Fahrer zu',
+        emptyTitle: 'Keine ausstehenden Lieferungen',
+        emptySubtitle: 'Alle juengsten Lieferungen sind zugewiesen',
+        assignDriver: 'Fahrer zuweisen',
+        driver: 'Fahrer',
+        selectDriver: 'Fahrer auswaehlen...',
+        noActiveDrivers: 'Keine aktiven Fahrer',
+        assignError: 'Fehler bei der Zuweisung',
+      },
+      active: {
+        title: 'Aktive Zuweisungen',
+        subtitle: 'Laufende oder abgeschlossene Lieferungen',
+        empty: 'Keine aktiven Lieferungen',
+        columnNote: 'Lieferschein',
+        columnClient: 'Kunde',
+        columnDriver: 'Fahrer',
+        columnAddress: 'Adresse',
+      },
+      status: {
+        pending: 'Ausstehend',
+        draft: 'Entwurf',
+        sent: 'Zugewiesen',
+        in_transit: 'Unterwegs',
+        delivered: 'Geliefert',
+        confirmed: 'Bestaetigt',
+        completed: 'Abgeschlossen',
+        cancelled: 'Storniert',
+      },
     },
   },
 };
