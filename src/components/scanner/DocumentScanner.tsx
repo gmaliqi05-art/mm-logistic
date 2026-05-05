@@ -23,10 +23,11 @@ import {
   applyScanFilter,
   canvasToBlob,
   detectPaperSize,
+  detectDocumentEdges,
   type ScanFilter,
   type PaperSize,
 } from '../../utils/scanProcessor';
-import { loadOpenCV } from '../../utils/opencvLoader';
+import { loadOpenCV, isOpenCVFailed, isOpenCVLoading } from '../../utils/opencvLoader';
 import {
   detectDocumentQuadCV,
   warpQuadCV,
@@ -79,6 +80,8 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
   const [uploadedUrl, setUploadedUrl] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [cvReady, setCvReady] = useState(false);
+  const [cvLoading, setCvLoading] = useState(true);
+  const [cvFailed, setCvFailed] = useState(false);
   const [liveQuad, setLiveQuad] = useState<Quad | null>(null);
   const [isStable, setIsStable] = useState(false);
   const [videoSize, setVideoSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -92,7 +95,18 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
 
   useEffect(() => {
     let cancelled = false;
-    loadOpenCV().then(() => { if (!cancelled) setCvReady(true); }).catch(() => {});
+    setCvLoading(true);
+    loadOpenCV()
+      .then(() => {
+        if (cancelled) return;
+        setCvReady(true);
+        setCvLoading(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCvFailed(true);
+        setCvLoading(false);
+      });
     return () => { cancelled = true; };
   }, []);
 
@@ -111,7 +125,15 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
+          const p = videoRef.current?.play();
+          if (p && typeof (p as Promise<void>).catch === 'function') {
+            (p as Promise<void>).catch((err) => {
+              if ((err as Error)?.name !== 'AbortError') {
+                // eslint-disable-next-line no-console
+                console.warn('video play error', err);
+              }
+            });
+          }
           if (videoRef.current) {
             setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
           }
@@ -121,7 +143,8 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
       const track = stream.getVideoTracks()[0];
       const caps = track.getCapabilities ? track.getCapabilities() : ({} as MediaTrackCapabilities);
       setTorchSupported(!!(caps as unknown as { torch?: boolean }).torch);
-    } catch {
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return;
       setCameraError(t('scanner.cameraPermissionDenied'));
     }
   }, [t]);
@@ -174,7 +197,18 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
 
         let quadSmall: Quad | null = null;
         if (cvReady) {
-          quadSmall = await detectDocumentQuadCV(tmp);
+          try { quadSmall = await detectDocumentQuadCV(tmp); } catch { quadSmall = null; }
+        }
+        if (!quadSmall) {
+          const bounds = detectDocumentEdges(tmp);
+          if (bounds && bounds.confidence > 0.3) {
+            quadSmall = [
+              { x: bounds.x, y: bounds.y },
+              { x: bounds.x + bounds.width, y: bounds.y },
+              { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
+              { x: bounds.x, y: bounds.y + bounds.height },
+            ];
+          }
         }
 
         if (!quadSmall) {
@@ -253,9 +287,20 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
         if (fullRes) quad = fullRes;
       } catch { /* keep live quad */ }
     }
+    if (!quad) {
+      const bounds = detectDocumentEdges(full);
+      if (bounds && bounds.confidence > 0.3) {
+        quad = [
+          { x: bounds.x, y: bounds.y },
+          { x: bounds.x + bounds.width, y: bounds.y },
+          { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
+          { x: bounds.x, y: bounds.y + bounds.height },
+        ];
+      }
+    }
 
     if (!quad) {
-      const margin = 0.05;
+      const margin = 0.08;
       quad = [
         { x: vw * margin, y: vh * margin },
         { x: vw * (1 - margin), y: vh * margin },
@@ -472,6 +517,16 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
           {cvReady && (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 inline-flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> HD
+            </span>
+          )}
+          {cvLoading && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 inline-flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" /> HD...
+            </span>
+          )}
+          {cvFailed && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-600/40 text-slate-300 inline-flex items-center gap-1">
+              Baze
             </span>
           )}
         </div>

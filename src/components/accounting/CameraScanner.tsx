@@ -130,7 +130,12 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          const name = (playErr as Error)?.name;
+          if (name !== 'AbortError') throw playErr;
+        }
         setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
       }
       const track = stream.getVideoTracks()[0];
@@ -140,6 +145,8 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       searchStartRef.current = 0;
       setSearchTimedOut(false);
     } catch (err) {
+      const name = (err as Error)?.name;
+      if (name === 'AbortError') return;
       const msg = err instanceof Error ? err.message : 'Nuk u qasa dot te kamera';
       setError(`Gabim kamere: ${msg}. Sigurohu qe ke dhene leje per kameren.`);
     }
