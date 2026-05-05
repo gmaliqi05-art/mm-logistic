@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, X, RotateCcw, Check, Loader2, AlertTriangle, Zap, ZapOff, FlipHorizontal, Crop, ScanLine, ScanSearch } from 'lucide-react';
-import { canvasToBlob } from '../../utils/scanProcessor';
+import { Camera, X, RotateCcw, Check, Loader2, AlertTriangle, Zap, ZapOff, FlipHorizontal, Crop, ScanLine, ScanSearch, FileText, Palette, Droplet, Gauge } from 'lucide-react';
+import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
 
 interface Props {
   onCapture: (file: File) => void;
@@ -13,12 +13,16 @@ type Quad = [Pt, Pt, Pt, Pt];
 export default function CameraScanner({ onCapture, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rawCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastDetectRef = useRef<number>(0);
   const stableCountRef = useRef<number>(0);
   const lastQuadRef = useRef<Quad | null>(null);
+  const fpsTimesRef = useRef<number[]>([]);
+  const searchStartRef = useRef<number>(0);
+  const lowPowerRef = useRef<boolean>(false);
 
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string>('');
@@ -33,6 +37,11 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
   const [liveQuad, setLiveQuad] = useState<Quad | null>(null);
   const [stable, setStable] = useState(false);
   const [usedQuad, setUsedQuad] = useState(false);
+  const [searchTimedOut, setSearchTimedOut] = useState(false);
+  const [lowPower, setLowPower] = useState(false);
+  const [filter, setFilter] = useState<ScanFilter>('color');
+  const [paperInfo, setPaperInfo] = useState<{ size: PaperSize; confidence: number; dimensions: string } | null>(null);
+  const [textStats, setTextStats] = useState<{ wordCount: number; isText: boolean } | null>(null);
 
   useEffect(() => {
     startCamera(facing);
@@ -48,11 +57,28 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       rafRef.current = null;
       return;
     }
+    if (searchStartRef.current === 0) searchStartRef.current = performance.now();
+
     const tick = (t: number) => {
-      if (t - lastDetectRef.current > 220) {
+      const times = fpsTimesRef.current;
+      times.push(t);
+      while (times.length > 0 && t - times[0] > 1000) times.shift();
+      const fps = times.length;
+      if (fps > 0 && fps < 15) {
+        lowPowerRef.current = true;
+        if (!lowPower) setLowPower(true);
+      }
+
+      const interval = lowPowerRef.current ? 500 : 220;
+      if (t - lastDetectRef.current > interval) {
         lastDetectRef.current = t;
         runLiveDetection();
       }
+
+      if (!searchTimedOut && !lastQuadRef.current && t - searchStartRef.current > 3000) {
+        setSearchTimedOut(true);
+      }
+
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -60,7 +86,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     };
-  }, [ready, previewUrl, autoCrop, busy]);
+  }, [ready, previewUrl, autoCrop, busy, lowPower, searchTimedOut]);
 
   useEffect(() => {
     return () => {
@@ -91,6 +117,8 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       const caps = track.getCapabilities ? track.getCapabilities() : ({} as MediaTrackCapabilities);
       setTorchSupported(!!(caps as unknown as { torch?: boolean }).torch);
       setReady(true);
+      searchStartRef.current = 0;
+      setSearchTimedOut(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Nuk u qasa dot te kamera';
       setError(`Gabim kamere: ${msg}. Sigurohu qe ke dhene leje per kameren.`);
@@ -124,7 +152,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     if (!vw || !vh) return;
 
     if (!detectCanvasRef.current) detectCanvasRef.current = document.createElement('canvas');
-    const sample = 240;
+    const sample = lowPowerRef.current ? 240 : 480;
     const scale = Math.min(sample / vw, sample / vh);
     const sw = Math.max(80, Math.round(vw * scale));
     const sh = Math.max(80, Math.round(vh * scale));
@@ -161,35 +189,17 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     }
     const nextStable = stableCountRef.current >= 2;
     setStable((s) => (s === nextStable ? s : nextStable));
+    if (nextStable) setSearchTimedOut(false);
   }
 
   function detectQuad(ctx: CanvasRenderingContext2D, w: number, h: number): Quad | null {
     const data = ctx.getImageData(0, 0, w, h).data;
     const gray = new Uint8ClampedArray(w * h);
-    const hist = new Array(256).fill(0);
     for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      const v = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) | 0;
-      gray[j] = v;
-      hist[v]++;
+      gray[j] = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) | 0;
     }
     const total = w * h;
-    let sum = 0;
-    for (let i = 0; i < 256; i++) sum += i * hist[i];
-    let sumB = 0, wB = 0, maxVar = 0, threshold = 128;
-    for (let i = 0; i < 256; i++) {
-      wB += hist[i];
-      if (wB === 0) continue;
-      const wF = total - wB;
-      if (wF === 0) break;
-      sumB += i * hist[i];
-      const mB = sumB / wB;
-      const mF = (sum - sumB) / wF;
-      const between = wB * wF * (mB - mF) * (mB - mF);
-      if (between > maxVar) {
-        maxVar = between;
-        threshold = i;
-      }
-    }
+    const threshold = otsuThreshold(gray, total);
 
     const mask = new Uint8Array(w * h);
     let whiteCount = 0;
@@ -362,7 +372,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         let quad = liveQuad;
         if (!quad) {
           if (!detectCanvasRef.current) detectCanvasRef.current = document.createElement('canvas');
-          const sample = 320;
+          const sample = 480;
           const scale = Math.min(sample / vw, sample / vh);
           const sw = Math.round(vw * scale);
           const sh = Math.round(vh * scale);
@@ -389,9 +399,22 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       setUsedQuad(didUseQuad);
       enhanceCanvas(ctx, canvas.width, canvas.height);
 
-      const blob = await canvasToBlob(canvas, 0.92);
-      setCapturedBlob(blob);
-      setPreviewUrl(URL.createObjectURL(blob));
+      const raw = document.createElement('canvas');
+      raw.width = canvas.width;
+      raw.height = canvas.height;
+      raw.getContext('2d')!.drawImage(canvas, 0, 0);
+      rawCanvasRef.current = raw;
+
+      const stats = estimateTextStats(canvas);
+      setTextStats(stats);
+
+      const aspectRatio = canvas.height / canvas.width;
+      const paper = detectPaperSize(aspectRatio);
+      setPaperInfo(paper);
+
+      const initialFilter: ScanFilter = stats.isText ? 'bw' : 'color';
+      setFilter(initialFilter);
+      await renderFilter(initialFilter);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gabim gjate fotografimit');
     } finally {
@@ -399,11 +422,38 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     }
   }
 
+  async function renderFilter(mode: ScanFilter) {
+    const canvas = canvasRef.current;
+    const raw = rawCanvasRef.current;
+    if (!canvas || !raw) return;
+    canvas.width = raw.width;
+    canvas.height = raw.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(raw, 0, 0);
+    if (mode !== 'color') applyScanFilter(canvas, mode);
+    const blob = await canvasToBlob(canvas, 0.92);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setCapturedBlob(blob);
+    setPreviewUrl(URL.createObjectURL(blob));
+  }
+
+  async function chooseFilter(mode: ScanFilter) {
+    if (mode === filter) return;
+    setFilter(mode);
+    await renderFilter(mode);
+  }
+
   function retake() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl('');
     setCapturedBlob(null);
     setUsedQuad(false);
+    setTextStats(null);
+    setPaperInfo(null);
+    rawCanvasRef.current = null;
+    searchStartRef.current = 0;
+    setSearchTimedOut(false);
   }
 
   function confirm() {
@@ -425,6 +475,14 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     : '';
   const overlayColor = stable ? '#10b981' : '#f59e0b';
 
+  const paperLabel = paperInfo && paperInfo.confidence > 0.7 && paperInfo.size !== 'Unknown'
+    ? `${paperInfo.size} detected`
+    : null;
+
+  const lowQualityWarning = textStats && textStats.isText && textStats.wordCount < 50
+    ? 'Cilesia e ulet, riprovo'
+    : null;
+
   return (
     <div className="fixed inset-0 z-[60] bg-black flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 bg-black/80 text-white">
@@ -434,16 +492,23 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         </div>
         <div className="flex items-center gap-2">
           {!previewUrl && (
-            <button
-              onClick={() => setAutoCrop(!autoCrop)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors ${
-                autoCrop ? 'bg-teal-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-              title="Detektim inteligjent i dokumentit"
-            >
-              <ScanSearch className="w-3.5 h-3.5" />
-              Auto {autoCrop ? 'ON' : 'OFF'}
-            </button>
+            <>
+              {lowPower && (
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 inline-flex items-center gap-1">
+                  <Gauge className="w-3 h-3" /> Low-power
+                </span>
+              )}
+              <button
+                onClick={() => setAutoCrop(!autoCrop)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                  autoCrop ? 'bg-teal-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+                title="Detektim inteligjent i dokumentit"
+              >
+                <ScanSearch className="w-3.5 h-3.5" />
+                Auto {autoCrop ? 'ON' : 'OFF'}
+              </button>
+            </>
           )}
           <button onClick={handleClose} className="p-2 hover:bg-white/10 rounded-lg">
             <X className="w-5 h-5" />
@@ -457,7 +522,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
             <div className="bg-white rounded-xl p-5 max-w-sm text-center shadow-2xl">
               <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-2" />
               <p className="text-sm text-slate-800 font-medium">{error}</p>
-              <button onClick={() => startCamera(facing)} className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm">
+              <button onClick={() => startCamera(facing)} className="mt-4 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm">
                 Provo perseri
               </button>
             </div>
@@ -522,31 +587,39 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
             )}
 
             {ready && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 text-white text-xs font-medium">
-                {autoCrop ? (
-                  liveQuad ? (
-                    stable ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        Dokumenti u detektua — fotografo
-                      </>
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 text-white text-xs font-medium">
+                  {autoCrop ? (
+                    liveQuad ? (
+                      stable ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          Dokumenti u detektua — fotografo
+                        </>
+                      ) : (
+                        <>
+                          <ScanLine className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                          Mbaj qendrueshem...
+                        </>
+                      )
                     ) : (
                       <>
-                        <ScanLine className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                        Mbaj qendrueshem...
+                        <ScanSearch className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                        Duke kerkuar dokumentin...
                       </>
                     )
                   ) : (
                     <>
-                      <ScanSearch className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                      Duke kerkuar dokumentin...
+                      <Camera className="w-3.5 h-3.5 text-slate-300" />
+                      Vendos dokumentin dhe fotografo
                     </>
-                  )
-                ) : (
-                  <>
-                    <Camera className="w-3.5 h-3.5 text-slate-300" />
-                    Vendos dokumentin dhe fotografo
-                  </>
+                  )}
+                </div>
+                {autoCrop && searchTimedOut && !liveQuad && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/90 text-white text-xs font-semibold shadow-lg">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Nuk po dallohet dokumenti — fotografo manualisht ose fik Auto
+                  </div>
                 )}
               </div>
             )}
@@ -556,23 +629,42 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         {previewUrl && (
           <>
             <img src={previewUrl} alt="Captured" className="max-w-full max-h-full object-contain" />
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 text-white text-xs font-medium">
-              {usedQuad ? (
-                <>
-                  <Crop className="w-3.5 h-3.5 text-emerald-300" />
-                  Dokumenti u pre dhe u korrigjua
-                </>
-              ) : autoCrop ? (
-                <>
-                  <ScanLine className="w-3.5 h-3.5 text-amber-300" />
-                  Dokumenti nuk u detektua — fotoja e plote
-                </>
-              ) : (
-                <>
-                  <ScanLine className="w-3.5 h-3.5 text-slate-300" />
-                  Pa auto-prerje
-                </>
-              )}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 text-white text-xs font-medium">
+                {usedQuad ? (
+                  <>
+                    <Crop className="w-3.5 h-3.5 text-emerald-300" />
+                    Dokumenti u pre dhe u korrigjua
+                  </>
+                ) : autoCrop ? (
+                  <>
+                    <ScanLine className="w-3.5 h-3.5 text-amber-300" />
+                    Dokumenti nuk u detektua — fotoja e plote
+                  </>
+                ) : (
+                  <>
+                    <ScanLine className="w-3.5 h-3.5 text-slate-300" />
+                    Pa auto-prerje
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                {paperLabel && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-teal-500/90 text-white inline-flex items-center gap-1">
+                    <FileText className="w-3 h-3" /> {paperLabel}
+                  </span>
+                )}
+                {textStats && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-700/90 text-white inline-flex items-center gap-1">
+                    ~{textStats.wordCount} fjale
+                  </span>
+                )}
+                {lowQualityWarning && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/90 text-white inline-flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> {lowQualityWarning}
+                  </span>
+                )}
+              </div>
             </div>
           </>
         )}
@@ -617,19 +709,47 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-3 max-w-md mx-auto">
-            <button
-              onClick={retake}
-              className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium inline-flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" /> Fotografo perseri
-            </button>
-            <button
-              onClick={confirm}
-              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold inline-flex items-center gap-2"
-            >
-              <Check className="w-5 h-5" /> Perdor kete foto
-            </button>
+          <div className="flex flex-col items-center gap-3 max-w-md mx-auto">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => chooseFilter('color')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                  filter === 'color' ? 'bg-teal-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                <Palette className="w-3.5 h-3.5" /> Color
+              </button>
+              <button
+                onClick={() => chooseFilter('grayscale')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                  filter === 'grayscale' ? 'bg-teal-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                <Droplet className="w-3.5 h-3.5" /> Grayscale
+              </button>
+              <button
+                onClick={() => chooseFilter('bw')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-colors ${
+                  filter === 'bw' ? 'bg-teal-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" /> B&W
+              </button>
+            </div>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={retake}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium inline-flex items-center gap-2 text-sm"
+              >
+                <RotateCcw className="w-4 h-4" /> Fotografo perseri
+              </button>
+              <button
+                onClick={confirm}
+                className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold inline-flex items-center gap-2 text-sm"
+              >
+                <Check className="w-4 h-4" /> Perdor kete foto
+              </button>
+            </div>
           </div>
         )}
       </div>
