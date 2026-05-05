@@ -964,7 +964,7 @@ function ReviewModal({
               Dergo te depo per stok
             </button>
           )}
-          {!showRejectReason && !(role === 'company_admin' && isPickup) && (
+          {!showRejectReason && (
             <button
               onClick={handleCompleteToStock}
               disabled={!!saving}
