@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, X, RotateCcw, Check, Loader2, AlertTriangle, Zap, ZapOff, FlipHorizontal, Crop, ScanLine, ScanSearch, FileText, Palette, Droplet, Gauge } from 'lucide-react';
 import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
+import { loadOpenCV, isOpenCVFailed } from '../../utils/opencvLoader';
+import { detectDocumentQuadCV, warpQuadCV, applyCLAHE, adaptiveBinarize, laplacianVariance } from '../../utils/cvDocScanner';
 
 interface Props {
   onCapture: (file: File) => void;
@@ -42,6 +44,24 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
   const [filter, setFilter] = useState<ScanFilter>('color');
   const [paperInfo, setPaperInfo] = useState<{ size: PaperSize; confidence: number; dimensions: string } | null>(null);
   const [textStats, setTextStats] = useState<{ wordCount: number; isText: boolean } | null>(null);
+  const [cvReady, setCvReady] = useState(false);
+  const cvReadyRef = useRef(false);
+  const cvBusyRef = useRef(false);
+  const [blurWarning, setBlurWarning] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadOpenCV()
+      .then(() => {
+        if (cancelled) return;
+        cvReadyRef.current = true;
+        setCvReady(true);
+      })
+      .catch(() => {
+        cvReadyRef.current = false;
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     startCamera(facing);
@@ -144,7 +164,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     }
   }
 
-  function runLiveDetection() {
+  async function runLiveDetection() {
     const video = videoRef.current;
     if (!video || video.readyState < 2) return;
     const vw = video.videoWidth;
@@ -152,7 +172,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     if (!vw || !vh) return;
 
     if (!detectCanvasRef.current) detectCanvasRef.current = document.createElement('canvas');
-    const sample = lowPowerRef.current ? 240 : 480;
+    const sample = lowPowerRef.current ? 320 : 640;
     const scale = Math.min(sample / vw, sample / vh);
     const sw = Math.max(80, Math.round(vw * scale));
     const sh = Math.max(80, Math.round(vh * scale));
@@ -163,7 +183,20 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     if (!dctx) return;
     dctx.drawImage(video, 0, 0, sw, sh);
 
-    const quadSmall = detectQuad(dctx, sw, sh);
+    let quadSmall: Quad | null = null;
+    if (cvReadyRef.current && !cvBusyRef.current) {
+      cvBusyRef.current = true;
+      try {
+        quadSmall = await detectDocumentQuadCV(dc);
+      } catch {
+        quadSmall = null;
+      } finally {
+        cvBusyRef.current = false;
+      }
+    }
+    if (!quadSmall) {
+      quadSmall = detectQuad(dctx, sw, sh);
+    }
     if (!quadSmall) {
       stableCountRef.current = 0;
       if (lastQuadRef.current !== null) {
@@ -372,7 +405,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         let quad = liveQuad;
         if (!quad) {
           if (!detectCanvasRef.current) detectCanvasRef.current = document.createElement('canvas');
-          const sample = 480;
+          const sample = 720;
           const scale = Math.min(sample / vw, sample / vh);
           const sw = Math.round(vw * scale);
           const sh = Math.round(vh * scale);
@@ -382,13 +415,21 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
           const dctx = dc.getContext('2d', { willReadFrequently: true });
           if (dctx) {
             dctx.drawImage(canvas, 0, 0, sw, sh);
-            const q = detectQuad(dctx, sw, sh);
+            let q: Quad | null = null;
+            if (cvReadyRef.current) {
+              try { q = await detectDocumentQuadCV(dc); } catch { q = null; }
+            }
+            if (!q) q = detectQuad(dctx, sw, sh);
             if (q) quad = q.map((p) => ({ x: p.x / scale, y: p.y / scale })) as Quad;
           }
         }
 
         if (quad) {
-          const warped = warpQuadToCanvas(canvas, quad);
+          let warped: HTMLCanvasElement | null = null;
+          if (cvReadyRef.current) {
+            try { warped = await warpQuadCV(canvas, quad); } catch { warped = null; }
+          }
+          if (!warped) warped = warpQuadToCanvas(canvas, quad);
           canvas.width = warped.width;
           canvas.height = warped.height;
           ctx.drawImage(warped, 0, 0);
@@ -397,7 +438,21 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       }
 
       setUsedQuad(didUseQuad);
-      enhanceCanvas(ctx, canvas.width, canvas.height);
+
+      if (cvReadyRef.current) {
+        try { await applyCLAHE(canvas); } catch { enhanceCanvas(ctx, canvas.width, canvas.height); }
+      } else {
+        enhanceCanvas(ctx, canvas.width, canvas.height);
+      }
+
+      if (cvReadyRef.current) {
+        try {
+          const variance = await laplacianVariance(canvas);
+          setBlurWarning(variance < 100);
+        } catch {
+          setBlurWarning(false);
+        }
+      }
 
       const raw = document.createElement('canvas');
       raw.width = canvas.width;
@@ -431,7 +486,11 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.drawImage(raw, 0, 0);
-    if (mode !== 'color') applyScanFilter(canvas, mode);
+    if (mode === 'bw' && cvReadyRef.current) {
+      try { await adaptiveBinarize(canvas); } catch { applyScanFilter(canvas, mode); }
+    } else if (mode !== 'color') {
+      applyScanFilter(canvas, mode);
+    }
     const blob = await canvasToBlob(canvas, 0.92);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setCapturedBlob(blob);
@@ -451,6 +510,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     setUsedQuad(false);
     setTextStats(null);
     setPaperInfo(null);
+    setBlurWarning(false);
     rawCanvasRef.current = null;
     searchStartRef.current = 0;
     setSearchTimedOut(false);
@@ -496,6 +556,11 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
               {lowPower && (
                 <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 inline-flex items-center gap-1">
                   <Gauge className="w-3 h-3" /> Low-power
+                </span>
+              )}
+              {cvReady && (
+                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 inline-flex items-center gap-1">
+                  <ScanSearch className="w-3 h-3" /> HD
                 </span>
               )}
               <button
@@ -662,6 +727,11 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
                 {lowQualityWarning && (
                   <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/90 text-white inline-flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" /> {lowQualityWarning}
+                  </span>
+                )}
+                {blurWarning && (
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/90 text-white inline-flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Imazh i turbullt
                   </span>
                 )}
               </div>
