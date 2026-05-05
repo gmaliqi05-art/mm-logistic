@@ -558,6 +558,16 @@ function ReviewModal({
     setSaving('approve');
     setError(null);
     try {
+      if (!note.assigned_depot_id) {
+        throw new Error('Cakto nje depo per kete dergese para se ta dergosh per regjistrim.');
+      }
+      if (rows.length === 0) {
+        throw new Error('Shtoni se paku nje artikull para se ta dergoni ne depo.');
+      }
+      const invalid = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
+      if (invalid.length > 0) {
+        throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
+      }
       await persistItems();
       const { error: upErr } = await supabase
         .from('delivery_notes')
@@ -602,6 +612,9 @@ function ReviewModal({
     setSaving('complete');
     setError(null);
     try {
+      if (rows.length === 0) {
+        throw new Error('Nuk ka asnje artikull per te regjistruar ne stok. Shtoni artikujt ose kthejeni dergesen.');
+      }
       const missing = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
       if (missing.length > 0) {
         throw new Error('Caktoni kategorine dhe sasine per cdo artikull para regjistrimit ne stok.');
@@ -622,6 +635,15 @@ function ReviewModal({
         .eq('id', note.id);
       if (upErr) throw upErr;
 
+      const { data: verify } = await supabase
+        .from('delivery_notes')
+        .select('stock_posted, stock_post_error')
+        .eq('id', note.id)
+        .maybeSingle();
+      if (verify && verify.stock_posted === false) {
+        throw new Error(verify.stock_post_error || 'Stoku nuk u regjistrua. Kontrolloni artikujt dhe depon.');
+      }
+
       const receivers = [note.assigned_driver_id].filter(Boolean) as string[];
       if (receivers.length > 0) {
         await notifyUsers({
@@ -634,6 +656,27 @@ function ReviewModal({
           fallbackTitle: 'Dergesa u regjistrua ne stok',
           fallbackMessage: `${note.note_number} u mbyll dhe u regjistrua ne stok.`,
         });
+      }
+
+      if (role === 'depot_worker' && note.company_id) {
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('company_id', note.company_id)
+          .eq('role', 'company_admin')
+          .eq('is_active', true);
+        if (admins && admins.length > 0) {
+          await notifyUsers({
+            userIds: admins.map((a) => a.id),
+            type: 'delivery',
+            titleKey: 'notifications.templates.deliveryRegisteredInStock.title',
+            messageKey: 'notifications.templates.deliveryRegisteredInStock.body',
+            params: { number: note.note_number },
+            referenceId: note.id,
+            fallbackTitle: 'Dergesa u regjistrua ne stok',
+            fallbackMessage: `${note.note_number} u regjistrua ne stok nga depoja.`,
+          });
+        }
       }
 
       await onDone();
@@ -673,6 +716,27 @@ function ReviewModal({
           fallbackTitle: 'Dergesa u kthye',
           fallbackMessage: `${note.note_number}: ${reason.trim()}`,
         });
+      }
+
+      if (role === 'depot_worker' && note.company_id) {
+        const { data: admins } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('company_id', note.company_id)
+          .eq('role', 'company_admin')
+          .eq('is_active', true);
+        if (admins && admins.length > 0) {
+          await notifyUsers({
+            userIds: admins.map((a) => a.id),
+            type: 'delivery',
+            titleKey: 'notifications.templates.deliveryReturned.title',
+            messageKey: 'notifications.templates.deliveryReturned.body',
+            params: { number: note.note_number, reason: reason.trim() },
+            referenceId: note.id,
+            fallbackTitle: 'Dergesa u kthye nga depoja',
+            fallbackMessage: `${note.note_number}: ${reason.trim()}`,
+          });
+        }
       }
       await onDone();
     } catch (err: any) {
@@ -900,7 +964,7 @@ function ReviewModal({
               Dergo te depo per stok
             </button>
           )}
-          {!showRejectReason && (
+          {!showRejectReason && !(role === 'company_admin' && isPickup) && (
             <button
               onClick={handleCompleteToStock}
               disabled={!!saving}
