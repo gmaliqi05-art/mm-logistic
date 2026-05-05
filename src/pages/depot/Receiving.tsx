@@ -521,7 +521,7 @@ export default function DepotReceiving() {
           <div className="flex">
             <button
               onClick={() => setActiveTab('receiving')}
-              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative ${
+              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors relative ${
                 activeTab === 'receiving'
                   ? 'text-teal-600'
                   : 'text-gray-500 hover:text-gray-700'
@@ -537,7 +537,7 @@ export default function DepotReceiving() {
             </button>
             <button
               onClick={() => setActiveTab('shipping')}
-              className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative ${
+              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors relative ${
                 activeTab === 'shipping'
                   ? 'text-teal-600'
                   : 'text-gray-500 hover:text-gray-700'

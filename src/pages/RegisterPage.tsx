@@ -948,8 +948,8 @@ function StepSuccess({
   return (
     <div className="max-w-lg mx-auto text-center">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 sm:p-12">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-teal-100 mb-6">
-          <CheckCircle className="h-10 w-10 text-teal-600" />
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-teal-100 mb-6">
+          <CheckCircle className="h-6 w-6 text-teal-600" />
         </div>
 
         <h2 className="text-2xl font-bold text-slate-800">{t('auth.welcomeTitle')}</h2>
