@@ -227,6 +227,15 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
+      await supabaseAdmin.rpc("seed_company_coa", {
+        p_company_id: companyData.id,
+        p_country_code: (country ?? "").toUpperCase(),
+      });
+    } catch (_e) {
+      // Chart of accounts seeding is best-effort; do not fail registration.
+    }
+
+    try {
       const sendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`;
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
       await fetch(sendUrl, {
