@@ -52,13 +52,14 @@ interface Props {
   title?: string;
   subtitle?: string;
   allowedKinds?: DocKind[];
+  docDirection?: 'in' | 'out';
   onClose: () => void;
   onConfirm: (result: SmartScanResult) => void;
 }
 
 type Step = 'choose' | 'camera' | 'uploading' | 'analyzing' | 'review';
 
-export default function SmartDocScanner({ role, title, subtitle, allowedKinds, onClose, onConfirm }: Props) {
+export default function SmartDocScanner({ role, title, subtitle, allowedKinds, docDirection, onClose, onConfirm }: Props) {
   const { profile } = useAuth();
   const { t } = useTranslation();
   const companyId = profile?.company_id ?? '';
@@ -110,7 +111,7 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, o
           Authorization: `Bearer ${session?.access_token}`,
           apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify({ scanId: scan.id, role }),
+        body: JSON.stringify({ scanId: scan.id, role, docDirection }),
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || t('common.scanner.analysisFailed'));
@@ -140,7 +141,7 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, o
     if (!result) return;
     if (allowedKinds && result.routing) {
       const kind = result.routing.suggested_kind;
-      if (!allowedKinds.includes(kind)) {
+      if (kind !== 'unknown' && !allowedKinds.includes(kind)) {
         setError(t('common.scanner.notAllowed'));
         return;
       }
@@ -148,7 +149,12 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, o
     onConfirm(result);
   }
 
-  const disallowed = !!(result?.routing && allowedKinds && !allowedKinds.includes(result.routing.suggested_kind));
+  const disallowed = !!(
+    result?.routing &&
+    allowedKinds &&
+    result.routing.suggested_kind !== 'unknown' &&
+    !allowedKinds.includes(result.routing.suggested_kind)
+  );
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">

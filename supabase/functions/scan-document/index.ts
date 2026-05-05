@@ -13,6 +13,7 @@ const corsHeaders = {
 interface ScanPayload {
   scanId: string;
   role?: "accountant" | "driver" | "depot" | "company_admin";
+  docDirection?: "in" | "out";
 }
 
 interface Routing {
@@ -295,7 +296,8 @@ async function computeRouting(
   supabase: ReturnType<typeof createClient>,
   companyId: string,
   ex: Extracted,
-  role?: ScanPayload["role"]
+  role?: ScanPayload["role"],
+  docDirection?: ScanPayload["docDirection"]
 ): Promise<Routing> {
   const { data: company } = await supabase
     .from("companies")
@@ -333,7 +335,9 @@ async function computeRouting(
 
   let suggested: Routing["suggested_kind"] = ex.document_nature_guess || "unknown";
 
-  if (role === "driver") suggested = "delivery_out";
+  if (docDirection === "in") suggested = "delivery_in";
+  else if (docDirection === "out") suggested = "delivery_out";
+  else if (role === "driver") suggested = "delivery_out";
   else if (role === "depot") suggested = "delivery_in";
   else if (customerMatchesUs && !supplierMatchesUs) {
     if (suggested === "sale" || suggested === "unknown") suggested = "purchase";
@@ -345,8 +349,10 @@ async function computeRouting(
   if (bestContact) reasonParts.push(`Kontakti "${bestContact.name}" u njoh nga ${vat && bestContact.score >= 0.95 ? "nr. TVSH" : "emri"}`);
   if (customerMatchesUs) reasonParts.push("Emri ne pozicionin e klientit perputhet me kompanine tone (dokument hyres)");
   if (supplierMatchesUs) reasonParts.push("Emri ne pozicionin e furnitorit perputhet me kompanine tone (dokument dales)");
-  if (role === "driver") reasonParts.push("Roli shofer — supozohet fletedalje");
-  if (role === "depot") reasonParts.push("Roli depo — supozohet fletepranim");
+  if (docDirection === "in") reasonParts.push("Detyra pickup — supozohet fletemarrje");
+  else if (docDirection === "out") reasonParts.push("Detyra delivery — supozohet fletedalje");
+  else if (role === "driver") reasonParts.push("Roli shofer — supozohet fletedalje");
+  else if (role === "depot") reasonParts.push("Roli depo — supozohet fletepranim");
   if (reasonParts.length === 0) reasonParts.push("U klasifikua ne baze te permbajtjes se dokumentit");
 
   let routingDecision: Routing["routing_decision"];
@@ -377,7 +383,7 @@ Deno.serve(async (req: Request) => {
     const rl = await checkRateLimit(`scan-document:ip=${ip}`, 10, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
 
-    const { scanId, role }: ScanPayload = await req.json();
+    const { scanId, role, docDirection }: ScanPayload = await req.json();
     if (!scanId) throw new Error("scanId required");
 
     const supabase = createClient(
@@ -430,7 +436,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const routing = await computeRouting(supabase, scan.company_id, extracted, role);
+    const routing = await computeRouting(supabase, scan.company_id, extracted, role, docDirection);
 
     const needsNewCompany = routing.routing_decision === "new_company_required";
     const counterpartyName = extracted.supplier_name || extracted.customer_name || "";
