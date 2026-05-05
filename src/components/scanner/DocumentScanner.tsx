@@ -8,39 +8,26 @@ import {
   Loader2,
   ScanLine,
   Zap,
-  ZapOff,
   Sun,
   Moon,
   FileText,
   Check,
   AlertTriangle,
-  ScanSearch,
-  Sparkles,
-  Move,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import {
+  captureFrameToCanvas,
   applyScanFilter,
-  canvasToBlob,
-  detectPaperSize,
   detectDocumentEdges,
+  canvasToBlob,
   type ScanFilter,
   type PaperSize,
+  type DocumentBounds,
 } from '../../utils/scanProcessor';
-import { loadOpenCV, isOpenCVFailed, isOpenCVLoading } from '../../utils/opencvLoader';
-import {
-  detectDocumentQuadCV,
-  warpQuadCV,
-  applyCLAHE,
-  adaptiveBinarize,
-  laplacianVariance,
-  type Quad,
-  type Pt,
-} from '../../utils/cvDocScanner';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
-type ScannerState = 'camera' | 'adjust' | 'captured' | 'uploading' | 'done';
+type ScannerState = 'camera' | 'captured' | 'uploading' | 'done';
 
 interface DocumentScannerProps {
   onClose: () => void;
@@ -58,93 +45,45 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
   const { profile } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const fullCaptureCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const warpedRawRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const originalCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
-  const detectionTimerRef = useRef<number | null>(null);
-  const detectingRef = useRef(false);
-  const liveQuadRef = useRef<Quad | null>(null);
-  const stableCountRef = useRef(0);
-  const overlayRef = useRef<SVGSVGElement>(null);
-  const adjustCanvasRef = useRef<HTMLCanvasElement>(null);
-  const adjustContainerRef = useRef<HTMLDivElement>(null);
-  const draggingIdxRef = useRef<number | null>(null);
+  const detectionIntervalRef = useRef<number | null>(null);
 
   const [state, setState] = useState<ScannerState>('camera');
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<ScanFilter>('color');
+  const [detectedBounds, setDetectedBounds] = useState<DocumentBounds | null>(null);
   const [detectedSize, setDetectedSize] = useState<PaperSize>('Unknown');
   const [detectedDimensions, setDetectedDimensions] = useState('');
+  const [confidence, setConfidence] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
-  const [cvReady, setCvReady] = useState(false);
-  const [cvLoading, setCvLoading] = useState(true);
-  const [cvFailed, setCvFailed] = useState(false);
-  const [liveQuad, setLiveQuad] = useState<Quad | null>(null);
-  const [isStable, setIsStable] = useState(false);
-  const [videoSize, setVideoSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  const [torchOn, setTorchOn] = useState(false);
-  const [torchSupported, setTorchSupported] = useState(false);
-  const [blurWarning, setBlurWarning] = useState(false);
-  const [adjustQuad, setAdjustQuad] = useState<Quad | null>(null);
-  const [adjustImgSize, setAdjustImgSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  const [magnifier, setMagnifier] = useState<{ x: number; y: number; sx: number; sy: number } | null>(null);
-  const [processing, setProcessing] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setCvLoading(true);
-    loadOpenCV()
-      .then(() => {
-        if (cancelled) return;
-        setCvReady(true);
-        setCvLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setCvFailed(true);
-        setCvLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
 
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: { ideal: 'environment' },
+          facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
-      });
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          const p = videoRef.current?.play();
-          if (p && typeof (p as Promise<void>).catch === 'function') {
-            (p as Promise<void>).catch((err) => {
-              if ((err as Error)?.name !== 'AbortError') {
-                // eslint-disable-next-line no-console
-                console.warn('video play error', err);
-              }
-            });
-          }
-          if (videoRef.current) {
-            setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
-          }
+          videoRef.current?.play();
           setCameraReady(true);
         };
       }
-      const track = stream.getVideoTracks()[0];
-      const caps = track.getCapabilities ? track.getCapabilities() : ({} as MediaTrackCapabilities);
-      setTorchSupported(!!(caps as unknown as { torch?: boolean }).torch);
-    } catch (err) {
-      if ((err as Error)?.name === 'AbortError') return;
+    } catch {
       setCameraError(t('scanner.cameraPermissionDenied'));
     }
   }, [t]);
@@ -154,16 +93,11 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    if (detectionTimerRef.current) {
-      clearInterval(detectionTimerRef.current);
-      detectionTimerRef.current = null;
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+      detectionIntervalRef.current = null;
     }
     setCameraReady(false);
-    liveQuadRef.current = null;
-    stableCountRef.current = 0;
-    setLiveQuad(null);
-    setIsStable(false);
-    setTorchOn(false);
   }, []);
 
   useEffect(() => {
@@ -174,227 +108,84 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
   useEffect(() => {
     if (!cameraReady || state !== 'camera') return;
 
-    const tick = async () => {
-      if (detectingRef.current) return;
-      const video = videoRef.current;
-      if (!video || video.readyState < 2) return;
-      const vw = video.videoWidth;
-      const vh = video.videoHeight;
-      if (!vw || !vh) return;
+    const detect = () => {
+      if (!videoRef.current || videoRef.current.readyState < 2) return;
 
-      detectingRef.current = true;
-      try {
-        const sample = 640;
-        const scale = Math.min(sample / vw, sample / vh);
-        const sw = Math.max(160, Math.round(vw * scale));
-        const sh = Math.max(160, Math.round(vh * scale));
-        const tmp = document.createElement('canvas');
-        tmp.width = sw;
-        tmp.height = sh;
-        const ctx = tmp.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return;
-        ctx.drawImage(video, 0, 0, sw, sh);
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 640;
+      const scale = 640 / videoRef.current.videoWidth;
+      tempCanvas.height = Math.round(videoRef.current.videoHeight * scale);
+      const ctx = tempCanvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(videoRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
 
-        let quadSmall: Quad | null = null;
-        if (cvReady) {
-          try { quadSmall = await detectDocumentQuadCV(tmp); } catch { quadSmall = null; }
-        }
-        if (!quadSmall) {
-          const bounds = detectDocumentEdges(tmp);
-          if (bounds && bounds.confidence > 0.3) {
-            quadSmall = [
-              { x: bounds.x, y: bounds.y },
-              { x: bounds.x + bounds.width, y: bounds.y },
-              { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
-              { x: bounds.x, y: bounds.y + bounds.height },
-            ];
-          }
-        }
-
-        if (!quadSmall) {
-          liveQuadRef.current = null;
-          stableCountRef.current = 0;
-          setLiveQuad(null);
-          setIsStable(false);
-          return;
-        }
-
-        const quad: Quad = quadSmall.map((p) => ({ x: p.x / scale, y: p.y / scale })) as Quad;
-        const prev = liveQuadRef.current;
-        const moveThreshold = Math.max(vw, vh) * 0.025;
-        if (prev) {
-          let d = 0;
-          for (let i = 0; i < 4; i++) d += Math.hypot(prev[i].x - quad[i].x, prev[i].y - quad[i].y);
-          d /= 4;
-          if (d < moveThreshold) {
-            stableCountRef.current = Math.min(stableCountRef.current + 1, 10);
-          } else {
-            stableCountRef.current = 1;
-          }
-        } else {
-          stableCountRef.current = 1;
-        }
-
-        liveQuadRef.current = quad;
-        setLiveQuad(quad);
-        setIsStable(stableCountRef.current >= 3);
-
-        const aspect = (Math.hypot(quad[3].x - quad[0].x, quad[3].y - quad[0].y)) /
-          Math.max(1, Math.hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y));
-        const paper = detectPaperSize(aspect);
-        setDetectedSize(paper.size);
-        setDetectedDimensions(paper.dimensions);
-      } finally {
-        detectingRef.current = false;
+      const bounds = detectDocumentEdges(tempCanvas);
+      setDetectedBounds(bounds);
+      if (bounds) {
+        setDetectedSize(bounds.paperSize);
+        setDetectedDimensions(bounds.dimensions);
+        setConfidence(bounds.confidence);
+      } else {
+        setDetectedSize('Unknown');
+        setDetectedDimensions('');
+        setConfidence(0);
       }
     };
 
-    detectionTimerRef.current = window.setInterval(tick, 280);
+    detectionIntervalRef.current = window.setInterval(detect, 500);
     return () => {
-      if (detectionTimerRef.current) clearInterval(detectionTimerRef.current);
-    };
-  }, [cameraReady, state, cvReady]);
-
-  async function toggleTorch() {
-    const track = streamRef.current?.getVideoTracks()[0];
-    if (!track) return;
-    try {
-      const next = !torchOn;
-      await track.applyConstraints({ advanced: [{ torch: next } as unknown as MediaTrackConstraintSet] });
-      setTorchOn(next);
-    } catch {
-      setTorchSupported(false);
-    }
-  }
-
-  const handleCapture = useCallback(async () => {
-    if (!videoRef.current) return;
-    setProcessing(true);
-    const video = videoRef.current;
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-
-    const full = document.createElement('canvas');
-    full.width = vw;
-    full.height = vh;
-    full.getContext('2d')!.drawImage(video, 0, 0, vw, vh);
-    fullCaptureCanvasRef.current = full;
-
-    let quad: Quad | null = liveQuadRef.current;
-    if (cvReady) {
-      try {
-        const fullRes = await detectDocumentQuadCV(full);
-        if (fullRes) quad = fullRes;
-      } catch { /* keep live quad */ }
-    }
-    if (!quad) {
-      const bounds = detectDocumentEdges(full);
-      if (bounds && bounds.confidence > 0.3) {
-        quad = [
-          { x: bounds.x, y: bounds.y },
-          { x: bounds.x + bounds.width, y: bounds.y },
-          { x: bounds.x + bounds.width, y: bounds.y + bounds.height },
-          { x: bounds.x, y: bounds.y + bounds.height },
-        ];
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
-    }
+    };
+  }, [cameraReady, state]);
 
-    if (!quad) {
-      const margin = 0.08;
-      quad = [
-        { x: vw * margin, y: vh * margin },
-        { x: vw * (1 - margin), y: vh * margin },
-        { x: vw * (1 - margin), y: vh * (1 - margin) },
-        { x: vw * margin, y: vh * (1 - margin) },
-      ];
-    }
+  const handleCapture = useCallback(() => {
+    if (!videoRef.current) return;
+
+    const captured = captureFrameToCanvas(videoRef.current);
+    canvasRef.current = captured;
+
+    const original = document.createElement('canvas');
+    original.width = captured.width;
+    original.height = captured.height;
+    original.getContext('2d')!.drawImage(captured, 0, 0);
+    originalCanvasRef.current = original;
 
     stopCamera();
-    setAdjustQuad(quad);
-    setAdjustImgSize({ w: vw, h: vh });
-    setState('adjust');
-    setProcessing(false);
-  }, [cvReady, stopCamera]);
+    setState('captured');
+    setActiveFilter('color');
 
-  useEffect(() => {
-    if (state !== 'adjust') return;
-    const canvas = adjustCanvasRef.current;
-    const full = fullCaptureCanvasRef.current;
-    if (!canvas || !full) return;
-    canvas.width = full.width;
-    canvas.height = full.height;
-    canvas.getContext('2d')!.drawImage(full, 0, 0);
-  }, [state]);
-
-  const confirmQuadAndProcess = useCallback(async () => {
-    const full = fullCaptureCanvasRef.current;
-    const quad = adjustQuad;
-    if (!full || !quad) return;
-    setProcessing(true);
-    try {
-      let warped: HTMLCanvasElement;
-      if (cvReady) {
-        warped = await warpQuadCV(full, quad);
-      } else {
-        warped = full;
-      }
-
-      if (cvReady) {
-        try { await applyCLAHE(warped); } catch { /* ignore */ }
-      }
-
-      warpedRawRef.current = warped;
-
-      const aspect = warped.height / warped.width;
-      const paper = detectPaperSize(aspect);
-      setDetectedSize(paper.size);
-      setDetectedDimensions(paper.dimensions);
-
-      if (cvReady) {
-        try {
-          const variance = await laplacianVariance(warped);
-          setBlurWarning(variance < 90);
-        } catch {
-          setBlurWarning(false);
+    requestAnimationFrame(() => {
+      if (previewRef.current && canvasRef.current) {
+        const ctx = previewRef.current.getContext('2d');
+        if (ctx) {
+          previewRef.current.width = canvasRef.current.width;
+          previewRef.current.height = canvasRef.current.height;
+          ctx.drawImage(canvasRef.current, 0, 0);
         }
       }
+    });
+  }, [stopCamera]);
 
-      if (previewRef.current) {
-        previewRef.current.width = warped.width;
-        previewRef.current.height = warped.height;
-        previewRef.current.getContext('2d')!.drawImage(warped, 0, 0);
-      }
-
-      setActiveFilter('color');
-      setState('captured');
-    } finally {
-      setProcessing(false);
-    }
-  }, [adjustQuad, cvReady]);
-
-  const applyFilter = useCallback(async (filter: ScanFilter) => {
+  const applyFilter = useCallback((filter: ScanFilter) => {
     setActiveFilter(filter);
-    const raw = warpedRawRef.current;
-    const preview = previewRef.current;
-    if (!raw || !preview) return;
-    preview.width = raw.width;
-    preview.height = raw.height;
-    const ctx = preview.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(raw, 0, 0);
+    if (!originalCanvasRef.current || !previewRef.current) return;
 
-    if (filter === 'bw' && cvReady) {
-      try { await adaptiveBinarize(preview); } catch { applyScanFilter(preview, 'bw'); }
-    } else if (filter !== 'color') {
-      applyScanFilter(preview, filter);
+    const ctx = previewRef.current.getContext('2d');
+    if (!ctx) return;
+    previewRef.current.width = originalCanvasRef.current.width;
+    previewRef.current.height = originalCanvasRef.current.height;
+    ctx.drawImage(originalCanvasRef.current, 0, 0);
+
+    if (filter !== 'color') {
+      applyScanFilter(previewRef.current, filter);
     }
-  }, [cvReady]);
+  }, []);
 
   const handleRetake = useCallback(() => {
-    fullCaptureCanvasRef.current = null;
-    warpedRawRef.current = null;
-    setAdjustQuad(null);
-    setBlurWarning(false);
+    canvasRef.current = null;
+    originalCanvasRef.current = null;
     setState('camera');
     startCamera();
   }, [startCamera]);
@@ -406,7 +197,7 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
     setState('uploading');
 
     try {
-      const blob = await canvasToBlob(previewRef.current, 0.95);
+      const blob = await canvasToBlob(previewRef.current);
       const timestamp = Date.now();
       const sizeLabel = detectedSize !== 'Unknown' ? `_${detectedSize}` : '';
       const fileName = `scan${sizeLabel}_${timestamp}.jpg`;
@@ -439,7 +230,7 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
 
   const handleDownload = useCallback(async () => {
     if (!previewRef.current) return;
-    const blob = await canvasToBlob(previewRef.current, 0.95);
+    const blob = await canvasToBlob(previewRef.current);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -449,86 +240,15 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
     URL.revokeObjectURL(url);
   }, [detectedSize]);
 
-  function getAdjustScale(): number {
-    const container = adjustContainerRef.current;
-    if (!container || !adjustImgSize.w) return 1;
-    const rect = container.getBoundingClientRect();
-    return Math.min(rect.width / adjustImgSize.w, rect.height / adjustImgSize.h);
-  }
-
-  function handleCornerPointerDown(idx: number, e: React.PointerEvent) {
-    e.preventDefault();
-    draggingIdxRef.current = idx;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-  }
-
-  function handleCornerPointerMove(e: React.PointerEvent) {
-    const idx = draggingIdxRef.current;
-    if (idx === null || !adjustContainerRef.current || !adjustQuad) return;
-    const container = adjustContainerRef.current;
-    const rect = container.getBoundingClientRect();
-    const scale = getAdjustScale();
-    const displayW = adjustImgSize.w * scale;
-    const displayH = adjustImgSize.h * scale;
-    const offsetX = (rect.width - displayW) / 2;
-    const offsetY = (rect.height - displayH) / 2;
-    const localX = e.clientX - rect.left - offsetX;
-    const localY = e.clientY - rect.top - offsetY;
-    const ix = Math.max(0, Math.min(adjustImgSize.w, localX / scale));
-    const iy = Math.max(0, Math.min(adjustImgSize.h, localY / scale));
-    const next = adjustQuad.slice() as Quad;
-    next[idx] = { x: ix, y: iy };
-    setAdjustQuad(next);
-    setMagnifier({ x: localX + offsetX, y: localY + offsetY, sx: ix, sy: iy });
-  }
-
-  function handleCornerPointerUp(e: React.PointerEvent) {
-    draggingIdxRef.current = null;
-    (e.target as Element).releasePointerCapture?.(e.pointerId);
-    setMagnifier(null);
-  }
-
-  async function autoDetectCorners() {
-    const full = fullCaptureCanvasRef.current;
-    if (!full || !cvReady) return;
-    try {
-      const q = await detectDocumentQuadCV(full);
-      if (q) setAdjustQuad(q);
-    } catch { /* ignore */ }
-  }
-
-  function resetCorners() {
-    if (!adjustImgSize.w) return;
-    const m = 0.05;
-    setAdjustQuad([
-      { x: adjustImgSize.w * m, y: adjustImgSize.h * m },
-      { x: adjustImgSize.w * (1 - m), y: adjustImgSize.h * m },
-      { x: adjustImgSize.w * (1 - m), y: adjustImgSize.h * (1 - m) },
-      { x: adjustImgSize.w * m, y: adjustImgSize.h * (1 - m) },
-    ]);
-  }
+  const confidenceColor = confidence > 0.7 ? 'text-emerald-400' : confidence > 0.4 ? 'text-amber-400' : 'text-gray-400';
+  const confidenceBg = confidence > 0.7 ? 'bg-emerald-500/20 border-emerald-500/40' : confidence > 0.4 ? 'bg-amber-500/20 border-amber-500/40' : 'bg-gray-500/20 border-gray-500/40';
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/90 to-transparent">
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
         <div className="flex items-center gap-3">
           <ScanLine className="w-5 h-5 text-teal-400" />
           <span className="text-white font-semibold text-sm">{t('scanner.title')}</span>
-          {cvReady && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 inline-flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> HD
-            </span>
-          )}
-          {cvLoading && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 inline-flex items-center gap-1">
-              <Loader2 className="w-3 h-3 animate-spin" /> HD...
-            </span>
-          )}
-          {cvFailed && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-600/40 text-slate-300 inline-flex items-center gap-1">
-              Baze
-            </span>
-          )}
         </div>
         <button
           onClick={() => { stopCamera(); onClose(); }}
@@ -562,55 +282,22 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-contain bg-black"
+                  className="w-full h-full object-cover"
                 />
 
-                {cameraReady && videoSize.w > 0 && (
-                  <svg
-                    ref={overlayRef}
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                    viewBox={`0 0 ${videoSize.w} ${videoSize.h}`}
-                    preserveAspectRatio="xMidYMid meet"
-                  >
-                    {liveQuad ? (
-                      <>
-                        <polygon
-                          points={liveQuad.map((p) => `${p.x},${p.y}`).join(' ')}
-                          fill={isStable ? '#10b981' : '#f59e0b'}
-                          fillOpacity={isStable ? 0.2 : 0.1}
-                          stroke={isStable ? '#10b981' : '#f59e0b'}
-                          strokeWidth={Math.max(4, videoSize.w / 260)}
-                          strokeLinejoin="round"
-                        />
-                        {liveQuad.map((p, i) => (
-                          <circle
-                            key={i}
-                            cx={p.x}
-                            cy={p.y}
-                            r={Math.max(8, videoSize.w / 110)}
-                            fill={isStable ? '#10b981' : '#f59e0b'}
-                            stroke="#ffffff"
-                            strokeWidth={Math.max(2, videoSize.w / 500)}
-                          />
-                        ))}
-                      </>
-                    ) : (
-                      <g opacity="0.6">
-                        <rect
-                          x={videoSize.w * 0.1}
-                          y={videoSize.h * 0.1}
-                          width={videoSize.w * 0.8}
-                          height={videoSize.h * 0.8}
-                          fill="none"
-                          stroke="#ffffff"
-                          strokeWidth={Math.max(2, videoSize.w / 500)}
-                          strokeDasharray={`${videoSize.w / 60} ${videoSize.w / 80}`}
-                          rx={videoSize.w / 120}
-                        />
-                      </g>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="relative" style={{ width: '80%', maxWidth: '400px', aspectRatio: '210/297' }}>
+                    <div className="absolute inset-0 border-2 border-white/60 rounded-lg" />
+                    <div className="absolute -top-0.5 -left-0.5 w-8 h-8 border-t-[3px] border-l-[3px] border-teal-400 rounded-tl-lg" />
+                    <div className="absolute -top-0.5 -right-0.5 w-8 h-8 border-t-[3px] border-r-[3px] border-teal-400 rounded-tr-lg" />
+                    <div className="absolute -bottom-0.5 -left-0.5 w-8 h-8 border-b-[3px] border-l-[3px] border-teal-400 rounded-bl-lg" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-8 h-8 border-b-[3px] border-r-[3px] border-teal-400 rounded-br-lg" />
+
+                    {detectedBounds && confidence > 0.4 && (
+                      <div className="absolute inset-0 border-2 border-teal-400/50 rounded-lg animate-pulse" />
                     )}
-                  </svg>
-                )}
+                  </div>
+                </div>
 
                 {!cameraReady && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -620,37 +307,16 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
                     </div>
                   </div>
                 )}
-
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 text-white text-xs font-medium">
-                    {liveQuad ? (
-                      isStable ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          Dokumenti u detektua
-                        </>
-                      ) : (
-                        <>
-                          <ScanLine className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                          Mbaj qendrueshem...
-                        </>
-                      )
-                    ) : (
-                      <>
-                        <ScanSearch className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                        Duke kerkuar dokumentin...
-                      </>
-                    )}
-                  </div>
-                </div>
               </div>
 
               <div className="bg-gradient-to-t from-black via-black/95 to-black/80 px-4 pb-8 pt-4">
-                {detectedSize !== 'Unknown' && liveQuad && (
+                {detectedSize !== 'Unknown' && confidence > 0.3 && (
                   <div className="flex justify-center mb-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-teal-500/40 bg-teal-500/10">
-                      <FileText className="w-4 h-4 text-teal-400" />
-                      <span className="text-sm font-medium text-teal-300">{detectedSize}</span>
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${confidenceBg}`}>
+                      <FileText className={`w-4 h-4 ${confidenceColor}`} />
+                      <span className={`text-sm font-medium ${confidenceColor}`}>
+                        {detectedSize}
+                      </span>
                       {detectedDimensions && (
                         <span className="text-xs text-gray-400">({detectedDimensions})</span>
                       )}
@@ -660,166 +326,20 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
 
                 <p className="text-gray-400 text-center text-xs mb-5">{t('scanner.positionDocument')}</p>
 
-                <div className="flex items-center justify-between max-w-md mx-auto">
-                  <button
-                    onClick={toggleTorch}
-                    disabled={!torchSupported}
-                    className="p-3 bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white rounded-full transition-colors"
-                    title="Ndriçim"
-                  >
-                    {torchOn ? <Zap className="w-5 h-5 text-amber-300" /> : <ZapOff className="w-5 h-5" />}
-                  </button>
-
+                <div className="flex items-center justify-center">
                   <button
                     onClick={handleCapture}
-                    disabled={!cameraReady || processing}
-                    className={`relative w-20 h-20 rounded-full flex items-center justify-center disabled:opacity-40 transition-all active:scale-95 ${
-                      isStable
-                        ? 'bg-emerald-400 ring-4 ring-emerald-300/50 animate-pulse'
-                        : 'bg-white/10 border-4 border-white hover:bg-white/20'
-                    }`}
+                    disabled={!cameraReady}
+                    className="relative w-20 h-20 rounded-full bg-white/10 border-4 border-white flex items-center justify-center disabled:opacity-40 transition-all active:scale-95 hover:bg-white/20"
                   >
-                    {processing ? (
-                      <Loader2 className="w-8 h-8 text-white animate-spin" />
-                    ) : (
-                      <div className={`w-14 h-14 rounded-full flex items-center justify-center ${isStable ? 'bg-emerald-600' : 'bg-white'}`}>
-                        <Camera className={`w-7 h-7 ${isStable ? 'text-white' : 'text-gray-800'}`} />
-                      </div>
-                    )}
+                    <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center">
+                      <Camera className="w-7 h-7 text-gray-800" />
+                    </div>
                   </button>
-
-                  <div className="w-12" />
                 </div>
               </div>
             </>
           )}
-        </>
-      )}
-
-      {state === 'adjust' && adjustQuad && (
-        <>
-          <div
-            ref={adjustContainerRef}
-            className="flex-1 relative overflow-hidden flex items-center justify-center mt-14 select-none"
-            onPointerMove={handleCornerPointerMove}
-            onPointerUp={handleCornerPointerUp}
-            onPointerCancel={handleCornerPointerUp}
-          >
-            <canvas ref={adjustCanvasRef} className="max-w-full max-h-full object-contain" />
-            {adjustImgSize.w > 0 && (
-              <svg
-                className="absolute inset-0 w-full h-full"
-                viewBox={`0 0 ${adjustImgSize.w} ${adjustImgSize.h}`}
-                preserveAspectRatio="xMidYMid meet"
-                style={{ touchAction: 'none' }}
-              >
-                <polygon
-                  points={adjustQuad.map((p) => `${p.x},${p.y}`).join(' ')}
-                  fill="#10b981"
-                  fillOpacity={0.15}
-                  stroke="#10b981"
-                  strokeWidth={Math.max(4, adjustImgSize.w / 260)}
-                  strokeLinejoin="round"
-                  pointerEvents="none"
-                />
-                {adjustQuad.map((p, i) => (
-                  <circle
-                    key={i}
-                    cx={p.x}
-                    cy={p.y}
-                    r={Math.max(18, adjustImgSize.w / 50)}
-                    fill="#10b981"
-                    stroke="#ffffff"
-                    strokeWidth={Math.max(3, adjustImgSize.w / 400)}
-                    style={{ cursor: 'grab', touchAction: 'none' }}
-                    onPointerDown={(e) => handleCornerPointerDown(i, e)}
-                  />
-                ))}
-              </svg>
-            )}
-
-            {magnifier && fullCaptureCanvasRef.current && (
-              <div
-                className="absolute w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-400 shadow-2xl pointer-events-none bg-black"
-                style={{
-                  top: Math.max(16, magnifier.y - 180),
-                  left: Math.min(
-                    (adjustContainerRef.current?.getBoundingClientRect().width || 0) - 140,
-                    Math.max(16, magnifier.x - 64),
-                  ),
-                }}
-              >
-                <canvas
-                  ref={(el) => {
-                    if (!el || !fullCaptureCanvasRef.current) return;
-                    el.width = 128;
-                    el.height = 128;
-                    const zoom = 3;
-                    const src = fullCaptureCanvasRef.current;
-                    const sx = Math.max(0, Math.min(src.width - 128 / zoom, magnifier.sx - 64 / zoom));
-                    const sy = Math.max(0, Math.min(src.height - 128 / zoom, magnifier.sy - 64 / zoom));
-                    const ctx = el.getContext('2d');
-                    if (ctx) {
-                      ctx.imageSmoothingEnabled = false;
-                      ctx.drawImage(src, sx, sy, 128 / zoom, 128 / zoom, 0, 0, 128, 128);
-                      ctx.strokeStyle = '#10b981';
-                      ctx.lineWidth = 2;
-                      ctx.beginPath();
-                      ctx.moveTo(64, 48); ctx.lineTo(64, 80);
-                      ctx.moveTo(48, 64); ctx.lineTo(80, 64);
-                      ctx.stroke();
-                    }
-                  }}
-                  width={128}
-                  height={128}
-                  className="w-full h-full"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="bg-black px-4 pb-8 pt-4 space-y-3">
-            <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-2">
-              <Move className="w-3.5 h-3.5" />
-              Terhiq qoshet per te rregulluar dokumentin
-            </p>
-            <div className="flex gap-2 justify-center">
-              <button
-                onClick={autoDetectCorners}
-                disabled={!cvReady || processing}
-                className="px-4 py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors inline-flex items-center gap-2 disabled:opacity-40"
-              >
-                <ScanSearch className="w-4 h-4" />
-                Auto-detekto
-              </button>
-              <button
-                onClick={resetCorners}
-                disabled={processing}
-                className="px-4 py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors inline-flex items-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleRetake}
-                disabled={processing}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors disabled:opacity-40"
-              >
-                <RotateCcw className="w-4 h-4" />
-                {t('scanner.retake')}
-              </button>
-              <button
-                onClick={confirmQuadAndProcess}
-                disabled={processing}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-teal-600 text-white font-medium hover:bg-teal-700 transition-colors disabled:opacity-40"
-              >
-                {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                Vazhdo
-              </button>
-            </div>
-          </div>
         </>
       )}
 
@@ -841,26 +361,20 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
             )}
           </div>
 
-          <div className="bg-black px-4 pb-8 pt-4 space-y-3">
-            <div className="flex flex-wrap justify-center gap-2">
-              {detectedSize !== 'Unknown' && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-teal-500/40 bg-teal-500/10">
-                  <FileText className="w-3.5 h-3.5 text-teal-400" />
-                  <span className="text-xs font-medium text-teal-300">
+          <div className="bg-black px-4 pb-8 pt-4 space-y-4">
+            {detectedSize !== 'Unknown' && (
+              <div className="flex justify-center">
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${confidenceBg}`}>
+                  <FileText className={`w-4 h-4 ${confidenceColor}`} />
+                  <span className={`text-sm font-medium ${confidenceColor}`}>
                     {t('scanner.detectedSize')}: {detectedSize}
                   </span>
                   {detectedDimensions && (
-                    <span className="text-[11px] text-gray-400">({detectedDimensions})</span>
+                    <span className="text-xs text-gray-400">({detectedDimensions})</span>
                   )}
                 </div>
-              )}
-              {blurWarning && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/40">
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-                  <span className="text-xs font-medium text-red-300">Imazh i turbullt</span>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="flex justify-center gap-2">
               {FILTER_OPTIONS.map(({ key, icon: Icon }) => (
@@ -880,7 +394,7 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
               ))}
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-3 pt-2">
               <button
                 onClick={handleRetake}
                 disabled={uploading}

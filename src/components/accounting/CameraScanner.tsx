@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, X, RotateCcw, Check, Loader2, AlertTriangle, Zap, ZapOff, FlipHorizontal, Crop, ScanLine, ScanSearch, FileText, Palette, Droplet, Gauge } from 'lucide-react';
-import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, detectDocumentProjection, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
-import { loadOpenCV } from '../../utils/opencvLoader';
-import { supabase } from '../../lib/supabase';
-import { detectDocumentQuadCV, warpQuadCV, applyCLAHE, adaptiveBinarize, laplacianVariance } from '../../utils/cvDocScanner';
+import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
 
 interface Props {
   onCapture: (file: File) => void;
@@ -45,34 +42,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
   const [filter, setFilter] = useState<ScanFilter>('color');
   const [paperInfo, setPaperInfo] = useState<{ size: PaperSize; confidence: number; dimensions: string } | null>(null);
   const [textStats, setTextStats] = useState<{ wordCount: number; isText: boolean } | null>(null);
-  const [cvReady, setCvReady] = useState(false);
-  const cvReadyRef = useRef(false);
-  const cvBusyRef = useRef(false);
-  const [blurWarning, setBlurWarning] = useState(false);
-
-  useEffect(() => {
-    const nav = navigator as Navigator & { deviceMemory?: number };
-    const cores = nav.hardwareConcurrency || 4;
-    const mem = nav.deviceMemory || 4;
-    if (cores < 4 || mem < 4) {
-      lowPowerRef.current = true;
-      setLowPower(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadOpenCV()
-      .then(() => {
-        if (cancelled) return;
-        cvReadyRef.current = true;
-        setCvReady(true);
-      })
-      .catch(() => {
-        cvReadyRef.current = false;
-      });
-    return () => { cancelled = true; };
-  }, []);
 
   useEffect(() => {
     startCamera(facing);
@@ -81,18 +50,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [facing]);
-
-  useEffect(() => {
-    if (ready || error) return;
-    const timer = window.setTimeout(() => {
-      if (!videoRef.current) return;
-      const v = videoRef.current;
-      if (v.readyState >= 2 && v.videoWidth > 0) {
-        setReady(true);
-      }
-    }, 2500);
-    return () => window.clearTimeout(timer);
-  }, [ready, error, facing]);
 
   useEffect(() => {
     if (!ready || previewUrl || busy) {
@@ -112,7 +69,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         if (!lowPower) setLowPower(true);
       }
 
-      const interval = lowPowerRef.current ? 1000 : 500;
+      const interval = lowPowerRef.current ? 500 : 220;
       if (t - lastDetectRef.current > interval) {
         lastDetectRef.current = t;
         runLiveDetection();
@@ -142,51 +99,27 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       setError('');
       setReady(false);
       stopCamera();
-
-      let stream: MediaStream | null = null;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: mode },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-          },
-          audio: false,
-        });
-      } catch {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: mode },
-          audio: false,
-        });
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: mode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      });
       streamRef.current = stream;
-
-      if (videoRef.current && stream) {
-        const v = videoRef.current;
-        v.srcObject = stream;
-        v.setAttribute('playsinline', 'true');
-        v.muted = true;
-        const playPromise = v.play();
-        if (playPromise && typeof playPromise.then === 'function') {
-          playPromise.catch((err) => {
-            if ((err as Error)?.name !== 'AbortError') {
-              // eslint-disable-next-line no-console
-              console.warn('video play warning', err);
-            }
-          });
-        }
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
       }
-
-      const track = stream?.getVideoTracks()[0];
-      if (track) {
-        const caps = track.getCapabilities ? track.getCapabilities() : ({} as MediaTrackCapabilities);
-        setTorchSupported(!!(caps as unknown as { torch?: boolean }).torch);
-      }
+      const track = stream.getVideoTracks()[0];
+      const caps = track.getCapabilities ? track.getCapabilities() : ({} as MediaTrackCapabilities);
+      setTorchSupported(!!(caps as unknown as { torch?: boolean }).torch);
+      setReady(true);
       searchStartRef.current = 0;
       setSearchTimedOut(false);
     } catch (err) {
-      const name = (err as Error)?.name;
-      if (name === 'AbortError') return;
       const msg = err instanceof Error ? err.message : 'Nuk u qasa dot te kamera';
       setError(`Gabim kamere: ${msg}. Sigurohu qe ke dhene leje per kameren.`);
     }
@@ -197,50 +130,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
-  }
-
-  const perfRef = useRef({ sumMs: 0, maxMs: 0, count: 0, longTasks: 0, method: 'none' as string });
-  const sessionLoggedRef = useRef(false);
-
-  async function uploadPerfLog() {
-    if (sessionLoggedRef.current) return;
-    sessionLoggedRef.current = true;
-    const p = perfRef.current;
-    if (p.count === 0) return;
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-      const nav = navigator as Navigator & { deviceMemory?: number };
-      await supabase.from('scanner_perf_logs').insert({
-        user_id: userData.user.id,
-        device_ua: navigator.userAgent.slice(0, 500),
-        hardware_concurrency: nav.hardwareConcurrency || 0,
-        device_memory: nav.deviceMemory || 0,
-        avg_tick_ms: p.count > 0 ? Math.round((p.sumMs / p.count) * 100) / 100 : 0,
-        max_tick_ms: Math.round(p.maxMs * 100) / 100,
-        long_task_count: p.longTasks,
-        cv_ready: cvReadyRef.current,
-        low_power_mode: lowPowerRef.current,
-        detection_method: p.method,
-        frame_count: p.count,
-      });
-    } catch { /* ignore */ }
-  }
-
-  useEffect(() => {
-    return () => { uploadPerfLog(); };
-  }, []);
-
-  const autoTorchTriedRef = useRef(false);
-  async function maybeAutoTorch() {
-    if (autoTorchTriedRef.current) return;
-    autoTorchTriedRef.current = true;
-    const track = streamRef.current?.getVideoTracks()[0];
-    if (!track) return;
-    try {
-      await track.applyConstraints({ advanced: [{ torch: true } as unknown as MediaTrackConstraintSet] });
-      setTorchOn(true);
-    } catch { /* ignore */ }
   }
 
   async function toggleTorch() {
@@ -255,13 +144,12 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     }
   }
 
-  async function runLiveDetection() {
+  function runLiveDetection() {
     const video = videoRef.current;
     if (!video || video.readyState < 2) return;
     const vw = video.videoWidth;
     const vh = video.videoHeight;
     if (!vw || !vh) return;
-    const t0 = performance.now();
 
     if (!detectCanvasRef.current) detectCanvasRef.current = document.createElement('canvas');
     const sample = lowPowerRef.current ? 240 : 480;
@@ -275,48 +163,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     if (!dctx) return;
     dctx.drawImage(video, 0, 0, sw, sh);
 
-    let quadSmall: Quad | null = null;
-    const frameArea = sw * sh;
-
-    const validate = (q: Quad | null): Quad | null => {
-      if (!q) return null;
-      const a = polygonArea(q);
-      if (a < frameArea * 0.12) return null;
-      if (a > frameArea * 0.92) return null;
-      const marginX = sw * 0.01;
-      const marginY = sh * 0.01;
-      for (const p of q) {
-        if (p.x < -marginX || p.x > sw + marginX) return null;
-        if (p.y < -marginY || p.y > sh + marginY) return null;
-      }
-      return q;
-    };
-
-    if (cvReadyRef.current && !cvBusyRef.current) {
-      cvBusyRef.current = true;
-      try {
-        quadSmall = validate(await detectDocumentQuadCV(dc));
-      } catch {
-        quadSmall = null;
-      } finally {
-        cvBusyRef.current = false;
-      }
-    }
-    let proj: ReturnType<typeof detectDocumentProjection> | null = null;
-    if (!quadSmall) {
-      proj = detectDocumentProjection(dc);
-      if (proj && proj.confidence > 0.15) {
-        quadSmall = validate([
-          { x: proj.x, y: proj.y },
-          { x: proj.x + proj.width, y: proj.y },
-          { x: proj.x + proj.width, y: proj.y + proj.height },
-          { x: proj.x, y: proj.y + proj.height },
-        ]);
-      }
-    }
-    if (proj && torchSupported && !torchOn && proj.meanLuminance < 55) {
-      maybeAutoTorch();
-    }
+    const quadSmall = detectQuad(dctx, sw, sh);
     if (!quadSmall) {
       stableCountRef.current = 0;
       if (lastQuadRef.current !== null) {
@@ -324,11 +171,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         setLiveQuad(null);
       }
       setStable((s) => (s ? false : s));
-      const dtNo = performance.now() - t0;
-      perfRef.current.count++;
-      perfRef.current.sumMs += dtNo;
-      if (dtNo > perfRef.current.maxMs) perfRef.current.maxMs = dtNo;
-      if (dtNo > 50) perfRef.current.longTasks++;
       return;
     }
     const quad: Quad = quadSmall.map((p) => ({ x: p.x / scale, y: p.y / scale })) as Quad;
@@ -348,13 +190,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     const nextStable = stableCountRef.current >= 2;
     setStable((s) => (s === nextStable ? s : nextStable));
     if (nextStable) setSearchTimedOut(false);
-
-    const dt = performance.now() - t0;
-    perfRef.current.count++;
-    perfRef.current.sumMs += dt;
-    if (dt > perfRef.current.maxMs) perfRef.current.maxMs = dt;
-    if (dt > 50) perfRef.current.longTasks++;
-    perfRef.current.method = cvReadyRef.current ? 'cv' : 'projection';
   }
 
   function detectQuad(ctx: CanvasRenderingContext2D, w: number, h: number): Quad | null {
@@ -537,7 +372,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         let quad = liveQuad;
         if (!quad) {
           if (!detectCanvasRef.current) detectCanvasRef.current = document.createElement('canvas');
-          const sample = 720;
+          const sample = 480;
           const scale = Math.min(sample / vw, sample / vh);
           const sw = Math.round(vw * scale);
           const sh = Math.round(vh * scale);
@@ -547,32 +382,13 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
           const dctx = dc.getContext('2d', { willReadFrequently: true });
           if (dctx) {
             dctx.drawImage(canvas, 0, 0, sw, sh);
-            let q: Quad | null = null;
-            if (cvReadyRef.current) {
-              try { q = await detectDocumentQuadCV(dc); } catch { q = null; }
-            }
-            if (!q) q = detectQuad(dctx, sw, sh);
-            if (!q) {
-              const proj = detectDocumentProjection(dc);
-              if (proj && proj.confidence > 0.15) {
-                q = [
-                  { x: proj.x, y: proj.y },
-                  { x: proj.x + proj.width, y: proj.y },
-                  { x: proj.x + proj.width, y: proj.y + proj.height },
-                  { x: proj.x, y: proj.y + proj.height },
-                ];
-              }
-            }
+            const q = detectQuad(dctx, sw, sh);
             if (q) quad = q.map((p) => ({ x: p.x / scale, y: p.y / scale })) as Quad;
           }
         }
 
         if (quad) {
-          let warped: HTMLCanvasElement | null = null;
-          if (cvReadyRef.current) {
-            try { warped = await warpQuadCV(canvas, quad); } catch { warped = null; }
-          }
-          if (!warped) warped = warpQuadToCanvas(canvas, quad);
+          const warped = warpQuadToCanvas(canvas, quad);
           canvas.width = warped.width;
           canvas.height = warped.height;
           ctx.drawImage(warped, 0, 0);
@@ -581,21 +397,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       }
 
       setUsedQuad(didUseQuad);
-
-      if (cvReadyRef.current) {
-        try { await applyCLAHE(canvas); } catch { enhanceCanvas(ctx, canvas.width, canvas.height); }
-      } else {
-        enhanceCanvas(ctx, canvas.width, canvas.height);
-      }
-
-      if (cvReadyRef.current) {
-        try {
-          const variance = await laplacianVariance(canvas);
-          setBlurWarning(variance < 100);
-        } catch {
-          setBlurWarning(false);
-        }
-      }
+      enhanceCanvas(ctx, canvas.width, canvas.height);
 
       const raw = document.createElement('canvas');
       raw.width = canvas.width;
@@ -629,11 +431,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.drawImage(raw, 0, 0);
-    if (mode === 'bw' && cvReadyRef.current) {
-      try { await adaptiveBinarize(canvas); } catch { applyScanFilter(canvas, mode); }
-    } else if (mode !== 'color') {
-      applyScanFilter(canvas, mode);
-    }
+    if (mode !== 'color') applyScanFilter(canvas, mode);
     const blob = await canvasToBlob(canvas, 0.92);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setCapturedBlob(blob);
@@ -653,7 +451,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     setUsedQuad(false);
     setTextStats(null);
     setPaperInfo(null);
-    setBlurWarning(false);
     rawCanvasRef.current = null;
     searchStartRef.current = 0;
     setSearchTimedOut(false);
@@ -687,16 +484,8 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     : null;
 
   return (
-    <div
-      className="fixed inset-0 z-[60] bg-black flex flex-col"
-      style={{
-        height: '100dvh',
-        maxHeight: '100dvh',
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 bg-black/80 text-white">
+    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 bg-black/80 text-white">
         <div className="flex items-center gap-2">
           <Camera className="w-5 h-5 text-teal-400" />
           <span className="font-semibold text-sm">Skano me kamere</span>
@@ -707,11 +496,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
               {lowPower && (
                 <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 inline-flex items-center gap-1">
                   <Gauge className="w-3 h-3" /> Low-power
-                </span>
-              )}
-              {cvReady && (
-                <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 inline-flex items-center gap-1">
-                  <ScanSearch className="w-3 h-3" /> HD
                 </span>
               )}
               <button
@@ -732,31 +516,15 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 relative overflow-hidden flex items-center justify-center">
+      <div className="flex-1 relative overflow-hidden flex items-center justify-center">
         {error && (
-          <div className="absolute bottom-4 left-4 right-4 z-20">
-            <div className="bg-amber-500/95 rounded-xl p-3 max-w-md mx-auto shadow-2xl flex items-start gap-2">
-              <AlertTriangle className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-xs text-white font-medium">{error}</p>
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => startCamera(facing)} className="px-3 py-1.5 bg-white text-amber-700 rounded-md text-xs font-semibold">
-                    Provo perseri
-                  </button>
-                  <label className="px-3 py-1.5 bg-white/20 text-white rounded-md text-xs font-semibold cursor-pointer">
-                    Zgjidh nga galeria
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) onCapture(f);
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
+          <div className="absolute inset-0 flex items-center justify-center p-6 z-20">
+            <div className="bg-white rounded-xl p-5 max-w-sm text-center shadow-2xl">
+              <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-2" />
+              <p className="text-sm text-slate-800 font-medium">{error}</p>
+              <button onClick={() => startCamera(facing)} className="mt-4 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm">
+                Provo perseri
+              </button>
             </div>
           </div>
         )}
@@ -767,20 +535,12 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
               ref={videoRef}
               className="absolute inset-0 w-full h-full object-contain bg-black"
               playsInline
-              autoPlay
               muted
               onLoadedMetadata={() => {
                 if (videoRef.current) {
                   setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
                 }
               }}
-              onPlaying={() => {
-                if (videoRef.current) {
-                  setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
-                }
-                setReady(true);
-              }}
-              onCanPlay={() => setReady(true)}
             />
 
             {ready && autoCrop && videoSize.w > 0 && (
@@ -904,11 +664,6 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
                     <AlertTriangle className="w-3 h-3" /> {lowQualityWarning}
                   </span>
                 )}
-                {blurWarning && (
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/90 text-white inline-flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" /> Imazh i turbullt
-                  </span>
-                )}
               </div>
             </div>
           </>
@@ -917,7 +672,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      <div className="shrink-0 bg-black/90 px-4 py-4">
+      <div className="bg-black/90 px-4 py-5">
         {!previewUrl ? (
           <div className="flex items-center justify-between max-w-md mx-auto">
             <button
@@ -930,7 +685,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
 
             <button
               onClick={capture}
-              disabled={busy}
+              disabled={!ready || busy}
               className={`w-20 h-20 rounded-full flex items-center justify-center transition-all active:scale-95 ${
                 stable && autoCrop
                   ? 'bg-emerald-400 ring-4 ring-emerald-300/50 animate-pulse'
