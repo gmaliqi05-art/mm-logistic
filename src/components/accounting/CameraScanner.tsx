@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, X, RotateCcw, Check, Loader2, AlertTriangle, Zap, ZapOff, FlipHorizontal, Crop, ScanLine, ScanSearch, FileText, Palette, Droplet, Gauge } from 'lucide-react';
-import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
+import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, detectDocumentProjection, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
 import { loadOpenCV, isOpenCVFailed } from '../../utils/opencvLoader';
 import { detectDocumentQuadCV, warpQuadCV, applyCLAHE, adaptiveBinarize, laplacianVariance } from '../../utils/cvDocScanner';
 
@@ -72,6 +72,18 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
   }, [facing]);
 
   useEffect(() => {
+    if (ready || error) return;
+    const timer = window.setTimeout(() => {
+      if (!videoRef.current) return;
+      const v = videoRef.current;
+      if (v.readyState >= 2 && v.videoWidth > 0) {
+        setReady(true);
+      }
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [ready, error, facing]);
+
+  useEffect(() => {
     if (!ready || previewUrl || busy) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -119,29 +131,46 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       setError('');
       setReady(false);
       stopCamera();
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: mode },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        try {
-          await videoRef.current.play();
-        } catch (playErr) {
-          const name = (playErr as Error)?.name;
-          if (name !== 'AbortError') throw playErr;
-        }
-        setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
+
+      let stream: MediaStream | null = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: mode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: mode },
+          audio: false,
+        });
       }
-      const track = stream.getVideoTracks()[0];
-      const caps = track.getCapabilities ? track.getCapabilities() : ({} as MediaTrackCapabilities);
-      setTorchSupported(!!(caps as unknown as { torch?: boolean }).torch);
-      setReady(true);
+      streamRef.current = stream;
+
+      if (videoRef.current && stream) {
+        const v = videoRef.current;
+        v.srcObject = stream;
+        v.setAttribute('playsinline', 'true');
+        v.muted = true;
+        const playPromise = v.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.catch((err) => {
+            if ((err as Error)?.name !== 'AbortError') {
+              // eslint-disable-next-line no-console
+              console.warn('video play warning', err);
+            }
+          });
+        }
+      }
+
+      const track = stream?.getVideoTracks()[0];
+      if (track) {
+        const caps = track.getCapabilities ? track.getCapabilities() : ({} as MediaTrackCapabilities);
+        setTorchSupported(!!(caps as unknown as { torch?: boolean }).torch);
+      }
       searchStartRef.current = 0;
       setSearchTimedOut(false);
     } catch (err) {
@@ -157,6 +186,18 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     }
+  }
+
+  const autoTorchTriedRef = useRef(false);
+  async function maybeAutoTorch() {
+    if (autoTorchTriedRef.current) return;
+    autoTorchTriedRef.current = true;
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: true } as unknown as MediaTrackConstraintSet] });
+      setTorchOn(true);
+    } catch { /* ignore */ }
   }
 
   async function toggleTorch() {
@@ -203,6 +244,18 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     }
     if (!quadSmall) {
       quadSmall = detectQuad(dctx, sw, sh);
+    }
+    const proj = detectDocumentProjection(dc);
+    if (!quadSmall && proj && proj.confidence > 0.15) {
+      quadSmall = [
+        { x: proj.x, y: proj.y },
+        { x: proj.x + proj.width, y: proj.y },
+        { x: proj.x + proj.width, y: proj.y + proj.height },
+        { x: proj.x, y: proj.y + proj.height },
+      ];
+    }
+    if (proj && torchSupported && !torchOn && proj.meanLuminance < 55) {
+      maybeAutoTorch();
     }
     if (!quadSmall) {
       stableCountRef.current = 0;
@@ -427,6 +480,17 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
               try { q = await detectDocumentQuadCV(dc); } catch { q = null; }
             }
             if (!q) q = detectQuad(dctx, sw, sh);
+            if (!q) {
+              const proj = detectDocumentProjection(dc);
+              if (proj && proj.confidence > 0.15) {
+                q = [
+                  { x: proj.x, y: proj.y },
+                  { x: proj.x + proj.width, y: proj.y },
+                  { x: proj.x + proj.width, y: proj.y + proj.height },
+                  { x: proj.x, y: proj.y + proj.height },
+                ];
+              }
+            }
             if (q) quad = q.map((p) => ({ x: p.x / scale, y: p.y / scale })) as Quad;
           }
         }
@@ -590,13 +654,29 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
 
       <div className="flex-1 relative overflow-hidden flex items-center justify-center">
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center p-6 z-20">
-            <div className="bg-white rounded-xl p-5 max-w-sm text-center shadow-2xl">
-              <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-2" />
-              <p className="text-sm text-slate-800 font-medium">{error}</p>
-              <button onClick={() => startCamera(facing)} className="mt-4 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm">
-                Provo perseri
-              </button>
+          <div className="absolute bottom-4 left-4 right-4 z-20">
+            <div className="bg-amber-500/95 rounded-xl p-3 max-w-md mx-auto shadow-2xl flex items-start gap-2">
+              <AlertTriangle className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs text-white font-medium">{error}</p>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => startCamera(facing)} className="px-3 py-1.5 bg-white text-amber-700 rounded-md text-xs font-semibold">
+                    Provo perseri
+                  </button>
+                  <label className="px-3 py-1.5 bg-white/20 text-white rounded-md text-xs font-semibold cursor-pointer">
+                    Zgjidh nga galeria
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) onCapture(f);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -607,12 +687,20 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
               ref={videoRef}
               className="absolute inset-0 w-full h-full object-contain bg-black"
               playsInline
+              autoPlay
               muted
               onLoadedMetadata={() => {
                 if (videoRef.current) {
                   setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
                 }
               }}
+              onPlaying={() => {
+                if (videoRef.current) {
+                  setVideoSize({ w: videoRef.current.videoWidth, h: videoRef.current.videoHeight });
+                }
+                setReady(true);
+              }}
+              onCanPlay={() => setReady(true)}
             />
 
             {ready && autoCrop && videoSize.w > 0 && (
