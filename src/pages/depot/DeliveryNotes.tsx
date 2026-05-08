@@ -12,6 +12,8 @@ import {
   AlertTriangle,
   Layers,
   Wrench,
+  ArrowUpRight,
+  ArrowDownLeft,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -184,9 +186,13 @@ export default function DepotDeliveryNotes() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${cfg.bg} ${cfg.text}`}>
                           {cfg.label}
                         </span>
-                        {n.type === 'pickup' && (
+                        {n.type === 'pickup' ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-100 text-orange-700">
-                            <Package className="w-3 h-3" /> Fletemarrje
+                            <ArrowDownLeft className="w-3 h-3" /> {t('depot.deliveryNotes.pickupBadge')}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
+                            <ArrowUpRight className="w-3 h-3" /> {t('depot.deliveryNotes.deliveryBadge')}
                           </span>
                         )}
                       </div>

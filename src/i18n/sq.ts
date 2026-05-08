@@ -1113,6 +1113,8 @@ export const sq = {
         delivered: 'Dorezuar',
         cancelled: 'Anuluar',
       },
+      pickupBadge: 'Hyrje ne depo',
+      deliveryBadge: 'Dalje nga depoja',
     },
     documents: {
       title: 'Dokumentet',

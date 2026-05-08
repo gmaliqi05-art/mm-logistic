@@ -1115,6 +1115,8 @@ export const fr: typeof sq = {
         delivered: 'Livr\u00e9',
         cancelled: 'Annul\u00e9',
       },
+      pickupBadge: 'Entr\u00e9e',
+      deliveryBadge: 'Sortie',
     },
     documents: {
       title: 'Documents',
