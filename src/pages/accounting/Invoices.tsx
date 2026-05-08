@@ -296,14 +296,14 @@ export default function Invoices() {
       if (sentIds.length > 0) {
         const { data: dns } = await supabase
           .from('delivery_notes')
-          .select('acc_invoice_id, status')
+          .select('id, acc_invoice_id, status, stock_posted')
           .in('acc_invoice_id', sentIds);
         const map: Record<string, 'moved' | 'pending' | 'missing'> = {};
         for (const id of sentIds) {
-          const rows = (dns ?? []).filter((d: { acc_invoice_id: string; status: string }) => d.acc_invoice_id === id);
-          if (rows.length === 0) {
+          const dn = (dns ?? []).find((d: { acc_invoice_id: string; stock_posted: boolean | null }) => d.acc_invoice_id === id);
+          if (!dn) {
             map[id] = 'missing';
-          } else if (rows.some((r) => r.status === 'confirmed' || r.status === 'delivered')) {
+          } else if (dn.stock_posted) {
             map[id] = 'moved';
           } else {
             map[id] = 'pending';
