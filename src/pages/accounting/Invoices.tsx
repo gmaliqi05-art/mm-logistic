@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, X, AlertTriangle, Loader2, CreditCard as Edit2, Copy, Printer, ChevronDown, Trash2, FileText, FileCode2, Eye, Truck } from 'lucide-react';
+import { Plus, Search, X, AlertTriangle, Loader2, CreditCard as Edit2, Copy, Printer, ChevronDown, Trash2, FileText, FileCode2, Eye, Truck, PackageCheck, PackageOpen, PackageX } from 'lucide-react';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -131,6 +131,7 @@ export default function Invoices() {
   const [creatingDeliveryNote, setCreatingDeliveryNote] = useState(false);
 
   const [invoices, setInvoices] = useState<AccInvoice[]>([]);
+  const [stockStatus, setStockStatus] = useState<Record<string, 'moved' | 'pending' | 'missing'>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -288,7 +289,30 @@ export default function Invoices() {
         .eq('company_id', profile!.company_id!)
         .order('created_at', { ascending: false });
       if (err) throw err;
-      setInvoices(data ?? []);
+      const invs = (data ?? []) as AccInvoice[];
+      setInvoices(invs);
+
+      const sentIds = invs.filter((i) => i.status !== 'draft' && i.status !== 'cancelled' && i.invoice_type === 'invoice').map((i) => i.id);
+      if (sentIds.length > 0) {
+        const { data: dns } = await supabase
+          .from('delivery_notes')
+          .select('acc_invoice_id, status')
+          .in('acc_invoice_id', sentIds);
+        const map: Record<string, 'moved' | 'pending' | 'missing'> = {};
+        for (const id of sentIds) {
+          const rows = (dns ?? []).filter((d: { acc_invoice_id: string; status: string }) => d.acc_invoice_id === id);
+          if (rows.length === 0) {
+            map[id] = 'missing';
+          } else if (rows.some((r) => r.status === 'confirmed' || r.status === 'delivered')) {
+            map[id] = 'moved';
+          } else {
+            map[id] = 'pending';
+          }
+        }
+        setStockStatus(map);
+      } else {
+        setStockStatus({});
+      }
     } catch (err: any) {
       setError(err.message || t('common.errorLoading'));
     } finally {
@@ -957,6 +981,7 @@ export default function Invoices() {
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Totali</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statusi</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Dergesa</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stok i levizur</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veprime</th>
                   </tr>
                 </thead>
@@ -990,6 +1015,36 @@ export default function Invoices() {
                             >
                               <Truck className="w-3 h-3" />
                               {cfg.label}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-6 py-4">
+                        {(() => {
+                          if (invoice.invoice_type !== 'invoice' || invoice.status === 'draft' || invoice.status === 'cancelled') {
+                            return <span className="text-xs text-gray-400">-</span>;
+                          }
+                          const s = stockStatus[invoice.id];
+                          if (s === 'moved') {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">
+                                <PackageCheck className="w-3 h-3" />
+                                Stoku i levizur
+                              </span>
+                            );
+                          }
+                          if (s === 'missing') {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700" title="Nuk ekziston fletedergese e lidhur">
+                                <PackageX className="w-3 h-3" />
+                                Pa fletedergese
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                              <PackageOpen className="w-3 h-3" />
+                              Fature derguar, malli ne pritje
                             </span>
                           );
                         })()}
@@ -1108,6 +1163,35 @@ export default function Invoices() {
                     {formatCurrency(invoice.total, invoice.currency)}
                   </span>
                 </div>
+                {invoice.invoice_type === 'invoice' && invoice.status !== 'draft' && invoice.status !== 'cancelled' && (
+                  <div className="mt-2">
+                    {(() => {
+                      const s = stockStatus[invoice.id];
+                      if (s === 'moved') {
+                        return (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">
+                            <PackageCheck className="w-3 h-3" />
+                            Stoku i levizur
+                          </span>
+                        );
+                      }
+                      if (s === 'missing') {
+                        return (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            <PackageX className="w-3 h-3" />
+                            Pa fletedergese
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                          <PackageOpen className="w-3 h-3" />
+                          Malli ne pritje
+                        </span>
+                      );
+                    })()}
+                  </div>
+                )}
                 <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-gray-50">
                   <button
                     onClick={() => openPreview(invoice)}
