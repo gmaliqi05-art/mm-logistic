@@ -304,7 +304,6 @@ export default function CompanyDeliveryNotes() {
           notes: form.notes,
           attachment_url: form.attachment_url || null,
           pallet_type: form.pallet_type || 'EPAL',
-          pallet_partner_contact_id: form.partner_id || null,
         })
         .select()
         .single();
