@@ -42,7 +42,6 @@ const SuperAdminUsers = lazy(() => import('./pages/super-admin/Users'));
 const SuperAdminReports = lazy(() => import('./pages/super-admin/Reports'));
 const SuperAdminSettings = lazy(() => import('./pages/super-admin/Settings'));
 const SuperAdminChat = lazy(() => import('./pages/super-admin/Chat'));
-const SuperAdminDataIntegrity = lazy(() => import('./pages/super-admin/DataIntegrity'));
 const SuperAdminSubscriptionPlans = lazy(() => import('./pages/super-admin/SubscriptionPlans'));
 const SuperAdminPaymentSettings = lazy(() => import('./pages/super-admin/PaymentSettings'));
 const SuperAdminHomepage = lazy(() => import('./pages/super-admin/HomepageManager'));
@@ -193,7 +192,6 @@ function AppRoutes() {
           <Route path="settings" element={<SuperAdminSettings />} />
           <Route path="branding" element={<SuperAdminPlatformBranding />} />
           <Route path="chat" element={<SuperAdminChat />} />
-          <Route path="data-integrity" element={<SuperAdminDataIntegrity />} />
           <Route path="static-pages" element={<SuperAdminStaticPages />} />
           <Route path="footer-settings" element={<SuperAdminFooterSettings />} />
           <Route path="footer-links" element={<SuperAdminFooterLinks />} />
