@@ -624,6 +624,25 @@ function ReviewModal({
       const depotId = note.assigned_depot_id || profile?.depot_id;
       if (!depotId) throw new Error('Depoja nuk eshte caktuar per kete dergese.');
 
+      const { data: validation, error: vErr } = await supabase.functions.invoke('validate-delivery-action', {
+        body: {
+          action: 'confirm',
+          delivery_note_id: note.id,
+        },
+      });
+
+      if (vErr || !validation?.valid) {
+        throw new Error((validation?.blockers || ['Validimi dështoi']).join('\n'));
+      }
+
+      if (validation.warnings?.length > 0) {
+        const proceed = confirm(`Paralajmërime:\n${validation.warnings.join('\n')}\n\nVazhdo?`);
+        if (!proceed) {
+          setSaving(null);
+          return;
+        }
+      }
+
       const { error: upErr } = await supabase
         .from('delivery_notes')
         .update({

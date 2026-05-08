@@ -251,6 +251,41 @@ export default function CompanyDeliveryNotes() {
 
       const noteNumber = trimmedTitle;
 
+      if (form.type === 'delivery' && form.items.length > 0) {
+        const validationItems = form.items
+          .filter((item) => item.category_id)
+          .map((item) => ({
+            category_id: item.category_id,
+            category_product_id: item.product_id || null,
+            quantity: item.quantity,
+            condition: item.condition,
+          }));
+
+        const { data: validation, error: vErr } = await supabase.functions.invoke('validate-delivery-action', {
+          body: {
+            action: 'create',
+            type: 'delivery',
+            items: validationItems,
+            company_id: companyId,
+          },
+        });
+
+        if (vErr || !validation?.valid) {
+          const blockerMsg = (validation?.blockers || ['Validimi dështoi']).join('\n');
+          setError(blockerMsg);
+          setSaving(false);
+          return;
+        }
+
+        if (validation.warnings?.length > 0) {
+          const proceed = confirm(`Paralajmërime:\n${validation.warnings.join('\n')}\n\nVazhdo?`);
+          if (!proceed) {
+            setSaving(false);
+            return;
+          }
+        }
+      }
+
       const { data: noteData, error: noteErr } = await supabase
         .from('delivery_notes')
         .insert({

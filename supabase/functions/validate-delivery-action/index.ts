@@ -86,7 +86,8 @@ Deno.serve(async (req: Request) => {
           const { data: acct } = await supabase
             .from('pallet_accounts')
             .select('id')
-            .eq('partner_id', partnerId)
+            .eq('company_id', n.company_id as string)
+            .eq('partner_contact_id', partnerId)
             .eq('pallet_type', palletType)
             .maybeSingle();
           if (!acct) {
