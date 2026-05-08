@@ -59,8 +59,6 @@ interface NoteForm {
   notes: string;
   items: NoteItemForm[];
   attachment_url: string;
-  pallets_delivered: string;
-  pallets_returned: string;
   pallet_type: string;
 }
 
@@ -108,8 +106,6 @@ const emptyForm: NoteForm = {
   notes: '',
   items: [{ ...emptyItem }],
   attachment_url: '',
-  pallets_delivered: '',
-  pallets_returned: '',
   pallet_type: 'EPAL',
 };
 
@@ -307,8 +303,6 @@ export default function CompanyDeliveryNotes() {
           scheduled_delivery_time_set: !!form.scheduled_delivery_time,
           notes: form.notes,
           attachment_url: form.attachment_url || null,
-          pallets_delivered: parseInt(form.pallets_delivered, 10) || 0,
-          pallets_returned: parseInt(form.pallets_returned, 10) || 0,
           pallet_type: form.pallet_type || 'EPAL',
           pallet_partner_contact_id: form.partner_id || null,
         })
@@ -885,7 +879,7 @@ export default function CompanyDeliveryNotes() {
 
               <div className="border border-teal-100 bg-teal-50/50 rounded-lg p-3 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-teal-900">Shkembim paletash (EPAL)</span>
+                  <span className="text-sm font-semibold text-teal-900">Shkembim paletash</span>
                   <select
                     value={form.pallet_type}
                     onChange={(e) => setForm({ ...form, pallet_type: e.target.value })}
@@ -897,29 +891,23 @@ export default function CompanyDeliveryNotes() {
                     <option value="Disposable">Disposable</option>
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Paleta te dorezuara</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={form.pallets_delivered}
-                      onChange={(e) => setForm({ ...form, pallets_delivered: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Paleta te kthyera</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={form.pallets_returned}
-                      onChange={(e) => setForm({ ...form, pallets_returned: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      placeholder="0"
-                    />
-                  </div>
+                <p className="text-xs text-teal-900 leading-relaxed">
+                  Sasia e paletave do te llogaritet automatikisht nga artikujt e shtuar.
+                  {(contacts.find((c) => c.id === form.partner_id)?.name || form.partner_name) && (
+                    <>
+                      {' '}Partner: <span className="font-semibold">{contacts.find((c) => c.id === form.partner_id)?.name || form.partner_name}</span>,
+                    </>
+                  )}{' '}
+                  Lloji: <span className="font-semibold">{form.pallet_type}</span>
+                </p>
+                <div className="flex items-center justify-between rounded-md bg-white border border-teal-200 px-3 py-2">
+                  <span className="text-xs text-gray-600">Total (vleresim live)</span>
+                  <span className="text-sm font-bold text-teal-900">
+                    {form.items
+                      .filter((i) => i.category_id)
+                      .reduce((s, i) => s + (Number(i.quantity) || 0), 0)}{' '}
+                    paleta
+                  </span>
                 </div>
                 <p className="text-[11px] text-teal-800">Regjistri i paletave azhurnohet automatikisht kur porosia konfirmohet.</p>
               </div>
