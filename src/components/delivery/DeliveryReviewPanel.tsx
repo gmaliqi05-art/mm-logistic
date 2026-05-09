@@ -770,7 +770,7 @@ function ReviewModal({
   const noScanFlag = !scannedUrl && /\[Pa skanim\]/i.test(note.notes || '');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[1100] flex items-end lg:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         className="bg-white rounded-t-3xl lg:rounded-2xl w-full lg:max-w-3xl max-h-[94vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -955,7 +955,7 @@ function ReviewModal({
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3 flex items-center justify-end gap-2">
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3 flex items-center justify-end gap-2 flex-wrap pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button
             onClick={() => setShowRejectReason(true)}
             disabled={!!saving}

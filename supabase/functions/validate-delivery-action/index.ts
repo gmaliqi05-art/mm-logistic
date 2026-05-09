@@ -67,16 +67,16 @@ Deno.serve(async (req: Request) => {
     }
 
     if (body.action === 'confirm' && body.delivery_note_id) {
-      const { data: note } = await supabase
+      const { data: note, error: noteErr } = await supabase
         .from('delivery_notes')
-        .select('id, status, stock_posted_at, partner_id, pallet_type, company_id')
+        .select('id, status, stock_posted, stock_confirmed_at, partner_id, pallet_type, company_id')
         .eq('id', body.delivery_note_id)
         .maybeSingle();
-      if (!note) {
-        blockers.push('Delivery note not found');
+      if (noteErr || !note) {
+        blockers.push(noteErr?.message || 'Delivery note not found');
       } else {
         const n = note as Record<string, unknown>;
-        if (n.stock_posted_at) {
+        if (n.stock_posted === true) {
           blockers.push('Stock has already been posted for this note');
         }
         const partnerId = (n.partner_id as string | null) ?? body.partner_id ?? null;
