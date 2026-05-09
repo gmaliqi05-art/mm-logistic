@@ -1,5 +1,5 @@
-import { ExternalLink, Info, Navigation, Truck, X } from 'lucide-react';
-import { useState } from 'react';
+import { Info, Navigation, Truck, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
   destLat: number;
@@ -8,62 +8,62 @@ interface Props {
   onClose: () => void;
 }
 
+type Platform = 'ios' | 'android' | 'other';
+
 interface NavApp {
   name: string;
   tag: string;
   description: string;
   free: boolean;
-  truckProfile: boolean;
-  openUrl: (lat: number, lng: number, label?: string) => string;
-  installAndroid?: string;
-  installIos?: string;
-  platformNote?: string;
+  scheme: (lat: number, lng: number, label?: string) => string;
+  androidStore: string;
+  iosStore: string;
 }
 
 const APPS: NavApp[] = [
   {
     name: 'OsmAnd',
-    tag: 'Rekomandohet',
-    description: 'Falas, open-source. Ka profil specifik per kamiona (HGV) me ndalesa per pesha, lartesi dhe kufizime.',
+    tag: 'Rekomandohet - falas',
+    description: 'Open-source me profil specifik per kamiona (HGV): peshe, lartesi, gjeresi dhe kufizime te rrugeve per LKW.',
     free: true,
-    truckProfile: true,
-    openUrl: (lat, lng) => `osmand.navigation:q=${lat},${lng}`,
-    installAndroid: 'https://play.google.com/store/apps/details?id=net.osmand',
-    installIos: 'https://apps.apple.com/app/osmand-maps-travel-navigate/id934850257',
+    scheme: (lat, lng) => `osmand.api://navigate?dest_lat=${lat}&dest_lon=${lng}&profile=truck&show_search_results=false`,
+    androidStore: 'https://play.google.com/store/apps/details?id=net.osmand',
+    iosStore: 'https://apps.apple.com/app/osmand-maps-travel-navigate/id934850257',
   },
   {
     name: 'Sygic Truck',
     tag: 'Standardi i flotave',
-    description: 'Ruten specifike per kamiona me rregulla EU (peshe, lartesi, gjeresi, ADR). Aplikacioni kerkon licence.',
+    description: 'Rruge te dedikuara per kamiona me rregulla EU (peshe, lartesi, gjeresi, ADR). Kerkon licence.',
     free: false,
-    truckProfile: true,
-    openUrl: (lat, lng) => `com.sygic.aura://coordinate|${lng}|${lat}|drive`,
-    installAndroid: 'https://play.google.com/store/apps/details?id=com.sygic.truck',
-    installIos: 'https://apps.apple.com/app/sygic-truck-caravan-gps/id1310573318',
-  },
-  {
-    name: 'Magic Earth',
-    tag: 'Alternative falas',
-    description: 'Falas me profil kamioni, pa reklama. Mbulim i mire per Europen.',
-    free: true,
-    truckProfile: true,
-    openUrl: (lat, lng, label) => `magicearth://?drive_to&lat=${lat}&lon=${lng}${label ? `&name=${encodeURIComponent(label)}` : ''}`,
-    installAndroid: 'https://play.google.com/store/apps/details?id=com.generalmagic.magicearth',
-    installIos: 'https://apps.apple.com/app/magic-earth-navigation-maps/id1008279475',
-  },
-  {
-    name: 'HERE WeGo',
-    tag: 'Pa profil kamioni',
-    description: 'Falas por pa profil te dedikuar per kamiona. Perdor vetem si alternative emergjence.',
-    free: true,
-    truckProfile: false,
-    openUrl: (lat, lng) => `https://wego.here.com/directions/drive/mylocation/${lat},${lng}`,
-    platformNote: 'Hapet ne shfletues ose aplikacion.',
+    scheme: (lat, lng) => `com.sygic.aura://coordinate|${lng}|${lat}|drive`,
+    androidStore: 'https://play.google.com/store/apps/details?id=com.sygic.truck',
+    iosStore: 'https://apps.apple.com/app/sygic-truck-caravan-gps/id1310573318',
   },
 ];
 
+function detectPlatform(): Platform {
+  if (typeof navigator === 'undefined') return 'other';
+  const ua = navigator.userAgent || '';
+  if (/android/i.test(ua)) return 'android';
+  if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
+  if (/mac/i.test(ua) && (navigator.maxTouchPoints ?? 0) > 1) return 'ios';
+  return 'other';
+}
+
 export default function TruckNavChooser({ destLat, destLng, label, onClose }: Props) {
   const [copied, setCopied] = useState(false);
+  const [launching, setLaunching] = useState<string | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const platform = detectPlatform();
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   async function copyCoords() {
     try {
@@ -75,9 +75,61 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
     }
   }
 
-  function openApp(app: NavApp) {
-    const url = app.openUrl(destLat, destLng, label);
-    window.location.href = url;
+  function launch(app: NavApp) {
+    const storeUrl = platform === 'ios' ? app.iosStore : app.androidStore;
+
+    if (platform === 'other') {
+      window.open(storeUrl, '_blank', 'noopener');
+      return;
+    }
+
+    setLaunching(app.name);
+    const startedAt = Date.now();
+    let handled = false;
+
+    const cleanup = () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', onHide);
+      window.removeEventListener('blur', onHide);
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        handled = true;
+        cleanup();
+        setLaunching(null);
+      }
+    };
+    const onHide = () => {
+      handled = true;
+      cleanup();
+      setLaunching(null);
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', onHide);
+    window.addEventListener('blur', onHide);
+
+    timerRef.current = window.setTimeout(() => {
+      cleanup();
+      setLaunching(null);
+      if (handled) return;
+      if (Date.now() - startedAt < 2500) {
+        window.location.href = storeUrl;
+      }
+    }, 1500);
+
+    try {
+      window.location.href = app.scheme(destLat, destLng, label);
+    } catch {
+      cleanup();
+      setLaunching(null);
+      window.location.href = storeUrl;
+    }
   }
 
   return (
@@ -98,7 +150,9 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
             <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
               <div className="font-semibold">Mos perdor Google Maps per navigim</div>
-              <div className="mt-0.5">Google Maps dhe Waze nuk kane profil per kamiona — ato dergojne neper rruge ku LKW nuk lejohen (kufizime per peshe, lartesi, qytete). Perdor nje nga aplikacionet me profil HGV me poshte.</div>
+              <div className="mt-0.5">
+                Google Maps dhe Waze nuk kane profil per kamiona — ato dergojne neper rruge ku LKW nuk lejohen. Perdor nje nga aplikacionet me profil HGV me poshte.
+              </div>
             </div>
           </div>
 
@@ -106,57 +160,39 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
             Destinacioni: <span className="font-mono text-slate-700">{destLat.toFixed(5)}, {destLng.toFixed(5)}</span>
           </div>
 
-          <div className="space-y-2.5">
-            {APPS.map((app) => (
-              <div key={app.name} className={`rounded-xl border p-3 ${app.truckProfile ? 'border-teal-200 bg-teal-50/40' : 'border-slate-200'}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-slate-900">{app.name}</span>
-                      {app.truckProfile && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-teal-600 text-white rounded uppercase">HGV</span>
-                      )}
-                      {app.free ? (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded">Falas</span>
-                      ) : (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">Me pagese</span>
-                      )}
-                      <span className="text-[10px] text-slate-500 italic">{app.tag}</span>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1 leading-snug">{app.description}</p>
+          <div className="space-y-3">
+            {APPS.map((app) => {
+              const isLaunching = launching === app.name;
+              return (
+                <div key={app.name} className="rounded-xl border border-teal-200 bg-teal-50/40 p-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-slate-900">{app.name}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-teal-600 text-white rounded uppercase">HGV</span>
+                    {app.free ? (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded">Falas</span>
+                    ) : (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">Me pagese</span>
+                    )}
+                    <span className="text-[10px] text-slate-500 italic">{app.tag}</span>
                   </div>
-                </div>
+                  <p className="text-xs text-slate-600 mt-1 leading-snug">{app.description}</p>
 
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <button
-                    onClick={() => openApp(app)}
-                    className="flex-1 min-w-[140px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700"
+                    onClick={() => launch(app)}
+                    disabled={isLaunching}
+                    className="w-full mt-3 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:opacity-70"
                   >
-                    <Navigation className="w-3.5 h-3.5" /> Hap ne {app.name}
+                    <Navigation className="w-4 h-4" />
+                    {isLaunching ? `Duke hapur ${app.name}...` : `Hap ne ${app.name}`}
                   </button>
-                  {app.installAndroid && (
-                    <a
-                      href={app.installAndroid}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200"
-                    >
-                      <ExternalLink className="w-3 h-3" /> Android
-                    </a>
-                  )}
-                  {app.installIos && (
-                    <a
-                      href={app.installIos}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200"
-                    >
-                      <ExternalLink className="w-3 h-3" /> iOS
-                    </a>
-                  )}
+                  <p className="text-[11px] text-slate-500 mt-1.5 text-center">
+                    {platform === 'other'
+                      ? 'Ne desktop hapet faqja e shkarkimit.'
+                      : 'Nese nuk eshte i instaluar, hapet automatikisht dyqani per shkarkim.'}
+                  </p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <button
