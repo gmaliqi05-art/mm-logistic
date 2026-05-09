@@ -13,6 +13,8 @@ import {
   Shield,
   FileText,
   Calendar,
+  MapPin,
+  Save,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -68,12 +70,17 @@ export default function DriverSettings() {
   const [depotName, setDepotName] = useState<string>('');
   const [recentDocs, setRecentDocs] = useState<RecentDoc[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(true);
+  const [baseAddress, setBaseAddress] = useState('');
+  const [baseLat, setBaseLat] = useState<number | null>(null);
+  const [baseLng, setBaseLng] = useState<number | null>(null);
+  const [baseSaving, setBaseSaving] = useState(false);
+  const [baseLoading, setBaseLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       if (!profile) return;
-      const [companyRes, depotRes, docsRes] = await Promise.all([
+      const [companyRes, depotRes, docsRes, baseRes] = await Promise.all([
         profile.company_id
           ? supabase.from('companies').select('name').eq('id', profile.company_id).maybeSingle()
           : Promise.resolve({ data: null }),
@@ -86,6 +93,11 @@ export default function DriverSettings() {
           .eq('target_driver_id', profile.id)
           .order('created_at', { ascending: false })
           .limit(5),
+        supabase
+          .from('profiles')
+          .select('base_address, base_lat, base_lng')
+          .eq('id', profile.id)
+          .maybeSingle(),
       ]);
       if (cancelled) return;
       setCompanyName((companyRes.data as any)?.name ?? '');
@@ -103,6 +115,12 @@ export default function DriverSettings() {
       }));
       setRecentDocs(docs);
       setLoadingDocs(false);
+      const base = (baseRes as any)?.data;
+      if (base) {
+        setBaseAddress(base.base_address ?? '');
+        setBaseLat(base.base_lat ?? null);
+        setBaseLng(base.base_lng ?? null);
+      }
     }
     load();
     return () => {
@@ -159,6 +177,46 @@ export default function DriverSettings() {
   }
 
   const initial = profile?.full_name?.charAt(0).toUpperCase() ?? 'U';
+
+  async function saveBase() {
+    if (!profile) return;
+    setBaseSaving(true);
+    try {
+      const trimmed = baseAddress.trim();
+      let lat = baseLat;
+      let lng = baseLng;
+      if (trimmed) {
+        try {
+          setBaseLoading(true);
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(trimmed)}`,
+            { headers: { 'Accept-Language': 'sq,en' } },
+          );
+          if (res.ok) {
+            const arr = (await res.json()) as Array<{ lat: string; lon: string }>;
+            if (arr[0]) {
+              lat = Number(arr[0].lat);
+              lng = Number(arr[0].lon);
+            }
+          }
+        } finally {
+          setBaseLoading(false);
+        }
+      } else {
+        lat = null;
+        lng = null;
+      }
+      await supabase
+        .from('profiles')
+        .update({ base_address: trimmed || null, base_lat: lat, base_lng: lng })
+        .eq('id', profile.id);
+      setBaseLat(lat);
+      setBaseLng(lng);
+      setToast('Baza u ruajt');
+    } finally {
+      setBaseSaving(false);
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 pb-6">
@@ -226,6 +284,45 @@ export default function DriverSettings() {
             <InfoRow icon={Building2} label={L.company} value={companyName || '-'} />
             <InfoRow icon={Warehouse} label={L.depot} value={depotName || '-'} />
           </dl>
+        </div>
+      </section>
+
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <MapPin className="w-5 h-5 text-teal-600" />
+          <h3 className="text-base font-bold text-gray-900">Lokacioni i bazes</h3>
+        </div>
+        <p className="text-sm text-gray-500 mb-3">
+          Kur nuk ka destinacion te caktuar, sistemi do te shfaqe automatikisht rrugen per ne baze.
+        </p>
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={baseAddress}
+            onChange={(e) => setBaseAddress(e.target.value)}
+            placeholder="P.sh. Rr. Marubi 8, Shkoder"
+            className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-teal-500 outline-none"
+          />
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[11px] text-gray-500">
+              {baseLat != null && baseLng != null
+                ? `${baseLat.toFixed(5)}, ${baseLng.toFixed(5)}`
+                : 'Asnje koordinate e ruajtur'}
+            </div>
+            <button
+              type="button"
+              onClick={() => void saveBase()}
+              disabled={baseSaving || baseLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 disabled:opacity-50"
+            >
+              {baseSaving || baseLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              Ruaj
+            </button>
+          </div>
         </div>
       </section>
 

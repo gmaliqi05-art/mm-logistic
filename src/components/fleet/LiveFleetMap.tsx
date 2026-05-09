@@ -1,8 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Copy, Crosshair, ExternalLink, Gauge, MapPin, Navigation, Phone, Route, Send, Truck } from 'lucide-react';
+import { Copy, Crosshair, ExternalLink, Gauge, MapPin, Navigation, Phone, Route, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
 
@@ -21,6 +21,9 @@ interface DriverPing {
   status: string | null;
   delivery_address: string | null;
   current_address: string | null;
+  base_address: string | null;
+  base_lat: number | null;
+  base_lng: number | null;
 }
 
 const geocodeCache = new Map<string, string>();
@@ -70,12 +73,37 @@ interface Props {
   compact?: boolean;
 }
 
-const truckIcon = L.divIcon({
-  className: '',
-  html: `<div style="width:36px;height:36px;border-radius:50%;background:#0f766e;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px">T</div>`,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-});
+function deriveInitials(name: string | null | undefined): string {
+  if (!name) return 'D';
+  const parts = name.trim().split(/[\s-]+/).filter(Boolean);
+  if (parts.length === 0) return 'D';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+}
+
+function buildTruckIcon(initials: string, selected: boolean): L.DivIcon {
+  const color = selected ? '#047857' : '#0f766e';
+  const size = selected ? 52 : 46;
+  return L.divIcon({
+    className: '',
+    html: `
+      <div style="position:relative;width:${size}px;height:${size + 12}px;">
+        <div style="width:${size}px;height:${size}px;border-radius:14px;background:${color};border:3px solid white;box-shadow:0 4px 14px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:white;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="${size - 20}" height="${size - 20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+            <path d="M15 18H9"/>
+            <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+            <circle cx="17" cy="18" r="2"/>
+            <circle cx="7" cy="18" r="2"/>
+          </svg>
+        </div>
+        <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:white;color:${color};font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;border:2px solid ${color};box-shadow:0 2px 6px rgba(0,0,0,.25);line-height:1.2;letter-spacing:.5px;">${initials}</div>
+      </div>
+    `,
+    iconSize: [size, size + 12],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
 
 function FollowDriver({ target }: { target: [number, number] | null }) {
   const map = useMap();
@@ -110,7 +138,7 @@ interface DeliveryRow {
   current_lat: number;
   current_lng: number;
   last_location_at: string;
-  driver?: { full_name: string; phone: string | null } | null;
+  driver?: { full_name: string; phone: string | null; base_address: string | null; base_lat: number | null; base_lng: number | null } | null;
 }
 
 function agoLabel(iso: string | null): string {
@@ -144,7 +172,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
         const { data, error } = await supabase
           .from('delivery_notes')
           .select(
-            'id, note_number, status, delivery_address, assigned_driver_id, current_lat, current_lng, last_location_at, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name, phone)',
+            'id, note_number, status, delivery_address, assigned_driver_id, current_lat, current_lng, last_location_at, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name, phone, base_address, base_lat, base_lng)',
           )
           .eq('company_id', companyId)
           .in('status', ['sent', 'in_transit', 'delivered'])
@@ -178,6 +206,9 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
               status: r.status,
               delivery_address: r.delivery_address,
               current_address: null,
+              base_address: r.driver?.base_address ?? null,
+              base_lat: r.driver?.base_lat ?? null,
+              base_lng: r.driver?.base_lng ?? null,
             };
           }
         }
@@ -373,55 +404,28 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
             <FollowDriver target={followTarget} />
             {list.map((d) => {
               const trail = trails[d.driver_id];
+              const isActive = activeId === d.driver_id;
+              const initials = deriveInitials(d.driver_name);
+              const hasDestination = Boolean(d.delivery_address && d.delivery_address.trim());
+              const showBaseRoute = !hasDestination && d.base_lat != null && d.base_lng != null;
               return (
                 <Fragment key={d.driver_id}>
                   {trail && trail.length > 1 && (
                     <Polyline positions={trail} pathOptions={{ color: '#0f766e', weight: 4, opacity: 0.55 }} />
                   )}
+                  {showBaseRoute && (
+                    <Polyline
+                      positions={[[d.lat, d.lng], [d.base_lat as number, d.base_lng as number]]}
+                      pathOptions={{ color: '#0f766e', weight: 3, opacity: 0.85, dashArray: '6 8' }}
+                    />
+                  )}
                   <Marker
                     position={[d.lat, d.lng]}
-                    icon={truckIcon}
+                    icon={buildTruckIcon(initials, isActive)}
                     eventHandlers={{
                       click: () => setActiveId(d.driver_id),
                     }}
-                  >
-                    <Popup>
-                      <div className="text-sm min-w-[240px]">
-                        <div className="font-semibold text-slate-900">{d.driver_name || 'Driver'}</div>
-                        {d.phone && (
-                          <div className="flex items-center gap-1 text-xs text-slate-600 mt-0.5">
-                            <Phone className="w-3 h-3" /> {d.phone}
-                          </div>
-                        )}
-                        <div className="mt-2 pt-2 border-t border-slate-100">
-                          <div className="flex items-start gap-1.5 text-xs">
-                            <MapPin className="w-3.5 h-3.5 text-teal-600 flex-shrink-0 mt-0.5" />
-                            <div className="min-w-0">
-                              <div className="font-semibold text-slate-700">Pozicioni aktual</div>
-                              <div className="text-slate-600 break-words">
-                                {d.current_address ?? `${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}`}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        {d.delivery_address && (
-                          <div className="mt-2 flex items-start gap-1.5 text-xs">
-                            <Navigation className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
-                            <div className="min-w-0">
-                              <div className="font-semibold text-slate-500">Destinacioni</div>
-                              <div className="text-slate-500 break-words">{d.delivery_address}</div>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2">
-                          {d.speed_kmh != null && (
-                            <span className="inline-flex items-center gap-1"><Gauge className="w-3 h-3" />{Math.round(d.speed_kmh)} km/h</span>
-                          )}
-                          <span>{agoLabel(d.last_location_at)} me pare</span>
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
+                  />
                 </Fragment>
               );
             })}
@@ -440,7 +444,9 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                     }}
                     className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center gap-2 ${followId === d.driver_id ? 'bg-teal-600 text-white' : 'hover:bg-slate-100 text-slate-700'}`}
                   >
-                    <Truck className="w-3.5 h-3.5" />
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${followId === d.driver_id ? 'bg-white text-teal-700' : 'bg-teal-600 text-white'}`}>
+                      {deriveInitials(d.driver_name)}
+                    </span>
                     <span className="flex-1 truncate font-medium">{d.driver_name || 'Driver'}</span>
                     {d.speed_kmh != null && <span className="text-[10px] opacity-80">{Math.round(d.speed_kmh)}</span>}
                     {followId === d.driver_id && <Crosshair className="w-3.5 h-3.5" />}
@@ -453,8 +459,8 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           {activeDriver && !compact && (
             <div className="absolute bottom-3 left-3 right-3 md:right-auto md:w-[320px] z-[6] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-3">
               <div className="flex items-start gap-2">
-                <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                  {(activeDriver.driver_name || 'D').charAt(0)}
+                <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                  {deriveInitials(activeDriver.driver_name)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-slate-900 text-sm truncate">{activeDriver.driver_name || 'Driver'}</div>
@@ -512,7 +518,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                 </div>
               </div>
 
-              {activeDriver.delivery_address && (
+              {activeDriver.delivery_address && activeDriver.delivery_address.trim() ? (
                 <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-slate-500">
                   <Navigation className="w-3 h-3 flex-shrink-0 mt-0.5" />
                   <div className="min-w-0">
@@ -520,7 +526,15 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                     <span className="break-words">{activeDriver.delivery_address}</span>
                   </div>
                 </div>
-              )}
+              ) : activeDriver.base_address && activeDriver.base_lat != null && activeDriver.base_lng != null ? (
+                <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-slate-500">
+                  <Navigation className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <span className="font-semibold text-slate-600">Ne baze: </span>
+                    <span className="break-words">{activeDriver.base_address}</span>
+                  </div>
+                </div>
+              ) : null}
               <div className="flex gap-2 mt-2">
                 {activeDriver.phone && (
                   <a
