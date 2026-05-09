@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download } from 'lucide-react';
+import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download, BarChart3 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
@@ -103,9 +103,17 @@ export default function DriverDetail() {
             <h1 className="text-xl font-bold text-gray-900">{driver.full_name}</h1>
             <div className="text-sm text-gray-500 mt-0.5">{driver.email}{driver.phone ? ` • ${driver.phone}` : ''}</div>
           </div>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${driver.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            {driver.is_active ? 'Aktiv' : 'Jo aktiv'}
-          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/company/drivers/${id}/reports`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700"
+            >
+              <BarChart3 className="w-3.5 h-3.5" /> Raportet
+            </Link>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${driver.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {driver.is_active ? 'Aktiv' : 'Jo aktiv'}
+            </span>
+          </div>
         </div>
       </div>
 

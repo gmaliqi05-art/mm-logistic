@@ -73,6 +73,18 @@ interface Props {
   compact?: boolean;
 }
 
+function normalizeAddr(s: string | null | undefined): string {
+  return (s ?? '').trim().toLowerCase().replace(/[,.\s]+/g, ' ').trim();
+}
+
+function hasRealDeliveryDestination(d: { delivery_address: string | null; status: string | null; base_address: string | null }): boolean {
+  const addr = (d.delivery_address ?? '').trim();
+  if (!addr) return false;
+  if (d.status === 'delivered') return false;
+  if (normalizeAddr(addr) === normalizeAddr(d.base_address)) return false;
+  return true;
+}
+
 function deriveInitials(name: string | null | undefined): string {
   if (!name) return 'D';
   const parts = name.trim().split(/[\s-]+/).filter(Boolean);
@@ -82,26 +94,27 @@ function deriveInitials(name: string | null | undefined): string {
 }
 
 function buildTruckIcon(initials: string, selected: boolean): L.DivIcon {
-  const color = selected ? '#047857' : '#0f766e';
-  const size = selected ? 52 : 46;
+  const cargoColor = selected ? '#047857' : '#0f766e';
+  const cabColor = selected ? '#064e3b' : '#115e59';
+  const width = selected ? 64 : 56;
+  const height = selected ? 36 : 32;
+  const fontSize = selected ? 14 : 12;
   return L.divIcon({
-    className: '',
+    className: 'live-truck-icon',
     html: `
-      <div style="position:relative;width:${size}px;height:${size + 12}px;">
-        <div style="width:${size}px;height:${size}px;border-radius:14px;background:${color};border:3px solid white;box-shadow:0 4px 14px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:white;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="${size - 20}" height="${size - 20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
-            <path d="M15 18H9"/>
-            <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
-            <circle cx="17" cy="18" r="2"/>
-            <circle cx="7" cy="18" r="2"/>
-          </svg>
-        </div>
-        <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);background:white;color:${color};font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;border:2px solid ${color};box-shadow:0 2px 6px rgba(0,0,0,.25);line-height:1.2;letter-spacing:.5px;">${initials}</div>
-      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 80 44" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,.45));overflow:visible;">
+        <rect x="2" y="6" width="50" height="28" rx="3" fill="${cargoColor}"/>
+        <path d="M52 14 L68 14 L76 24 L76 34 L52 34 Z" fill="${cabColor}"/>
+        <rect x="55" y="17" width="14" height="8" rx="1.5" fill="#bae6fd" opacity="0.9"/>
+        <circle cx="15" cy="36" r="5" fill="#0f172a"/>
+        <circle cx="15" cy="36" r="2" fill="#475569"/>
+        <circle cx="62" cy="36" r="5" fill="#0f172a"/>
+        <circle cx="62" cy="36" r="2" fill="#475569"/>
+        <text x="27" y="26" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="${fontSize}" font-weight="800" fill="white" letter-spacing="0.5">${initials}</text>
+      </svg>
     `,
-    iconSize: [size, size + 12],
-    iconAnchor: [size / 2, size / 2],
+    iconSize: [width, height],
+    iconAnchor: [width / 2, height / 2],
   });
 }
 
@@ -458,8 +471,8 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
               const trail = trails[d.driver_id];
               const isActive = activeId === d.driver_id;
               const initials = deriveInitials(d.driver_name);
-              const hasDestination = Boolean(d.delivery_address && d.delivery_address.trim());
-              const showBaseRoute = !hasDestination && d.base_lat != null && d.base_lng != null;
+              const hasRealDestination = hasRealDeliveryDestination(d);
+              const showBaseRoute = !hasRealDestination && d.base_lat != null && d.base_lng != null;
               return (
                 <Fragment key={d.driver_id}>
                   {trail && trail.length > 1 && (
@@ -496,9 +509,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                     }}
                     className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center gap-2 ${followId === d.driver_id ? 'bg-teal-600 text-white' : 'hover:bg-slate-100 text-slate-700'}`}
                   >
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${followId === d.driver_id ? 'bg-white text-teal-700' : 'bg-teal-600 text-white'}`}>
-                      {deriveInitials(d.driver_name)}
-                    </span>
+                    <MiniTruck initials={deriveInitials(d.driver_name)} inverted={followId === d.driver_id} size="xs" />
                     <span className="flex-1 truncate font-medium">{d.driver_name || 'Driver'}</span>
                     {d.speed_kmh != null && <span className="text-[10px] opacity-80">{Math.round(d.speed_kmh)}</span>}
                     {followId === d.driver_id && <Crosshair className="w-3.5 h-3.5" />}
@@ -511,9 +522,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           {activeDriver && !compact && (
             <div className="absolute top-3 right-3 z-[7] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-3 w-[300px] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto">
               <div className="flex items-start gap-2">
-                <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {deriveInitials(activeDriver.driver_name)}
-                </div>
+                <MiniTruck initials={deriveInitials(activeDriver.driver_name)} />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-slate-900 text-sm truncate">{activeDriver.driver_name || 'Driver'}</div>
                   {activeDriver.note_number && (
@@ -570,7 +579,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                 </div>
               </div>
 
-              {activeDriver.delivery_address && activeDriver.delivery_address.trim() ? (
+              {hasRealDeliveryDestination(activeDriver) ? (
                 <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-slate-500">
                   <Navigation className="w-3 h-3 flex-shrink-0 mt-0.5" />
                   <div className="min-w-0">
@@ -640,5 +649,44 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
         </div>
       )}
     </div>
+  );
+}
+
+function MiniTruck({ initials, inverted = false, size = 'md' }: { initials: string; inverted?: boolean; size?: 'xs' | 'md' }) {
+  const cargoColor = inverted ? '#ffffff' : '#0f766e';
+  const cabColor = inverted ? '#e2e8f0' : '#115e59';
+  const textColor = inverted ? '#0f766e' : '#ffffff';
+  const windowColor = inverted ? '#94a3b8' : '#bae6fd';
+  const wheelColor = inverted ? '#475569' : '#0f172a';
+  const width = size === 'xs' ? 28 : 40;
+  const height = size === 'xs' ? 16 : 22;
+  const svgFontSize = size === 'xs' ? 14 : 13;
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={width}
+      height={height}
+      viewBox="0 0 80 44"
+      className="flex-shrink-0"
+      style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.15))' }}
+    >
+      <rect x="2" y="6" width="50" height="28" rx="3" fill={cargoColor} />
+      <path d="M52 14 L68 14 L76 24 L76 34 L52 34 Z" fill={cabColor} />
+      <rect x="55" y="17" width="14" height="8" rx="1.5" fill={windowColor} opacity="0.9" />
+      <circle cx="15" cy="36" r="5" fill={wheelColor} />
+      <circle cx="62" cy="36" r="5" fill={wheelColor} />
+      <text
+        x="27"
+        y="26"
+        textAnchor="middle"
+        fontFamily="system-ui,-apple-system,sans-serif"
+        fontSize={svgFontSize}
+        fontWeight="800"
+        fill={textColor}
+        letterSpacing="0.5"
+      >
+        {initials}
+      </text>
+    </svg>
   );
 }

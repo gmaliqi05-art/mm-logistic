@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Search, Plus, CreditCard as Edit2, ToggleLeft, ToggleRight, AlertTriangle, X, Users, Loader2, ChevronRight, ShieldCheck, ScanLine } from 'lucide-react';
+import { Truck, Search, Plus, CreditCard as Edit2, ToggleLeft, ToggleRight, AlertTriangle, X, Users, Loader2, ChevronRight, ShieldCheck, ScanLine, BarChart3 } from 'lucide-react';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -287,6 +287,13 @@ export default function CompanyDrivers() {
                         <button onClick={() => toggleStatus(driver)} className={`p-2 rounded-lg ${driver.is_active ? 'text-green-500 hover:text-red-500 hover:bg-red-50' : 'text-red-400 hover:text-green-500 hover:bg-green-50'}`}>
                           {driver.is_active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                         </button>
+                        <Link
+                          to={`/company/drivers/${driver.id}/reports`}
+                          title="Raportet"
+                          className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg"
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                        </Link>
                         <Link to={`/company/drivers/${driver.id}`} className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg">
                           <ChevronRight className="w-4 h-4" />
                         </Link>
