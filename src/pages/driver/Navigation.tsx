@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { Clock, MapPin, Navigation as NavigationIcon, Route, Truck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import TruckNavChooser from '../../components/fleet/TruckNavChooser';
 
 interface CountrySegment {
   country_code: string;
@@ -63,6 +64,7 @@ export default function DriverNavigation() {
   const [delivery, setDelivery] = useState<AssignedDelivery | null>(null);
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
+  const [navOpen, setNavOpen] = useState(false);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -269,16 +271,23 @@ export default function DriverNavigation() {
         </div>
       )}
 
-      {me && last && (
-        <a
-          href={`https://www.google.com/maps/dir/?api=1&origin=${me.lat},${me.lng}&destination=${last[0]},${last[1]}&travelmode=driving`}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white font-semibold"
+      {last && (
+        <button
+          onClick={() => setNavOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800"
         >
-          <NavigationIcon className="w-4 h-4" />
-          Hap navigimin ne Google Maps
-        </a>
+          <Truck className="w-4 h-4" />
+          Ndiq rrugen me navigim per kamiona
+        </button>
+      )}
+
+      {navOpen && last && (
+        <TruckNavChooser
+          destLat={last[0]}
+          destLng={last[1]}
+          label={delivery.delivery_address ?? delivery.note_number}
+          onClose={() => setNavOpen(false)}
+        />
       )}
     </div>
   );
