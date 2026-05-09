@@ -31,7 +31,6 @@ import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCa
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote } from '../../types';
-import LiveFleetMap from '../../components/fleet/LiveFleetMap';
 
 interface DriverRow {
   id: string;
@@ -336,18 +335,21 @@ export default function CompanyDashboard() {
       <ComplianceHealthCard />
 
       {profile?.company_id && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-teal-600" />
-              <h2 className="font-semibold text-gray-900 text-sm">Harta direkt - Shoferet live</h2>
-            </div>
-            <Link to="/company/live-map" className="text-xs text-teal-600 hover:underline">E plote <ArrowRight className="w-3 h-3 inline" /></Link>
+        <Link
+          to="/company/live-map"
+          className="group flex items-center gap-3 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all"
+        >
+          <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+            <MapPin className="w-5 h-5" />
           </div>
-          <div className="p-2">
-            <LiveFleetMap companyId={profile.company_id} height="380px" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm">Ndiq shoferet ne kohe reale</p>
+            <p className="text-xs text-white/80 mt-0.5">
+              Pozicioni, adresa dhe shpejtesia e cdo shoferi ne harte
+            </p>
           </div>
-        </div>
+          <ArrowRight className="w-5 h-5 opacity-90 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
       )}
 
       <ReviewCTA counts={reviewCounts} t={t} />

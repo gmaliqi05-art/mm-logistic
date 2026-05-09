@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Crosshair, Gauge, Phone, Route, Send, Truck } from 'lucide-react';
+import { Copy, Crosshair, ExternalLink, Gauge, MapPin, Navigation, Phone, Route, Send, Truck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
 
@@ -20,6 +20,48 @@ interface DriverPing {
   note_number: string | null;
   status: string | null;
   delivery_address: string | null;
+  current_address: string | null;
+}
+
+const geocodeCache = new Map<string, string>();
+
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+  const cached = geocodeCache.get(key);
+  if (cached) return cached;
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      { headers: { 'Accept-Language': 'sq,en' } },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      address?: {
+        road?: string;
+        house_number?: string;
+        suburb?: string;
+        village?: string;
+        town?: string;
+        city?: string;
+        municipality?: string;
+        county?: string;
+        state?: string;
+        postcode?: string;
+        country?: string;
+      };
+      display_name?: string;
+    };
+    const a = data.address ?? {};
+    const street = [a.road, a.house_number].filter(Boolean).join(' ');
+    const place = a.city || a.town || a.village || a.municipality || a.suburb || a.county || '';
+    const parts = [street, [a.postcode, place].filter(Boolean).join(' ')].filter(Boolean);
+    const compact = parts.join(', ');
+    const result = compact || data.display_name || null;
+    if (result) geocodeCache.set(key, result);
+    return result;
+  } catch {
+    return null;
+  }
 }
 
 interface Props {
@@ -135,6 +177,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
               note_number: r.note_number,
               status: r.status,
               delivery_address: r.delivery_address,
+              current_address: null,
             };
           }
         }
@@ -241,6 +284,37 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
   }, [companyId]);
 
   const list = useMemo(() => Object.values(drivers), [drivers]);
+
+  const lastGeocodedRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const timers: number[] = [];
+    for (const d of list) {
+      const key = `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`;
+      if (lastGeocodedRef.current[d.driver_id] === key) continue;
+      lastGeocodedRef.current[d.driver_id] = key;
+      const cached = geocodeCache.get(key);
+      if (cached) {
+        setDrivers((prev) => {
+          const cur = prev[d.driver_id];
+          if (!cur || cur.current_address === cached) return prev;
+          return { ...prev, [d.driver_id]: { ...cur, current_address: cached } };
+        });
+        continue;
+      }
+      const t = window.setTimeout(async () => {
+        const addr = await reverseGeocode(d.lat, d.lng);
+        if (!addr) return;
+        setDrivers((prev) => {
+          const cur = prev[d.driver_id];
+          if (!cur) return prev;
+          return { ...prev, [d.driver_id]: { ...cur, current_address: addr } };
+        });
+      }, 1500);
+      timers.push(t);
+    }
+    return () => { timers.forEach((t) => window.clearTimeout(t)); };
+  }, [list]);
+
   const activeDriver = useMemo(() => list.find((d) => d.driver_id === activeId) ?? null, [list, activeId]);
   const followTarget: [number, number] | null = useMemo(() => {
     if (!followId) return null;
@@ -312,21 +386,39 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                     }}
                   >
                     <Popup>
-                      <div className="text-sm min-w-[220px]">
+                      <div className="text-sm min-w-[240px]">
                         <div className="font-semibold text-slate-900">{d.driver_name || 'Driver'}</div>
                         {d.phone && (
                           <div className="flex items-center gap-1 text-xs text-slate-600 mt-0.5">
                             <Phone className="w-3 h-3" /> {d.phone}
                           </div>
                         )}
-                        {d.note_number && <div className="text-xs text-slate-700 mt-1">Dergesa: {d.note_number}</div>}
-                        {d.delivery_address && <div className="text-xs text-slate-500">{d.delivery_address}</div>}
-                        {d.speed_kmh != null && (
-                          <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
-                            <Gauge className="w-3 h-3" /> {Math.round(d.speed_kmh)} km/h
+                        <div className="mt-2 pt-2 border-t border-slate-100">
+                          <div className="flex items-start gap-1.5 text-xs">
+                            <MapPin className="w-3.5 h-3.5 text-teal-600 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <div className="font-semibold text-slate-700">Pozicioni aktual</div>
+                              <div className="text-slate-600 break-words">
+                                {d.current_address ?? `${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}`}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {d.delivery_address && (
+                          <div className="mt-2 flex items-start gap-1.5 text-xs">
+                            <Navigation className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <div className="font-semibold text-slate-500">Destinacioni</div>
+                              <div className="text-slate-500 break-words">{d.delivery_address}</div>
+                            </div>
                           </div>
                         )}
-                        <div className="text-[11px] text-slate-400 mt-1">{agoLabel(d.last_location_at)} me pare</div>
+                        <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2">
+                          {d.speed_kmh != null && (
+                            <span className="inline-flex items-center gap-1"><Gauge className="w-3 h-3" />{Math.round(d.speed_kmh)} km/h</span>
+                          )}
+                          <span>{agoLabel(d.last_location_at)} me pare</span>
+                        </div>
                       </div>
                     </Popup>
                   </Marker>
@@ -369,9 +461,6 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                   {activeDriver.note_number && (
                     <div className="text-xs text-slate-600">Dergesa {activeDriver.note_number} - {activeDriver.status}</div>
                   )}
-                  {activeDriver.delivery_address && (
-                    <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{activeDriver.delivery_address}</div>
-                  )}
                   <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-1">
                     {activeDriver.speed_kmh != null && (
                       <span className="inline-flex items-center gap-1"><Gauge className="w-3 h-3" />{Math.round(activeDriver.speed_kmh)} km/h</span>
@@ -381,6 +470,57 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                 </div>
                 <button onClick={() => setActiveId(null)} className="text-slate-400 text-xs px-1">x</button>
               </div>
+
+              <div className="mt-2 rounded-lg bg-teal-50 border border-teal-100 p-2">
+                <div className="flex items-start gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-teal-700 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-bold text-teal-800 uppercase tracking-wide">Ku eshte tani</div>
+                    <div className="text-xs font-semibold text-slate-800 break-words">
+                      {activeDriver.current_address ?? (
+                        <span className="text-slate-500 font-normal">Duke marre adresen...</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                      {activeDriver.lat.toFixed(5)}, {activeDriver.lng.toFixed(5)}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const text = activeDriver.current_address
+                          ? `${activeDriver.current_address} (${activeDriver.lat.toFixed(5)}, ${activeDriver.lng.toFixed(5)})`
+                          : `${activeDriver.lat.toFixed(5)}, ${activeDriver.lng.toFixed(5)}`;
+                        void navigator.clipboard?.writeText(text);
+                      }}
+                      title="Kopjo adresen"
+                      className="p-1 rounded-md hover:bg-teal-100 text-teal-700"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <a
+                      href={`https://www.google.com/maps?q=${activeDriver.lat},${activeDriver.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Hap ne Google Maps"
+                      className="p-1 rounded-md hover:bg-teal-100 text-teal-700"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {activeDriver.delivery_address && (
+                <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-slate-500">
+                  <Navigation className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <span className="font-semibold text-slate-600">Destinacioni: </span>
+                    <span className="break-words">{activeDriver.delivery_address}</span>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2 mt-2">
                 {activeDriver.phone && (
                   <a
