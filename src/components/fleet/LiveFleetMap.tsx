@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Copy, Crosshair, ExternalLink, Gauge, MapPin, Navigation, Phone, Route, Send } from 'lucide-react';
+import { AlertTriangle, Copy, Crosshair, ExternalLink, Gauge, MapPin, Navigation, Phone, Route, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
 
@@ -142,6 +142,18 @@ function FitBounds({ drivers, active }: { drivers: DriverPing[]; active: boolean
   return null;
 }
 
+interface TrafficAlert {
+  id: string;
+  driver_id: string;
+  delivery_note_id: string | null;
+  severity: 'low' | 'moderate' | 'high';
+  delay_minutes: number;
+  message: string;
+  created_at: string;
+  resolved_at: string | null;
+  acknowledged_at: string | null;
+}
+
 interface DeliveryRow {
   id: string;
   note_number: string;
@@ -154,9 +166,9 @@ interface DeliveryRow {
   driver?: { full_name: string; phone: string | null; base_address: string | null; base_lat: number | null; base_lng: number | null } | null;
 }
 
-function agoLabel(iso: string | null): string {
+function agoLabel(iso: string | null, now: number = Date.now()): string {
   if (!iso) return '';
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff = now - new Date(iso).getTime();
   const s = Math.max(1, Math.round(diff / 1000));
   if (s < 60) return `${s}s`;
   const m = Math.round(s / 60);
@@ -174,6 +186,41 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
   const [extendOpen, setExtendOpen] = useState<string | null>(null);
   const [extendText, setExtendText] = useState('');
   const [extendSaving, setExtendSaving] = useState(false);
+  const [trafficAlerts, setTrafficAlerts] = useState<TrafficAlert[]>([]);
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!companyId) return;
+    let cancelled = false;
+    const loadAlerts = async () => {
+      const { data } = await supabase
+        .from('route_traffic_alerts')
+        .select('id, driver_id, delivery_note_id, severity, delay_minutes, message, created_at, resolved_at, acknowledged_at')
+        .eq('company_id', companyId)
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!cancelled) setTrafficAlerts((data as TrafficAlert[]) ?? []);
+    };
+    void loadAlerts();
+    const ch = supabase
+      .channel(`traffic_alerts_${companyId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'route_traffic_alerts', filter: `company_id=eq.${companyId}` },
+        () => { void loadAlerts(); },
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(ch);
+    };
+  }, [companyId]);
 
   useEffect(() => {
     if (!companyId) return;
@@ -456,6 +503,42 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
 
   return (
     <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white relative" style={{ height }}>
+      {trafficAlerts.length > 0 && (
+        <div className="absolute top-2 left-2 right-2 z-[8] flex flex-col gap-1.5 pointer-events-none">
+          {trafficAlerts.slice(0, 3).map((a) => {
+            const severityCls =
+              a.severity === 'high'
+                ? 'bg-red-600 text-white border-red-700'
+                : a.severity === 'moderate'
+                ? 'bg-amber-500 text-white border-amber-600'
+                : 'bg-amber-100 text-amber-900 border-amber-200';
+            const driver = drivers[a.driver_id];
+            return (
+              <div
+                key={a.id}
+                className={`pointer-events-auto flex items-start gap-2 rounded-lg border shadow-lg px-3 py-2 text-xs ${severityCls}`}
+              >
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold">
+                    {driver?.driver_name || 'Shoferi'} {a.delay_minutes ? ` • vonese ${a.delay_minutes} min` : ''}
+                  </div>
+                  <div className="truncate opacity-90">{a.message}</div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveId(a.driver_id);
+                    setFollowId(a.driver_id);
+                  }}
+                  className="text-[11px] font-semibold underline whitespace-nowrap"
+                >
+                  Shiko
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {loading && list.length === 0 ? (
         <div className="h-full flex items-center justify-center text-sm text-slate-500">Loading map...</div>
       ) : (
@@ -532,7 +615,10 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                     {activeDriver.speed_kmh != null && (
                       <span className="inline-flex items-center gap-1"><Gauge className="w-3 h-3" />{Math.round(activeDriver.speed_kmh)} km/h</span>
                     )}
-                    <span>{agoLabel(activeDriver.last_location_at)} me pare</span>
+                    <span>
+                      <LiveDot lastAt={activeDriver.last_location_at} nowTick={nowTick} />
+                      {agoLabel(activeDriver.last_location_at, nowTick)} me pare
+                    </span>
                   </div>
                 </div>
                 <button onClick={() => setActiveId(null)} className="text-slate-400 text-xs px-1">x</button>
@@ -649,6 +735,18 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
         </div>
       )}
     </div>
+  );
+}
+
+function LiveDot({ lastAt, nowTick }: { lastAt: string | null; nowTick: number }) {
+  if (!lastAt) return null;
+  const diff = nowTick - new Date(lastAt).getTime();
+  const live = diff < 20000;
+  return (
+    <span
+      className={`inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle ${live ? 'bg-emerald-500' : 'bg-slate-400'}`}
+      style={live ? { boxShadow: '0 0 0 0 rgba(16,185,129,.7)', animation: 'pulse-dot 1.4s infinite' } : undefined}
+    />
   );
 }
 

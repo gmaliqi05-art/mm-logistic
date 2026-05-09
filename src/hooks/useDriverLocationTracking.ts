@@ -9,6 +9,7 @@ interface Options {
   deliveryNoteId?: string | null;
   minIntervalMs?: number;
   minDistanceM?: number;
+  heartbeatMs?: number;
 }
 
 export interface TrackingState {
@@ -36,8 +37,9 @@ export function useDriverLocationTracking({
   companyId,
   driverId,
   deliveryNoteId,
-  minIntervalMs = 15000,
-  minDistanceM = 50,
+  minIntervalMs = 2500,
+  minDistanceM = 8,
+  heartbeatMs = 10000,
 }: Options): TrackingState {
   const [state, setState] = useState<TrackingState>({
     active: false,
@@ -50,10 +52,12 @@ export function useDriverLocationTracking({
     error: null,
   });
   const watchIdRef = useRef<number | null>(null);
+  const heartbeatRef = useRef<number | null>(null);
   const lastSentRef = useRef<{ lat: number; lng: number; at: number } | null>(null);
+  const lastPosRef = useRef<{ lat: number; lng: number; at: number } | null>(null);
 
   const persist = useCallback(
-    async (lat: number, lng: number, accuracy: number | null, speed: number | null, heading: number | null) => {
+    async (lat: number, lng: number, accuracy: number | null, speedKmh: number | null, heading: number | null) => {
       if (!companyId || !driverId) return;
       try {
         await supabase.from('driver_locations').insert({
@@ -63,7 +67,7 @@ export function useDriverLocationTracking({
           lat,
           lng,
           accuracy_m: accuracy,
-          speed_kmh: speed !== null ? speed * 3.6 : null,
+          speed_kmh: speedKmh,
           heading_deg: heading,
         });
         if (deliveryNoteId) {
@@ -85,6 +89,10 @@ export function useDriverLocationTracking({
         navigator.geolocation?.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
+      if (heartbeatRef.current !== null) {
+        window.clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
       setState((s) => ({ ...s, active: false }));
       return;
     }
@@ -93,46 +101,91 @@ export function useDriverLocationTracking({
       return;
     }
 
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, accuracy, speed, heading } = pos.coords;
-        const now = Date.now();
-        const last = lastSentRef.current;
-        const shouldSend =
-          !last ||
-          now - last.at >= minIntervalMs ||
-          haversineMeters(last.lat, last.lng, latitude, longitude) >= minDistanceM;
+    const handlePosition = (pos: GeolocationPosition) => {
+      const { latitude, longitude, accuracy, speed, heading } = pos.coords;
+      const now = Date.now();
+      const last = lastSentRef.current;
+      const prevPos = lastPosRef.current;
 
-        setState({
-          active: true,
-          lat: latitude,
-          lng: longitude,
-          accuracy: accuracy ?? null,
-          speed: speed ?? null,
-          heading: heading ?? null,
-          lastSentAt: shouldSend ? now : last?.at ?? null,
-          error: null,
-        });
-
-        if (shouldSend) {
-          lastSentRef.current = { lat: latitude, lng: longitude, at: now };
-          void persist(latitude, longitude, accuracy ?? null, speed ?? null, heading ?? null);
+      let speedKmh: number | null = null;
+      if (speed != null && !Number.isNaN(speed)) {
+        speedKmh = speed * 3.6;
+      } else if (prevPos) {
+        const dMeters = haversineMeters(prevPos.lat, prevPos.lng, latitude, longitude);
+        const dtSec = (now - prevPos.at) / 1000;
+        if (dtSec > 0.2 && dtSec < 60) {
+          speedKmh = (dMeters / dtSec) * 3.6;
+          if (speedKmh < 0.5) speedKmh = 0;
         }
-      },
-      (err) => {
-        setState((s) => ({ ...s, active: false, error: err.message }));
-      },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
-    );
+      }
+      lastPosRef.current = { lat: latitude, lng: longitude, at: now };
+
+      const moved = last ? haversineMeters(last.lat, last.lng, latitude, longitude) : Infinity;
+      const shouldSend = !last || now - last.at >= minIntervalMs || moved >= minDistanceM;
+
+      setState({
+        active: true,
+        lat: latitude,
+        lng: longitude,
+        accuracy: accuracy ?? null,
+        speed: speedKmh != null ? speedKmh / 3.6 : null,
+        heading: heading ?? null,
+        lastSentAt: shouldSend ? now : last?.at ?? null,
+        error: null,
+      });
+
+      if (shouldSend) {
+        lastSentRef.current = { lat: latitude, lng: longitude, at: now };
+        void persist(latitude, longitude, accuracy ?? null, speedKmh, heading ?? null);
+      }
+    };
+
+    const handleError = (err: GeolocationPositionError) => {
+      setState((s) => ({ ...s, active: false, error: err.message }));
+    };
+
+    const id = navigator.geolocation.watchPosition(handlePosition, handleError, {
+      enableHighAccuracy: true,
+      maximumAge: 1500,
+      timeout: 20000,
+    });
     watchIdRef.current = id;
+
+    heartbeatRef.current = window.setInterval(() => {
+      const last = lastSentRef.current;
+      const pos = lastPosRef.current;
+      if (!pos) return;
+      const now = Date.now();
+      if (!last || now - last.at >= heartbeatMs) {
+        lastSentRef.current = { lat: pos.lat, lng: pos.lng, at: now };
+        void persist(pos.lat, pos.lng, null, 0, null);
+        setState((s) => ({ ...s, lastSentAt: now }));
+      }
+    }, heartbeatMs);
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(handlePosition, handleError, {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 15000,
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
+      if (heartbeatRef.current !== null) {
+        window.clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [enabled, companyId, driverId, minIntervalMs, minDistanceM, persist]);
+  }, [enabled, companyId, driverId, minIntervalMs, minDistanceM, heartbeatMs, persist]);
 
   return state;
 }

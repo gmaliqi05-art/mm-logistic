@@ -38,6 +38,7 @@ export default function DriverTracking() {
   const [nextPromptAt, setNextPromptAt] = useState<Date | null>(null);
   const [autoStopped, setAutoStopped] = useState(false);
   const [autoStartNote, setAutoStartNote] = useState<string | null>(null);
+  const [trafficAlert, setTrafficAlert] = useState<{ id: string; delay_minutes: number; severity: string; message: string } | null>(null);
   const autoStopTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -58,7 +59,14 @@ export default function DriverTracking() {
           .eq('id', profile.id)
           .maybeSingle(),
       ]);
-      setActive((delivery as ActiveDelivery | null) ?? null);
+      const activeDel = (delivery as ActiveDelivery | null) ?? null;
+      setActive(activeDel);
+      if (activeDel) {
+        setEnabled((prev) => {
+          if (!prev) setAutoStartNote('Tracking filloi automatikisht: ke nje dergese ne rruge.');
+          return true;
+        });
+      }
       if (prof) {
         const p = prof as { shift_start_hour?: number; shift_end_hour?: number; auto_tracking_enabled?: boolean };
         if (p.shift_start_hour != null) setShiftStartHour(p.shift_start_hour);
@@ -68,6 +76,42 @@ export default function DriverTracking() {
     };
     void load();
   }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    let cancelled = false;
+    const loadAlert = async () => {
+      const { data } = await supabase
+        .from('route_traffic_alerts')
+        .select('id, delay_minutes, severity, message')
+        .eq('driver_id', profile.id)
+        .is('resolved_at', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) setTrafficAlert(data as typeof trafficAlert);
+    };
+    void loadAlert();
+    const ch = supabase
+      .channel(`driver_traffic_${profile.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'route_traffic_alerts', filter: `driver_id=eq.${profile.id}` }, () => {
+        void loadAlert();
+      })
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(ch);
+    };
+  }, [profile?.id]);
+
+  async function acknowledgeTraffic() {
+    if (!trafficAlert) return;
+    await supabase
+      .from('route_traffic_alerts')
+      .update({ acknowledged_at: new Date().toISOString() })
+      .eq('id', trafficAlert.id);
+    setTrafficAlert(null);
+  }
 
   const state = useDriverLocationTracking({
     enabled,
@@ -214,6 +258,25 @@ export default function DriverTracking() {
       ) : (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-600">
           No active delivery in transit. You can still share location for testing.
+        </div>
+      )}
+
+      {trafficAlert && (
+        <div className={`rounded-xl border p-4 flex items-start gap-3 ${
+          trafficAlert.severity === 'high'
+            ? 'bg-red-50 border-red-300 text-red-900'
+            : trafficAlert.severity === 'moderate'
+            ? 'bg-amber-50 border-amber-300 text-amber-900'
+            : 'bg-amber-50 border-amber-200 text-amber-800'
+        }`}>
+          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold">Trafik ne rrugen tende • vonese rreth {trafficAlert.delay_minutes} min</div>
+            <p className="text-xs mt-1 opacity-90">{trafficAlert.message}</p>
+          </div>
+          <button onClick={acknowledgeTraffic} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/80 hover:bg-white">
+            Pranoj
+          </button>
         </div>
       )}
 
