@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   ScanLine,
   Key,
+  Route,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,6 +50,7 @@ const allNavItems = [
   { to: '/company/partners', icon: Building2, labelKey: 'nav.partners', end: false, premium: false, bottomNav: false },
   { to: '/company/pallet-accounts', icon: Package, labelKey: 'nav.palletAccounts', end: false, premium: false, bottomNav: false },
   { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap', end: false, premium: false, bottomNav: false },
+  { to: '/company/route-planner', icon: Route, labelKey: 'nav.routePlanner', end: false, premium: false, bottomNav: false },
   { to: '/company/stock', icon: Package, labelKey: 'nav.stock', end: false, premium: false, bottomNav: true },
   { to: '/company/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, premium: false, bottomNav: true },
   { to: '/company/depots', icon: Warehouse, labelKey: 'nav.depots', end: false, premium: false, bottomNav: false },

@@ -175,6 +175,7 @@ export const fr: typeof sq = {
     documents: 'Documents',
     tracking: 'Suivi',
     liveMap: 'Carte en direct',
+    routePlanner: 'Planificateur d\'itinéraire',
     palletAccounts: 'Comptes de palettes',
     apiWebhooks: 'API & Webhooks',
     deliveryNotes: 'Nouvelles commandes',

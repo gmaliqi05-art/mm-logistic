@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapPin, Navigation, AlertTriangle, CheckCircle2, Power, Clock, Route, Coffee, X } from 'lucide-react';
+import { MapPin, Navigation, AlertTriangle, CheckCircle2, Power, Clock, Route, Coffee, X, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDriverLocationTracking } from '../../hooks/useDriverLocationTracking';
@@ -15,14 +15,29 @@ interface ActiveDelivery {
 
 const AUTO_STOP_DELAY_MS = 10 * 60 * 1000;
 
+function msUntilNextLocalHour(hour: number): number {
+  const now = new Date();
+  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, 0, 0, 0);
+  if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
+  return next.getTime() - now.getTime();
+}
+
+function isWithinWorkingWindow(startHour: number, endHour: number): boolean {
+  const h = new Date().getHours();
+  return h >= startHour && h < endHour;
+}
+
 export default function DriverTracking() {
   const { profile } = useAuth();
   const [enabled, setEnabled] = useState(false);
   const [active, setActive] = useState<ActiveDelivery | null>(null);
+  const [shiftStartHour, setShiftStartHour] = useState(7);
   const [shiftEndHour, setShiftEndHour] = useState(17);
+  const [autoTracking, setAutoTracking] = useState(false);
   const [prompt, setPrompt] = useState<{ id: string; sent_at: string } | null>(null);
   const [nextPromptAt, setNextPromptAt] = useState<Date | null>(null);
   const [autoStopped, setAutoStopped] = useState(false);
+  const [autoStartNote, setAutoStartNote] = useState<string | null>(null);
   const autoStopTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -37,11 +52,18 @@ export default function DriverTracking() {
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
-        supabase.from('profiles').select('shift_end_hour').eq('id', profile.id).maybeSingle(),
+        supabase
+          .from('profiles')
+          .select('shift_start_hour, shift_end_hour, auto_tracking_enabled')
+          .eq('id', profile.id)
+          .maybeSingle(),
       ]);
       setActive((delivery as ActiveDelivery | null) ?? null);
-      if (prof && (prof as { shift_end_hour?: number }).shift_end_hour != null) {
-        setShiftEndHour((prof as { shift_end_hour: number }).shift_end_hour);
+      if (prof) {
+        const p = prof as { shift_start_hour?: number; shift_end_hour?: number; auto_tracking_enabled?: boolean };
+        if (p.shift_start_hour != null) setShiftStartHour(p.shift_start_hour);
+        if (p.shift_end_hour != null) setShiftEndHour(p.shift_end_hour);
+        if (p.auto_tracking_enabled != null) setAutoTracking(p.auto_tracking_enabled);
       }
     };
     void load();
@@ -53,6 +75,22 @@ export default function DriverTracking() {
     driverId: profile?.id,
     deliveryNoteId: active?.id ?? null,
   });
+
+  useEffect(() => {
+    if (!autoTracking) return;
+    if (enabled) return;
+    if (isWithinWorkingWindow(shiftStartHour, shiftEndHour)) {
+      setEnabled(true);
+      setAutoStartNote(`Tracking filloi automatikisht ne ora ${shiftStartHour}:00.`);
+      return;
+    }
+    const wait = msUntilNextLocalHour(shiftStartHour);
+    const timer = window.setTimeout(() => {
+      setEnabled(true);
+      setAutoStartNote(`Tracking filloi automatikisht ne ora ${shiftStartHour}:00.`);
+    }, wait);
+    return () => window.clearTimeout(timer);
+  }, [autoTracking, enabled, shiftStartHour, shiftEndHour]);
 
   const nextShiftCheck = useMemo(() => {
     const d = new Date();
@@ -149,6 +187,17 @@ export default function DriverTracking() {
     return Math.max(0, Math.round(remain / 60000));
   }, [prompt, state.lastSentAt]);
 
+  async function toggleAutoTracking(next: boolean) {
+    setAutoTracking(next);
+    if (profile?.id) {
+      await supabase.from('profiles').update({ auto_tracking_enabled: next }).eq('id', profile.id);
+    }
+    if (next && !enabled && isWithinWorkingWindow(shiftStartHour, shiftEndHour)) {
+      setEnabled(true);
+      setAutoStartNote(`Tracking u aktivizua sepse jemi brenda orarit te punes (${shiftStartHour}:00 - ${shiftEndHour}:00).`);
+    }
+  }
+
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-4">
       <div>
@@ -169,12 +218,42 @@ export default function DriverTracking() {
       )}
 
       <button
-        onClick={() => { setEnabled((e) => !e); setAutoStopped(false); }}
+        onClick={() => { setEnabled((e) => !e); setAutoStopped(false); setAutoStartNote(null); }}
         className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-white transition ${enabled ? 'bg-red-600 hover:bg-red-700' : 'bg-teal-600 hover:bg-teal-700'}`}
       >
         <Power className="w-5 h-5" />
         {enabled ? 'Stop sharing location' : 'Start sharing location'}
       </button>
+
+      <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2 flex-1">
+            <Zap className={`w-5 h-5 mt-0.5 ${autoTracking ? 'text-teal-600' : 'text-slate-400'}`} />
+            <div>
+              <div className="text-sm font-semibold text-slate-900">Tracking automatik</div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Kur eshte i ndezur, tracking-u fillon automatikisht cdo dite ne ora <strong>{shiftStartHour}:00</strong> dhe ndalet ne ora <strong>{shiftEndHour}:00</strong> (nese nuk konfirmon punen).
+              </p>
+            </div>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={autoTracking}
+              onChange={(e) => toggleAutoTracking(e.target.checked)}
+            />
+            <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-teal-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+          </label>
+        </div>
+      </div>
+
+      {autoStartNote && enabled && (
+        <div className="flex items-start gap-2 text-xs text-teal-800 bg-teal-50 border border-teal-200 rounded-lg p-2.5">
+          <Zap className="w-4 h-4 mt-0.5 flex-shrink-0 text-teal-600" />
+          <span>{autoStartNote}</span>
+        </div>
+      )}
 
       {enabled && nextPromptAt && (
         <div className="flex items-center gap-2 text-xs text-slate-600 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
@@ -231,9 +310,9 @@ export default function DriverTracking() {
         className="flex items-center justify-between px-4 py-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition"
       >
         <span className="flex items-center gap-2 font-semibold">
-          <Route className="w-5 h-5" /> Planifiko rrugen me kosto minimale
+          <Route className="w-5 h-5" /> Planifiko rrugen per kamiona
         </span>
-        <span className="text-xs opacity-70">Truck / HGV</span>
+        <span className="text-xs opacity-70">HGV</span>
       </Link>
 
       {prompt && (

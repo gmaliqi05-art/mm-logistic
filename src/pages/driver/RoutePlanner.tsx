@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Calculator, Euro, Fuel, MapPin, Navigation, Route, Search, Timer } from 'lucide-react';
+import { Calculator, MapPin, Navigation, Route, Search, Timer, Truck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
@@ -12,15 +12,10 @@ interface CountrySegment {
   country_code: string;
   country_name: string;
   km: number;
-  toll_eur: number;
 }
-interface Option {
-  label: string;
+interface DriverRoute {
   distance_km: number;
   duration_min: number;
-  toll_eur: number;
-  fuel_eur: number;
-  total_eur: number;
   country_breakdown: CountrySegment[];
   geometry: [number, number][];
 }
@@ -60,11 +55,8 @@ export default function DriverRoutePlanner() {
   const [origin, setOrigin] = useState<Point | null>(null);
   const [dest, setDest] = useState<Point | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ selected: Option; options: Option[] } | null>(null);
+  const [route, setRoute] = useState<DriverRoute | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [vehicleConsumption, setVehicleConsumption] = useState(32);
-  const [fuelPrice, setFuelPrice] = useState(1.65);
-  const [prefer, setPrefer] = useState<'cheapest' | 'fastest'>('cheapest');
 
   useEffect(() => {
     if (origin) return;
@@ -80,9 +72,9 @@ export default function DriverRoutePlanner() {
   }, [origin]);
 
   const geometryLatLng = useMemo(() => {
-    if (!result) return [] as [number, number][];
-    return result.selected.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
-  }, [result]);
+    if (!route) return [] as [number, number][];
+    return route.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
+  }, [route]);
 
   async function resolveOrigin(): Promise<Point | null> {
     if (origin && originText.startsWith(`${origin.lat.toFixed(5)}`)) return origin;
@@ -110,9 +102,7 @@ export default function DriverRoutePlanner() {
           origin: o,
           destination: d,
           vehicle_profile: 'driving-hgv',
-          avg_consumption_l_100km: vehicleConsumption,
-          fuel_price_eur_per_l: fuelPrice,
-          prefer,
+          prefer: 'fastest',
           driver_id: profile?.id ?? null,
           company_id: profile?.company_id ?? null,
         },
@@ -120,7 +110,22 @@ export default function DriverRoutePlanner() {
       if (fnErr) throw fnErr;
       if (!data || data.error) throw new Error(data?.error ?? 'Gabim gjate kalkulimit');
 
-      setResult(data as { selected: Option; options: Option[] });
+      const selected = data.selected as {
+        distance_km: number;
+        duration_min: number;
+        country_breakdown: CountrySegment[];
+        geometry: [number, number][];
+      };
+      setRoute({
+        distance_km: selected.distance_km,
+        duration_min: selected.duration_min,
+        country_breakdown: selected.country_breakdown.map((c) => ({
+          country_code: c.country_code,
+          country_name: c.country_name,
+          km: c.km,
+        })),
+        geometry: selected.geometry,
+      });
     } catch (err) {
       logger.warn('plan route failed', { error: err });
       setError(err instanceof Error ? err.message : 'Gabim gjate kalkulimit');
@@ -130,6 +135,8 @@ export default function DriverRoutePlanner() {
   }
 
   const center: [number, number] = origin ? [origin.lat, origin.lng] : [50.1, 10.3];
+  const hours = route ? Math.floor(route.duration_min / 60) : 0;
+  const minutes = route ? route.duration_min % 60 : 0;
 
   return (
     <div className="p-4 max-w-5xl mx-auto space-y-4">
@@ -137,7 +144,14 @@ export default function DriverRoutePlanner() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Route className="w-6 h-6 text-teal-600" /> Planifiko Rrugen
         </h1>
-        <p className="text-sm text-slate-600 mt-1">Kalkulo rrugen me kosto minimale per kamiona, perfshire taksat per cdo vend.</p>
+        <p className="text-sm text-slate-600 mt-1">
+          Rruga e lejuar per kamiona - distanca dhe koha e udhetimit.
+        </p>
+      </div>
+
+      <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center gap-2 text-sm text-teal-900">
+        <Truck className="w-4 h-4" />
+        <span>Kalkulimi perdor vetem rruget e lejuara per kamiona (HGV).</span>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
@@ -168,41 +182,6 @@ export default function DriverRoutePlanner() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Konsumi L/100km</label>
-            <input
-              type="number"
-              value={vehicleConsumption}
-              onChange={(e) => setVehicleConsumption(Number(e.target.value) || 0)}
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Cmimi EUR/L</label>
-            <input
-              type="number"
-              step="0.01"
-              value={fuelPrice}
-              onChange={(e) => setFuelPrice(Number(e.target.value) || 0)}
-              className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 text-sm"
-            />
-          </div>
-          <div className="col-span-2">
-            <label className="text-xs font-semibold text-slate-600 uppercase">Preferenca</label>
-            <div className="mt-1 flex rounded-lg overflow-hidden border border-slate-300 text-sm">
-              <button
-                onClick={() => setPrefer('cheapest')}
-                className={`flex-1 px-3 py-2 ${prefer === 'cheapest' ? 'bg-teal-600 text-white' : 'bg-white text-slate-700'}`}
-              >Me kosto me te ulet</button>
-              <button
-                onClick={() => setPrefer('fastest')}
-                className={`flex-1 px-3 py-2 ${prefer === 'fastest' ? 'bg-teal-600 text-white' : 'bg-white text-slate-700'}`}
-              >Me i shpejte</button>
-            </div>
-          </div>
-        </div>
-
         <button
           onClick={handlePlan}
           disabled={loading || !destText.trim()}
@@ -220,7 +199,7 @@ export default function DriverRoutePlanner() {
       <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ height: '380px' }}>
         <MapContainer center={center} zoom={6} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
-          {geometryLatLng.length > 1 && <FitToRoute geometry={result?.selected.geometry ?? []} />}
+          {geometryLatLng.length > 1 && <FitToRoute geometry={route?.geometry ?? []} />}
           {origin && <Marker position={[origin.lat, origin.lng]} icon={originIcon} />}
           {dest && <Marker position={[dest.lat, dest.lng]} icon={destIcon} />}
           {geometryLatLng.length > 1 && (
@@ -229,67 +208,38 @@ export default function DriverRoutePlanner() {
         </MapContainer>
       </div>
 
-      {result && (
+      {route && (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <MetricCard icon={Route} label="Distanca" value={`${result.selected.distance_km} km`} />
-            <MetricCard icon={Timer} label="Koha" value={`${Math.floor(result.selected.duration_min / 60)}h ${result.selected.duration_min % 60}min`} />
-            <MetricCard icon={Euro} label="Taksa" value={`${result.selected.toll_eur.toFixed(2)} EUR`} />
-            <MetricCard icon={Fuel} label="Karburant" value={`${result.selected.fuel_eur.toFixed(2)} EUR`} />
-          </div>
-          <div className="bg-teal-600 text-white rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-semibold uppercase opacity-80">Kosto totale ({result.selected.label})</div>
-              <div className="text-3xl font-bold mt-1">{result.selected.total_eur.toFixed(2)} EUR</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase">
+                <Route className="w-3.5 h-3.5 text-teal-600" /> Distanca
+              </div>
+              <div className="text-2xl font-bold text-slate-900 mt-1">{route.distance_km} km</div>
             </div>
-            <Calculator className="w-10 h-10 opacity-60" />
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase">
+                <Timer className="w-3.5 h-3.5 text-teal-600" /> Koha
+              </div>
+              <div className="text-2xl font-bold text-slate-900 mt-1">{hours}h {minutes}min</div>
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <h3 className="text-sm font-semibold text-slate-900 mb-2">Ndarja sipas vendeve</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-2">Vendet qe pershkohen</h3>
             <div className="space-y-1.5">
-              {result.selected.country_breakdown.map((c) => (
+              {route.country_breakdown.map((c) => (
                 <div key={c.country_code} className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 last:border-0">
-                  <span className="font-medium text-slate-800">{c.country_name} <span className="text-xs text-slate-500">({c.country_code})</span></span>
-                  <div className="flex items-center gap-4 text-slate-600">
-                    <span>{c.km} km</span>
-                    <span className="font-semibold text-slate-900">{c.toll_eur.toFixed(2)} EUR</span>
-                  </div>
+                  <span className="font-medium text-slate-800">
+                    {c.country_name} <span className="text-xs text-slate-500">({c.country_code})</span>
+                  </span>
+                  <span className="text-slate-600">{c.km} km</span>
                 </div>
               ))}
             </div>
           </div>
-
-          {result.options.length > 1 && (
-            <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">Alternativa</h3>
-              <div className="space-y-1.5">
-                {result.options.map((o, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs py-1.5">
-                    <span className="font-medium text-slate-700 capitalize">{o.label}</span>
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <span>{o.distance_km} km</span>
-                      <span>{Math.round(o.duration_min)} min</span>
-                      <span className="font-semibold text-slate-900">{o.total_eur.toFixed(2)} EUR</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
-    </div>
-  );
-}
-
-function MetricCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-3">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase">
-        <Icon className="w-3.5 h-3.5 text-teal-600" /> {label}
-      </div>
-      <div className="text-lg font-bold text-slate-900 mt-1">{value}</div>
     </div>
   );
 }
