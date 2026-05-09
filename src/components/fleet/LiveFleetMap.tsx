@@ -73,6 +73,15 @@ interface Props {
   compact?: boolean;
 }
 
+function haversine(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
 function normalizeAddr(s: string | null | undefined): string {
   return (s ?? '').trim().toLowerCase().replace(/[,.\s]+/g, ' ').trim();
 }
@@ -327,13 +336,26 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           setDrivers((prev) => {
             const existing = prev[row.driver_id];
             if (!existing) return prev;
+            const newLat = Number(row.lat);
+            const newLng = Number(row.lng);
+            let derived: number | null = null;
+            if (existing.last_location_at) {
+              const dtSec = (new Date(row.recorded_at).getTime() - new Date(existing.last_location_at).getTime()) / 1000;
+              if (dtSec > 0.5 && dtSec < 120) {
+                const meters = haversine(existing.lat, existing.lng, newLat, newLng);
+                derived = Math.max(0, (meters / dtSec) * 3.6);
+                if (derived < 1) derived = 0;
+              }
+            }
+            const fromRow = row.speed_kmh != null ? Number(row.speed_kmh) : null;
+            const speed = fromRow != null && fromRow > 0 ? fromRow : (derived ?? fromRow ?? existing.speed_kmh);
             return {
               ...prev,
               [row.driver_id]: {
                 ...existing,
-                lat: Number(row.lat),
-                lng: Number(row.lng),
-                speed_kmh: row.speed_kmh != null ? Number(row.speed_kmh) : existing.speed_kmh,
+                lat: newLat,
+                lng: newLng,
+                speed_kmh: speed,
                 heading_deg: row.heading_deg != null ? Number(row.heading_deg) : existing.heading_deg,
                 last_location_at: row.recorded_at,
               },
@@ -389,7 +411,17 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
             if (!cur) continue;
             const lat = Number(latest.lat);
             const lng = Number(latest.lng);
-            const speed = latest.speed_kmh != null ? Number(latest.speed_kmh) : cur.speed_kmh;
+            let derived: number | null = null;
+            if (cur.last_location_at && latest.recorded_at !== cur.last_location_at) {
+              const dtSec = (new Date(latest.recorded_at).getTime() - new Date(cur.last_location_at).getTime()) / 1000;
+              if (dtSec > 0.5 && dtSec < 120) {
+                const meters = haversine(cur.lat, cur.lng, lat, lng);
+                derived = Math.max(0, (meters / dtSec) * 3.6);
+                if (derived < 1) derived = 0;
+              }
+            }
+            const fromRow = latest.speed_kmh != null ? Number(latest.speed_kmh) : null;
+            const speed = fromRow != null && fromRow > 0 ? fromRow : (derived ?? fromRow ?? cur.speed_kmh);
             const heading = latest.heading_deg != null ? Number(latest.heading_deg) : cur.heading_deg;
             if (cur.lat === lat && cur.lng === lng && cur.speed_kmh === speed && cur.last_location_at === latest.recorded_at) continue;
             next[driverId] = { ...cur, lat, lng, speed_kmh: speed, heading_deg: heading, last_location_at: latest.recorded_at };
@@ -554,18 +586,10 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
               const trail = trails[d.driver_id];
               const isActive = activeId === d.driver_id;
               const initials = deriveInitials(d.driver_name);
-              const hasRealDestination = hasRealDeliveryDestination(d);
-              const showBaseRoute = !hasRealDestination && d.base_lat != null && d.base_lng != null;
               return (
                 <Fragment key={d.driver_id}>
                   {trail && trail.length > 1 && (
                     <Polyline positions={trail} pathOptions={{ color: '#0f766e', weight: 4, opacity: 0.55 }} />
-                  )}
-                  {showBaseRoute && (
-                    <Polyline
-                      positions={[[d.lat, d.lng], [d.base_lat as number, d.base_lng as number]]}
-                      pathOptions={{ color: '#0f766e', weight: 3, opacity: 0.85, dashArray: '6 8' }}
-                    />
                   )}
                   <Marker
                     position={[d.lat, d.lng]}

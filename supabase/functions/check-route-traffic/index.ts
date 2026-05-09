@@ -8,7 +8,6 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const TOMTOM_API_KEY = Deno.env.get("TOMTOM_API_KEY") ?? "";
 
 interface Delivery {
   id: string;
@@ -19,8 +18,24 @@ interface Delivery {
   delivery_address: string | null;
   current_lat: number | null;
   current_lng: number | null;
-  dest_lat: number | null;
-  dest_lng: number | null;
+  delivery_lat: number | null;
+  delivery_lng: number | null;
+}
+
+interface CompanyConfig {
+  id: string;
+  traffic_provider: string;
+  traffic_api_key: string | null;
+}
+
+const companyCache = new Map<string, CompanyConfig | null>();
+
+async function getCompany(companyId: string): Promise<CompanyConfig | null> {
+  if (companyCache.has(companyId)) return companyCache.get(companyId) ?? null;
+  const rows = await pg<CompanyConfig[]>(`companies?id=eq.${companyId}&select=id,traffic_provider,traffic_api_key`);
+  const c = rows[0] ?? null;
+  companyCache.set(companyId, c);
+  return c;
 }
 
 async function pg<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
@@ -63,10 +78,10 @@ async function osrmRoute(oLat: number, oLng: number, dLat: number, dLng: number)
   return null;
 }
 
-async function tomtomTraffic(oLat: number, oLng: number, dLat: number, dLng: number): Promise<{ delaySec: number; totalSec: number } | null> {
-  if (!TOMTOM_API_KEY) return null;
+async function tomtomTraffic(oLat: number, oLng: number, dLat: number, dLng: number, apiKey: string): Promise<{ delaySec: number; totalSec: number } | null> {
+  if (!apiKey) return null;
   try {
-    const url = `https://api.tomtom.com/routing/1/calculateRoute/${oLat},${oLng}:${dLat},${dLng}/json?traffic=true&travelMode=truck&key=${TOMTOM_API_KEY}`;
+    const url = `https://api.tomtom.com/routing/1/calculateRoute/${oLat},${oLng}:${dLat},${dLng}/json?traffic=true&travelMode=truck&key=${apiKey}`;
     const r = await fetch(url);
     const j = await r.json();
     const s = j?.routes?.[0]?.summary;
@@ -84,12 +99,17 @@ function severityFor(delayMin: number): "low" | "moderate" | "high" {
 }
 
 async function checkOne(delivery: Delivery): Promise<{ checked: boolean; alerted: boolean }> {
+  const company = await getCompany(delivery.company_id);
+  if (!company || company.traffic_provider !== 'tomtom' || !company.traffic_api_key) {
+    return { checked: false, alerted: false };
+  }
+
   const oLat = delivery.current_lat;
   const oLng = delivery.current_lng;
   if (oLat == null || oLng == null) return { checked: false, alerted: false };
 
-  let dLat = delivery.dest_lat ?? null;
-  let dLng = delivery.dest_lng ?? null;
+  let dLat = delivery.delivery_lat ?? null;
+  let dLng = delivery.delivery_lng ?? null;
   if ((dLat == null || dLng == null) && delivery.delivery_address) {
     const g = await geocodeOSM(delivery.delivery_address);
     if (g) { dLat = g.lat; dLng = g.lng; }
@@ -98,16 +118,11 @@ async function checkOne(delivery: Delivery): Promise<{ checked: boolean; alerted
 
   const [baseline, traffic] = await Promise.all([
     osrmRoute(oLat, oLng, dLat, dLng),
-    tomtomTraffic(oLat, oLng, dLat, dLng),
+    tomtomTraffic(oLat, oLng, dLat, dLng, company.traffic_api_key),
   ]);
 
-  let delaySec = 0;
-  let totalSec = baseline?.duration ?? 0;
-  if (traffic) {
-    delaySec = traffic.delaySec;
-    totalSec = traffic.totalSec;
-  }
-  const delayMin = Math.round(delaySec / 60);
+  if (!traffic) return { checked: true, alerted: false };
+  const delayMin = Math.round(traffic.delaySec / 60);
 
   if (delayMin < 10) return { checked: true, alerted: false };
 
@@ -183,11 +198,11 @@ Deno.serve(async (req: Request) => {
     let deliveries: Delivery[] = [];
     if (deliveryId) {
       deliveries = await pg<Delivery[]>(
-        `delivery_notes?id=eq.${deliveryId}&select=id,company_id,assigned_driver_id,note_number,status,delivery_address,current_lat,current_lng,dest_lat,dest_lng`,
+        `delivery_notes?id=eq.${deliveryId}&select=id,company_id,assigned_driver_id,note_number,status,delivery_address,current_lat,current_lng,delivery_lat,delivery_lng`,
       );
     } else {
       deliveries = await pg<Delivery[]>(
-        `delivery_notes?status=eq.in_transit&assigned_driver_id=not.is.null&current_lat=not.is.null&delivery_address=not.is.null&select=id,company_id,assigned_driver_id,note_number,status,delivery_address,current_lat,current_lng,dest_lat,dest_lng&limit=50`,
+        `delivery_notes?status=eq.in_transit&assigned_driver_id=not.is.null&current_lat=not.is.null&delivery_address=not.is.null&select=id,company_id,assigned_driver_id,note_number,status,delivery_address,current_lat,current_lng,delivery_lat,delivery_lng&limit=50`,
       );
     }
 

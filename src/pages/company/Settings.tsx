@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Upload, Save, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Building2, Upload, Save, Loader2, Image as ImageIcon, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -19,6 +19,8 @@ export default function CompanySettings() {
   const [companyPhone, setCompanyPhone] = useState('');
   const [companyEmail, setCompanyEmail] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [trafficProvider, setTrafficProvider] = useState<'none' | 'tomtom'>('none');
+  const [trafficApiKey, setTrafficApiKey] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function CompanySettings() {
         setCompanyPhone(data.phone || '');
         setCompanyEmail(data.email || '');
         setLogoUrl(data.logo_url || '');
+        setTrafficProvider((data.traffic_provider as 'none' | 'tomtom') || 'none');
+        setTrafficApiKey(data.traffic_api_key || '');
       }
     } catch (err: any) {
       setError(err.message || t('common.errorLoading'));
@@ -118,6 +122,8 @@ export default function CompanySettings() {
           phone: companyPhone.trim(),
           email: companyEmail.trim(),
           logo_url: logoUrl,
+          traffic_provider: trafficProvider,
+          traffic_api_key: trafficProvider === 'tomtom' ? trafficApiKey.trim() || null : null,
         })
         .eq('id', profile!.company_id!);
 
@@ -272,6 +278,43 @@ export default function CompanySettings() {
                   placeholder="info@kompania.com"
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex items-start gap-3 mb-4">
+              <Radio className="w-5 h-5 text-teal-600 mt-0.5" />
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900">Integrim trafiku (TomTom)</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Aktivizoje vetem nese shoferet e kompanise kane pajisje ose llogari TomTom. Pa kete, nuk do te gjenerohen alerte trafiku.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ofrues i trafikut</label>
+                <select
+                  value={trafficProvider}
+                  onChange={(e) => setTrafficProvider(e.target.value as 'none' | 'tomtom')}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="none">Pa integrim</option>
+                  <option value="tomtom">TomTom</option>
+                </select>
+              </div>
+              {trafficProvider === 'tomtom' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">TomTom API Key</label>
+                  <input
+                    type="password"
+                    value={trafficApiKey}
+                    onChange={(e) => setTrafficApiKey(e.target.value)}
+                    placeholder="..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

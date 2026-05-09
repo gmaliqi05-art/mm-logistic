@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { DeliveryNote, DeliveryNoteItem, Profile, Depot } from '../../types';
 import { notifyUsers } from '../../utils/notifications';
+import DestinationPicker from './DestinationPicker';
 
 interface Props {
   noteId: string;
@@ -44,6 +45,8 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
     scheduled_delivery_at: '',
     scheduled_pickup_at: '',
     delivery_address: '',
+    delivery_lat: null as number | null,
+    delivery_lng: null as number | null,
     pickup_address: '',
     notes: '',
   });
@@ -89,6 +92,8 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
           scheduled_delivery_at: n.scheduled_delivery_at ? toLocalInput(n.scheduled_delivery_at) : '',
           scheduled_pickup_at: n.scheduled_pickup_at ? toLocalInput(n.scheduled_pickup_at) : '',
           delivery_address: n.delivery_address ?? '',
+          delivery_lat: (n as unknown as { delivery_lat?: number | null }).delivery_lat ?? null,
+          delivery_lng: (n as unknown as { delivery_lng?: number | null }).delivery_lng ?? null,
           pickup_address: n.pickup_address ?? '',
           notes: n.notes ?? '',
         });
@@ -127,6 +132,8 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
         assigned_driver_id: form.assigned_driver_id || null,
         assigned_depot_id: form.assigned_depot_id || null,
         delivery_address: form.delivery_address,
+        delivery_lat: form.delivery_lat,
+        delivery_lng: form.delivery_lng,
         pickup_address: form.pickup_address,
         notes: form.notes,
         scheduled_delivery_at: fromLocalInput(form.scheduled_delivery_at),
@@ -268,18 +275,22 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
                     label={isPickup ? t('company.deliveryNotes.pickupAddress') || 'Pickup address' : t('company.deliveryNotes.deliveryAddress') || 'Delivery address'}
                     icon={MapPin}
                   >
-                    <input
-                      type="text"
-                      value={isPickup ? form.pickup_address : form.delivery_address}
-                      onChange={(e) =>
-                        setForm(
-                          isPickup
-                            ? { ...form, pickup_address: e.target.value }
-                            : { ...form, delivery_address: e.target.value },
-                        )
-                      }
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    />
+                    {isPickup ? (
+                      <input
+                        type="text"
+                        value={form.pickup_address}
+                        onChange={(e) => setForm({ ...form, pickup_address: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    ) : (
+                      <DestinationPicker
+                        address={form.delivery_address}
+                        lat={form.delivery_lat}
+                        lng={form.delivery_lng}
+                        driverId={form.assigned_driver_id || note.assigned_driver_id || null}
+                        onChange={(next) => setForm({ ...form, delivery_address: next.address, delivery_lat: next.lat, delivery_lng: next.lng })}
+                      />
+                    )}
                   </Field>
                   <Field label={t('company.deliveryNotes.notes') || 'Notes'} icon={FileText}>
                     <textarea
