@@ -111,7 +111,9 @@ const DriverOverdue = lazy(() => import('./pages/driver/Overdue'));
 const DriverSettings = lazy(() => import('./pages/driver/Settings'));
 const DriverTracking = lazy(() => import('./pages/driver/Tracking'));
 const DriverRoutePlanner = lazy(() => import('./pages/driver/RoutePlanner'));
+const DriverNavigation = lazy(() => import('./pages/driver/Navigation'));
 const CompanyRoutePlanner = lazy(() => import('./pages/company/RoutePlanner'));
+const CompanyFleetReports = lazy(() => import('./pages/company/FleetReports'));
 const LogisticsLiveMap = lazy(() => import('./pages/logistics/LiveMap'));
 const CompanyPalletAccounts = lazy(() => import('./pages/company/PalletAccounts'));
 const CompanyPalletAccountDetail = lazy(() => import('./pages/company/PalletAccountDetail'));
@@ -239,6 +241,7 @@ function AppRoutes() {
           <Route path="pallet-accounts/:id" element={<CompanyPalletAccountDetail />} />
           <Route path="live-map" element={<LogisticsLiveMap />} />
           <Route path="route-planner" element={<CompanyRoutePlanner />} />
+          <Route path="fleet-reports" element={<CompanyFleetReports />} />
           <Route path="reports" element={<CompanyReports />} />
           <Route path="repair-reports" element={<CompanyRepairReports />} />
           <Route path="worker-repair-stats" element={<CompanyWorkerRepairStats />} />
@@ -281,6 +284,7 @@ function AppRoutes() {
           <Route index element={<DriverDashboard />} />
           <Route path="tracking" element={<DriverTracking />} />
           <Route path="route-planner" element={<DriverRoutePlanner />} />
+          <Route path="navigation" element={<DriverNavigation />} />
           <Route path="overdue" element={<DriverOverdue />} />
           <Route path="documents" element={<DriverDocuments />} />
           <Route path="chat" element={<DriverChat />} />

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Calculator, Euro, Fuel, MapPin, Navigation, Route, Search, Timer } from 'lucide-react';
+import { Calculator, Check, Euro, Fuel, MapPin, Navigation, Route, Search, Send, Timer, Truck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
@@ -25,6 +25,15 @@ interface Option {
   geometry: [number, number][];
 }
 
+interface DeliveryNoteLite {
+  id: string;
+  note_number: string;
+  delivery_address: string | null;
+  pickup_address: string | null;
+  assigned_driver_id: string | null;
+  status: string;
+}
+
 const originIcon = L.divIcon({
   className: '',
   html: `<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:3px solid white;box-shadow:0 0 0 2px #10b981"></div>`,
@@ -35,6 +44,8 @@ const destIcon = L.divIcon({
   html: `<div style="width:18px;height:18px;border-radius:50%;background:#dc2626;border:3px solid white;box-shadow:0 0 0 2px #dc2626"></div>`,
   iconSize: [18, 18], iconAnchor: [9, 9],
 });
+
+const ROUTE_COLORS = ['#0f766e', '#d97706', '#6b7280'];
 
 function FitToRoute({ geometry }: { geometry: [number, number][] }) {
   const map = useMap();
@@ -64,15 +75,47 @@ export default function CompanyRoutePlanner() {
   const [error, setError] = useState<string | null>(null);
   const [vehicleConsumption, setVehicleConsumption] = useState(32);
   const [fuelPrice, setFuelPrice] = useState(1.65);
-  const [prefer, setPrefer] = useState<'cheapest' | 'fastest'>('cheapest');
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [deliveries, setDeliveries] = useState<DeliveryNoteLite[]>([]);
+  const [deliveryId, setDeliveryId] = useState<string>('');
+  const [assigning, setAssigning] = useState(false);
+  const [assigned, setAssigned] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.company_id) return;
+    void (async () => {
+      const { data } = await supabase
+        .from('delivery_notes')
+        .select('id, note_number, delivery_address, pickup_address, assigned_driver_id, status')
+        .eq('company_id', profile.company_id)
+        .in('status', ['scheduled', 'in_transit', 'assigned'])
+        .order('created_at', { ascending: false })
+        .limit(25);
+      setDeliveries((data ?? []) as DeliveryNoteLite[]);
+    })();
+  }, [profile?.company_id]);
+
+  useEffect(() => {
+    if (!deliveryId) return;
+    const d = deliveries.find((x) => x.id === deliveryId);
+    if (d?.pickup_address) setOriginText(d.pickup_address);
+    if (d?.delivery_address) setDestText(d.delivery_address);
+    setOrigin(null);
+    setDest(null);
+    setResult(null);
+    setAssigned(false);
+  }, [deliveryId, deliveries]);
+
+  const selected = result?.options[selectedIdx] ?? result?.selected;
 
   const geometryLatLng = useMemo(() => {
-    if (!result) return [] as [number, number][];
-    return result.selected.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
-  }, [result]);
+    if (!selected) return [] as [number, number][];
+    return selected.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
+  }, [selected]);
 
   async function handlePlan() {
     setError(null);
+    setAssigned(false);
     setLoading(true);
     try {
       const o = origin ?? (await geocode(originText));
@@ -89,7 +132,7 @@ export default function CompanyRoutePlanner() {
           vehicle_profile: 'driving-hgv',
           avg_consumption_l_100km: vehicleConsumption,
           fuel_price_eur_per_l: fuelPrice,
-          prefer,
+          prefer: 'cheapest',
           driver_id: null,
           company_id: profile?.company_id ?? null,
         },
@@ -97,12 +140,50 @@ export default function CompanyRoutePlanner() {
       if (fnErr) throw fnErr;
       if (!data || data.error) throw new Error(data?.error ?? 'Gabim gjate kalkulimit');
 
-      setResult(data as { selected: Option; options: Option[] });
+      const typed = data as { selected: Option; options: Option[] };
+      setResult(typed);
+      const cheapestIdx = typed.options.findIndex((o) => o.label === typed.selected.label);
+      setSelectedIdx(cheapestIdx >= 0 ? cheapestIdx : 0);
     } catch (err) {
       logger.warn('plan route failed', { error: err });
       setError(err instanceof Error ? err.message : 'Gabim gjate kalkulimit');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function assignToDelivery() {
+    if (!deliveryId || !result || !selected || !profile?.id) return;
+    setAssigning(true);
+    try {
+      await supabase
+        .from('delivery_notes')
+        .update({
+          route_alternatives: result.options.map((o) => ({
+            label: o.label,
+            distance_km: o.distance_km,
+            duration_min: o.duration_min,
+            toll_eur: o.toll_eur,
+            fuel_eur: o.fuel_eur,
+            total_eur: o.total_eur,
+            country_breakdown: o.country_breakdown,
+            geometry: o.geometry,
+          })),
+          route_selected_label: selected.label,
+          route_assigned_at: new Date().toISOString(),
+          route_assigned_by: profile.id,
+          planned_route_geojson: { type: 'LineString', coordinates: selected.geometry },
+          planned_toll_cost_eur: selected.toll_eur,
+          planned_distance_km: selected.distance_km,
+          planned_duration_min: selected.duration_min,
+        })
+        .eq('id', deliveryId);
+      setAssigned(true);
+    } catch (err) {
+      logger.warn('assign route failed', { error: err });
+      setError('Nuk u ruajt rruga.');
+    } finally {
+      setAssigning(false);
     }
   }
 
@@ -112,12 +193,30 @@ export default function CompanyRoutePlanner() {
     <div className="p-4 max-w-6xl mx-auto space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Route className="w-6 h-6 text-teal-600" /> Planifikim Rruge - Kosto
+          <Route className="w-6 h-6 text-teal-600" /> Planifikim Rruge - 3 Alternativa
         </h1>
-        <p className="text-sm text-slate-600 mt-1">Kalkulo koston totale te rruges: taksa per cdo shtet, karburant dhe distance.</p>
+        <p className="text-sm text-slate-600 mt-1">Zgjedh nje nga 3 rruget per kamiona dhe cakto-ja te nje transport.</p>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        {deliveries.length > 0 && (
+          <div>
+            <label className="text-xs font-semibold text-slate-600 uppercase">Lidh me transport (opsionale)</label>
+            <select
+              value={deliveryId}
+              onChange={(e) => setDeliveryId(e.target.value)}
+              className="w-full mt-1 px-3 py-2.5 rounded-lg border border-slate-300 text-sm"
+            >
+              <option value="">-- Pa transport --</option>
+              {deliveries.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.note_number} · {d.delivery_address ?? 'pa destinacion'}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase">Nisja</label>
@@ -145,7 +244,7 @@ export default function CompanyRoutePlanner() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase">Konsumi L/100km</label>
             <input
@@ -165,19 +264,6 @@ export default function CompanyRoutePlanner() {
               className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 text-sm"
             />
           </div>
-          <div className="col-span-2">
-            <label className="text-xs font-semibold text-slate-600 uppercase">Preferenca</label>
-            <div className="mt-1 flex rounded-lg overflow-hidden border border-slate-300 text-sm">
-              <button
-                onClick={() => setPrefer('cheapest')}
-                className={`flex-1 px-3 py-2 ${prefer === 'cheapest' ? 'bg-teal-600 text-white' : 'bg-white text-slate-700'}`}
-              >Me kosto me te ulet</button>
-              <button
-                onClick={() => setPrefer('fastest')}
-                className={`flex-1 px-3 py-2 ${prefer === 'fastest' ? 'bg-teal-600 text-white' : 'bg-white text-slate-700'}`}
-              >Me i shpejte</button>
-            </div>
-          </div>
         </div>
 
         <button
@@ -186,7 +272,7 @@ export default function CompanyRoutePlanner() {
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold disabled:opacity-50"
         >
           {loading ? <Search className="w-4 h-4 animate-pulse" /> : <Calculator className="w-4 h-4" />}
-          {loading ? 'Duke kalkuluar...' : 'Kalkulo Koston'}
+          {loading ? 'Duke kalkuluar 3 alternativat...' : 'Kalkulo 3 Alternativat'}
         </button>
 
         {error && (
@@ -194,79 +280,99 @@ export default function CompanyRoutePlanner() {
         )}
       </div>
 
-      <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ height: '380px' }}>
+      <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ height: '420px' }}>
         <MapContainer center={center} zoom={6} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
-          {geometryLatLng.length > 1 && <FitToRoute geometry={result?.selected.geometry ?? []} />}
+          {geometryLatLng.length > 1 && <FitToRoute geometry={selected?.geometry ?? []} />}
           {origin && <Marker position={[origin.lat, origin.lng]} icon={originIcon} />}
           {dest && <Marker position={[dest.lat, dest.lng]} icon={destIcon} />}
-          {geometryLatLng.length > 1 && (
-            <Polyline positions={geometryLatLng} pathOptions={{ color: '#0f766e', weight: 5 }} />
-          )}
+          {result?.options.map((opt, idx) => {
+            const positions = opt.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
+            if (positions.length < 2) return null;
+            const isSelected = idx === selectedIdx;
+            return (
+              <Polyline
+                key={idx}
+                positions={positions}
+                pathOptions={{
+                  color: ROUTE_COLORS[idx % ROUTE_COLORS.length],
+                  weight: isSelected ? 6 : 3,
+                  opacity: isSelected ? 0.95 : 0.45,
+                  dashArray: isSelected ? undefined : '6 8',
+                }}
+              />
+            );
+          })}
         </MapContainer>
       </div>
 
       {result && (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <MetricCard icon={Route} label="Distanca" value={`${result.selected.distance_km} km`} />
-            <MetricCard icon={Timer} label="Koha" value={`${Math.floor(result.selected.duration_min / 60)}h ${result.selected.duration_min % 60}min`} />
-            <MetricCard icon={Euro} label="Taksa" value={`${result.selected.toll_eur.toFixed(2)} EUR`} />
-            <MetricCard icon={Fuel} label="Karburant" value={`${result.selected.fuel_eur.toFixed(2)} EUR`} />
-          </div>
-          <div className="bg-teal-600 text-white rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-semibold uppercase opacity-80">Kosto totale ({result.selected.label})</div>
-              <div className="text-3xl font-bold mt-1">{result.selected.total_eur.toFixed(2)} EUR</div>
-            </div>
-            <Calculator className="w-10 h-10 opacity-60" />
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <h3 className="text-sm font-semibold text-slate-900 mb-2">Ndarja sipas vendeve</h3>
-            <div className="space-y-1.5">
-              {result.selected.country_breakdown.map((c) => (
-                <div key={c.country_code} className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 last:border-0">
-                  <span className="font-medium text-slate-800">{c.country_name} <span className="text-xs text-slate-500">({c.country_code})</span></span>
-                  <div className="flex items-center gap-4 text-slate-600">
-                    <span>{c.km} km</span>
-                    <span className="font-semibold text-slate-900">{c.toll_eur.toFixed(2)} EUR</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {result.options.slice(0, 3).map((opt, idx) => {
+              const isSelected = idx === selectedIdx;
+              const hours = Math.floor(opt.duration_min / 60);
+              const mins = Math.round(opt.duration_min % 60);
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedIdx(idx)}
+                  className={`text-left rounded-xl border-2 p-4 transition ${isSelected ? 'border-teal-600 bg-teal-50 shadow-md' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full" style={{ background: ROUTE_COLORS[idx % ROUTE_COLORS.length] }} />
+                      <span className="text-sm font-semibold text-slate-900 capitalize">
+                        {idx === 0 ? 'Me kosto me te ulet' : idx === 1 ? 'Alternativa 2' : 'Alternativa 3'}
+                      </span>
+                    </div>
+                    {isSelected && <Check className="w-5 h-5 text-teal-600" />}
                   </div>
-                </div>
-              ))}
-            </div>
+                  <div className="mt-3 space-y-1.5 text-sm">
+                    <div className="flex justify-between"><span className="text-slate-500">Distanca</span><span className="font-semibold">{opt.distance_km} km</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Koha</span><span className="font-semibold">{hours}h {mins}min</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Taksa</span><span className="font-semibold">{opt.toll_eur.toFixed(2)} EUR</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Karburant</span><span className="font-semibold">{opt.fuel_eur.toFixed(2)} EUR</span></div>
+                    <div className="flex justify-between pt-1.5 border-t border-slate-200">
+                      <span className="text-slate-700 font-semibold">Total</span>
+                      <span className="font-bold text-teal-700">{opt.total_eur.toFixed(2)} EUR</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
-          {result.options.length > 1 && (
+          {selected && (
             <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">Alternativa</h3>
+              <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
+                <Truck className="w-4 h-4 text-teal-600" /> Ndarja sipas vendeve (rruga e zgjedhur)
+              </h3>
               <div className="space-y-1.5">
-                {result.options.map((o, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs py-1.5">
-                    <span className="font-medium text-slate-700 capitalize">{o.label}</span>
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <span>{o.distance_km} km</span>
-                      <span>{Math.round(o.duration_min)} min</span>
-                      <span className="font-semibold text-slate-900">{o.total_eur.toFixed(2)} EUR</span>
+                {selected.country_breakdown.map((c) => (
+                  <div key={c.country_code} className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 last:border-0">
+                    <span className="font-medium text-slate-800">{c.country_name} <span className="text-xs text-slate-500">({c.country_code})</span></span>
+                    <div className="flex items-center gap-4 text-slate-600">
+                      <span>{c.km} km</span>
+                      <span className="font-semibold text-slate-900">{c.toll_eur.toFixed(2)} EUR</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+          {deliveryId && selected && (
+            <button
+              onClick={assignToDelivery}
+              disabled={assigning || assigned}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white disabled:opacity-70 ${assigned ? 'bg-emerald-600' : 'bg-slate-900 hover:bg-slate-800'}`}
+            >
+              {assigned ? <><Check className="w-4 h-4" /> Rruga u dergua te shoferi</> : <><Send className="w-4 h-4" /> {assigning ? 'Duke dërguar...' : 'Cakto kete rruge per kete transport'}</>}
+            </button>
+          )}
         </div>
       )}
-    </div>
-  );
-}
-
-function MetricCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-3">
-      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase">
-        <Icon className="w-3.5 h-3.5 text-teal-600" /> {label}
-      </div>
-      <div className="text-lg font-bold text-slate-900 mt-1">{value}</div>
     </div>
   );
 }
