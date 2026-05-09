@@ -1,44 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Calculator, MapPin, Navigation, Route, Search, Timer, Truck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { AlertCircle, Calculator, Crosshair, MapPin, Navigation, Route, Search, Timer, Truck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
+import RouteMapPicker, { reverseGeocode, type Point } from '../../components/fleet/RouteMapPicker';
 
-interface Point { lat: number; lng: number; label?: string }
-interface CountrySegment {
-  country_code: string;
-  country_name: string;
-  km: number;
-}
+interface CountrySegment { country_code: string; country_name: string; km: number }
 interface DriverRoute {
   distance_km: number;
   duration_min: number;
   country_breakdown: CountrySegment[];
   geometry: [number, number][];
-}
-
-const originIcon = L.divIcon({
-  className: '',
-  html: `<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:3px solid white;box-shadow:0 0 0 2px #10b981"></div>`,
-  iconSize: [18, 18], iconAnchor: [9, 9],
-});
-const destIcon = L.divIcon({
-  className: '',
-  html: `<div style="width:18px;height:18px;border-radius:50%;background:#dc2626;border:3px solid white;box-shadow:0 0 0 2px #dc2626"></div>`,
-  iconSize: [18, 18], iconAnchor: [9, 9],
-});
-
-function FitToRoute({ geometry }: { geometry: [number, number][] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (geometry.length === 0) return;
-    const bounds = L.latLngBounds(geometry.map(([lng, lat]) => [lat, lng] as [number, number]));
-    map.fitBounds(bounds, { padding: [40, 40] });
-  }, [geometry, map]);
-  return null;
 }
 
 async function geocode(query: string): Promise<Point | null> {
@@ -50,56 +23,51 @@ async function geocode(query: string): Promise<Point | null> {
 
 export default function DriverRoutePlanner() {
   const { profile } = useAuth();
-  const [originText, setOriginText] = useState('');
-  const [destText, setDestText] = useState('');
   const [origin, setOrigin] = useState<Point | null>(null);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const [destText, setDestText] = useState('');
   const [dest, setDest] = useState<Point | null>(null);
+  const [pickMode, setPickMode] = useState<'destination' | null>(null);
   const [loading, setLoading] = useState(false);
   const [route, setRoute] = useState<DriverRoute | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (origin) return;
-    if (!('geolocation' in navigator)) return;
-    navigator.geolocation.getCurrentPosition(
+    if (!('geolocation' in navigator)) {
+      setGpsError('GPS nuk mbeshtetet nga pajisja.');
+      return;
+    }
+    const id = navigator.geolocation.watchPosition(
       (pos) => {
-        setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Vendndodhja aktuale' });
-        setOriginText(`${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`);
+        setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'Vendndodhja aktuale (GPS)' });
+        setGpsError(null);
       },
-      () => {},
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
+      (err) => setGpsError(err.message || 'Nuk mund te marrim GPS.'),
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
     );
-  }, [origin]);
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
 
-  const geometryLatLng = useMemo(() => {
-    if (!route) return [] as [number, number][];
-    return route.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
-  }, [route]);
-
-  async function resolveOrigin(): Promise<Point | null> {
-    if (origin && originText.startsWith(`${origin.lat.toFixed(5)}`)) return origin;
-    if (!originText.trim()) return origin;
-    const p = await geocode(originText);
-    if (p) setOrigin(p);
-    return p;
+  async function handleSetDest(p: Point) {
+    setDest(p);
+    setPickMode(null);
+    const label = await reverseGeocode(p.lat, p.lng);
+    setDestText(label);
   }
 
   async function handlePlan() {
     setError(null);
     setLoading(true);
     try {
-      const o = await resolveOrigin();
-      if (!o) throw new Error('Nuk u gjet adresa e nisjes.');
+      if (!origin) throw new Error('Nuk kemi GPS. Aktivizo tracking-un.');
       let d = dest;
-      if (!d || (destText && destText !== d.label)) {
-        d = await geocode(destText);
-      }
-      if (!d) throw new Error('Nuk u gjet adresa e destinacionit.');
+      if (!d && destText.trim()) d = await geocode(destText);
+      if (!d) throw new Error('Nuk u gjet destinacioni. Kliko ne harte ose shkruaj adresen.');
       setDest(d);
 
       const { data, error: fnErr } = await supabase.functions.invoke('plan-truck-route', {
         body: {
-          origin: o,
+          origin,
           destination: d,
           vehicle_profile: 'driving-hgv',
           prefer: 'fastest',
@@ -134,9 +102,12 @@ export default function DriverRoutePlanner() {
     }
   }
 
-  const center: [number, number] = origin ? [origin.lat, origin.lng] : [50.1, 10.3];
+  const alternatives = useMemo(
+    () => (route ? [{ label: 'fastest', geometry: route.geometry }] : []),
+    [route],
+  );
   const hours = route ? Math.floor(route.duration_min / 60) : 0;
-  const minutes = route ? route.duration_min % 60 : 0;
+  const minutes = route ? Math.round(route.duration_min % 60) : 0;
 
   return (
     <div className="p-4 max-w-5xl mx-auto space-y-4">
@@ -145,7 +116,7 @@ export default function DriverRoutePlanner() {
           <Route className="w-6 h-6 text-teal-600" /> Planifiko Rrugen
         </h1>
         <p className="text-sm text-slate-600 mt-1">
-          Rruga e lejuar per kamiona - distanca dhe koha e udhetimit.
+          Nisja merret automatikisht nga GPS. Vendos vetem destinacionin.
         </p>
       </div>
 
@@ -154,37 +125,55 @@ export default function DriverRoutePlanner() {
         <span>Kalkulimi perdor vetem rruget e lejuara per kamiona (HGV).</span>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Nisja</label>
-            <div className="relative mt-1">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600" />
-              <input
-                value={originText}
-                onChange={(e) => setOriginText(e.target.value)}
-                placeholder="Adresa ose vendndodhja aktuale"
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
-              />
-            </div>
+      {gpsError && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-sm">
+          <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="font-semibold text-amber-900">GPS nuk eshte aktiv</div>
+            <div className="text-amber-800 text-xs mt-0.5">{gpsError}</div>
+            <Link to="/driver/tracking" className="inline-block mt-1 text-xs font-semibold text-teal-700 underline">
+              Hap tracking-un
+            </Link>
           </div>
-          <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Destinacioni</label>
-            <div className="relative mt-1">
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <div>
+          <label className="text-xs font-semibold text-slate-600 uppercase">Nisja (GPS live)</label>
+          <div className="mt-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm">
+            <MapPin className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span className="truncate text-slate-800">
+              {origin ? `${origin.lat.toFixed(5)}, ${origin.lng.toFixed(5)}` : 'Duke marre GPS...'}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-slate-600 uppercase">Destinacioni</label>
+          <div className="relative mt-1 flex gap-2">
+            <div className="relative flex-1">
               <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-600" />
               <input
                 value={destText}
-                onChange={(e) => setDestText(e.target.value)}
+                onChange={(e) => { setDestText(e.target.value); setDest(null); }}
                 placeholder="p.sh. Zurich, Hauptstrasse 12"
                 className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setPickMode(pickMode === 'destination' ? null : 'destination')}
+              className={`px-3 rounded-lg border text-xs font-semibold flex items-center gap-1 ${pickMode === 'destination' ? 'bg-red-600 text-white border-red-600' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+            >
+              <Crosshair className="w-3.5 h-3.5" /> Harte
+            </button>
           </div>
         </div>
 
         <button
           onClick={handlePlan}
-          disabled={loading || !destText.trim()}
+          disabled={loading || !origin || (!destText.trim() && !dest)}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold disabled:opacity-50"
         >
           {loading ? <Search className="w-4 h-4 animate-pulse" /> : <Calculator className="w-4 h-4" />}
@@ -196,17 +185,16 @@ export default function DriverRoutePlanner() {
         )}
       </div>
 
-      <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ height: '380px' }}>
-        <MapContainer center={center} zoom={6} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
-          {geometryLatLng.length > 1 && <FitToRoute geometry={route?.geometry ?? []} />}
-          {origin && <Marker position={[origin.lat, origin.lng]} icon={originIcon} />}
-          {dest && <Marker position={[dest.lat, dest.lng]} icon={destIcon} />}
-          {geometryLatLng.length > 1 && (
-            <Polyline positions={geometryLatLng} pathOptions={{ color: '#0f766e', weight: 5 }} />
-          )}
-        </MapContainer>
-      </div>
+      <RouteMapPicker
+        origin={origin}
+        dest={dest}
+        mode={pickMode}
+        allowOriginEdit={false}
+        onSetDest={handleSetDest}
+        alternatives={alternatives}
+        selectedIdx={0}
+        height={380}
+      />
 
       {route && (
         <div className="space-y-3">

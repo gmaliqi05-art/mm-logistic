@@ -77,10 +77,58 @@ export default function DriverNavigation() {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (!cancelled) {
-        setDelivery((data as AssignedDelivery | null) ?? null);
-        setLoading(false);
+
+      if (data) {
+        if (!cancelled) {
+          setDelivery(data as AssignedDelivery);
+          setLoading(false);
+        }
+        return;
       }
+
+      const { data: plan } = await supabase
+        .from('driver_route_plans')
+        .select('id, origin_address, destination_address, origin_lat, origin_lng, destination_lat, destination_lng, total_distance_km, total_duration_min, country_breakdown, selected_option, geojson, created_at')
+        .eq('target_driver_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (plan && !cancelled) {
+        const p = plan as {
+          id: string;
+          origin_address: string | null;
+          destination_address: string | null;
+          total_distance_km: number | null;
+          total_duration_min: number | null;
+          country_breakdown: Array<{ country_code: string; country_name: string; km: number }> | null;
+          selected_option: string | null;
+          geojson: { coordinates: [number, number][] } | null;
+          created_at: string;
+        };
+        setDelivery({
+          id: p.id,
+          note_number: 'Rruge ad-hoc',
+          delivery_address: p.destination_address,
+          pickup_address: p.origin_address,
+          status: 'assigned',
+          planned_distance_km: p.total_distance_km,
+          planned_duration_min: p.total_duration_min,
+          planned_route_geojson: p.geojson,
+          route_selected_label: p.selected_option,
+          route_assigned_at: p.created_at,
+          route_alternatives: p.country_breakdown
+            ? [{
+                label: p.selected_option ?? 'selected',
+                distance_km: p.total_distance_km ?? 0,
+                duration_min: p.total_duration_min ?? 0,
+                country_breakdown: p.country_breakdown,
+                geometry: p.geojson?.coordinates ?? [],
+              }]
+            : null,
+        });
+      }
+      if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [profile?.id]);

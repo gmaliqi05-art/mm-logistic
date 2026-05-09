@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { Calculator, Check, Euro, Fuel, MapPin, Navigation, Route, Search, Send, Timer, Truck } from 'lucide-react';
+import { Calculator, Check, Crosshair, MapPin, Navigation, Route, Search, Send, Truck, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
+import RouteMapPicker, { reverseGeocode, type Point } from '../../components/fleet/RouteMapPicker';
 
-interface Point { lat: number; lng: number; label?: string }
 interface CountrySegment {
   country_code: string;
   country_name: string;
@@ -34,27 +31,9 @@ interface DeliveryNoteLite {
   status: string;
 }
 
-const originIcon = L.divIcon({
-  className: '',
-  html: `<div style="width:18px;height:18px;border-radius:50%;background:#10b981;border:3px solid white;box-shadow:0 0 0 2px #10b981"></div>`,
-  iconSize: [18, 18], iconAnchor: [9, 9],
-});
-const destIcon = L.divIcon({
-  className: '',
-  html: `<div style="width:18px;height:18px;border-radius:50%;background:#dc2626;border:3px solid white;box-shadow:0 0 0 2px #dc2626"></div>`,
-  iconSize: [18, 18], iconAnchor: [9, 9],
-});
-
-const ROUTE_COLORS = ['#0f766e', '#d97706', '#6b7280'];
-
-function FitToRoute({ geometry }: { geometry: [number, number][] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (geometry.length === 0) return;
-    const bounds = L.latLngBounds(geometry.map(([lng, lat]) => [lat, lng] as [number, number]));
-    map.fitBounds(bounds, { padding: [40, 40] });
-  }, [geometry, map]);
-  return null;
+interface DriverLite {
+  id: string;
+  full_name: string;
 }
 
 async function geocode(query: string): Promise<Point | null> {
@@ -70,6 +49,7 @@ export default function CompanyRoutePlanner() {
   const [destText, setDestText] = useState('');
   const [origin, setOrigin] = useState<Point | null>(null);
   const [dest, setDest] = useState<Point | null>(null);
+  const [pickMode, setPickMode] = useState<'origin' | 'destination' | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ selected: Option; options: Option[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,21 +57,32 @@ export default function CompanyRoutePlanner() {
   const [fuelPrice, setFuelPrice] = useState(1.65);
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [deliveries, setDeliveries] = useState<DeliveryNoteLite[]>([]);
+  const [drivers, setDrivers] = useState<DriverLite[]>([]);
   const [deliveryId, setDeliveryId] = useState<string>('');
+  const [driverId, setDriverId] = useState<string>('');
   const [assigning, setAssigning] = useState(false);
   const [assigned, setAssigned] = useState(false);
 
   useEffect(() => {
     if (!profile?.company_id) return;
     void (async () => {
-      const { data } = await supabase
-        .from('delivery_notes')
-        .select('id, note_number, delivery_address, pickup_address, assigned_driver_id, status')
-        .eq('company_id', profile.company_id)
-        .in('status', ['scheduled', 'in_transit', 'assigned'])
-        .order('created_at', { ascending: false })
-        .limit(25);
-      setDeliveries((data ?? []) as DeliveryNoteLite[]);
+      const [d1, d2] = await Promise.all([
+        supabase
+          .from('delivery_notes')
+          .select('id, note_number, delivery_address, pickup_address, assigned_driver_id, status')
+          .eq('company_id', profile.company_id)
+          .in('status', ['scheduled', 'in_transit', 'assigned'])
+          .order('created_at', { ascending: false })
+          .limit(25),
+        supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('company_id', profile.company_id)
+          .eq('role', 'driver')
+          .order('full_name'),
+      ]);
+      setDeliveries((d1.data ?? []) as DeliveryNoteLite[]);
+      setDrivers((d2.data ?? []) as DriverLite[]);
     })();
   }, [profile?.company_id]);
 
@@ -100,6 +91,7 @@ export default function CompanyRoutePlanner() {
     const d = deliveries.find((x) => x.id === deliveryId);
     if (d?.pickup_address) setOriginText(d.pickup_address);
     if (d?.delivery_address) setDestText(d.delivery_address);
+    if (d?.assigned_driver_id) setDriverId(d.assigned_driver_id);
     setOrigin(null);
     setDest(null);
     setResult(null);
@@ -108,20 +100,31 @@ export default function CompanyRoutePlanner() {
 
   const selected = result?.options[selectedIdx] ?? result?.selected;
 
-  const geometryLatLng = useMemo(() => {
-    if (!selected) return [] as [number, number][];
-    return selected.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
-  }, [selected]);
+  async function handleSetOrigin(p: Point) {
+    setOrigin(p);
+    setPickMode(null);
+    const label = await reverseGeocode(p.lat, p.lng);
+    setOriginText(label);
+  }
+
+  async function handleSetDest(p: Point) {
+    setDest(p);
+    setPickMode(null);
+    const label = await reverseGeocode(p.lat, p.lng);
+    setDestText(label);
+  }
 
   async function handlePlan() {
     setError(null);
     setAssigned(false);
     setLoading(true);
     try {
-      const o = origin ?? (await geocode(originText));
-      if (!o) throw new Error('Nuk u gjet adresa e nisjes.');
+      let o = origin;
+      if (!o && originText.trim()) o = await geocode(originText);
+      if (!o) throw new Error('Nuk u gjet adresa e nisjes. Kliko ne harte ose shkruaj adresen.');
       setOrigin(o);
-      const d = dest ?? (await geocode(destText));
+      let d = dest;
+      if (!d && destText.trim()) d = await geocode(destText);
       if (!d) throw new Error('Nuk u gjet adresa e destinacionit.');
       setDest(d);
 
@@ -133,7 +136,7 @@ export default function CompanyRoutePlanner() {
           avg_consumption_l_100km: vehicleConsumption,
           fuel_price_eur_per_l: fuelPrice,
           prefer: 'cheapest',
-          driver_id: null,
+          driver_id: driverId || null,
           company_id: profile?.company_id ?? null,
         },
       });
@@ -152,13 +155,18 @@ export default function CompanyRoutePlanner() {
     }
   }
 
-  async function assignToDelivery() {
-    if (!deliveryId || !result || !selected || !profile?.id) return;
+  async function assignRoute() {
+    if (!result || !selected || !profile?.id) return;
+    if (!deliveryId && !driverId) {
+      setError('Zgjedh nje shofer ose nje transport para se te caktosh rrugen.');
+      return;
+    }
     setAssigning(true);
+    setError(null);
     try {
-      await supabase
-        .from('delivery_notes')
-        .update({
+      if (deliveryId) {
+        const delivery = deliveries.find((d) => d.id === deliveryId);
+        const patch: Record<string, unknown> = {
           route_alternatives: result.options.map((o) => ({
             label: o.label,
             distance_km: o.distance_km,
@@ -176,8 +184,54 @@ export default function CompanyRoutePlanner() {
           planned_toll_cost_eur: selected.toll_eur,
           planned_distance_km: selected.distance_km,
           planned_duration_min: selected.duration_min,
-        })
-        .eq('id', deliveryId);
+        };
+        if (driverId && delivery?.assigned_driver_id !== driverId) {
+          patch.assigned_driver_id = driverId;
+        }
+        await supabase.from('delivery_notes').update(patch).eq('id', deliveryId);
+      } else if (driverId) {
+        await supabase.from('driver_route_plans').insert({
+          company_id: profile.company_id,
+          driver_id: profile.id,
+          target_driver_id: driverId,
+          origin_address: origin?.label ?? originText,
+          destination_address: dest?.label ?? destText,
+          origin_lat: origin?.lat,
+          origin_lng: origin?.lng,
+          destination_lat: dest?.lat,
+          destination_lng: dest?.lng,
+          vehicle_profile: 'driving-hgv',
+          total_distance_km: selected.distance_km,
+          total_duration_min: selected.duration_min,
+          toll_cost_eur: selected.toll_eur,
+          fuel_cost_eur: selected.fuel_eur,
+          total_cost_eur: selected.total_eur,
+          country_breakdown: selected.country_breakdown,
+          alternatives: result.options.map((o) => ({
+            label: o.label,
+            distance_km: o.distance_km,
+            duration_min: o.duration_min,
+            toll_eur: o.toll_eur,
+            fuel_eur: o.fuel_eur,
+            total_eur: o.total_eur,
+          })),
+          selected_option: selected.label,
+          geojson: { type: 'LineString', coordinates: selected.geometry },
+        });
+      }
+
+      const targetDriver = driverId || deliveries.find((d) => d.id === deliveryId)?.assigned_driver_id;
+      if (targetDriver && profile.company_id) {
+        await supabase.from('notifications').insert({
+          company_id: profile.company_id,
+          user_id: targetDriver,
+          type: 'route_assigned',
+          title: 'Rruge e re e caktuar',
+          message: 'Kompania te ka caktuar nje rruge te re. Hap Navigimin per detajet.',
+          data: { kind: 'route_assigned', delivery_note_id: deliveryId || null },
+        });
+      }
+
       setAssigned(true);
     } catch (err) {
       logger.warn('assign route failed', { error: err });
@@ -187,7 +241,9 @@ export default function CompanyRoutePlanner() {
     }
   }
 
-  const center: [number, number] = origin ? [origin.lat, origin.lng] : [50.1, 10.3];
+  const alternatives = useMemo(() => result?.options.map((o) => ({ label: o.label, geometry: o.geometry })) ?? [], [result]);
+  const selectedDelivery = deliveries.find((d) => d.id === deliveryId);
+  const driverLocked = !!(selectedDelivery?.assigned_driver_id);
 
   return (
     <div className="p-4 max-w-6xl mx-auto space-y-4">
@@ -195,13 +251,32 @@ export default function CompanyRoutePlanner() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Route className="w-6 h-6 text-teal-600" /> Planifikim Rruge - 3 Alternativa
         </h1>
-        <p className="text-sm text-slate-600 mt-1">Zgjedh nje nga 3 rruget per kamiona dhe cakto-ja te nje transport.</p>
+        <p className="text-sm text-slate-600 mt-1">Zgjedh shoferin, vendos pikat ne harte dhe dergoji rrugen shoferit.</p>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-        {deliveries.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Lidh me transport (opsionale)</label>
+            <label className="text-xs font-semibold text-slate-600 uppercase flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" /> Shoferi
+            </label>
+            <select
+              value={driverId}
+              onChange={(e) => setDriverId(e.target.value)}
+              disabled={driverLocked}
+              className="w-full mt-1 px-3 py-2.5 rounded-lg border border-slate-300 text-sm disabled:bg-slate-100"
+            >
+              <option value="">-- Zgjedh shoferin --</option>
+              {drivers.map((d) => (
+                <option key={d.id} value={d.id}>{d.full_name}</option>
+              ))}
+            </select>
+            {driverLocked && (
+              <p className="text-[11px] text-slate-500 mt-1">Shoferi eshte marre nga transporti i zgjedhur.</p>
+            )}
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-600 uppercase">Transporti (opsionale)</label>
             <select
               value={deliveryId}
               onChange={(e) => setDeliveryId(e.target.value)}
@@ -215,31 +290,50 @@ export default function CompanyRoutePlanner() {
               ))}
             </select>
           </div>
-        )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase">Nisja</label>
-            <div className="relative mt-1">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600" />
-              <input
-                value={originText}
-                onChange={(e) => { setOriginText(e.target.value); setOrigin(null); }}
-                placeholder="Adresa e nisjes"
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
-              />
+            <div className="relative mt-1 flex gap-2">
+              <div className="relative flex-1">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600" />
+                <input
+                  value={originText}
+                  onChange={(e) => { setOriginText(e.target.value); setOrigin(null); }}
+                  placeholder="Adresa e nisjes"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setPickMode(pickMode === 'origin' ? null : 'origin')}
+                className={`px-3 rounded-lg border text-xs font-semibold flex items-center gap-1 ${pickMode === 'origin' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                title="Zgjedh ne harte"
+              >
+                <Crosshair className="w-3.5 h-3.5" /> Harte
+              </button>
             </div>
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase">Destinacioni</label>
-            <div className="relative mt-1">
-              <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-600" />
-              <input
-                value={destText}
-                onChange={(e) => { setDestText(e.target.value); setDest(null); }}
-                placeholder="p.sh. Zurich, Hauptstrasse 12"
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
-              />
+            <div className="relative mt-1 flex gap-2">
+              <div className="relative flex-1">
+                <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-600" />
+                <input
+                  value={destText}
+                  onChange={(e) => { setDestText(e.target.value); setDest(null); }}
+                  placeholder="Adresa e destinacionit"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setPickMode(pickMode === 'destination' ? null : 'destination')}
+                className={`px-3 rounded-lg border text-xs font-semibold flex items-center gap-1 ${pickMode === 'destination' ? 'bg-red-600 text-white border-red-600' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+              >
+                <Crosshair className="w-3.5 h-3.5" /> Harte
+              </button>
             </div>
           </div>
         </div>
@@ -268,7 +362,7 @@ export default function CompanyRoutePlanner() {
 
         <button
           onClick={handlePlan}
-          disabled={loading || !originText.trim() || !destText.trim()}
+          disabled={loading || (!originText.trim() && !origin) || (!destText.trim() && !dest)}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold disabled:opacity-50"
         >
           {loading ? <Search className="w-4 h-4 animate-pulse" /> : <Calculator className="w-4 h-4" />}
@@ -280,31 +374,16 @@ export default function CompanyRoutePlanner() {
         )}
       </div>
 
-      <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white" style={{ height: '420px' }}>
-        <MapContainer center={center} zoom={6} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap contributors' />
-          {geometryLatLng.length > 1 && <FitToRoute geometry={selected?.geometry ?? []} />}
-          {origin && <Marker position={[origin.lat, origin.lng]} icon={originIcon} />}
-          {dest && <Marker position={[dest.lat, dest.lng]} icon={destIcon} />}
-          {result?.options.map((opt, idx) => {
-            const positions = opt.geometry.map(([lng, lat]) => [lat, lng] as [number, number]);
-            if (positions.length < 2) return null;
-            const isSelected = idx === selectedIdx;
-            return (
-              <Polyline
-                key={idx}
-                positions={positions}
-                pathOptions={{
-                  color: ROUTE_COLORS[idx % ROUTE_COLORS.length],
-                  weight: isSelected ? 6 : 3,
-                  opacity: isSelected ? 0.95 : 0.45,
-                  dashArray: isSelected ? undefined : '6 8',
-                }}
-              />
-            );
-          })}
-        </MapContainer>
-      </div>
+      <RouteMapPicker
+        origin={origin}
+        dest={dest}
+        mode={pickMode}
+        onSetOrigin={handleSetOrigin}
+        onSetDest={handleSetDest}
+        alternatives={alternatives}
+        selectedIdx={selectedIdx}
+        height={440}
+      />
 
       {result && (
         <div className="space-y-3">
@@ -321,8 +400,8 @@ export default function CompanyRoutePlanner() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full" style={{ background: ROUTE_COLORS[idx % ROUTE_COLORS.length] }} />
-                      <span className="text-sm font-semibold text-slate-900 capitalize">
+                      <span className="w-3 h-3 rounded-full" style={{ background: ['#0f766e', '#d97706', '#6b7280'][idx % 3] }} />
+                      <span className="text-sm font-semibold text-slate-900">
                         {idx === 0 ? 'Me kosto me te ulet' : idx === 1 ? 'Alternativa 2' : 'Alternativa 3'}
                       </span>
                     </div>
@@ -362,13 +441,13 @@ export default function CompanyRoutePlanner() {
             </div>
           )}
 
-          {deliveryId && selected && (
+          {(driverId || deliveryId) && selected && (
             <button
-              onClick={assignToDelivery}
+              onClick={assignRoute}
               disabled={assigning || assigned}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white disabled:opacity-70 ${assigned ? 'bg-emerald-600' : 'bg-slate-900 hover:bg-slate-800'}`}
             >
-              {assigned ? <><Check className="w-4 h-4" /> Rruga u dergua te shoferi</> : <><Send className="w-4 h-4" /> {assigning ? 'Duke dërguar...' : 'Cakto kete rruge per kete transport'}</>}
+              {assigned ? <><Check className="w-4 h-4" /> Rruga u dergua te shoferi</> : <><Send className="w-4 h-4" /> {assigning ? 'Duke dërguar...' : 'Cakto kete rruge per shoferin'}</>}
             </button>
           )}
         </div>
