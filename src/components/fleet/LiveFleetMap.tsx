@@ -306,9 +306,61 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
       void load();
     }, 30000);
 
+    const livePoll = window.setInterval(async () => {
+      if (cancelled) return;
+      try {
+        const { data: rows } = await supabase
+          .from('driver_locations')
+          .select('driver_id, lat, lng, speed_kmh, heading_deg, recorded_at')
+          .eq('company_id', companyId)
+          .gte('recorded_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+          .order('recorded_at', { ascending: false })
+          .limit(200);
+        if (cancelled || !rows) return;
+        const latestByDriver: Record<string, { lat: number; lng: number; speed_kmh: number | null; heading_deg: number | null; recorded_at: string }> = {};
+        for (const r of rows as Array<{ driver_id: string; lat: number; lng: number; speed_kmh: number | null; heading_deg: number | null; recorded_at: string }>) {
+          if (!latestByDriver[r.driver_id]) latestByDriver[r.driver_id] = r;
+        }
+        setDrivers((prev) => {
+          let changed = false;
+          const next = { ...prev };
+          for (const [driverId, latest] of Object.entries(latestByDriver)) {
+            const cur = next[driverId];
+            if (!cur) continue;
+            const lat = Number(latest.lat);
+            const lng = Number(latest.lng);
+            const speed = latest.speed_kmh != null ? Number(latest.speed_kmh) : cur.speed_kmh;
+            const heading = latest.heading_deg != null ? Number(latest.heading_deg) : cur.heading_deg;
+            if (cur.lat === lat && cur.lng === lng && cur.speed_kmh === speed && cur.last_location_at === latest.recorded_at) continue;
+            next[driverId] = { ...cur, lat, lng, speed_kmh: speed, heading_deg: heading, last_location_at: latest.recorded_at };
+            changed = true;
+          }
+          return changed ? next : prev;
+        });
+        setTrails((prev) => {
+          const next = { ...prev };
+          for (const [driverId, latest] of Object.entries(latestByDriver)) {
+            const arr = (next[driverId] ||= []);
+            const lat = Number(latest.lat);
+            const lng = Number(latest.lng);
+            const last = arr[arr.length - 1];
+            if (!last || last[0] !== lat || last[1] !== lng) {
+              arr.push([lat, lng]);
+              if (arr.length > 400) arr.splice(0, arr.length - 400);
+              next[driverId] = [...arr];
+            }
+          }
+          return next;
+        });
+      } catch (err) {
+        logger.warn('live poll failed', { error: err });
+      }
+    }, 2000);
+
     return () => {
       cancelled = true;
       window.clearInterval(interval);
+      window.clearInterval(livePoll);
       void supabase.removeChannel(locationChannel);
       void supabase.removeChannel(deliveryChannel);
     };
@@ -431,8 +483,8 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
             })}
           </MapContainer>
 
-          {!compact && list.length > 0 && (
-            <div className="absolute top-3 right-3 z-[6] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-2 max-w-[260px] w-[240px]">
+          {!compact && list.length > 0 && !activeDriver && (
+            <div className="absolute top-3 right-3 z-[6] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-2 max-w-[220px] w-[200px]">
               <div className="text-[11px] font-semibold text-slate-500 uppercase mb-1 px-1">Shoferet aktive</div>
               <div className="max-h-[200px] overflow-y-auto space-y-1">
                 {list.map((d) => (
@@ -457,7 +509,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           )}
 
           {activeDriver && !compact && (
-            <div className="absolute bottom-3 left-3 right-3 md:right-auto md:w-[320px] z-[6] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-3">
+            <div className="absolute top-3 right-3 z-[7] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-3 w-[300px] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto">
               <div className="flex items-start gap-2">
                 <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                   {deriveInitials(activeDriver.driver_name)}
