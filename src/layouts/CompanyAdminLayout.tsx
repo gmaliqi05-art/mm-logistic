@@ -210,7 +210,7 @@ export default function CompanyAdminLayout() {
         <SubscriptionBanner />
 
         {/* Mobile Header */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-30 lg:h-16 lg:px-6">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-[800] lg:h-16 lg:px-6">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -252,7 +252,7 @@ export default function CompanyAdminLayout() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[900] bg-white border-t border-gray-200 safe-area-bottom">
         <div className="flex items-center justify-around h-16 px-1">
           {bottomNavItems.map((item) => (
             <NavLink
@@ -284,7 +284,7 @@ export default function CompanyAdminLayout() {
 
       {/* Mobile Full-Screen Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white animate-in slide-in-from-bottom duration-200">
+        <div className="lg:hidden fixed inset-0 z-[1000] bg-white animate-in slide-in-from-bottom duration-200">
           <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
               {companyLogo && (

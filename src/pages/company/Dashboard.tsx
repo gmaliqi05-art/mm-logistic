@@ -31,6 +31,7 @@ import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCa
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote } from '../../types';
+import LiveFleetMap from '../../components/fleet/LiveFleetMap';
 
 interface DriverRow {
   id: string;
@@ -333,6 +334,21 @@ export default function CompanyDashboard() {
       </div>
 
       <ComplianceHealthCard />
+
+      {profile?.company_id && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-teal-600" />
+              <h2 className="font-semibold text-gray-900 text-sm">Harta direkt - Shoferet live</h2>
+            </div>
+            <Link to="/company/live-map" className="text-xs text-teal-600 hover:underline">E plote <ArrowRight className="w-3 h-3 inline" /></Link>
+          </div>
+          <div className="p-2">
+            <LiveFleetMap companyId={profile.company_id} height="380px" />
+          </div>
+        </div>
+      )}
 
       <ReviewCTA counts={reviewCounts} t={t} />
 
