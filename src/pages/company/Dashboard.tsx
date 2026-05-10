@@ -28,7 +28,6 @@ import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import PendingScansPanel from '../../components/scanner/PendingScansPanel';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
-import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCard';
 import FinanceSnapshot from '../../components/accounting/FinanceSnapshot';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
@@ -374,8 +373,6 @@ export default function CompanyDashboard() {
         <QuickActionTile to="/company/chat" icon={MessageCircle} label={t('nav.chat')} color="cyan" />
         <QuickActionTile to="/company/reports" icon={BarChart3} label={t('nav.reports')} color="gray" />
       </div>
-
-      {accountingEnabled && <ComplianceHealthCard />}
 
       {accountingEnabled && <FinanceSnapshot companyId={profile?.company_id ?? null} />}
 

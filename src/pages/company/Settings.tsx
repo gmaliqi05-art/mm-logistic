@@ -1,17 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Upload, Save, Loader2, Image as ImageIcon, Radio, FileText, Bell, Plug } from 'lucide-react';
+import { Building2, Upload, Save, Loader2, Image as ImageIcon, Radio, FileText, Bell, Plug, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import BackButton from '../../components/BackButton';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
+import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCard';
 
-type TabKey = 'profile' | 'invoice' | 'integrations' | 'notifications';
+type TabKey = 'profile' | 'invoice' | 'integrations' | 'notifications' | 'compliance';
 
 const CURRENCIES = ['EUR', 'CHF', 'ALL', 'RSD', 'BAM', 'MKD', 'RON', 'BGN', 'PLN', 'GBP', 'USD'];
 
 export default function CompanySettings() {
   const { profile } = useAuth();
+  const { accountingEnabled } = useSubscription();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -162,6 +165,9 @@ export default function CompanySettings() {
   const tabs: { key: TabKey; label: string; icon: typeof Building2 }[] = [
     { key: 'profile', label: 'Profili i kompanise', icon: Building2 },
     { key: 'invoice', label: 'Fatura & te dhena ligjore', icon: FileText },
+    ...(accountingEnabled
+      ? [{ key: 'compliance' as TabKey, label: 'Pajtueshmeria', icon: ShieldCheck }]
+      : []),
     { key: 'integrations', label: 'Integrimet', icon: Plug },
     { key: 'notifications', label: 'Njoftimet', icon: Bell },
   ];
@@ -467,9 +473,24 @@ export default function CompanySettings() {
             </div>
           )}
 
+          {tab === 'compliance' && (
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-teal-600 mt-0.5" />
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900">Statusi i Pajtueshmerise</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Paketa e rregullave qe aplikohen per kontabilitetin dhe TVSH-ne sipas vendit te kompanise.
+                  </p>
+                </div>
+              </div>
+              <ComplianceHealthCard />
+            </div>
+          )}
+
           {tab === 'notifications' && <PushNotificationSettings />}
 
-          {tab !== 'notifications' && (
+          {tab !== 'notifications' && tab !== 'compliance' && (
             <div className="flex justify-end pt-4 border-t border-gray-200">
               <button
                 onClick={handleSave}

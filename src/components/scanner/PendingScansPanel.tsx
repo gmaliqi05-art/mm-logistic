@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 
 type ScanKind = 'purchase' | 'expense' | 'investment' | 'sale' | 'delivery_out' | 'delivery_in' | 'unknown';
@@ -37,7 +38,7 @@ interface Props {
   refreshKey?: number;
 }
 
-const COMPANY_KINDS: ScanKind[] = ['delivery_out', 'delivery_in', 'purchase'];
+const COMPANY_KINDS: ScanKind[] = ['delivery_out', 'delivery_in', 'purchase', 'expense', 'sale', 'investment', 'unknown'];
 
 const KIND_VISUAL: Record<ScanKind, { icon: typeof FileText; bg: string; color: string; key: string }> = {
   purchase: { icon: ShoppingCart, bg: 'bg-teal-100', color: 'text-teal-600', key: 'companyAdmin.scanner.kindPurchase' },
@@ -49,10 +50,23 @@ const KIND_VISUAL: Record<ScanKind, { icon: typeof FileText; bg: string; color: 
   unknown: { icon: FileText, bg: 'bg-gray-100', color: 'text-gray-500', key: 'companyAdmin.scanner.kindUnknown' },
 };
 
-function destinationFor(kind: ScanKind, role: 'company_admin' | 'accountant'): string | null {
+function destinationFor(
+  kind: ScanKind,
+  role: 'company_admin' | 'accountant',
+  accountingEnabled: boolean,
+): string {
   if (role === 'company_admin') {
     if (kind === 'delivery_out' || kind === 'delivery_in') return '/company/delivery-notes';
-    return null;
+    if (accountingEnabled) {
+      switch (kind) {
+        case 'purchase': return '/accounting/purchases';
+        case 'expense': return '/accounting/transactions';
+        case 'investment': return '/accounting/assets';
+        case 'sale': return '/accounting/invoices';
+        default: return '/accounting/scans';
+      }
+    }
+    return '/company/documents';
   }
   switch (kind) {
     case 'purchase': return '/accounting/purchases';
@@ -67,6 +81,7 @@ function destinationFor(kind: ScanKind, role: 'company_admin' | 'accountant'): s
 
 export default function PendingScansPanel({ role, refreshKey = 0 }: Props) {
   const { profile } = useAuth();
+  const { accountingEnabled } = useSubscription();
   const { t } = useTranslation();
   const [rows, setRows] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +144,7 @@ export default function PendingScansPanel({ role, refreshKey = 0 }: Props) {
           const partyName = (ex.supplier_name as string) || (ex.customer_name as string) || (ex.invoice_number as string) || '-';
           const total = typeof ex.total === 'number' ? ex.total : 0;
           const currency = (ex.currency as string) || 'EUR';
-          const dest = destinationFor(kind, role);
+          const dest = destinationFor(kind, role, accountingEnabled);
           const StatusIcon = r.status === 'saved' ? CheckCircle2 : r.status === 'failed' ? AlertTriangle : Clock;
           const statusKey = r.status === 'saved'
             ? 'companyAdmin.scanner.statusSaved'
@@ -170,18 +185,14 @@ export default function PendingScansPanel({ role, refreshKey = 0 }: Props) {
                 <StatusIcon className={`w-3 h-3 ${r.status === 'uploaded' ? 'animate-pulse' : ''}`} />
                 {t(statusKey)}
               </span>
-              {dest && <ArrowRight className="w-4 h-4 text-gray-300 flex-shrink-0" />}
+              <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
             </div>
           );
 
-          return dest ? (
+          return (
             <Link key={r.id} to={dest} className="block hover:bg-blue-50/40 transition-colors">
               {Inner}
             </Link>
-          ) : (
-            <div key={r.id} className="block">
-              {Inner}
-            </div>
           );
         })}
       </div>
