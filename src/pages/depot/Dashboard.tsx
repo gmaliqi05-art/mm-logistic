@@ -171,7 +171,7 @@ export default function DepotDashboard() {
       <DeliveryReviewPanel role="depot_worker" />
 
       {/* Quick Actions - Mobile */}
-      <div className="grid grid-cols-4 gap-2 lg:hidden">
+      <div className="grid grid-cols-5 gap-2 lg:hidden">
         <Link
           to="/depot/sorting"
           className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 shadow-md ring-2 ring-teal-300 active:opacity-90 transition-opacity"
@@ -179,7 +179,16 @@ export default function DepotDashboard() {
           <div className="p-2 bg-white/20 rounded-lg">
             <Layers className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[10px] font-bold text-white text-center leading-tight">Sortire (Selektimi)</span>
+          <span className="text-[10px] font-bold text-white text-center leading-tight">Sortire</span>
+        </Link>
+        <Link
+          to="/depot/repairs"
+          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-50 active:bg-amber-100 transition-colors"
+        >
+          <div className="p-2 bg-amber-500 rounded-lg">
+            <Wrench className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-[10px] font-medium text-amber-700 text-center leading-tight">{t('nav.repairs')}</span>
         </Link>
         <Link
           to="/depot/receiving"
@@ -215,7 +224,9 @@ export default function DepotDashboard() {
         <StatCard label={t('depot.dashboard.totalStock')} value={stats.totalStock} icon={Package} color="bg-teal-500" />
         <StatCard label={t('depot.dashboard.entryToday')} value={stats.entryToday} icon={ArrowUpCircle} color="bg-emerald-500" />
         <StatCard label={t('depot.dashboard.exitToday')} value={stats.exitToday} icon={ArrowDownCircle} color="bg-cyan-500" />
-        <StatCard label={t('depot.dashboard.pendingRepairs')} value={stats.pendingRepairs} icon={Wrench} color="bg-teal-600" />
+        <Link to="/depot/repairs" className="block">
+          <StatCard label={t('depot.dashboard.pendingRepairs')} value={stats.pendingRepairs} icon={Wrench} color="bg-amber-500" />
+        </Link>
       </div>
 
       {/* Low Stock Alert Banner */}
@@ -331,6 +342,18 @@ export default function DepotDashboard() {
                   <span className="text-sm font-bold text-white">Sortire (Selektimi)</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/80 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link
+                to="/depot/repairs"
+                className="flex items-center justify-between p-3.5 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-500 rounded-lg">
+                    <Wrench className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-sm font-medium text-amber-900">{t('nav.repairs')}</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/depot/receiving"
