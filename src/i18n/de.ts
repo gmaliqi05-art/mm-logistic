@@ -2323,6 +2323,8 @@ export const de: typeof sq = {
       expenseDesc: 'Allgemeine Ausgaben: Treibstoff, Miete, Versorgung. Wird als Transaktion gespeichert.',
       investmentTitle: 'Investition / Anlage',
       investmentDesc: 'Geraete und Anlageguter mit mehrjaehriger Abschreibung.',
+      saleTitle: 'Verkauf',
+      saleDesc: 'Ausgangsrechnung / Verkauf - erstellt Rechnung im Status "gesendet".',
       step2Title: 'Scannen oder Hochladen',
       step2Subtitle: 'Mit der Kamera scannen oder Datei vom Geraet hochladen.',
       pendingTitle: 'Zu pruefende Dokumente',

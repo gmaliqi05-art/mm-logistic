@@ -2321,6 +2321,8 @@ export const sq = {
       expenseDesc: 'Shpenzime te pergjithshme: karburant, qira, sherbime. Shkon ne transaksione.',
       investmentTitle: 'Investim / Aset',
       investmentDesc: 'Blerje pajisjesh dhe asete fikse me zhvleresim shumevjecar.',
+      saleTitle: 'Shitje',
+      saleDesc: 'Fature daleze / shitje - krijon Fature ne statusin "derguar".',
       step2Title: 'Skano ose Ngarko',
       step2Subtitle: 'Skani me kameren ose ngarkoni nje skedar nga pajisja juaj.',
       pendingTitle: 'Dokumente per Verifikim',

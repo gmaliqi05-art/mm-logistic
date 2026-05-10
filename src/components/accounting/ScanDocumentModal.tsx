@@ -8,6 +8,7 @@ import { useTranslation } from '../../i18n';
 import { formatCurrency } from '../../types/accounting';
 import type { AccContact } from '../../types/accounting';
 import CameraScanner from './CameraScanner';
+import { matchProduct, type ProductLike, type CategoryLike } from '../../utils/productMatcher';
 
 type DocKind = 'purchase' | 'expense' | 'investment' | 'sale' | 'delivery_out' | 'delivery_in';
 
@@ -101,11 +102,25 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
   const [formCategory, setFormCategory] = useState<string>('equipment');
   const [formLife, setFormLife] = useState<number>(5);
   const [formLines, setFormLines] = useState<Extracted['line_items']>([]);
+  const [lineMatches, setLineMatches] = useState<Array<{ product_id: string | null; category_id: string | null; condition: string | null }>>([]);
+  const [catalogProducts, setCatalogProducts] = useState<ProductLike[]>([]);
+  const [catalogCategories, setCatalogCategories] = useState<CategoryLike[]>([]);
   const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     fetchContacts();
+    fetchCatalog();
   }, [companyId]);
+
+  async function fetchCatalog() {
+    if (!companyId) return;
+    const [catRes, prodRes] = await Promise.all([
+      supabase.from('product_categories').select('id, name, aliases').eq('company_id', companyId),
+      supabase.from('category_products').select('id, name, sku, category_id, aliases, keywords, dimensions, default_condition').eq('company_id', companyId).eq('is_active', true),
+    ]);
+    setCatalogCategories((catRes.data as CategoryLike[]) ?? []);
+    setCatalogProducts((prodRes.data as ProductLike[]) ?? []);
+  }
 
   async function fetchContacts() {
     if (!companyId) return;
@@ -184,17 +199,33 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
 
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-document`;
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Sesioni ka skaduar. Ju lutem kyquni perseri.');
+      }
+      const docDirection = chosenKind === 'delivery_in' ? 'incoming'
+        : chosenKind === 'delivery_out' ? 'outgoing'
+        : undefined;
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
           apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify({ scanId: scan.id, role: 'accountant' }),
+        body: JSON.stringify({ scanId: scan.id, role: 'accountant', docDirection, chosenKind }),
       });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error || t('accounting.scanModal.errOcr'));
+      let json: any = null;
+      try { json = await res.json(); } catch {
+        throw new Error(`Skanuesi kthen pergjigje te pavlefshme (HTTP ${res.status}). Ju lutem provoni perseri.`);
+      }
+      if (!res.ok || !json?.success) {
+        const serverMsg = json?.error || json?.message;
+        if (serverMsg) throw new Error(serverMsg);
+        if (res.status === 429) throw new Error('Shume kerkesa njehere. Prisni nje minute dhe provoni perseri.');
+        if (res.status === 401 || res.status === 403) throw new Error('Nuk jeni i autorizuar per skanim. Rifreskoni faqen dhe provoni perseri.');
+        if (res.status >= 500) throw new Error(`Serveri ka nje problem (HTTP ${res.status}). Provoni perseri me vone.`);
+        throw new Error(`Skanimi deshtoi (HTTP ${res.status})`);
+      }
       const ex = json.extracted as Extracted;
       const rt = json.routing || null;
       if (rt && rt.suggested_kind && rt.suggested_kind !== 'unknown') {
@@ -205,7 +236,13 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
       setExtracted(ex);
       setStep('preview');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('accounting.scanModal.errScan'));
+      const msg = err instanceof Error ? err.message : t('accounting.scanModal.errScan');
+      setError(msg);
+      if (scanId) {
+        await supabase.from('acc_scanned_documents')
+          .update({ status: 'error', error_message: msg.slice(0, 500) })
+          .eq('id', scanId);
+      }
       setStep('classify');
     }
   }
@@ -219,6 +256,16 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
     setFormVat(ex.vat_amount || 0);
     setFormSubtotal(ex.subtotal || Math.max(0, (ex.total || 0) - (ex.vat_amount || 0)));
     setFormLines(ex.line_items || []);
+    const matches = (ex.line_items || []).map((li) => {
+      const mm = matchProduct(li.description || '', catalogProducts, catalogCategories);
+      const prod = mm.productId ? catalogProducts.find((p) => p.id === mm.productId) : null;
+      return {
+        product_id: mm.productId,
+        category_id: mm.categoryId,
+        condition: prod?.default_condition ?? null,
+      };
+    });
+    setLineMatches(matches);
     const kind = (rt?.suggested_kind && rt.suggested_kind !== 'unknown') ? rt.suggested_kind as DocKind : chosenKind;
     const matchedId = rt?.matched_contact_id || '';
     if (kind === 'sale' || kind === 'delivery_out') {
@@ -481,7 +528,60 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
       }));
       await supabase.from('acc_delivery_note_items').insert(items);
     }
+
+    await bridgeToLogistics(direction, data.id as string, url, contactId);
     return data.id as string;
+  }
+
+  async function bridgeToLogistics(
+    direction: 'outgoing' | 'incoming',
+    accNoteId: string,
+    documentUrl: string,
+    contactId: string | null,
+  ) {
+    if (!profile?.id || !companyId) return;
+    const partnerName = direction === 'outgoing'
+      ? (extracted?.customer_name || extracted?.supplier_name || '')
+      : (extracted?.supplier_name || extracted?.customer_name || '');
+    const noteNumber = `DN-${Date.now().toString(36).toUpperCase()}`;
+    const { data: logNote, error: lErr } = await supabase
+      .from('delivery_notes')
+      .insert({
+        company_id: companyId,
+        created_by: profile.id,
+        note_number: noteNumber,
+        type: direction === 'outgoing' ? 'delivery' : 'pickup',
+        status: 'pending_company_review',
+        partner_name: partnerName || null,
+        partner_id: null,
+        scanned_photo_url: documentUrl || null,
+        attachment_url: documentUrl || null,
+        notes: (extracted?.notes || formDescription || '').slice(0, 500),
+        ai_extracted_json: extracted ? { ...extracted, _acc_delivery_note_id: accNoteId, _acc_contact_id: contactId } : null,
+        ai_confidence: extracted?.confidence ?? null,
+        origin: 'scan',
+        reference_number: formInvoiceNumber || null,
+      })
+      .select('id')
+      .maybeSingle();
+    if (lErr || !logNote) return;
+
+    if (formLines.length > 0) {
+      const items = formLines.map((l, i) => {
+        const match = lineMatches[i] || { product_id: null, category_id: null, condition: null };
+        return {
+          delivery_note_id: logNote.id,
+          category_id: match.category_id,
+          category_product_id: match.product_id,
+          product_id: null,
+          quantity: Math.max(1, Math.round(l.quantity || 1)),
+          condition: match.condition || 'good',
+          notes: l.description || '',
+          intended_action: 'stock',
+        };
+      });
+      await supabase.from('delivery_note_items').insert(items);
+    }
   }
 
   async function handleSave() {

@@ -2323,6 +2323,8 @@ export const fr: typeof sq = {
       expenseDesc: 'Depenses generales: carburant, loyer, services. Enregistree comme transaction.',
       investmentTitle: 'Investissement / Actif',
       investmentDesc: 'Equipements et actifs immobilises avec amortissement pluriannuel.',
+      saleTitle: 'Vente',
+      saleDesc: 'Facture de sortie / vente - cree une facture au statut "envoyee".',
       step2Title: 'Scanner ou televerser',
       step2Subtitle: 'Utilisez la camera ou televersez un fichier depuis votre appareil.',
       pendingTitle: 'Documents a verifier',

@@ -2323,6 +2323,8 @@ export const en: typeof sq = {
       expenseDesc: 'General expenses: fuel, rent, utilities. Saved as a transaction.',
       investmentTitle: 'Investment / Asset',
       investmentDesc: 'Equipment and fixed assets with multi-year depreciation.',
+      saleTitle: 'Sale',
+      saleDesc: 'Outgoing invoice / sale - creates an Invoice in "sent" status.',
       step2Title: 'Scan or Upload',
       step2Subtitle: 'Use the camera or upload a file from your device.',
       pendingTitle: 'Documents to Verify',
