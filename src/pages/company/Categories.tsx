@@ -629,10 +629,10 @@ function CategoriesContent() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-modal flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-lg modal-panel flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
               <h2 className="text-lg font-semibold text-gray-900">
                 {editingCategory
                   ? t('company.categories.editCategory')
@@ -648,7 +648,7 @@ function CategoriesContent() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 modal-body-scroll flex-1">
               {!editingCategory && !editingProduct && (
                 <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
                   <button
@@ -891,7 +891,7 @@ function CategoriesContent() {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+            <div className="modal-footer flex items-center justify-end gap-3 p-6 border-t border-gray-100 flex-shrink-0">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"

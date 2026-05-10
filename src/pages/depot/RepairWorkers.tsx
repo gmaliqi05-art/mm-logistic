@@ -674,7 +674,7 @@ export default function DepotRepairWorkers() {
 
       {/* Complete button bar */}
       <div
-        className={`sticky bottom-16 lg:static z-20 rounded-xl border p-3 transition-colors ${
+        className={`sticky-above-nav rounded-xl border p-3 transition-colors ${
           canComplete
             ? 'bg-white border-teal-200 shadow-md'
             : 'bg-gray-50 border-gray-200'
@@ -830,11 +830,11 @@ export default function DepotRepairWorkers() {
 
       {showCategoryModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          className="fixed inset-0 z-modal bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4"
           onClick={() => setShowCategoryModal(false)}
         >
           <div
-            className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[85vh] flex flex-col"
+            className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-xl modal-panel flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -852,7 +852,7 @@ export default function DepotRepairWorkers() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-3">
+            <div className="flex-1 modal-body-scroll p-3">
               {categories.length === 0 ? (
                 <p className="p-6 text-center text-sm text-gray-400">Nuk ka kategori.</p>
               ) : (
@@ -995,7 +995,7 @@ export default function DepotRepairWorkers() {
                 </div>
               )}
             </div>
-            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-2xl sm:rounded-b-2xl">
+            <div className="modal-footer px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-2xl sm:rounded-b-2xl">
               <button
                 type="button"
                 onClick={() => setShowCategoryModal(false)}

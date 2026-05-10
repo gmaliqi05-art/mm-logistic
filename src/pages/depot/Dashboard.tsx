@@ -182,13 +182,13 @@ export default function DepotDashboard() {
           <span className="text-[10px] font-bold text-white text-center leading-tight">Sortire</span>
         </Link>
         <Link
-          to="/depot/repairs"
+          to="/depot/repair-workers"
           className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-50 active:bg-amber-100 transition-colors"
         >
           <div className="p-2 bg-amber-500 rounded-lg">
             <Wrench className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[10px] font-medium text-amber-700 text-center leading-tight">{t('nav.repairs')}</span>
+          <span className="text-[10px] font-medium text-amber-700 text-center leading-tight">{t('nav.repairWorkers')}</span>
         </Link>
         <Link
           to="/depot/receiving"
@@ -344,14 +344,14 @@ export default function DepotDashboard() {
                 <ArrowRight className="w-4 h-4 text-white/80 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
-                to="/depot/repairs"
+                to="/depot/repair-workers"
                 className="flex items-center justify-between p-3.5 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-amber-500 rounded-lg">
                     <Wrench className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-amber-900">{t('nav.repairs')}</span>
+                  <span className="text-sm font-medium text-amber-900">{t('nav.repairWorkers')}</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
               </Link>

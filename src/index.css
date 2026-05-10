@@ -105,13 +105,39 @@
 
   /* Standard modal panel sizing using dynamic viewport units */
   .modal-panel {
-    max-height: 100vh;
+    max-height: calc(100vh - 2rem);
   }
 
   @supports (height: 100dvh) {
     .modal-panel {
-      max-height: 100dvh;
+      max-height: calc(100dvh - 2rem);
     }
+  }
+
+  /* Sticky action bar above bottom nav on mobile */
+  .sticky-above-nav {
+    position: sticky;
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 0.5rem);
+    z-index: 20;
+  }
+
+  @media (min-width: 1024px) {
+    .sticky-above-nav {
+      position: static;
+      bottom: auto;
+    }
+  }
+
+  /* Modal z-index scale that sits above bottom nav (z-40) */
+  .z-modal {
+    z-index: 60;
+  }
+
+  /* Scroll body area inside a modal */
+  .modal-body-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Sticky footer inside modals that respects iOS safe-area */
