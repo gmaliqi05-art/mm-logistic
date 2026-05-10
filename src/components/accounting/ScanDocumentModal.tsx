@@ -171,14 +171,22 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
   }
 
   async function runScan() {
-    if (!file || !companyId) return;
+    if (!file || !companyId) {
+      setError('Ju lutem ngarkoni nje dokument para se te skanoni.');
+      return;
+    }
     setStep('scanning');
     setError('');
+    let localScanId = '';
     try {
       const ext = file.name.split('.').pop() || 'bin';
       const path = `${companyId}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('acc-scans').upload(path, file);
-      if (upErr) throw upErr;
+      if (upErr) {
+        throw new Error(`Ngarkimi i skedarit deshtoi: ${upErr.message || 'gabim i panjohur'}`);
+      }
+
+      const fileMime = file.type || (ext === 'pdf' ? 'application/pdf' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'png' ? 'image/png' : 'application/octet-stream');
 
       const { data: scan, error: scanErr } = await supabase
         .from('acc_scanned_documents')
@@ -186,14 +194,17 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
           company_id: companyId,
           uploaded_by: profile?.id,
           storage_path: path,
-          file_mime: file.type,
+          file_mime: fileMime,
           file_size: file.size,
           chosen_type: chosenKind,
           status: 'uploaded',
         })
         .select()
-        .single();
-      if (scanErr) throw scanErr;
+        .maybeSingle();
+      if (scanErr || !scan) {
+        throw new Error(`Nuk u regjistrua dokumenti ne baze: ${scanErr?.message || 'pa pergjigje'}`);
+      }
+      localScanId = scan.id;
       setScanId(scan.id);
       setStoragePath(path);
 
@@ -202,18 +213,23 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
       if (!session?.access_token) {
         throw new Error('Sesioni ka skaduar. Ju lutem kyquni perseri.');
       }
-      const docDirection = chosenKind === 'delivery_in' ? 'incoming'
-        : chosenKind === 'delivery_out' ? 'outgoing'
+      const docDirection = chosenKind === 'delivery_in' ? 'in'
+        : chosenKind === 'delivery_out' ? 'out'
         : undefined;
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ scanId: scan.id, role: 'accountant', docDirection, chosenKind }),
-      });
+      let res: Response;
+      try {
+        res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ scanId: scan.id, role: 'accountant', docDirection, chosenKind }),
+        });
+      } catch (netErr: any) {
+        throw new Error(`Nuk u lidh dot me skanuesin: ${netErr?.message || 'problem rrjeti'}`);
+      }
       let json: any = null;
       try { json = await res.json(); } catch {
         throw new Error(`Skanuesi kthen pergjigje te pavlefshme (HTTP ${res.status}). Ju lutem provoni perseri.`);
@@ -236,12 +252,16 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
       setExtracted(ex);
       setStep('preview');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t('accounting.scanModal.errScan');
+      const rawMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : '');
+      const msg = rawMsg && rawMsg.trim().length > 0
+        ? rawMsg
+        : `${t('accounting.scanModal.errScan')}: probleme te panjohura. Kontrolloni lidhjen dhe provoni perseri.`;
       setError(msg);
-      if (scanId) {
+      const updateId = localScanId || scanId;
+      if (updateId) {
         await supabase.from('acc_scanned_documents')
           .update({ status: 'error', error_message: msg.slice(0, 500) })
-          .eq('id', scanId);
+          .eq('id', updateId);
       }
       setStep('classify');
     }
