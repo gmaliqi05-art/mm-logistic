@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   ScanLine,
+  Tag,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -251,6 +252,21 @@ export default function DepotStock() {
       ),
     );
   const sortedCategories = categories.slice().sort((a, b) => compareCategoriesByPriority(a.name, b.name));
+
+  const groupedStocks = (() => {
+    const map = new Map<string, { categoryId: string; categoryName: string; rows: typeof sortedStocks; total: number }>();
+    sortedStocks.forEach((s) => {
+      const catName = (s.category as any)?.name ?? 'Pa kategori';
+      const catId = s.category_id ?? `name:${catName}`;
+      if (!map.has(catId)) {
+        map.set(catId, { categoryId: catId, categoryName: catName, rows: [], total: 0 });
+      }
+      const g = map.get(catId)!;
+      g.rows.push(s);
+      g.total += s.quantity;
+    });
+    return Array.from(map.values()).sort((a, b) => compareCategoriesByPriority(a.categoryName, b.categoryName));
+  })();
   const goodTotal = stocks.filter((s) => s.condition === 'good').reduce((sum, s) => sum + s.quantity, 0);
   const damagedTotal = stocks.filter((s) => s.condition === 'damaged').reduce((sum, s) => sum + s.quantity, 0);
   const repairedTotal = stocks.filter((s) => s.condition === 'repaired').reduce((sum, s) => sum + s.quantity, 0);
@@ -342,61 +358,71 @@ export default function DepotStock() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{t('depot.stock.title')}</h2>
+      {sortedStocks.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-400">
+          <Package className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+          {t('company.stock.noStock')}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">{t('depot.stock.category')}</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.quantity')}</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('company.stock.condition')}</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('common.date')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {sortedStocks.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                    <Package className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                    {t('company.stock.noStock')}
-                  </td>
-                </tr>
-              ) : (
-                sortedStocks.map((stock) => {
-                  const productName = (stock as any).product?.name as string | undefined;
-                  const categoryName = (stock.category as any)?.name as string | undefined;
-                  return (
-                    <tr key={stock.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        <div>{productName || categoryName || '-'}</div>
-                        <div className="sm:hidden text-xs text-gray-500 mt-0.5">{productName ? categoryName : ''}</div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 hidden sm:table-cell">
-                        {categoryName ?? '-'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-semibold text-gray-900">{stock.quantity}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${conditionConfig[stock.condition]?.className ?? 'bg-gray-100 text-gray-700'}`}>
-                          {conditionConfig[stock.condition]?.label ?? stock.condition}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">
-                        {new Date(stock.updated_at).toLocaleDateString()}
-                      </td>
+      ) : (
+        <div className="space-y-5">
+          {groupedStocks.map((group) => (
+            <section key={group.categoryId} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <header className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-teal-50 via-emerald-50 to-white flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 rounded-xl bg-teal-600 shadow-sm shadow-teal-600/20">
+                    <Tag className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold text-gray-900 truncate">{group.categoryName}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {group.rows.length} {group.rows.length === 1 ? 'rresht' : 'rreshta'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">{group.total}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500 mt-1">{t('common.pieces')}</p>
+                </div>
+              </header>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                      <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
+                      <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{t('common.quantity')}</th>
+                      <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{t('company.stock.condition')}</th>
+                      <th className="text-left px-5 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('common.date')}</th>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {group.rows.map((stock) => {
+                      const productName = (stock as any).product?.name as string | undefined;
+                      return (
+                        <tr key={stock.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-5 py-3 text-sm font-medium text-gray-900">
+                            {productName || <span className="italic text-gray-400">Pa produkt te caktuar</span>}
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className="text-sm font-semibold text-gray-900 tabular-nums">{stock.quantity}</span>
+                          </td>
+                          <td className="px-5 py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${conditionConfig[stock.condition]?.className ?? 'bg-gray-100 text-gray-700'}`}>
+                              {conditionConfig[stock.condition]?.label ?? stock.condition}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-sm text-gray-500 hidden md:table-cell">
+                            {new Date(stock.updated_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ))}
         </div>
-      </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-100">

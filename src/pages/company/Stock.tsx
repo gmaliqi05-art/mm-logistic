@@ -301,6 +301,24 @@ export default function CompanyStock() {
     });
   }, [productCards, search, filterCategory, filterDepot]);
 
+  const groupedByCategory = useMemo(() => {
+    const groups = new Map<string, { categoryId: string; categoryName: string; cards: ProductCard[]; total: number; damaged: number }>();
+    filteredCards.forEach((c) => {
+      const key = c.categoryId || `name:${c.categoryName}`;
+      if (!groups.has(key)) {
+        groups.set(key, { categoryId: c.categoryId, categoryName: c.categoryName, cards: [], total: 0, damaged: 0 });
+      }
+      const g = groups.get(key)!;
+      g.cards.push(c);
+      g.total += c.total;
+      g.damaged += c.damaged;
+    });
+    groups.forEach((g) => {
+      g.cards.sort((a, b) => epalClassRank(a.productName) - epalClassRank(b.productName) || a.productName.localeCompare(b.productName));
+    });
+    return Array.from(groups.values()).sort((a, b) => compareCategoriesByPriority(a.categoryName, b.categoryName));
+  }, [filteredCards]);
+
   const stats = useMemo(() => {
     const totalActive = productCards.reduce((sum, c) => sum + c.total, 0);
     const totalDamaged = productCards.reduce((sum, c) => sum + c.damaged, 0);
@@ -599,12 +617,31 @@ export default function CompanyStock() {
       )}
 
       {tab === 'active' && (
-        <div>
+        <div className="space-y-6">
           {filteredCards.length === 0 ? (
             <EmptyState icon={Package} text={t('company.stock.noStock')} />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredCards.map((c) => {
+            groupedByCategory.map((group) => (
+              <section key={group.categoryId || group.categoryName} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <header className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-teal-50 via-emerald-50 to-white flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2.5 rounded-xl bg-teal-600 shadow-sm shadow-teal-600/20">
+                      <Tag className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-base font-bold text-gray-900 truncate">{group.categoryName}</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {group.cards.length} {group.cards.length === 1 ? 'produkt' : 'produkte'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">{group.total}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-gray-500 mt-1">{t('common.pieces')}</p>
+                  </div>
+                </header>
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {group.cards.map((c) => {
                 const expanded = expandedCard === c.key;
                 const sourceTotal = c.sources.repair + c.sources.delivery + c.sources.manual;
                 const activeDepots = c.byDepot.filter((d) => d.condition !== 'damaged' && d.quantity > 0);
@@ -613,26 +650,20 @@ export default function CompanyStock() {
                     key={c.key}
                     className={`bg-white rounded-xl shadow-sm border ${c.isLegacy ? 'border-amber-200' : 'border-gray-100'} overflow-hidden hover:shadow-md transition-shadow`}
                   >
-                    <div className="p-5">
+                    <div className="p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500 bg-gray-100 rounded px-1.5 py-0.5">
-                              <Tag className="w-3 h-3" />
-                              {c.categoryName}
-                            </span>
-                            {c.isLegacy && (
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-                                Pa produkt
-                              </span>
-                            )}
-                          </div>
                           <h3 className="text-base font-bold text-gray-900 truncate" title={c.productName}>
                             {c.productName}
                           </h3>
+                          {c.isLegacy && (
+                            <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                              Pa produkt
+                            </span>
+                          )}
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="text-3xl font-bold text-gray-900 tabular-nums leading-none">{c.total}</p>
+                          <p className="text-2xl font-bold text-gray-900 tabular-nums leading-none">{c.total}</p>
                           <p className="text-[10px] uppercase tracking-wide text-gray-400 mt-1">{t('common.pieces')}</p>
                         </div>
                       </div>
@@ -710,7 +741,9 @@ export default function CompanyStock() {
                   </div>
                 );
               })}
-            </div>
+                </div>
+              </section>
+            ))
           )}
         </div>
       )}

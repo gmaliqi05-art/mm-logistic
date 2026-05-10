@@ -352,7 +352,7 @@ export default function CompanyDeliveryNotes() {
     setShowDetail(true);
     const { data } = await supabase
       .from('delivery_note_items')
-      .select('*, category:product_categories(name)')
+      .select('*, category:product_categories(name), product:category_products(name)')
       .eq('delivery_note_id', note.id);
     setNoteItems(data ?? []);
   }
@@ -1231,7 +1231,10 @@ export default function CompanyDeliveryNotes() {
                     {noteItems.map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{(item.category as any)?.name ?? '-'}</p>
+                          <p className="text-sm font-medium text-gray-900">{(item as any).product?.name ?? (item.category as any)?.name ?? '-'}</p>
+                          {(item as any).product?.name && (item.category as any)?.name && (
+                            <p className="text-[11px] text-gray-500 mt-0.5">{(item.category as any).name}</p>
+                          )}
                           {item.notes && <p className="text-xs text-gray-500 mt-0.5">{item.notes}</p>}
                         </div>
                         <div className="flex items-center gap-2">

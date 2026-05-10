@@ -63,7 +63,7 @@ interface Stats {
   statusCounts: Record<string, number>;
   stockByDepot: { name: string; total: number; depotId: string }[];
   driverStats: DriverRow[];
-  recentMovements: { type: string; quantity: number; depot: string; category: string; created_at: string }[];
+  recentMovements: { type: string; quantity: number; depot: string; category: string; product: string; created_at: string }[];
   dayBuckets: DayBucket[];
 }
 
@@ -217,7 +217,7 @@ export default function CompanyDashboard() {
         supabase.from('depots').select('id, name').eq('company_id', companyId).eq('is_active', true),
         supabase.from('delivery_notes').select('assigned_driver_id, status, delivered_at, scheduled_delivery_at, scheduled_pickup_at').eq('company_id', companyId),
         supabase.from('stock_movements')
-          .select('movement_type, quantity, depot:depots(name), category:product_categories(name), created_at')
+          .select('movement_type, quantity, depot:depots(name), category:product_categories(name), product:category_products(name), created_at')
           .eq('company_id', companyId).order('created_at', { ascending: false }).limit(5),
         supabase.from('delivery_notes').select('status, created_at, delivered_at').eq('company_id', companyId).neq('status', 'draft').gte('created_at', fromIso),
       ]);
@@ -283,6 +283,7 @@ export default function CompanyDashboard() {
         quantity: m.quantity,
         depot: m.depot?.name || '-',
         category: m.category?.name || '-',
+        product: m.product?.name || '',
         created_at: m.created_at,
       }));
 
@@ -672,8 +673,10 @@ export default function CompanyDashboard() {
                   {m.type === 'entry' ? <ArrowDownRight className="w-3.5 h-3.5 text-green-600" /> : m.type === 'exit' ? <ArrowUpRight className="w-3.5 h-3.5 text-red-600" /> : <Wrench className="w-3.5 h-3.5 text-amber-600" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{m.category}</p>
-                  <p className="text-xs text-gray-500">{m.depot}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{m.product || m.category}</p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {m.product ? `${m.category} · ` : ''}{m.depot}
+                  </p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-sm font-bold text-gray-900">{m.quantity}</p>
