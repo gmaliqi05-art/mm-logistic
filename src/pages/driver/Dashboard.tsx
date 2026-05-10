@@ -957,8 +957,79 @@ export function TaskDetailSheet({
       };
 
       const detectedName = isPickup ? (ex.supplier_name || '') : (ex.customer_name || '');
+      const detectedVat = (ex as any).vat_number || (ex as any).supplier_vat || (ex as any).customer_vat || null;
+      const detectedEmail = (ex as any).email || (ex as any).supplier_email || (ex as any).customer_email || null;
+      const detectedPhone = (ex as any).phone || (ex as any).supplier_phone || (ex as any).customer_phone || null;
+      const detectedAddress = (ex as any).address || (ex as any).supplier_address || (ex as any).customer_address || null;
       if (detectedName && !note.partner_name) {
         update.partner_name = detectedName;
+      }
+      if (detectedName) {
+        update.counterparty_name = detectedName;
+      }
+      if (detectedVat) update.counterparty_vat = detectedVat;
+      if (detectedPhone) update.counterparty_phone = detectedPhone;
+      if (detectedEmail) update.counterparty_email = detectedEmail;
+
+      if (detectedName && note.company_id && !(note as any).counterparty_contact_id) {
+        try {
+          const { data: matchedCompanyId } = await supabase.rpc('match_counterparty_company', {
+            p_vat: detectedVat,
+            p_email: detectedEmail,
+            p_phone: detectedPhone,
+            p_name: detectedName,
+          });
+          if (matchedCompanyId) {
+            update.counterparty_company_id = matchedCompanyId;
+          }
+
+          let contactId: string | null = null;
+          if (detectedVat) {
+            const { data: byVat } = await supabase
+              .from('acc_contacts')
+              .select('id')
+              .eq('company_id', note.company_id)
+              .eq('vat_number', detectedVat)
+              .maybeSingle();
+            if (byVat?.id) contactId = byVat.id;
+          }
+          if (!contactId) {
+            const { data: byName } = await supabase
+              .from('acc_contacts')
+              .select('id')
+              .eq('company_id', note.company_id)
+              .ilike('name', detectedName)
+              .maybeSingle();
+            if (byName?.id) contactId = byName.id;
+          }
+          if (!contactId) {
+            const { data: created } = await supabase
+              .from('acc_contacts')
+              .insert({
+                company_id: note.company_id,
+                name: detectedName,
+                contact_type: isPickup ? 'vendor' : 'customer',
+                vat_number: detectedVat,
+                email: detectedEmail,
+                phone: detectedPhone,
+                address: detectedAddress,
+                source_document_id: result.scanId,
+                auto_created_at: new Date().toISOString(),
+                is_active: true,
+              })
+              .select('id')
+              .maybeSingle();
+            if (created?.id) contactId = created.id;
+          }
+          if (contactId) {
+            update.counterparty_contact_id = contactId;
+          }
+        } catch (err) {
+          // Non-fatal: continue with the delivery update even if partner
+          // detection fails; the company admin can still link the partner
+          // during review.
+          console.warn('auto partner detect failed', err);
+        }
       }
 
       if (ex.invoice_number && !(note as any).reference_number) {
@@ -1007,12 +1078,12 @@ export function TaskDetailSheet({
           await notifyUsers({
             userIds: admins.map((a) => a.id),
             type: 'delivery',
-            titleKey: 'notifications.templates.deliveryClosedNoDoc.title',
-            messageKey: 'notifications.templates.deliveryClosedNoDoc.body',
+            titleKey: 'notifications.templates.deliveryScannedPendingReview.title',
+            messageKey: 'notifications.templates.deliveryScannedPendingReview.body',
             params: { number: note.note_number },
             referenceId: note.id,
-            fallbackTitle: 'Dergese per shqyrtim',
-            fallbackMessage: `${note.note_number} u skanua nga shoferi dhe pret miratim.`,
+            fallbackTitle: 'Dergese e skanuar per shqyrtim',
+            fallbackMessage: `${note.note_number} u skanua/ngarkua nga shoferi dhe pret miratim.`,
           });
         }
       }

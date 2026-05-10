@@ -1570,6 +1570,10 @@ export const de: typeof sq = {
         title: 'Lieferung ohne Beleg',
         body: '{number} wurde vom Fahrer ohne Scan geschlossen - Beleg wird per E-Mail erwartet.',
       },
+      deliveryScannedPendingReview: {
+        title: 'Lieferung zur Prüfung gescannt',
+        body: '{number} wurde vom Fahrer gescannt/hochgeladen und wartet auf Freigabe.',
+      },
     },
   },
   support: {

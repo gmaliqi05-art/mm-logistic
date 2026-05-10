@@ -156,6 +156,11 @@ export default function PartnerFlows() {
                           Nga partneri
                         </span>
                       )}
+                      {weAreOwner && !r.partner_company_id && r.partner_contact_id && (
+                        <span className="ml-2 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                          Nga skanimi
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <span

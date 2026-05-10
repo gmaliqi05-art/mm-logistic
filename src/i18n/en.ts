@@ -1570,6 +1570,10 @@ export const en: typeof sq = {
         title: 'Delivery without document',
         body: '{number} was closed by the driver without scan - document expected by email.',
       },
+      deliveryScannedPendingReview: {
+        title: 'Delivery scanned for review',
+        body: '{number} was scanned/uploaded by the driver and awaits approval.',
+      },
     },
   },
   support: {

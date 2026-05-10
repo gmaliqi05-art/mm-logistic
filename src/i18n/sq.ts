@@ -1568,6 +1568,10 @@ export const sq = {
         title: 'Dergese pa dokument',
         body: '{number} u mbyll nga shoferi pa skanim - dokumenti pritet me email.',
       },
+      deliveryScannedPendingReview: {
+        title: 'Dergese e skanuar per shqyrtim',
+        body: '{number} u skanua/ngarkua nga shoferi dhe pret miratim.',
+      },
     },
   },
   support: {
