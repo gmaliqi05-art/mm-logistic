@@ -1264,20 +1264,58 @@ export default function CompanyDeliveryNotes() {
                 </div>
               )}
 
-              {selectedNote.attachment_url && (
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Dokument i bashkangjitur</p>
-                  <a
-                    href={selectedNote.attachment_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
-                  >
-                    <File className="w-5 h-5 text-teal-600 flex-shrink-0" />
-                    <span className="text-sm font-medium text-teal-700">Shiko dokumentin</span>
-                  </a>
-                </div>
-              )}
+              {(() => {
+                const scanUrl = (selectedNote as any).scanned_photo_url as string | null;
+                const attachUrl = selectedNote.attachment_url;
+                const docs = [
+                  scanUrl ? { url: scanUrl, label: 'Skanim nga shoferi' } : null,
+                  attachUrl && attachUrl !== scanUrl ? { url: attachUrl, label: 'Bashkelidhur' } : null,
+                ].filter(Boolean) as { url: string; label: string }[];
+                if (docs.length === 0) return null;
+                return (
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Dokumenti origjinal</p>
+                    <div className="space-y-2">
+                      {docs.map((d) => {
+                        const isImage = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(d.url);
+                        const isPdf = /\.pdf(\?|$)/i.test(d.url);
+                        return (
+                          <div key={d.url} className="rounded-lg border border-teal-200 bg-teal-50 overflow-hidden">
+                            {isImage ? (
+                              <a href={d.url} target="_blank" rel="noopener noreferrer" className="block">
+                                <img src={d.url} alt={d.label} className="w-full max-h-72 object-contain bg-white" />
+                              </a>
+                            ) : (
+                              <a
+                                href={d.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 p-4 bg-white hover:bg-teal-50 transition-colors"
+                              >
+                                <File className="w-6 h-6 text-teal-600 flex-shrink-0" />
+                                <span className="text-sm font-medium text-teal-700">
+                                  {isPdf ? 'Shiko PDF' : 'Shiko dokumentin'}
+                                </span>
+                              </a>
+                            )}
+                            <div className="flex items-center justify-between px-3 py-2 bg-white border-t border-teal-100">
+                              <span className="text-xs font-semibold text-teal-700">{d.label}</span>
+                              <a
+                                href={d.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-semibold text-teal-600 hover:text-teal-700"
+                              >
+                                Hap origjinalin
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">{t('company.deliveryNotes.items')} ({noteItems.length})</p>

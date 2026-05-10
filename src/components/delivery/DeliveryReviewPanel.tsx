@@ -643,20 +643,31 @@ function ReviewModal({
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
+      const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
+      const willAutoRegister = !!(note as any).auto_register_partner;
+      if (!hasPartnerLink && !willAutoRegister) {
+        throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne stok.');
+      }
       await persistItems();
       const prevAi = (note.ai_extracted_json as any) || null;
       const sanitizedAi = prevAi
         ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
         : null;
+      const updatePayload: Record<string, any> = {
+        status: 'pending_stock_confirmation',
+        company_reviewed_by: profile!.id,
+        company_reviewed_at: new Date().toISOString(),
+        ai_extracted_json: sanitizedAi,
+        updated_at: new Date().toISOString(),
+      };
+      const scanUrl = (note as any).scanned_photo_url as string | null;
+      const attachUrl = (note as any).attachment_url as string | null;
+      if (scanUrl && !attachUrl) {
+        updatePayload.attachment_url = scanUrl;
+      }
       const { error: upErr } = await supabase
         .from('delivery_notes')
-        .update({
-          status: 'pending_stock_confirmation',
-          company_reviewed_by: profile!.id,
-          company_reviewed_at: new Date().toISOString(),
-          ai_extracted_json: sanitizedAi,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('id', note.id);
       if (upErr) throw upErr;
 
@@ -725,6 +736,11 @@ function ReviewModal({
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
+      const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
+      const willAutoRegister = !!(note as any).auto_register_partner;
+      if (!hasPartnerLink && !willAutoRegister) {
+        throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne sortire.');
+      }
       const sortingRows = rows.map((r) => ({
         ...r,
         intended_action: r.intended_action === 'repair' ? 'repair' : 'sorting',
@@ -741,15 +757,21 @@ function ReviewModal({
       const sanitizedAi = prevAi
         ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
         : null;
+      const updatePayload: Record<string, any> = {
+        status: 'pending_stock_confirmation',
+        company_reviewed_by: profile!.id,
+        company_reviewed_at: new Date().toISOString(),
+        ai_extracted_json: sanitizedAi,
+        updated_at: new Date().toISOString(),
+      };
+      const scanUrl = (note as any).scanned_photo_url as string | null;
+      const attachUrl = (note as any).attachment_url as string | null;
+      if (scanUrl && !attachUrl) {
+        updatePayload.attachment_url = scanUrl;
+      }
       const { error: upErr } = await supabase
         .from('delivery_notes')
-        .update({
-          status: 'pending_stock_confirmation',
-          company_reviewed_by: profile!.id,
-          company_reviewed_at: new Date().toISOString(),
-          ai_extracted_json: sanitizedAi,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('id', note.id);
       if (upErr) throw upErr;
 
