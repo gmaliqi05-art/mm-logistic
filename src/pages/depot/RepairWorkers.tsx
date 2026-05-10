@@ -31,6 +31,7 @@ interface CatalogProduct {
   category_id: string;
   category_name: string;
   show_in_repair: boolean;
+  is_active: boolean;
 }
 
 interface CategoryRow {
@@ -181,9 +182,8 @@ export default function DepotRepairWorkers() {
         workersQuery,
         supabase
           .from('category_products')
-          .select('id, name, category_id, show_in_repair, category:product_categories(name, show_in_repair)')
+          .select('id, name, category_id, show_in_repair, is_active, category:product_categories(name, show_in_repair)')
           .eq('company_id', companyId)
-          .eq('is_active', true)
           .order('name'),
         supabase
           .from('product_categories')
@@ -247,6 +247,7 @@ export default function DepotRepairWorkers() {
         name: string;
         category_id: string;
         show_in_repair: boolean;
+        is_active: boolean;
         category?: { name: string } | { name: string }[] | null;
       }>;
       const productList: CatalogProduct[] = productRows.map((p) => {
@@ -257,6 +258,7 @@ export default function DepotRepairWorkers() {
           category_id: p.category_id,
           category_name: cat?.name ?? '',
           show_in_repair: p.show_in_repair !== false,
+          is_active: p.is_active !== false,
         };
       });
 
@@ -446,7 +448,7 @@ export default function DepotRepairWorkers() {
   );
 
   const visibleProducts = useMemo(
-    () => products.filter((p) => p.show_in_repair && visibleCategoryIds.has(p.category_id)),
+    () => products.filter((p) => p.is_active && p.show_in_repair && visibleCategoryIds.has(p.category_id)),
     [products, visibleCategoryIds],
   );
 
@@ -934,38 +936,53 @@ export default function DepotRepairWorkers() {
                                 catProducts.map((p) => {
                                   const pChecked = p.show_in_repair;
                                   const pBusy = savingProductId === p.id;
+                                  const pInactive = !p.is_active;
                                   return (
                                     <button
                                       key={p.id}
                                       type="button"
-                                      onClick={() => toggleProductVisibility(p)}
-                                      disabled={pBusy}
+                                      onClick={() => !pInactive && toggleProductVisibility(p)}
+                                      disabled={pBusy || pInactive}
+                                      title={pInactive ? 'Produkt joaktiv - kerko adminin te aktivizoje' : ''}
                                       className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-colors ${
-                                        pChecked
+                                        pInactive
+                                          ? 'bg-amber-50/40 cursor-not-allowed'
+                                          : pChecked
                                           ? 'bg-teal-50/60 hover:bg-teal-50'
                                           : 'hover:bg-gray-50'
                                       }`}
                                     >
                                       <div
                                         className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
-                                          pChecked
+                                          pInactive
+                                            ? 'bg-gray-100 border-gray-300'
+                                            : pChecked
                                             ? 'bg-teal-600 border-teal-600'
                                             : 'bg-white border-gray-300'
                                         }`}
                                       >
                                         {pBusy ? (
                                           <Loader2 className="w-2.5 h-2.5 text-teal-600 animate-spin" />
-                                        ) : pChecked ? (
+                                        ) : pChecked && !pInactive ? (
                                           <CheckCircle2 className="w-3 h-3 text-white" />
                                         ) : null}
                                       </div>
                                       <span
                                         className={`flex-1 text-sm ${
-                                          pChecked ? 'text-teal-900 font-medium' : 'text-gray-600'
+                                          pInactive
+                                            ? 'text-gray-400 italic'
+                                            : pChecked
+                                            ? 'text-teal-900 font-medium'
+                                            : 'text-gray-600'
                                         }`}
                                       >
                                         {p.name}
                                       </span>
+                                      {pInactive && (
+                                        <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                          Joaktiv
+                                        </span>
+                                      )}
                                     </button>
                                   );
                                 })

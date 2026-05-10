@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Tags, Plus, CreditCard as Edit2, Trash2, X, AlertTriangle, Loader2, Search, Package, ChevronDown } from 'lucide-react';
+import { Tags, Plus, CreditCard as Edit2, Trash2, X, AlertTriangle, Loader2, Search, Package, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -278,6 +278,24 @@ function CategoriesContent() {
     }
   }
 
+  async function handleToggleProductActive(prod: CategoryProduct) {
+    try {
+      setError(null);
+      const next = !prod.is_active;
+      setProducts((prev) => prev.map((p) => (p.id === prod.id ? { ...p, is_active: next } : p)));
+      const { error: err } = await supabase
+        .from('category_products')
+        .update({ is_active: next, updated_at: new Date().toISOString() })
+        .eq('id', prod.id);
+      if (err) {
+        setProducts((prev) => prev.map((p) => (p.id === prod.id ? { ...p, is_active: !next } : p)));
+        throw err;
+      }
+    } catch (err: any) {
+      setError(err.message || t('common.errorSaving'));
+    }
+  }
+
   async function handleDeleteProduct(id: string) {
     if (!window.confirm(t('company.categories.confirmDeleteProduct'))) return;
     try {
@@ -341,8 +359,12 @@ function CategoriesContent() {
   }
 
   const productCountByCat = new Map<string, number>();
+  const inactiveCountByCat = new Map<string, number>();
   for (const p of products) {
     productCountByCat.set(p.category_id, (productCountByCat.get(p.category_id) ?? 0) + 1);
+    if (p.is_active === false) {
+      inactiveCountByCat.set(p.category_id, (inactiveCountByCat.get(p.category_id) ?? 0) + 1);
+    }
   }
 
   return (
@@ -468,6 +490,12 @@ function CategoriesContent() {
                           <p className="text-sm font-medium text-gray-900 truncate">{cat.name}</p>
                           <p className="text-xs text-gray-500 truncate">
                             {productCountByCat.get(cat.id) ?? 0} {t('company.categories.productsCount')}
+                            {(inactiveCountByCat.get(cat.id) ?? 0) > 0 && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+                                <EyeOff className="w-2.5 h-2.5" />
+                                {inactiveCountByCat.get(cat.id)} joaktiv
+                              </span>
+                            )}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
@@ -530,18 +558,53 @@ function CategoriesContent() {
                 <ul className="divide-y divide-gray-50">
                   {filteredProducts.map((prod) => {
                     const catName = categories.find((c) => c.id === prod.category_id)?.name ?? '-';
+                    const inactive = prod.is_active === false;
                     return (
-                      <li key={prod.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors">
-                        <div className="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center flex-shrink-0">
+                      <li
+                        key={prod.id}
+                        className={`flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors ${
+                          inactive ? 'bg-amber-50/40' : ''
+                        }`}
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            inactive ? 'bg-gray-100 text-gray-400' : 'bg-cyan-100 text-cyan-700'
+                          }`}
+                        >
                           <Package className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{prod.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p
+                              className={`text-sm font-medium truncate ${
+                                inactive ? 'text-gray-500' : 'text-gray-900'
+                              }`}
+                            >
+                              {prod.name}
+                            </p>
+                            {inactive && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 flex-shrink-0">
+                                <EyeOff className="w-3 h-3" />
+                                Joaktiv
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 truncate">
                             {catName}{prod.description ? ` \u00b7 ${prod.description}` : ''}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => handleToggleProductActive(prod)}
+                            title={inactive ? 'Aktivizo produktin' : 'Cakto si joaktiv'}
+                            className={`p-1.5 rounded transition-colors ${
+                              inactive
+                                ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-100'
+                                : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {inactive ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
                           <button
                             onClick={() => openEditProduct(prod)}
                             className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded transition-colors"
