@@ -23,15 +23,6 @@ import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 const demoAccounts = [
   {
-    label: 'Super Admin',
-    description: 'Paneli kryesor',
-    email: 'demo-superadmin@demo.com',
-    password: 'demo123456',
-    icon: Package,
-    color: 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100',
-    iconBg: 'bg-slate-200 text-slate-700',
-  },
-  {
     label: 'Company Admin',
     description: 'Menaxho kompanine',
     email: 'demo-admin@demo.com',
@@ -348,13 +339,13 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
-              {demoAccounts.map((account, index) => (
+              {demoAccounts.map((account) => (
                 <button
                   key={account.email}
                   type="button"
                   disabled={loading}
                   onClick={() => handleDemoLogin(account.email, account.password)}
-                  className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed ${index === 0 ? 'col-span-2' : ''} ${account.color}`}
+                  className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all duration-200 text-left group disabled:opacity-50 disabled:cursor-not-allowed ${account.color}`}
                 >
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${account.iconBg}`}>
                     <account.icon className="w-4.5 h-4.5" />
@@ -390,7 +381,8 @@ export default function LoginPage() {
               {t('common.createdBy')}{' '}
               <span
                 onClick={handleSecretClick}
-                className="text-slate-500 font-medium cursor-default select-none"
+                role="presentation"
+                className="inline-block text-slate-500 font-medium cursor-default select-none px-3 py-1.5 -mx-3 -my-1.5 touch-manipulation"
               >
                 MM Logistic
               </span>

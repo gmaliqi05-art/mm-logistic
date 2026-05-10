@@ -114,26 +114,32 @@ export default function CompanyDrivers() {
         await logAudit('update', 'driver', editingDriver.id, { name: form.full_name });
       } else {
         if (!form.email.trim() || !form.password.trim()) return;
+        if (!session?.access_token) throw new Error('Sesioni ka skaduar. Ju lutem rihyni.');
+        if (form.password.length < 8) throw new Error('Fjalekalimi duhet te kete te pakten 8 karaktere.');
         const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`;
         const res = await fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
+            'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
-            email: form.email,
+            email: form.email.trim().toLowerCase(),
             password: form.password,
-            full_name: form.full_name,
+            full_name: form.full_name.trim(),
             role: 'driver',
             company_id: profile!.company_id,
             depot_id: form.depot_id || null,
-            phone: form.phone,
+            phone: form.phone?.trim() || '',
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || t('common.errorSaving'));
+        let data: { error?: string; details?: string; step?: string; code?: string; user?: { id?: string } } = {};
+        try { data = await res.json(); } catch { /* ignore */ }
+        if (!res.ok) {
+          const parts = [data.error, data.details, data.step ? `(${data.step})` : ''].filter(Boolean);
+          throw new Error(parts.length ? parts.join(' — ') : `${t('common.errorSaving')} (HTTP ${res.status})`);
+        }
         await logAudit('create', 'driver', data.user?.id, { name: form.full_name, email: form.email });
       }
 
@@ -308,59 +314,61 @@ export default function CompanyDrivers() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">{editingDriver ? t('company.drivers.editDriver') : t('company.drivers.addDriver')}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              {!editingDriver && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.email')}</label>
-                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.password')}</label>
-                    <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
-                  </div>
-                </>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.fullName')}</label>
-                <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+          <div className="relative min-h-full flex items-center justify-center p-3 sm:p-4">
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md my-4 max-h-[calc(100vh-2rem)] flex flex-col">
+              <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-5 py-3 border-b border-gray-100">
+                <h2 className="text-base font-semibold text-gray-900">{editingDriver ? t('company.drivers.editDriver') : t('company.drivers.addDriver')}</h2>
+                <button onClick={() => setShowModal(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.phone')}</label>
-                <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
-              </div>
-              {depots.length > 0 && (
+              <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3">
+                {!editingDriver && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.email')}</label>
+                      <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.password')}</label>
+                      <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                    </div>
+                  </>
+                )}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.depot')}</label>
-                  <select value={form.depot_id} onChange={(e) => setForm({ ...form, depot_id: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white">
-                    <option value="">-</option>
-                    {depots.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.fullName')}</label>
+                  <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
                 </div>
-              )}
-              <p className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-                Patenta, kualifikimet (Kod 95, ADR) dhe te dhenat mjeksore mund te shtohen pasi te krijohet shoferi duke klikuar ne emrin e tij.
-              </p>
-            </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">{t('common.cancel')}</button>
-              <button onClick={handleSave} disabled={saving || !form.full_name.trim() || (!editingDriver && (!form.email.trim() || !form.password.trim()))}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {editingDriver ? t('common.saveChanges') : t('company.drivers.addDriver')}
-              </button>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.phone')}</label>
+                  <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                </div>
+                {depots.length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">{t('company.deliveryNotes.depot')}</label>
+                    <select value={form.depot_id} onChange={(e) => setForm({ ...form, depot_id: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white">
+                      <option value="">-</option>
+                      {depots.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg leading-relaxed">
+                  Patenta, kualifikimet (Kod 95, ADR) dhe te dhenat mjeksore mund te shtohen pasi te krijohet shoferi duke klikuar ne emrin e tij.
+                </p>
+              </div>
+              <div className="flex-shrink-0 flex items-center justify-end gap-2 px-4 sm:px-5 py-3 border-t border-gray-100">
+                <button onClick={() => setShowModal(false)} className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">{t('common.cancel')}</button>
+                <button onClick={handleSave} disabled={saving || !form.full_name.trim() || (!editingDriver && (!form.email.trim() || !form.password.trim()))}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {editingDriver ? t('common.saveChanges') : t('company.drivers.addDriver')}
+                </button>
+              </div>
             </div>
           </div>
         </div>
