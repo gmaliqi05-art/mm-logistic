@@ -18,9 +18,24 @@ interface CategoryProduct {
   vat_rate?: number | null;
   unit?: string | null;
   sku?: string | null;
+  aliases?: string[] | null;
+  keywords?: string[] | null;
+  dimensions?: string | null;
+  default_condition?: string | null;
   created_at: string;
   updated_at: string;
 }
+
+const CONDITION_OPTIONS = [
+  { value: '', label: '-- Auto --' },
+  { value: 'good', label: 'I mire' },
+  { value: 'damaged', label: 'Me defekt' },
+  { value: 'repaired', label: 'Riparuar' },
+  { value: 'sorting', label: 'Per sortim' },
+  { value: 'ready_a', label: 'Klasa A' },
+  { value: 'ready_b', label: 'Klasa B' },
+  { value: 'ready_c', label: 'Klasa C' },
+];
 
 const UNIT_OPTIONS = ['pcs', 'kg', 'liter', 'hour', 'meter', 'package', 'set'] as const;
 const VAT_OPTIONS = [0, 7, 19] as const;
@@ -55,6 +70,10 @@ function CategoriesContent() {
   const [formSku, setFormSku] = useState('');
   const [formSortingMode, setFormSortingMode] = useState<SortingMode>('none');
   const [formAliases, setFormAliases] = useState<string>('');
+  const [formProdAliases, setFormProdAliases] = useState<string>('');
+  const [formProdKeywords, setFormProdKeywords] = useState<string>('');
+  const [formProdDimensions, setFormProdDimensions] = useState<string>('');
+  const [formProdDefaultCondition, setFormProdDefaultCondition] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -110,6 +129,10 @@ function CategoriesContent() {
     setFormSku('');
     setFormSortingMode('none');
     setFormAliases('');
+    setFormProdAliases('');
+    setFormProdKeywords('');
+    setFormProdDimensions('');
+    setFormProdDefaultCondition('');
     setEditingCategory(null);
     setEditingProduct(null);
   }
@@ -143,6 +166,10 @@ function CategoriesContent() {
     setFormVat(prod.vat_rate != null ? Number(prod.vat_rate) : 19);
     setFormUnit(prod.unit || 'pcs');
     setFormSku(prod.sku || '');
+    setFormProdAliases((prod.aliases || []).join(', '));
+    setFormProdKeywords((prod.keywords || []).join(', '));
+    setFormProdDimensions(prod.dimensions || '');
+    setFormProdDefaultCondition(prod.default_condition || '');
     setShowModal(true);
   }
 
@@ -187,6 +214,10 @@ function CategoriesContent() {
         const priceVal = Number(formPrice.replace(',', '.')) || 0;
         const vatVal = VAT_OPTIONS.includes(formVat as any) ? formVat : 19;
         const unitVal = UNIT_OPTIONS.includes(formUnit as any) ? formUnit : 'pcs';
+        const prodAliasesArr = formProdAliases.split(',').map((s) => s.trim()).filter(Boolean);
+        const prodKeywordsArr = formProdKeywords.split(',').map((s) => s.trim()).filter(Boolean);
+        const prodDimensions = formProdDimensions.trim() || null;
+        const prodDefaultCondition = formProdDefaultCondition || null;
         if (editingProduct) {
           const { error: err } = await supabase
             .from('category_products')
@@ -198,6 +229,10 @@ function CategoriesContent() {
               vat_rate: vatVal,
               unit: unitVal,
               sku: formSku.trim(),
+              aliases: prodAliasesArr,
+              keywords: prodKeywordsArr,
+              dimensions: prodDimensions,
+              default_condition: prodDefaultCondition,
               updated_at: new Date().toISOString(),
             })
             .eq('id', editingProduct.id);
@@ -212,6 +247,10 @@ function CategoriesContent() {
             vat_rate: vatVal,
             unit: unitVal,
             sku: formSku.trim(),
+            aliases: prodAliasesArr,
+            keywords: prodKeywordsArr,
+            dimensions: prodDimensions,
+            default_condition: prodDefaultCondition,
           });
           if (err) throw err;
         }
@@ -717,6 +756,74 @@ function CategoriesContent() {
                   <p className="text-[11px] text-teal-700/80">
                     Keto te dhena perdoren per krijim te fatures ne Kontabilitet.
                   </p>
+                </div>
+              )}
+
+              {addMode === 'product' && (
+                <div className="rounded-lg border border-sky-100 bg-sky-50/40 p-3 space-y-3">
+                  <p className="text-xs font-semibold text-sky-700 uppercase tracking-wide">
+                    Identifikim automatik ne fatura & fletedergesa
+                  </p>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Emra alternative (aliases)
+                    </label>
+                    <input
+                      type="text"
+                      value={formProdAliases}
+                      onChange={(e) => setFormProdAliases(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
+                      placeholder="Europalette B Qualität, EUR-Flachpalette gebraucht"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Ndaj me presje. Nese ndonje nga keto tekste gjendet ne fature, produkti identifikohet automatikisht.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                      Fjale kyce (keywords)
+                    </label>
+                    <input
+                      type="text"
+                      value={formProdKeywords}
+                      onChange={(e) => setFormProdKeywords(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
+                      placeholder="gebraucht, tauschfähig, Klasse B"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Ndaj me presje. Cdo fjale kyce qe gjendet shton besueshmeri ne identifikim.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Permasat
+                      </label>
+                      <input
+                        type="text"
+                        value={formProdDimensions}
+                        onChange={(e) => setFormProdDimensions(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
+                        placeholder="1200x800"
+                      />
+                      <p className="text-[11px] text-gray-500 mt-1">Format: GGGxLLL (mm)</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Kushti default
+                      </label>
+                      <select
+                        value={formProdDefaultCondition}
+                        onChange={(e) => setFormProdDefaultCondition(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
+                      >
+                        {CONDITION_OPTIONS.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                      <p className="text-[11px] text-gray-500 mt-1">Vendoset automatikisht kur zgjidhet produkti.</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

@@ -128,6 +128,7 @@ function deriveConditionAction(
 interface Category {
   id: string;
   name: string;
+  aliases?: string[] | null;
 }
 
 interface Product {
@@ -135,6 +136,10 @@ interface Product {
   name: string;
   sku: string | null;
   category_id: string | null;
+  aliases?: string[] | null;
+  keywords?: string[] | null;
+  dimensions?: string | null;
+  default_condition?: string | null;
 }
 
 interface DeliveryReviewPanelProps {
@@ -387,8 +392,8 @@ function ReviewModal({
       : Promise.resolve({ data: [] });
     const [itemsRes, catsRes, prodsRes, stockRes] = await Promise.all([
       supabase.from('delivery_note_items').select('*').eq('delivery_note_id', note.id).order('created_at', { ascending: true }),
-      supabase.from('product_categories').select('id, name').eq('company_id', note.company_id).order('name'),
-      supabase.from('category_products').select('id, name, sku, category_id').eq('company_id', note.company_id).eq('is_active', true).order('name'),
+      supabase.from('product_categories').select('id, name, aliases').eq('company_id', note.company_id).order('name'),
+      supabase.from('category_products').select('id, name, sku, category_id, aliases, keywords, dimensions, default_condition').eq('company_id', note.company_id).eq('is_active', true).order('name'),
       stockQuery,
     ]);
     const sMap: Record<string, number> = {};
@@ -444,6 +449,16 @@ function ReviewModal({
           autoMatched = true;
           confidence = 'medium';
           matchedOn = matchedOn || 'combined';
+        }
+      }
+
+      if (!productId && categoryId) {
+        const inCat = prods.filter((p) => p.category_id === categoryId);
+        if (inCat.length === 1) {
+          productId = inCat[0].id;
+          autoMatched = true;
+          matchedOn = matchedOn || 'category_name';
+          if (inCat[0].default_condition && !condition) condition = inCat[0].default_condition;
         }
       }
 
@@ -1159,21 +1174,25 @@ function ReviewModal({
                     onUpdate={updateRow}
                     onRemoveRow={removeRow}
                     onAddSplit={() => addSplit(group.key)}
-                    onCreateCategory={async (name) => {
+                    onCreateCategory={async (name, sourceDescription) => {
+                      const aliases = sourceDescription ? [sourceDescription.trim()].filter(Boolean) : [];
                       const { data, error: e } = await supabase.from('product_categories').insert({
                         company_id: note.company_id,
                         name: name.trim(),
-                      } as any).select('id, name').maybeSingle();
+                        aliases,
+                      } as any).select('id, name, aliases').maybeSingle();
                       if (e || !data) throw e || new Error('Nuk u krijua kategoria');
                       setCategories((prev) => [...prev, data as Category].sort((a, b) => a.name.localeCompare(b.name)));
                       return data as Category;
                     }}
-                    onCreateProduct={async (name, categoryId) => {
+                    onCreateProduct={async (name, categoryId, sourceDescription) => {
+                      const aliases = sourceDescription ? [sourceDescription.trim()].filter(Boolean) : [];
                       const { data, error: e } = await supabase.from('category_products').insert({
                         company_id: note.company_id,
                         category_id: categoryId,
                         name: name.trim(),
-                      } as any).select('id, name, sku, category_id').maybeSingle();
+                        aliases,
+                      } as any).select('id, name, sku, category_id, aliases, keywords, dimensions, default_condition').maybeSingle();
                       if (e || !data) throw e || new Error('Nuk u krijua produkti');
                       setProducts((prev) => [...prev, data as Product].sort((a, b) => a.name.localeCompare(b.name)));
                       return data as Product;
@@ -1381,8 +1400,8 @@ function ItemGroupBlock({
   onUpdate: (key: string, patch: Partial<RowState>) => void;
   onRemoveRow: (key: string) => void;
   onAddSplit: () => void;
-  onCreateCategory: (name: string) => Promise<Category>;
-  onCreateProduct: (name: string, categoryId: string) => Promise<Product>;
+  onCreateCategory: (name: string, sourceDescription?: string) => Promise<Category>;
+  onCreateProduct: (name: string, categoryId: string, sourceDescription?: string) => Promise<Product>;
 }) {
   const sumQty = useMemo(() => group.rows.reduce((s, r) => s + (r.quantity || 0), 0), [group.rows]);
   const hasSource = group.sourceQuantity > 0;
@@ -1472,8 +1491,8 @@ function SplitRow({
   onUpdate: (key: string, patch: Partial<RowState>) => void;
   onRemove: (() => void) | null;
   isFirst: boolean;
-  onCreateCategory: (name: string) => Promise<Category>;
-  onCreateProduct: (name: string, categoryId: string) => Promise<Product>;
+  onCreateCategory: (name: string, sourceDescription?: string) => Promise<Category>;
+  onCreateProduct: (name: string, categoryId: string, sourceDescription?: string) => Promise<Product>;
 }) {
   const productsForCategory = useMemo(
     () => (row.category_id ? products.filter((p) => p.category_id === row.category_id) : []),
@@ -1501,10 +1520,18 @@ function SplitRow({
     }
     const cur = products.find((p) => p.id === row.product_id);
     const keepProduct = cur && cur.category_id === val;
+    const inCat = val ? products.filter((p) => p.category_id === val) : [];
+    let autoProductId: string | null = keepProduct ? row.product_id : null;
+    let autoCondition: string | undefined = undefined;
+    if (!autoProductId && inCat.length === 1) {
+      autoProductId = inCat[0].id;
+      if (inCat[0].default_condition) autoCondition = inCat[0].default_condition;
+    }
     onUpdate(row._key, {
       category_id: val || null,
-      product_id: keepProduct ? row.product_id : null,
-      auto_matched: false,
+      product_id: autoProductId,
+      auto_matched: !!autoProductId && inCat.length === 1,
+      ...(autoCondition ? { condition: autoCondition } : {}),
     });
   }
 
@@ -1512,7 +1539,7 @@ function SplitRow({
     if (!createCatName.trim()) return;
     setCreating(true);
     try {
-      const cat = await onCreateCategory(createCatName);
+      const cat = await onCreateCategory(createCatName, row._sourceDescription || row.notes || undefined);
       setCreateCatName('');
       setCreateMode(null);
       onUpdate(row._key, { category_id: cat.id, product_id: null, auto_matched: false });
@@ -1527,7 +1554,7 @@ function SplitRow({
     if (!createProdName.trim() || !row.category_id) return;
     setCreating(true);
     try {
-      const prod = await onCreateProduct(createProdName, row.category_id);
+      const prod = await onCreateProduct(createProdName, row.category_id, row._sourceDescription || row.notes || undefined);
       setCreateProdName('');
       setCreateMode(null);
       onUpdate(row._key, { product_id: prod.id, auto_matched: false });
@@ -1575,10 +1602,11 @@ function SplitRow({
             const newId = v || null;
             const newProd = newId ? products.find((p) => p.id === newId) ?? null : null;
             const d = deriveConditionAction(row._sourceDescription || row.notes || '', newProd?.name, null, isOutgoing);
+            const finalCondition = newProd?.default_condition || d.condition;
             onUpdate(row._key, {
               product_id: newId,
               auto_matched: false,
-              condition: d.condition,
+              condition: finalCondition,
               intended_action: isOutgoing ? 'stock' : d.intended_action,
             });
           }}

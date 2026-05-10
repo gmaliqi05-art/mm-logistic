@@ -3,11 +3,16 @@ export interface ProductLike {
   name: string;
   sku?: string | null;
   category_id?: string | null;
+  aliases?: string[] | null;
+  keywords?: string[] | null;
+  dimensions?: string | null;
+  default_condition?: string | null;
 }
 
 export interface CategoryLike {
   id: string;
   name: string;
+  aliases?: string[] | null;
 }
 
 export interface MatchResult {
@@ -157,17 +162,24 @@ export function matchProduct(
 
   let bestCat: { c: CategoryLike; score: number; hits: number } | null = null;
   for (const c of categories) {
-    const cTokens = expandTokens(c.name);
+    const aliasBlob = (c.aliases || []).join(' ');
+    const cTokens = expandTokens(`${c.name} ${aliasBlob}`);
     const { hits, ratio } = overlap(descTokens, cTokens);
     const nameLower = normalize(c.name);
     const contained = nameLower && desc.includes(nameLower) ? 0.5 : 0;
-    const total = ratio + contained;
+    const aliasHit = (c.aliases || []).some((a) => {
+      const n = normalize(a);
+      return n.length >= 3 && desc.includes(n);
+    }) ? 0.9 : 0;
+    const total = ratio + contained + aliasHit;
     if (!bestCat || total > bestCat.score) bestCat = { c, score: total, hits };
   }
 
-  let bestProduct: { p: ProductLike; score: number; hits: number; matchedSku: boolean; dimMatch: boolean } | null = null;
+  let bestProduct: { p: ProductLike; score: number; hits: number; matchedSku: boolean; dimMatch: boolean; aliasMatch: boolean } | null = null;
   for (const p of products) {
-    const pTokens = expandTokens(p.name);
+    const aliasBlob = (p.aliases || []).join(' ');
+    const keywordBlob = (p.keywords || []).join(' ');
+    const pTokens = expandTokens(`${p.name} ${aliasBlob} ${keywordBlob}`);
     const { hits, ratio } = overlap(descTokens, pTokens);
     const nameLower = normalize(p.name);
     const contained = nameLower && desc.includes(nameLower) ? 0.5 : 0;
@@ -175,17 +187,30 @@ export function matchProduct(
     const sku = normalize(p.sku || '');
     const skuHit = sku && sku.length >= 3 && desc.includes(sku);
 
-    const prodDims = extractDimensions(`${p.name} ${p.sku || ''}`);
-    const dimMatch = descDims.length > 0 && prodDims.length > 0
-      && prodDims.some((d) => descDims.includes(d));
+    const aliasHit = (p.aliases || []).some((a) => {
+      const n = normalize(a);
+      return n.length >= 3 && desc.includes(n);
+    });
+    const keywordHits = (p.keywords || []).reduce((acc, k) => {
+      const n = normalize(k);
+      return n.length >= 3 && desc.includes(n) ? acc + 1 : acc;
+    }, 0);
+
+    const prodDimsRaw = p.dimensions
+      ? extractDimensions(p.dimensions)
+      : extractDimensions(`${p.name} ${p.sku || ''} ${aliasBlob}`);
+    const dimMatch = descDims.length > 0 && prodDimsRaw.length > 0
+      && prodDimsRaw.some((d) => descDims.includes(d));
 
     const inCatBonus = bestCat && p.category_id === bestCat.c.id ? 0.15 : 0;
     const dimBonus = dimMatch ? 0.8 : 0;
-    const dimMismatchPenalty = descDims.length > 0 && prodDims.length > 0 && !dimMatch ? -0.5 : 0;
-    const total = ratio + contained + (skuHit ? 0.6 : 0) + inCatBonus + dimBonus + dimMismatchPenalty;
+    const dimMismatchPenalty = descDims.length > 0 && prodDimsRaw.length > 0 && !dimMatch ? -0.5 : 0;
+    const aliasBonus = aliasHit ? 0.9 : 0;
+    const keywordBonus = Math.min(keywordHits * 0.2, 0.4);
+    const total = ratio + contained + (skuHit ? 0.6 : 0) + inCatBonus + dimBonus + dimMismatchPenalty + aliasBonus + keywordBonus;
 
     if (!bestProduct || total > bestProduct.score) {
-      bestProduct = { p, score: total, hits, matchedSku: !!skuHit, dimMatch };
+      bestProduct = { p, score: total, hits, matchedSku: !!skuHit, dimMatch, aliasMatch: aliasHit };
     }
   }
 
@@ -220,7 +245,8 @@ export function matchProduct(
   const combined = (bestCat?.score ?? 0) * 0.4 + (bestProduct?.score ?? 0) * 0.4 + (skuOk ? 0.2 : 0);
 
   let confidence: MatchResult['confidence'] = 'none';
-  if (bestProduct?.dimMatch && catOk) confidence = 'high';
+  if (bestProduct?.aliasMatch) confidence = 'high';
+  else if (bestProduct?.dimMatch && catOk) confidence = 'high';
   else if (signals >= 3 || (prodOk && combined >= 0.9)) confidence = 'high';
   else if (signals >= 2) confidence = 'high';
   else if (signals === 1 && combined >= 0.45) confidence = 'medium';
