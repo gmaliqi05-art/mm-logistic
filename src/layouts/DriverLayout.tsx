@@ -18,6 +18,7 @@ import { useCompanyBranding } from '../hooks/useCompanyBranding';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import DriverTrackingBanner from '../components/DriverTrackingBanner';
+import { DriverTrackingProvider } from '../contexts/DriverTrackingContext';
 
 const navItems = [
   { to: '/driver', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true },
@@ -43,6 +44,7 @@ export default function DriverLayout() {
   const roleLabel = t(`roles.${profile?.role ?? ''}`);
 
   return (
+    <DriverTrackingProvider>
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col bg-teal-900 text-white fixed inset-y-0 left-0 z-40">
@@ -244,5 +246,6 @@ export default function DriverLayout() {
       )}
 
     </div>
+    </DriverTrackingProvider>
   );
 }

@@ -1,81 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MapPin, Navigation, AlertTriangle, CheckCircle2, Power, Clock, Route, Coffee, X, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDriverLocationTracking } from '../../hooks/useDriverLocationTracking';
+import { useDriverTracking } from '../../contexts/DriverTrackingContext';
 import { supabase } from '../../lib/supabase';
-import { logger } from '../../utils/logger';
-
-interface ActiveDelivery {
-  id: string;
-  note_number: string;
-  status: string;
-  delivery_address: string | null;
-}
-
-const AUTO_STOP_DELAY_MS = 10 * 60 * 1000;
-
-function msUntilNextLocalHour(hour: number): number {
-  const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, 0, 0, 0);
-  if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
-  return next.getTime() - now.getTime();
-}
-
-function isWithinWorkingWindow(startHour: number, endHour: number): boolean {
-  const h = new Date().getHours();
-  return h >= startHour && h < endHour;
-}
 
 export default function DriverTracking() {
   const { profile } = useAuth();
-  const [enabled, setEnabled] = useState(false);
-  const [active, setActive] = useState<ActiveDelivery | null>(null);
-  const [shiftStartHour, setShiftStartHour] = useState(7);
-  const [shiftEndHour, setShiftEndHour] = useState(17);
-  const [autoTracking, setAutoTracking] = useState(false);
-  const [prompt, setPrompt] = useState<{ id: string; sent_at: string } | null>(null);
-  const [nextPromptAt, setNextPromptAt] = useState<Date | null>(null);
-  const [autoStopped, setAutoStopped] = useState(false);
-  const [autoStartNote, setAutoStartNote] = useState<string | null>(null);
-  const [trafficAlert, setTrafficAlert] = useState<{ id: string; delay_minutes: number; severity: string; message: string } | null>(null);
-  const autoStopTimer = useRef<number | null>(null);
+  const {
+    enabled,
+    setEnabled,
+    autoTracking,
+    setAutoTracking,
+    shiftStartHour,
+    shiftEndHour,
+    activeDelivery,
+    state,
+    autoStopped,
+    autoStartNote,
+    clearAutoStartNote,
+    prompt,
+    respondPrompt,
+    minutesRemaining,
+    nextPromptAt,
+    isWithinWorkingWindow,
+  } = useDriverTracking();
 
-  useEffect(() => {
-    if (!profile?.id) return;
-    const load = async () => {
-      const [{ data: delivery }, { data: prof }] = await Promise.all([
-        supabase
-          .from('delivery_notes')
-          .select('id, note_number, status, delivery_address')
-          .eq('assigned_driver_id', profile.id)
-          .eq('status', 'in_transit')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from('profiles')
-          .select('shift_start_hour, shift_end_hour, auto_tracking_enabled')
-          .eq('id', profile.id)
-          .maybeSingle(),
-      ]);
-      const activeDel = (delivery as ActiveDelivery | null) ?? null;
-      setActive(activeDel);
-      if (activeDel) {
-        setEnabled((prev) => {
-          if (!prev) setAutoStartNote('Tracking filloi automatikisht: ke nje dergese ne rruge.');
-          return true;
-        });
-      }
-      if (prof) {
-        const p = prof as { shift_start_hour?: number; shift_end_hour?: number; auto_tracking_enabled?: boolean };
-        if (p.shift_start_hour != null) setShiftStartHour(p.shift_start_hour);
-        if (p.shift_end_hour != null) setShiftEndHour(p.shift_end_hour);
-        if (p.auto_tracking_enabled != null) setAutoTracking(p.auto_tracking_enabled);
-      }
-    };
-    void load();
-  }, [profile?.id]);
+  const [trafficAlert, setTrafficAlert] = useState<{ id: string; delay_minutes: number; severity: string; message: string } | null>(null);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -113,151 +64,29 @@ export default function DriverTracking() {
     setTrafficAlert(null);
   }
 
-  const state = useDriverLocationTracking({
-    enabled,
-    companyId: profile?.company_id,
-    driverId: profile?.id,
-    deliveryNoteId: active?.id ?? null,
-  });
-
-  useEffect(() => {
-    if (!autoTracking) return;
-    if (enabled) return;
-    if (isWithinWorkingWindow(shiftStartHour, shiftEndHour)) {
-      setEnabled(true);
-      setAutoStartNote(`Tracking filloi automatikisht ne ora ${shiftStartHour}:00.`);
-      return;
-    }
-    const wait = msUntilNextLocalHour(shiftStartHour);
-    const timer = window.setTimeout(() => {
-      setEnabled(true);
-      setAutoStartNote(`Tracking filloi automatikisht ne ora ${shiftStartHour}:00.`);
-    }, wait);
-    return () => window.clearTimeout(timer);
-  }, [autoTracking, enabled, shiftStartHour, shiftEndHour]);
-
-  const nextShiftCheck = useMemo(() => {
-    const d = new Date();
-    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), shiftEndHour, 0, 0, 0);
-    if (end.getTime() <= d.getTime()) {
-      const hour = d.getHours();
-      const next = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour + 1, 0, 0, 0);
-      return next;
-    }
-    return end;
-  }, [shiftEndHour]);
-
-  useEffect(() => {
-    if (!enabled || !profile?.id || !profile.company_id) {
-      setNextPromptAt(null);
-      return;
-    }
-    setNextPromptAt(nextShiftCheck);
-    const now = Date.now();
-    const wait = nextShiftCheck.getTime() - now;
-    if (wait <= 0) return;
-    const timer = window.setTimeout(() => {
-      void raisePrompt();
-    }, wait);
-    return () => window.clearTimeout(timer);
-  }, [enabled, nextShiftCheck, profile?.id, profile?.company_id]);
-
-  async function raisePrompt() {
-    if (!profile?.id || !profile.company_id) return;
-    try {
-      const { data } = await supabase
-        .from('tracking_prompts')
-        .insert({
-          company_id: profile.company_id,
-          driver_id: profile.id,
-          delivery_note_id: active?.id ?? null,
-        })
-        .select('id, sent_at')
-        .maybeSingle();
-      if (data) {
-        setPrompt(data as { id: string; sent_at: string });
-        autoStopTimer.current = window.setTimeout(() => {
-          void respondPrompt('auto_stopped');
-        }, AUTO_STOP_DELAY_MS);
-      }
-    } catch (err) {
-      logger.warn('raise prompt failed', { error: err });
-    }
-  }
-
-  async function respondPrompt(response: 'still_working' | 'finished' | 'break' | 'auto_stopped') {
-    if (!prompt || !profile?.id) return;
-    if (autoStopTimer.current) {
-      window.clearTimeout(autoStopTimer.current);
-      autoStopTimer.current = null;
-    }
-    try {
-      await supabase
-        .from('tracking_prompts')
-        .update({ response, responded_at: new Date().toISOString() })
-        .eq('id', prompt.id);
-
-      await supabase
-        .from('profiles')
-        .update({ tracking_last_confirmed_at: new Date().toISOString() })
-        .eq('id', profile.id);
-
-      if (response === 'finished' || response === 'auto_stopped') {
-        setEnabled(false);
-        setAutoStopped(response === 'auto_stopped');
-        if (active?.id) {
-          await supabase
-            .from('delivery_notes')
-            .update({
-              tracking_paused: true,
-              tracking_auto_stopped_at: response === 'auto_stopped' ? new Date().toISOString() : null,
-            })
-            .eq('id', active.id);
-        }
-      } else if (response === 'break') {
-        const nextHour = new Date(Date.now() + 30 * 60 * 1000);
-        setNextPromptAt(nextHour);
-      }
-      setPrompt(null);
-    } catch (err) {
-      logger.warn('respond prompt failed', { error: err });
-    }
-  }
-
-  const minutesRemaining = useMemo(() => {
-    if (!prompt) return null;
-    const elapsed = Date.now() - new Date(prompt.sent_at).getTime();
-    const remain = AUTO_STOP_DELAY_MS - elapsed;
-    return Math.max(0, Math.round(remain / 60000));
-  }, [prompt, state.lastSentAt]);
-
-  async function toggleAutoTracking(next: boolean) {
-    setAutoTracking(next);
-    if (profile?.id) {
-      await supabase.from('profiles').update({ auto_tracking_enabled: next }).eq('id', profile.id);
-    }
-    if (next && !enabled && isWithinWorkingWindow(shiftStartHour, shiftEndHour)) {
-      setEnabled(true);
-      setAutoStartNote(`Tracking u aktivizua sepse jemi brenda orarit te punes (${shiftStartHour}:00 - ${shiftEndHour}:00).`);
-    }
-  }
-
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Live Tracking</h1>
-        <p className="text-sm text-slate-600 mt-1">Share your GPS position with dispatch during active deliveries.</p>
+        <p className="text-sm text-slate-600 mt-1">Ndaj pozicionin GPS me dispeçerin gjate turnit. Gjurmimi vazhdon edhe kur kalon ne faqe tjeter.</p>
       </div>
 
-      {active ? (
+      {activeDelivery ? (
         <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
           <div className="text-xs text-teal-800 font-semibold uppercase tracking-wide">Active delivery</div>
-          <div className="text-lg font-bold text-slate-900 mt-1">{active.note_number}</div>
-          {active.delivery_address && <div className="text-sm text-slate-600 mt-1">{active.delivery_address}</div>}
+          <div className="text-lg font-bold text-slate-900 mt-1">{activeDelivery.note_number}</div>
+          {activeDelivery.delivery_address && <div className="text-sm text-slate-600 mt-1">{activeDelivery.delivery_address}</div>}
         </div>
       ) : (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-600">
-          No active delivery in transit. You can still share location for testing.
+          Nuk ka dergese aktive. Mund te ndash pozicionin per testim.
+        </div>
+      )}
+
+      {!isWithinWorkingWindow && (
+        <div className="flex items-start gap-2 text-xs text-slate-700 bg-slate-100 border border-slate-200 rounded-lg p-2.5">
+          <Clock className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-500" />
+          <span>Jashte orarit te punes ({shiftStartHour}:00 - {shiftEndHour}:00). Gjurmimi eshte i pezulluar edhe nese eshte aktiv.</span>
         </div>
       )}
 
@@ -271,7 +100,7 @@ export default function DriverTracking() {
         }`}>
           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold">Trafik ne rrugen tende • vonese rreth {trafficAlert.delay_minutes} min</div>
+            <div className="text-sm font-semibold">Trafik ne rrugen tende vonese rreth {trafficAlert.delay_minutes} min</div>
             <p className="text-xs mt-1 opacity-90">{trafficAlert.message}</p>
           </div>
           <button onClick={acknowledgeTraffic} className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/80 hover:bg-white">
@@ -281,11 +110,11 @@ export default function DriverTracking() {
       )}
 
       <button
-        onClick={() => { setEnabled((e) => !e); setAutoStopped(false); setAutoStartNote(null); }}
+        onClick={() => { setEnabled(!enabled); clearAutoStartNote(); }}
         className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-white transition ${enabled ? 'bg-red-600 hover:bg-red-700' : 'bg-teal-600 hover:bg-teal-700'}`}
       >
         <Power className="w-5 h-5" />
-        {enabled ? 'Stop sharing location' : 'Start sharing location'}
+        {enabled ? 'Ndal ndarjen e pozicionit' : 'Fillo ndarjen e pozicionit'}
       </button>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -304,7 +133,7 @@ export default function DriverTracking() {
               type="checkbox"
               className="sr-only peer"
               checked={autoTracking}
-              onChange={(e) => toggleAutoTracking(e.target.checked)}
+              onChange={(e) => { void setAutoTracking(e.target.checked); }}
             />
             <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-teal-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
           </label>
@@ -353,7 +182,7 @@ export default function DriverTracking() {
               <span className="font-mono">{state.lat.toFixed(5)}, {state.lng.toFixed(5)}</span>
             </div>
             {state.accuracy !== null && (
-              <div className="text-xs text-slate-500">Accuracy: ±{Math.round(state.accuracy)}m</div>
+              <div className="text-xs text-slate-500">Accuracy: {Math.round(state.accuracy)}m</div>
             )}
             {state.speed !== null && (
               <div className="flex items-center gap-2 text-sm text-slate-700">
