@@ -99,22 +99,25 @@ function deriveConditionAction(
   desc: string,
   productName?: string | null,
   categoryName?: string | null,
+  isOutgoing: boolean = false,
 ): { condition: string; intended_action: 'stock' | 'sorting' | 'repair' } {
   const d = `${desc || ''} ${productName || ''}`.toLowerCase();
+  const outgoingAction = (fallback: 'stock' | 'sorting' | 'repair'): 'stock' | 'sorting' | 'repair' =>
+    isOutgoing ? 'stock' : fallback;
   if (/\b(defekt|defect|damage|damaged|kaputt|broken|repair|riparim)\b/i.test(d)) {
-    return { condition: 'damaged', intended_action: 'repair' };
+    return { condition: 'damaged', intended_action: outgoingAction('repair') };
   }
   if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b|a[- ]?qualit(a|ä)t|qualit(a|ä)t\s*a)/i.test(d)) {
-    return { condition: 'ready_a', intended_action: 'sorting' };
+    return { condition: 'ready_a', intended_action: outgoingAction('sorting') };
   }
   if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b|b[- ]?qualit(a|ä)t|qualit(a|ä)t\s*b)/i.test(d)) {
-    return { condition: 'ready_b', intended_action: 'sorting' };
+    return { condition: 'ready_b', intended_action: outgoingAction('sorting') };
   }
   if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b|c[- ]?qualit(a|ä)t|qualit(a|ä)t\s*c)/i.test(d)) {
-    return { condition: 'ready_c', intended_action: 'sorting' };
+    return { condition: 'ready_c', intended_action: outgoingAction('sorting') };
   }
   if (/\b(sortier|sortir|sorting|mix|mischt|gemischt|mischpalette)\b/i.test(d)) {
-    return { condition: 'sorting', intended_action: 'sorting' };
+    return { condition: isOutgoing ? 'good' : 'sorting', intended_action: outgoingAction('sorting') };
   }
   if (isEuroPaletteName(d) || isEuroPaletteName(categoryName)) {
     return { condition: 'good', intended_action: 'stock' };
@@ -319,6 +322,7 @@ function ReviewModal({
   const [error, setError] = useState<string | null>(null);
   const [scannedUrl, setScannedUrl] = useState<string | null>(note.scanned_photo_url);
   const [uploading, setUploading] = useState(false);
+  const isOutgoing = note.type === 'delivery';
 
   async function handleUploadDocument(file: File) {
     if (!file) return;
@@ -389,6 +393,7 @@ function ReviewModal({
       let autoMatched = false;
       let condition = it.condition || '';
       let action: 'stock' | 'sorting' | 'repair' = (it.intended_action as any) || 'stock';
+      if (isOutgoing) action = 'stock';
 
       if (!categoryId && !productId && it.notes) {
         const mm = matchProduct(it.notes, prods, cats);
@@ -404,10 +409,11 @@ function ReviewModal({
       const matchedProdName = productId ? prods.find((p) => p.id === productId)?.name : null;
       const matchedCatName = categoryId ? cats.find((c) => c.id === categoryId)?.name : null;
       if (!condition || (!it.intended_action && it.notes)) {
-        const d = deriveConditionAction(it.notes || '', matchedProdName, matchedCatName);
+        const d = deriveConditionAction(it.notes || '', matchedProdName, matchedCatName, isOutgoing);
         if (!condition) condition = d.condition;
         if (!it.intended_action) action = d.intended_action;
       }
+      if (isOutgoing) action = 'stock';
 
       if (
         !productId &&
@@ -458,7 +464,7 @@ function ReviewModal({
           const desc = (li.description || '').trim();
           const mm = matchProduct(desc, prods, cats);
           const matchedName = mm.productId ? prods.find((p) => p.id === mm.productId)?.name : null;
-          const d = deriveConditionAction(desc, matchedName);
+          const d = deriveConditionAction(desc, matchedName, null, isOutgoing);
           const key = `synthetic-${idx}-${Date.now()}`;
           built.push({
             _key: key,
@@ -548,6 +554,8 @@ function ReviewModal({
     const updates = rows.filter((r) => r._persistedId);
     const inserts = rows.filter((r) => !r._persistedId);
 
+    const effectiveAction = (r: RowState) => (isOutgoing ? 'stock' : r.intended_action);
+
     for (const r of updates) {
       await supabase
         .from('delivery_note_items')
@@ -556,7 +564,7 @@ function ReviewModal({
           category_id: r.category_id,
           quantity: r.quantity,
           condition: r.condition,
-          intended_action: r.intended_action,
+          intended_action: effectiveAction(r),
           notes: r.notes,
         })
         .eq('id', r._persistedId!);
@@ -569,7 +577,7 @@ function ReviewModal({
         category_id: r.category_id,
         quantity: r.quantity,
         condition: r.condition,
-        intended_action: r.intended_action,
+        intended_action: effectiveAction(r),
         notes: r.notes,
       }));
       const { data: inserted } = await supabase
@@ -670,6 +678,10 @@ function ReviewModal({
   }
 
   async function handleSendToSorting() {
+    if (isOutgoing) {
+      setError('Fletedergesat dalese nuk mund te dergohen ne sortire. Perdorni "Regjistro ne stok" ose "Dergo te depo per stok".');
+      return;
+    }
     setSaving('approve');
     setError(null);
     try {
@@ -1080,6 +1092,7 @@ function ReviewModal({
                     group={group}
                     categories={categories}
                     products={products}
+                    isOutgoing={isOutgoing}
                     onUpdate={updateRow}
                     onRemoveRow={removeRow}
                     onAddSplit={() => addSplit(group.key)}
@@ -1143,15 +1156,17 @@ function ReviewModal({
                 {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Warehouse className="w-4 h-4" />}
                 Dergo te depo per stok
               </button>
-              <button
-                onClick={handleSendToSorting}
-                disabled={!!saving}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
-                title="Dergo ne sortire ne depo — paletat do te ndahen ne A/B/C/Defekt"
-              >
-                {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
-                Dergo ne Sortire
-              </button>
+              {!isOutgoing && (
+                <button
+                  onClick={handleSendToSorting}
+                  disabled={!!saving}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                  title="Dergo ne sortire ne depo — paletat do te ndahen ne A/B/C/Defekt"
+                >
+                  {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+                  Dergo ne Sortire
+                </button>
+              )}
             </>
           )}
           {!showRejectReason && (
@@ -1228,6 +1243,7 @@ function ItemGroupBlock({
   group,
   categories,
   products,
+  isOutgoing = false,
   onUpdate,
   onRemoveRow,
   onAddSplit,
@@ -1235,6 +1251,7 @@ function ItemGroupBlock({
   group: Group;
   categories: Category[];
   products: Product[];
+  isOutgoing?: boolean;
   onUpdate: (key: string, patch: Partial<RowState>) => void;
   onRemoveRow: (key: string) => void;
   onAddSplit: () => void;
@@ -1250,6 +1267,11 @@ function ItemGroupBlock({
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5 flex items-center gap-1">
               <Sparkles className="w-2.5 h-2.5 text-emerald-500" /> AI nga dokumenti
+              {isOutgoing && (
+                <span className="ml-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-semibold normal-case tracking-normal">
+                  Zbritet nga stoku
+                </span>
+              )}
             </p>
             <p className="text-xs text-gray-700 break-words">{group.sourceDescription}</p>
           </div>
@@ -1278,6 +1300,7 @@ function ItemGroupBlock({
             row={row}
             categories={categories}
             products={products}
+            isOutgoing={isOutgoing}
             onUpdate={onUpdate}
             onRemove={group.rows.length > 1 || !row._persistedId ? () => onRemoveRow(row._key) : null}
             isFirst={idx === 0}
@@ -1302,6 +1325,7 @@ function SplitRow({
   row,
   categories,
   products,
+  isOutgoing = false,
   onUpdate,
   onRemove,
   isFirst,
@@ -1309,6 +1333,7 @@ function SplitRow({
   row: RowState;
   categories: Category[];
   products: Product[];
+  isOutgoing?: boolean;
   onUpdate: (key: string, patch: Partial<RowState>) => void;
   onRemove: (() => void) | null;
   isFirst: boolean;
@@ -1330,6 +1355,7 @@ function SplitRow({
   }
 
   function handleActionChange(val: 'stock' | 'sorting' | 'repair') {
+    if (isOutgoing) val = 'stock';
     let condition = row.condition;
     if (val === 'repair') condition = 'damaged';
     else if (val === 'sorting') condition = 'sorting';
@@ -1359,12 +1385,12 @@ function SplitRow({
           onChange={(e) => {
             const newId = e.target.value || null;
             const newProd = newId ? products.find((p) => p.id === newId) ?? null : null;
-            const d = deriveConditionAction(row._sourceDescription || row.notes || '', newProd?.name);
+            const d = deriveConditionAction(row._sourceDescription || row.notes || '', newProd?.name, null, isOutgoing);
             onUpdate(row._key, {
               product_id: newId,
               auto_matched: false,
               condition: d.condition,
-              intended_action: d.intended_action,
+              intended_action: isOutgoing ? 'stock' : d.intended_action,
             });
           }}
           disabled={!row.category_id}
@@ -1388,7 +1414,7 @@ function SplitRow({
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1 flex-wrap">
-          {ACTION_OPTIONS.map((opt) => {
+          {ACTION_OPTIONS.filter((opt) => !isOutgoing || opt.value === 'stock').map((opt) => {
             const Icon = opt.icon;
             const active = row.intended_action === opt.value;
             return (
