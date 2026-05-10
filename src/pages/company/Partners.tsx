@@ -11,6 +11,7 @@ import {
   Hash,
   Save,
   Pencil,
+  Trash2,
   UserPlus,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -87,6 +88,7 @@ export default function CompanyPartners() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PartnerForm>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.company_id) fetchPartners();
@@ -178,6 +180,27 @@ export default function CompanyPartners() {
     }
   }
 
+  async function deletePartner(p: Partner) {
+    if (!profile?.company_id) return;
+    const ok = window.confirm(`Fshi partnerin "${p.name}"?\n\nKy veprim e largon nga lista, por te dhenat historike ne fatura dhe fletedergesa ruhen.`);
+    if (!ok) return;
+    try {
+      setDeletingId(p.id);
+      setError(null);
+      const { error: dErr } = await supabase
+        .from('acc_contacts')
+        .update({ is_active: false })
+        .eq('id', p.id)
+        .eq('company_id', profile.company_id);
+      if (dErr) throw dErr;
+      setPartners((prev) => prev.filter((x) => x.id !== p.id));
+    } catch (e: any) {
+      setError(e?.message ?? 'Nuk u arrit te fshihet partneri.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return partners.filter((p) => {
@@ -261,13 +284,23 @@ export default function CompanyPartners() {
                     {typeLabel[p.contact_type]}
                   </span>
                 </div>
-                <button
-                  onClick={() => openEdit(p)}
-                  className="p-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
-                  title="Modifiko"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="p-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+                    title="Modifiko"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => deletePartner(p)}
+                    disabled={deletingId === p.id}
+                    className="p-1.5 rounded-md border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
+                    title="Fshi"
+                  >
+                    {deletingId === p.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <dl className="mt-3 space-y-1.5 text-xs text-gray-600">
                 {p.vat_number && (
@@ -325,24 +358,24 @@ interface ModalProps {
 
 export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editing }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="w-full sm:max-w-2xl bg-white sm:rounded-2xl rounded-t-2xl shadow-xl max-h-[95vh] overflow-y-auto">
-        <div className="flex items-start justify-between p-5 border-b border-gray-100">
-          <div>
+    <div className="fixed inset-0 z-modal bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4 modal-safe-top">
+      <div className="w-full sm:max-w-2xl bg-white sm:rounded-2xl rounded-t-2xl shadow-xl modal-panel flex flex-col">
+        <div className="flex items-start justify-between p-5 border-b border-gray-100 bg-white sm:rounded-t-2xl flex-shrink-0 sticky top-0 z-10">
+          <div className="min-w-0">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-teal-600" />
-              {editing ? 'Modifiko Kompanine' : 'Regjistro Kompani te Re'}
+              <UserPlus className="w-5 h-5 text-teal-600 flex-shrink-0" />
+              <span className="truncate">{editing ? 'Modifiko Kompanine' : 'Regjistro Kompani te Re'}</span>
             </h2>
             <p className="text-sm text-gray-500 mt-0.5">
               Informacioni do perdoret ne fletedergesa, fletmarrje dhe fatura.
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2" aria-label="Mbyll">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 modal-body-scroll flex-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Emri i Kompanise *">
               <input
@@ -434,7 +467,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white p-4 border-t border-gray-100 flex justify-end gap-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="modal-footer border-t border-gray-100 flex justify-end gap-2 px-4 pt-3 flex-shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"

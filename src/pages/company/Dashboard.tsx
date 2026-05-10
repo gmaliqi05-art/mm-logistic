@@ -26,7 +26,6 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
-import PendingScansPanel from '../../components/scanner/PendingScansPanel';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
 import FinanceSnapshot from '../../components/accounting/FinanceSnapshot';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
@@ -88,7 +87,6 @@ export default function CompanyDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showChooser, setShowChooser] = useState(false);
   const [scanKind, setScanKind] = useState<ScanDocKind | null>(null);
-  const [scanRefreshKey, setScanRefreshKey] = useState(0);
   const [range, setRange] = useState<RangeKey>('7d');
   const [quickNoteId, setQuickNoteId] = useState<string | null>(null);
 
@@ -377,8 +375,6 @@ export default function CompanyDashboard() {
       {accountingEnabled && <FinanceSnapshot companyId={profile?.company_id ?? null} />}
 
       <ReviewCTA counts={reviewCounts} t={t} />
-
-      <PendingScansPanel role="company_admin" refreshKey={scanRefreshKey} />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -704,7 +700,6 @@ export default function CompanyDashboard() {
           onClose={() => setScanKind(null)}
           onSaved={() => {
             setScanKind(null);
-            setScanRefreshKey((k) => k + 1);
             fetchData();
           }}
         />

@@ -128,9 +128,16 @@
     }
   }
 
-  /* Modal z-index scale that sits above bottom nav (z-40) */
+  /* Modal z-index scale that sits above the platform top navbar (z-800)
+     and bottom nav (z-40). */
   .z-modal {
-    z-index: 60;
+    z-index: 900;
+  }
+
+  /* Reserve space at the top on mobile so the modal does not slide under the
+     platform navbar. On desktop the modal is centered, so no extra padding. */
+  .modal-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   /* Scroll body area inside a modal */
