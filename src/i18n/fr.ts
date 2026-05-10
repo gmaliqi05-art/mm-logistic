@@ -737,6 +737,8 @@ export const fr: typeof sq = {
       deleteConfirmTitle: 'Confirmer la suppression',
       deleteConfirmBody: 'Cette action est irr\u00e9versible. Tapez {number} pour confirmer.',
       deleteBlockedStock: 'Impossible de supprimer - ce bon a d\u00e9j\u00e0 impact\u00e9 le stock',
+      removeItem: 'Retirer l\u0027article',
+      removeItemConfirm: 'Retirer cet article de la livraison? Le stock sera restitu\u00e9.',
     },
     reports: {
       title: 'Rapports',

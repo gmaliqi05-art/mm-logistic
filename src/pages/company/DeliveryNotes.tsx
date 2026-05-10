@@ -140,6 +140,7 @@ export default function CompanyDeliveryNotes() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const statusConfig: Record<string, { label: string; className: string }> = {
@@ -432,6 +433,26 @@ export default function CompanyDeliveryNotes() {
   function canDeleteNote(note: DeliveryNote | null): boolean {
     if (!note) return false;
     return DELETABLE_STATUSES.includes(note.status);
+  }
+
+  async function removeItemFromNote(itemId: string, noteId: string) {
+    if (!confirm(t('company.deliveryNotes.removeItemConfirm'))) return;
+    try {
+      setRemovingItemId(itemId);
+      const { error: rpcErr } = await supabase.rpc('remove_delivery_note_item', { p_item_id: itemId });
+      if (rpcErr) throw rpcErr;
+      const { data } = await supabase
+        .from('delivery_note_items')
+        .select('*, category:product_categories(name), product:category_products(name)')
+        .eq('delivery_note_id', noteId)
+        .order('created_at');
+      setNoteItems((data as any) ?? []);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || t('common.error'));
+    } finally {
+      setRemovingItemId(null);
+    }
   }
 
   async function deleteNote(note: DeliveryNote) {
@@ -1289,6 +1310,14 @@ export default function CompanyDeliveryNotes() {
                           >
                             {item.condition === 'good' ? t('company.stock.good') : item.condition === 'damaged' ? t('company.stock.damaged') : item.condition}
                           </span>
+                          <button
+                            onClick={() => removeItemFromNote(item.id, selectedNote.id)}
+                            disabled={removingItemId === item.id}
+                            title={t('company.deliveryNotes.removeItem')}
+                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                          >
+                            {removingItemId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                          </button>
                         </div>
                       </div>
                     ))}

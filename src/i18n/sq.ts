@@ -735,6 +735,8 @@ export const sq = {
       deleteConfirmTitle: 'Konfirmo fshirjen',
       deleteConfirmBody: 'Ky veprim eshte i pakthyeshem. Shkruani {number} per te konfirmuar.',
       deleteBlockedStock: 'Nuk mund te fshihet - kjo fletedergese ka prekur stokun',
+      removeItem: 'Hiq artikullin',
+      removeItemConfirm: 'Do te hiqet ky artikull nga fletedergesa dhe stoku do te kthehet. Vazhdoni?',
     },
     reports: {
       title: 'Raportet',

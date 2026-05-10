@@ -737,6 +737,8 @@ export const de: typeof sq = {
       deleteConfirmTitle: 'Löschen bestätigen',
       deleteConfirmBody: 'Diese Aktion ist unwiderruflich. Geben Sie {number} zur Bestätigung ein.',
       deleteBlockedStock: 'Kann nicht gelöscht werden - der Lieferschein wurde bereits im Bestand verbucht',
+      removeItem: 'Artikel entfernen',
+      removeItemConfirm: 'Diesen Artikel vom Lieferschein entfernen? Der Bestand wird zurückgebucht.',
     },
     reports: {
       title: 'Berichte',
