@@ -15,6 +15,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import RepairCompletionModal from '../../components/stock/RepairCompletionModal';
 
 interface RepairReportRow {
   id: string;
@@ -53,7 +54,18 @@ interface DamagedStockRow {
   category?: { name: string } | null;
 }
 
-type TabKey = 'reports' | 'damaged';
+type TabKey = 'reports' | 'damaged' | 'pending';
+
+interface OpenRepairCase {
+  id: string;
+  category_id: string | null;
+  quantity_in: number;
+  quantity_repaired: number;
+  quantity_scrapped: number;
+  created_at: string;
+  category?: { name: string } | null;
+  depot?: { name: string } | null;
+}
 
 export default function DepotRepairs() {
   const { profile } = useAuth();
@@ -63,6 +75,8 @@ export default function DepotRepairs() {
   const [reports, setReports] = useState<RepairReportRow[]>([]);
   const [openRepairs, setOpenRepairs] = useState<OpenRepair[]>([]);
   const [damagedStock, setDamagedStock] = useState<DamagedStockRow[]>([]);
+  const [openCases, setOpenCases] = useState<OpenRepairCase[]>([]);
+  const [activeRepairId, setActiveRepairId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -87,7 +101,15 @@ export default function DepotRepairs() {
         .order('quantity', { ascending: false });
       if (depotId) stockQuery = stockQuery.eq('depot_id', depotId);
 
-      const [reportsRes, openRes, stockRes] = await Promise.all([
+      let casesQuery = supabase
+        .from('depot_repairs')
+        .select('id, category_id, quantity_in, quantity_repaired, quantity_scrapped, created_at, category:product_categories(name), depot:depots(name)')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (depotId) casesQuery = casesQuery.eq('depot_id', depotId);
+
+      const [reportsRes, openRes, stockRes, casesRes] = await Promise.all([
         supabase
           .from('depot_repair_reports')
           .select('id, report_date, total_quantity, details')
@@ -101,11 +123,24 @@ export default function DepotRepairs() {
           .eq('company_id', companyId)
           .is('reported_at', null),
         stockQuery,
+        casesQuery,
       ]);
 
       if (reportsRes.error) throw reportsRes.error;
       if (openRes.error) throw openRes.error;
       if (stockRes.error) throw stockRes.error;
+      if (casesRes.error) throw casesRes.error;
+
+      const casesData = (casesRes.data ?? []) as unknown as OpenRepairCase[];
+      setOpenCases(
+        casesData
+          .map((c) => ({
+            ...c,
+            category: Array.isArray((c as any).category) ? (c as any).category[0] ?? null : (c as any).category ?? null,
+            depot: Array.isArray((c as any).depot) ? (c as any).depot[0] ?? null : (c as any).depot ?? null,
+          }))
+          .filter((c) => c.quantity_in - c.quantity_repaired - c.quantity_scrapped > 0),
+      );
 
       setReports((reportsRes.data ?? []) as RepairReportRow[]);
 
@@ -271,6 +306,13 @@ export default function DepotRepairs() {
           label="Stoku per Reparim"
           count={damagedStock.length}
         />
+        <TabButton
+          active={tab === 'pending'}
+          onClick={() => setTab('pending')}
+          icon={<Wrench className="w-4 h-4" />}
+          label="Rastet e hapura"
+          count={openCases.length}
+        />
       </div>
 
       {tab === 'reports' ? (
@@ -280,9 +322,75 @@ export default function DepotRepairs() {
           setSearch={setSearch}
           totalRepaired={totalRepaired}
         />
-      ) : (
+      ) : tab === 'damaged' ? (
         <DamagedTab rows={damagedStock} />
+      ) : (
+        <OpenCasesTab rows={openCases} onReport={(id) => setActiveRepairId(id)} />
       )}
+
+      {activeRepairId && (
+        <RepairCompletionModal
+          repairId={activeRepairId}
+          onClose={() => setActiveRepairId(null)}
+          onApplied={() => {
+            setActiveRepairId(null);
+            fetchAll();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function OpenCasesTab({ rows, onReport }: { rows: OpenRepairCase[]; onReport: (id: string) => void }) {
+  if (rows.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+        <CheckCircle className="w-10 h-10 mx-auto mb-3 text-emerald-300" />
+        <p className="text-sm text-slate-400">Asnje rast i hapur reparimi.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">
+          <tr>
+            <th className="px-4 py-2 text-left">Data</th>
+            <th className="px-4 py-2 text-left">Kategori</th>
+            <th className="px-4 py-2 text-left">Depo</th>
+            <th className="px-4 py-2 text-right">Hyri</th>
+            <th className="px-4 py-2 text-right">Reparuar</th>
+            <th className="px-4 py-2 text-right">Scrap</th>
+            <th className="px-4 py-2 text-right">Mbetet</th>
+            <th className="px-4 py-2 text-right">Veprim</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map((r) => {
+            const remaining = r.quantity_in - r.quantity_repaired - r.quantity_scrapped;
+            return (
+              <tr key={r.id} className="hover:bg-slate-50">
+                <td className="px-4 py-2 text-slate-600 whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</td>
+                <td className="px-4 py-2 text-slate-800 font-medium">{r.category?.name ?? '-'}</td>
+                <td className="px-4 py-2 text-slate-600">{r.depot?.name ?? '-'}</td>
+                <td className="px-4 py-2 text-right text-slate-700">{r.quantity_in}</td>
+                <td className="px-4 py-2 text-right text-emerald-700">{r.quantity_repaired}</td>
+                <td className="px-4 py-2 text-right text-rose-700">{r.quantity_scrapped}</td>
+                <td className="px-4 py-2 text-right font-semibold text-amber-700">{remaining}</td>
+                <td className="px-4 py-2 text-right">
+                  <button
+                    onClick={() => onReport(r.id)}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700"
+                  >
+                    <Wrench className="w-3 h-3" /> Raporto
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

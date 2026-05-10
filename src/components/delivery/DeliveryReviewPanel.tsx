@@ -628,6 +628,14 @@ function ReviewModal({
       if (missing.length > 0) {
         throw new Error('Caktoni kategorine dhe sasine per cdo artikull para regjistrimit ne stok.');
       }
+      const missingProduct = rows.filter(
+        (r) => r.intended_action !== 'repair' && !r.category_product_id,
+      );
+      if (missingProduct.length > 0) {
+        throw new Error(
+          'Cdo artikull duhet te kete produkt te caktuar (jo vetem kategori). Zgjidhni produktin e sakte para regjistrimit ne stok.',
+        );
+      }
       await persistItems();
 
       const depotId = note.assigned_depot_id || profile?.depot_id;

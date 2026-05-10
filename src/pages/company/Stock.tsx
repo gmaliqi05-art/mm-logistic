@@ -28,6 +28,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { Stock as StockType, StockMovement, Depot, ProductCategory } from '../../types';
 import { compareCategoriesByPriority, compareProducts, epalClassRank } from '../../utils/productSort';
+import InProcessPanel from '../../components/stock/InProcessPanel';
 
 interface CategoryProduct {
   id: string;
@@ -536,6 +537,14 @@ export default function CompanyStock() {
           subtitle=""
         />
       </div>
+
+      {profile?.company_id && (
+        <InProcessPanel
+          companyId={profile.company_id}
+          sortingPath="/company/sorting"
+          repairPath="/company/repair-reports"
+        />
+      )}
 
       <div className="inline-flex bg-gray-100 rounded-xl p-1">
         <TabButton active={tab === 'active'} onClick={() => setTab('active')} icon={Boxes} accent="teal">
