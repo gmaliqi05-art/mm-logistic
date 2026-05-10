@@ -617,6 +617,69 @@ function ReviewModal({
     }
   }
 
+  async function handleSendToSorting() {
+    setSaving('approve');
+    setError(null);
+    try {
+      if (!note.assigned_depot_id) {
+        throw new Error('Cakto nje depo per kete dergese para se ta dergosh ne sortire.');
+      }
+      if (rows.length === 0) {
+        throw new Error('Shtoni se paku nje artikull para se ta dergoni ne sortire.');
+      }
+      const invalid = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
+      if (invalid.length > 0) {
+        throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
+      }
+      const sortingRows = rows.map((r) => ({
+        ...r,
+        intended_action: r.intended_action === 'repair' ? 'repair' : 'sorting',
+      }));
+      setRows(sortingRows as any);
+      const originalRows = rows;
+      try {
+        await persistItems();
+      } catch (err) {
+        setRows(originalRows);
+        throw err;
+      }
+      const { error: upErr } = await supabase
+        .from('delivery_notes')
+        .update({
+          status: 'pending_stock_confirmation',
+          company_reviewed_by: profile!.id,
+          company_reviewed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', note.id);
+      if (upErr) throw upErr;
+
+      const { data: depotUsers } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('depot_id', note.assigned_depot_id)
+        .eq('role', 'depot_worker')
+        .eq('is_active', true);
+      if (depotUsers && depotUsers.length > 0) {
+        await notifyUsers({
+          userIds: depotUsers.map((u) => u.id),
+          type: 'delivery',
+          titleKey: 'notifications.templates.sortingRequested.title',
+          messageKey: 'notifications.templates.sortingRequested.body',
+          params: { number: note.note_number },
+          referenceId: note.id,
+          fallbackTitle: 'Sortim i ri',
+          fallbackMessage: `${note.note_number} kerkon sortim ne depo.`,
+        });
+      }
+      await onDone();
+    } catch (err: any) {
+      setError(err.message || 'Gabim');
+    } finally {
+      setSaving(null);
+    }
+  }
+
   async function handleCompleteToStock() {
     setSaving('complete');
     setError(null);
@@ -1007,14 +1070,25 @@ function ReviewModal({
             </button>
           )}
           {role === 'company_admin' && !showRejectReason && (
-            <button
-              onClick={handleApprove}
-              disabled={!!saving}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50"
-            >
-              {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Warehouse className="w-4 h-4" />}
-              Dergo te depo per stok
-            </button>
+            <>
+              <button
+                onClick={handleApprove}
+                disabled={!!saving}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50"
+              >
+                {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Warehouse className="w-4 h-4" />}
+                Dergo te depo per stok
+              </button>
+              <button
+                onClick={handleSendToSorting}
+                disabled={!!saving}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                title="Dergo ne sortire ne depo — paletat do te ndahen ne A/B/C/Defekt"
+              >
+                {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+                Dergo ne Sortire
+              </button>
+            </>
           )}
           {!showRejectReason && (
             <button

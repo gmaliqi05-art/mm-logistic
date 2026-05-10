@@ -145,3 +145,67 @@ SELECT s.*
 FROM stock s
 WHERE s.condition IN ('damaged','sorting_pending','sorting')
   AND s.quantity > 0;
+
+-- ============================================================================
+-- SORTING: Ensure damaged items in sorting batches create depot_repairs
+-- ============================================================================
+-- The existing commit_sorting_batch_to_stock trigger posts stock rows for each
+-- pallet_sorting_items row (condition-aware). This helper ensures that any
+-- damaged pallets sorted within a batch also open a depot_repairs case, and
+-- that the "Defekt" class product exists for every class-mode category.
+
+-- Seed "Defekt" category_product per class-mode category if missing
+INSERT INTO category_products (id, company_id, category_id, name, is_active, created_at, updated_at)
+SELECT gen_random_uuid(), c.company_id, c.id, 'Defekt', true, now(), now()
+FROM product_categories c
+WHERE c.sorting_mode = 'class'
+  AND NOT EXISTS (
+    SELECT 1 FROM category_products cp
+    WHERE cp.category_id = c.id
+      AND cp.company_id = c.company_id
+      AND lower(cp.name) LIKE '%defekt%'
+  )
+ON CONFLICT DO NOTHING;
+
+-- After-completion trigger: when batch completes, open a depot_repairs row for
+-- each damaged item in that batch, so the repair workflow kicks in.
+CREATE OR REPLACE FUNCTION public.open_repairs_from_sorting_batch()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_item record;
+  v_cat_name text;
+BEGIN
+  IF NEW.status <> 'completed' OR (OLD.status IS NOT DISTINCT FROM 'completed') THEN
+    RETURN NEW;
+  END IF;
+
+  FOR v_item IN
+    SELECT psi.*, cp.name AS product_name
+    FROM pallet_sorting_items psi
+    JOIN category_products cp ON cp.id = psi.category_product_id
+    WHERE psi.batch_id = NEW.id
+      AND (psi.condition = 'damaged' OR lower(cp.name) LIKE '%defekt%')
+      AND psi.quantity > 0
+  LOOP
+    SELECT name INTO v_cat_name FROM product_categories WHERE id = NEW.category_id;
+    INSERT INTO depot_repairs (
+      company_id, depot_id, category_id, product_name,
+      quantity_in, quantity_repaired, quantity_scrapped,
+      source_delivery_note_id, logged_at, created_at, updated_at
+    ) VALUES (
+      NEW.company_id, NEW.depot_id, NEW.category_id, v_item.product_name,
+      v_item.quantity, 0, 0,
+      NEW.source_delivery_note_id, now(), now(), now()
+    );
+  END LOOP;
+  RETURN NEW;
+END $$;
+
+DROP TRIGGER IF EXISTS trg_sorting_batch_open_repairs ON pallet_sorting_batches;
+CREATE TRIGGER trg_sorting_batch_open_repairs
+  AFTER UPDATE ON pallet_sorting_batches
+  FOR EACH ROW
+  WHEN (NEW.status = 'completed' AND OLD.status <> 'completed')
+  EXECUTE FUNCTION public.open_repairs_from_sorting_batch();

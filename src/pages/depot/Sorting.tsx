@@ -12,6 +12,10 @@ import {
   Trash2,
   ArrowRight,
   ScanLine,
+  ChevronDown,
+  ChevronRight,
+  Wrench,
+  Minus,
 } from 'lucide-react';
 import PalletScanner from '../../components/scanner/PalletScanner';
 import { supabase } from '../../lib/supabase';
@@ -42,6 +46,16 @@ interface ItemInput {
 function isDefectProduct(name: string) {
   const n = (name || '').toLowerCase();
   return n.includes('defekt') || n.includes('defect') || n.includes('damaged');
+}
+
+const PRIMARY_ORDER = ['a klasse', 'b klasse', 'c klasse', 'defekt'];
+
+function primaryRank(name: string): number {
+  const n = (name || '').toLowerCase();
+  for (let i = 0; i < PRIMARY_ORDER.length; i++) {
+    if (n.includes(PRIMARY_ORDER[i])) return i;
+  }
+  return 99;
 }
 
 export default function DepotSorting() {
@@ -135,6 +149,9 @@ export default function DepotSorting() {
 
     catProducts.sort((a, b) => {
       if (cat?.sorting_mode === 'class') {
+        const pa = primaryRank(a.name);
+        const pb = primaryRank(b.name);
+        if (pa !== pb) return pa - pb;
         return epalClassRank(a.name) - epalClassRank(b.name);
       }
       return a.name.localeCompare(b.name);
@@ -645,57 +662,23 @@ export default function DepotSorting() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                {itemInputs.length === 0 ? (
-                  <div className="text-center py-6 text-gray-400 text-sm">
-                    <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                    {t('depot.sorting.noProductsForCategory')}
-                  </div>
-                ) : (
-                  itemInputs.map((row, idx) => {
-                    const isDefect = isDefectProduct(row.product_name);
-                    return (
-                      <div
-                        key={row.category_product_id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${
-                          isDefect ? 'bg-red-50 border-red-100' : 'bg-white border-gray-100'
-                        }`}
-                      >
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            isDefect ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'
-                          }`}
-                        >
-                          <Package className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {row.product_name}
-                          </p>
-                          {isDefect && (
-                            <p className="text-[11px] text-red-600">
-                              {t('depot.sorting.goesToRepair')}
-                            </p>
-                          )}
-                        </div>
-                        <input
-                          type="number"
-                          min="0"
-                          inputMode="numeric"
-                          value={row.quantity}
-                          onChange={(e) => {
-                            const copy = itemInputs.slice();
-                            copy[idx] = { ...row, quantity: e.target.value };
-                            setItemInputs(copy);
-                          }}
-                          className="w-24 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm text-right font-semibold"
-                          placeholder="0"
-                        />
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+              <SortingItemsGrid
+                itemInputs={itemInputs}
+                setItemInputs={setItemInputs}
+                isClassMode={currentCategory?.sorting_mode === 'class'}
+              />
+              <OtherCategoriesPanel
+                currentCategoryId={currentCategory?.id ?? ''}
+                categories={categories}
+                batches={batches}
+                onOpen={(b) => openBatch(b)}
+                onCreate={(catId) => {
+                  setNewCategoryId(catId);
+                  setNewTotalReceived('');
+                  setNewNotes('');
+                  setShowNewBatch(true);
+                }}
+              />
 
               {currentBatch.notes && (
                 <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
@@ -722,9 +705,13 @@ export default function DepotSorting() {
                   {t('depot.sorting.saveProgress')}
                 </button>
                 <button
-                  onClick={handleComplete}
-                  disabled={submitting || sortedTotal === 0 || diff !== 0}
-                  title={diff !== 0 ? t('depot.sorting.mustMatchTotal') : ''}
+                  onClick={() => {
+                    if (Math.abs(diff) > 0) {
+                      if (!window.confirm(`Ka nje diference prej ${diff} paletash. Vazhdo me perfundimin e sortimit?`)) return;
+                    }
+                    handleComplete();
+                  }}
+                  disabled={submitting || sortedTotal === 0}
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -745,6 +732,185 @@ export default function DepotSorting() {
         continuous={false}
         title={t('scanner.title') || 'Skano paleten'}
       />
+    </div>
+  );
+}
+
+function SortingItemsGrid({
+  itemInputs,
+  setItemInputs,
+  isClassMode,
+}: {
+  itemInputs: ItemInput[];
+  setItemInputs: (r: ItemInput[]) => void;
+  isClassMode: boolean;
+}) {
+  if (itemInputs.length === 0) {
+    return (
+      <div className="text-center py-6 text-gray-400 text-sm">
+        <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+        Nuk ka produkte per kete kategori
+      </div>
+    );
+  }
+
+  const primary = isClassMode ? itemInputs.filter((r) => primaryRank(r.product_name) < 99) : itemInputs;
+  const extras = isClassMode ? itemInputs.filter((r) => primaryRank(r.product_name) >= 99) : [];
+
+  function updateQty(index: number, next: string) {
+    const copy = itemInputs.slice();
+    copy[index] = { ...copy[index], quantity: next };
+    setItemInputs(copy);
+  }
+
+  function bump(index: number, delta: number) {
+    const copy = itemInputs.slice();
+    const current = parseInt(copy[index].quantity || '0', 10) || 0;
+    copy[index] = { ...copy[index], quantity: String(Math.max(0, current + delta)) };
+    setItemInputs(copy);
+  }
+
+  const renderRow = (row: ItemInput) => {
+    const realIdx = itemInputs.indexOf(row);
+    const isDefect = isDefectProduct(row.product_name);
+    const rank = primaryRank(row.product_name);
+    const tone: Record<number, string> = {
+      0: 'border-emerald-200 bg-emerald-50',
+      1: 'border-amber-200 bg-amber-50',
+      2: 'border-sky-200 bg-sky-50',
+      3: 'border-rose-200 bg-rose-50',
+    };
+    const iconTone: Record<number, string> = {
+      0: 'bg-emerald-100 text-emerald-700',
+      1: 'bg-amber-100 text-amber-700',
+      2: 'bg-sky-100 text-sky-700',
+      3: 'bg-rose-100 text-rose-700',
+    };
+    const shell = isDefect
+      ? 'border-rose-200 bg-rose-50'
+      : isClassMode && rank < 99
+      ? tone[rank] ?? 'border-gray-100 bg-white'
+      : 'border-gray-100 bg-white';
+    const iconShell = isDefect
+      ? 'bg-rose-100 text-rose-700'
+      : isClassMode && rank < 99
+      ? iconTone[rank] ?? 'bg-teal-100 text-teal-700'
+      : 'bg-teal-100 text-teal-700';
+
+    return (
+      <div
+        key={row.category_product_id}
+        className={`flex items-center gap-3 p-3 rounded-lg border ${shell}`}
+      >
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${iconShell}`}>
+          {isDefect ? <Wrench className="w-4 h-4" /> : <Package className="w-4 h-4" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">{row.product_name}</p>
+          {isDefect && <p className="text-[11px] text-rose-600">Shkon automatikisht ne reparim</p>}
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => bump(realIdx, -1)}
+            className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={row.quantity}
+            onChange={(e) => updateQty(realIdx, e.target.value)}
+            className="w-20 px-2 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm text-right font-bold bg-white"
+            placeholder="0"
+          />
+          <button
+            type="button"
+            onClick={() => bump(realIdx, 1)}
+            className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-2">
+      {primary.map(renderRow)}
+      {extras.length > 0 && (
+        <details className="rounded-lg border border-gray-100 bg-gray-50/50 open:bg-white">
+          <summary className="cursor-pointer list-none p-3 flex items-center gap-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+            <ChevronRight className="w-4 h-4 text-gray-400 transition-transform details-chevron" />
+            Produkte te tjera te kategorise ({extras.length})
+          </summary>
+          <div className="p-2 pt-0 space-y-2">{extras.map(renderRow)}</div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function OtherCategoriesPanel({
+  currentCategoryId,
+  categories,
+  batches,
+  onOpen,
+  onCreate,
+}: {
+  currentCategoryId: string;
+  categories: ProductCategory[];
+  batches: BatchWithItems[];
+  onOpen: (b: BatchWithItems) => void;
+  onCreate: (catId: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const others = categories.filter((c) => c.id !== currentCategoryId);
+  if (others.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white">
+      <button
+        type="button"
+        onClick={() => setExpanded((s) => !s)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-xl"
+      >
+        <span className="flex items-center gap-2">
+          <Layers className="w-4 h-4 text-teal-600" />
+          Kategori te tjera ({others.length})
+        </span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+      {expanded && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 pt-0">
+          {others.map((c) => {
+            const batch = batches.find((b) => b.category_id === c.id && b.status === 'in_progress');
+            const sorted = batch ? batch.items.reduce((s, i) => s + i.quantity, 0) : 0;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => (batch ? onOpen(batch) : onCreate(c.id))}
+                className="text-left rounded-lg border border-gray-100 hover:border-teal-300 hover:bg-teal-50/50 transition-colors p-3 flex items-center gap-3"
+              >
+                <div className="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
+                  <Package className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
+                  <p className="text-[11px] text-gray-500">
+                    {batch ? `${sorted}/${batch.total_received} paleta` : 'Krijo batch te ri'}
+                  </p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
