@@ -78,13 +78,13 @@ export default function DepotStock() {
       const [stockRes, movementRes, catRes] = await Promise.all([
         supabase
           .from('stock')
-          .select('*, category:product_categories(id, name)')
+          .select('*, category:product_categories(id, name), product:category_products(id, name)')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .order('updated_at', { ascending: false }),
         supabase
           .from('stock_movements')
-          .select('*, category:product_categories(id, name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
+          .select('*, category:product_categories(id, name), product:category_products(id, name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
@@ -245,7 +245,9 @@ export default function DepotStock() {
         a,
         b,
         (s) => (s as unknown as { category?: { name?: string } }).category?.name ?? null,
-        (s) => (s as unknown as { category?: { name?: string } }).category?.name ?? '',
+        (s) => (s as unknown as { product?: { name?: string }; category?: { name?: string } }).product?.name
+          ?? (s as unknown as { category?: { name?: string } }).category?.name
+          ?? '',
       ),
     );
   const sortedCategories = categories.slice().sort((a, b) => compareCategoriesByPriority(a.name, b.name));
@@ -348,7 +350,8 @@ export default function DepotStock() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('depot.stock.category')}</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">{t('depot.stock.category')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.quantity')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('company.stock.condition')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('common.date')}</th>
@@ -357,30 +360,38 @@ export default function DepotStock() {
             <tbody className="divide-y divide-gray-50">
               {sortedStocks.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
                     <Package className="w-10 h-10 mx-auto mb-3 text-gray-300" />
                     {t('company.stock.noStock')}
                   </td>
                 </tr>
               ) : (
-                sortedStocks.map((stock) => (
-                  <tr key={stock.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {(stock.category as any)?.name ?? '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-semibold text-gray-900">{stock.quantity}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${conditionConfig[stock.condition]?.className ?? 'bg-gray-100 text-gray-700'}`}>
-                        {conditionConfig[stock.condition]?.label ?? stock.condition}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">
-                      {new Date(stock.updated_at).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))
+                sortedStocks.map((stock) => {
+                  const productName = (stock as any).product?.name as string | undefined;
+                  const categoryName = (stock.category as any)?.name as string | undefined;
+                  return (
+                    <tr key={stock.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        <div>{productName || categoryName || '-'}</div>
+                        <div className="sm:hidden text-xs text-gray-500 mt-0.5">{productName ? categoryName : ''}</div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 hidden sm:table-cell">
+                        {categoryName ?? '-'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-semibold text-gray-900">{stock.quantity}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${conditionConfig[stock.condition]?.className ?? 'bg-gray-100 text-gray-700'}`}>
+                          {conditionConfig[stock.condition]?.label ?? stock.condition}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">
+                        {new Date(stock.updated_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -416,8 +427,10 @@ export default function DepotStock() {
                           <span className="text-sm font-medium text-gray-900">{m.quantity} {t('common.pieces')}</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1 truncate">
-                          {(m.category as any)?.name ?? '-'} &middot; {(m.performer as any)?.full_name ?? '-'}
-                          {m.notes ? ` &middot; ${m.notes}` : ''}
+                          {(m as any).product?.name
+                            ? `${(m as any).product.name}${(m.category as any)?.name ? ` (${(m.category as any).name})` : ''}`
+                            : (m.category as any)?.name ?? '-'} &middot; {(m.performer as any)?.full_name ?? '-'}
+                          {m.notes ? ` · ${m.notes}` : ''}
                         </p>
                       </div>
                     </div>

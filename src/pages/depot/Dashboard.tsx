@@ -29,6 +29,7 @@ interface DashboardStats {
 interface LowStockItem {
   id: string;
   categoryName: string;
+  productName: string;
   quantity: number;
   condition: string;
 }
@@ -99,14 +100,14 @@ export default function DepotDashboard() {
           .eq('condition', 'damaged'),
         supabase
           .from('stock_movements')
-          .select('*, category:product_categories(id, name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
+          .select('*, category:product_categories(id, name), product:category_products(id, name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
           .limit(10),
         supabase
           .from('stock')
-          .select('id, quantity, condition, category:product_categories(id, name)')
+          .select('id, quantity, condition, category:product_categories(id, name), product:category_products(id, name)')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .lt('quantity', 10)
@@ -132,6 +133,7 @@ export default function DepotDashboard() {
         (lowStockRes.data ?? []).map((s: any) => ({
           id: s.id,
           categoryName: s.category?.name ?? '-',
+          productName: s.product?.name ?? '',
           quantity: s.quantity,
           condition: s.condition,
         }))
@@ -239,7 +241,7 @@ export default function DepotDashboard() {
           <div className="flex flex-wrap gap-2">
             {lowStockItems.map((item) => (
               <span key={item.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-xs font-medium text-red-700 border border-red-200">
-                {item.categoryName}
+                {item.productName || item.categoryName}
                 <span className="font-bold">{item.quantity}</span>
               </span>
             ))}
@@ -278,7 +280,9 @@ export default function DepotDashboard() {
                             <span className="text-sm font-medium text-gray-900">{m.quantity} {t('common.pieces')}</span>
                           </div>
                           <p className="text-xs text-gray-500 mt-0.5 truncate">
-                            {(m.category as any)?.name ?? '-'} &middot; {(m.performer as any)?.full_name ?? '-'}
+                            {(m.product as any)?.name
+                              ? `${(m.product as any).name}${(m.category as any)?.name ? ` (${(m.category as any).name})` : ''}`
+                              : (m.category as any)?.name ?? '-'} &middot; {(m.performer as any)?.full_name ?? '-'}
                           </p>
                         </div>
                       </div>
@@ -313,8 +317,10 @@ export default function DepotDashboard() {
                 lowStockItems.map((item) => (
                   <div key={item.id} className="px-4 py-3 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{item.categoryName}</p>
-                      <p className="text-xs text-gray-500 capitalize">{item.condition}</p>
+                      <p className="text-sm font-medium text-gray-900">{item.productName || item.categoryName}</p>
+                      <p className="text-xs text-gray-500 capitalize">
+                        {item.productName ? `${item.categoryName} · ` : ''}{item.condition}
+                      </p>
                     </div>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
                       {item.quantity}
