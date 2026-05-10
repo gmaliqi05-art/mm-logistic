@@ -323,6 +323,11 @@ function ReviewModal({
   const [scannedUrl, setScannedUrl] = useState<string | null>(note.scanned_photo_url);
   const [uploading, setUploading] = useState(false);
   const isOutgoing = note.type === 'delivery';
+  const [stockMap, setStockMap] = useState<Record<string, number>>({});
+  const [negConfirm, setNegConfirm] = useState<null | {
+    shortages: Array<{ label: string; condition: string; requested: number; available: number }>;
+    onConfirm: () => void;
+  }>(null);
 
   async function handleUploadDocument(file: File) {
     if (!file) return;
@@ -375,11 +380,23 @@ function ReviewModal({
 
   async function load() {
     setLoading(true);
-    const [itemsRes, catsRes, prodsRes] = await Promise.all([
+    const depotId = note.assigned_depot_id;
+    const stockQuery = depotId
+      ? supabase.from('stock').select('category_id, category_product_id, condition, quantity')
+          .eq('company_id', note.company_id).eq('depot_id', depotId)
+      : Promise.resolve({ data: [] });
+    const [itemsRes, catsRes, prodsRes, stockRes] = await Promise.all([
       supabase.from('delivery_note_items').select('*').eq('delivery_note_id', note.id).order('created_at', { ascending: true }),
       supabase.from('product_categories').select('id, name').eq('company_id', note.company_id).order('name'),
-      supabase.from('category_products').select('id, name, sku, category_id').eq('company_id', note.company_id).order('name'),
+      supabase.from('category_products').select('id, name, sku, category_id').eq('company_id', note.company_id).eq('is_active', true).order('name'),
+      stockQuery,
     ]);
+    const sMap: Record<string, number> = {};
+    ((stockRes as any).data as Array<{ category_id: string; category_product_id: string | null; condition: string; quantity: number }> | null ?? []).forEach((s) => {
+      const key = `${s.category_id}|${s.category_product_id || ''}|${s.condition}`;
+      sMap[key] = (sMap[key] || 0) + (s.quantity || 0);
+    });
+    setStockMap(sMap);
     const cats = (catsRes.data as Category[]) ?? [];
     const prods = (prodsRes.data as Product[]) ?? [];
     const rawItems = (itemsRes.data as NoteItem[]) ?? [];
@@ -393,7 +410,6 @@ function ReviewModal({
       let autoMatched = false;
       let condition = it.condition || '';
       let action: 'stock' | 'sorting' | 'repair' = (it.intended_action as any) || 'stock';
-      if (isOutgoing) action = 'stock';
 
       if (!categoryId && !productId && it.notes) {
         const mm = matchProduct(it.notes, prods, cats);
@@ -413,7 +429,6 @@ function ReviewModal({
         if (!condition) condition = d.condition;
         if (!it.intended_action) action = d.intended_action;
       }
-      if (isOutgoing) action = 'stock';
 
       if (
         !productId &&
@@ -554,8 +569,6 @@ function ReviewModal({
     const updates = rows.filter((r) => r._persistedId);
     const inserts = rows.filter((r) => !r._persistedId);
 
-    const effectiveAction = (r: RowState) => (isOutgoing ? 'stock' : r.intended_action);
-
     for (const r of updates) {
       await supabase
         .from('delivery_note_items')
@@ -564,7 +577,7 @@ function ReviewModal({
           category_id: r.category_id,
           quantity: r.quantity,
           condition: r.condition,
-          intended_action: effectiveAction(r),
+          intended_action: r.intended_action,
           notes: r.notes,
         })
         .eq('id', r._persistedId!);
@@ -577,7 +590,7 @@ function ReviewModal({
         category_id: r.category_id,
         quantity: r.quantity,
         condition: r.condition,
-        intended_action: effectiveAction(r),
+        intended_action: r.intended_action,
         notes: r.notes,
       }));
       const { data: inserted } = await supabase
@@ -678,10 +691,6 @@ function ReviewModal({
   }
 
   async function handleSendToSorting() {
-    if (isOutgoing) {
-      setError('Fletedergesat dalese nuk mund te dergohen ne sortire. Perdorni "Regjistro ne stok" ose "Dergo te depo per stok".');
-      return;
-    }
     setSaving('approve');
     setError(null);
     try {
@@ -744,7 +753,37 @@ function ReviewModal({
     }
   }
 
-  async function handleCompleteToStock() {
+  function effConditionForRow(r: RowState): string {
+    if (r.intended_action === 'repair') return 'damaged';
+    if (r.intended_action === 'sorting' && !['ready_a','ready_b','ready_c'].includes(r.condition)) return 'sorting';
+    if (['good','damaged','repaired','sorting','ready_a','ready_b','ready_c'].includes(r.condition)) return r.condition;
+    return 'good';
+  }
+
+  function computeShortages() {
+    if (!isOutgoing) return [];
+    const out: Array<{ label: string; condition: string; requested: number; available: number }> = [];
+    for (const r of rows) {
+      if (r.intended_action !== 'stock') continue;
+      if (!r.category_id || !r.quantity) continue;
+      const cond = effConditionForRow(r);
+      const key = `${r.category_id}|${r.product_id || ''}|${cond}`;
+      const available = stockMap[key] || 0;
+      if (available < r.quantity) {
+        const prod = products.find((p) => p.id === r.product_id);
+        const cat = categories.find((c) => c.id === r.category_id);
+        out.push({
+          label: prod?.name || cat?.name || 'Artikull',
+          condition: cond,
+          requested: r.quantity,
+          available,
+        });
+      }
+    }
+    return out;
+  }
+
+  async function handleCompleteToStock(allowNegative: boolean = false) {
     setSaving('complete');
     setError(null);
     try {
@@ -756,14 +795,37 @@ function ReviewModal({
         throw new Error('Caktoni kategorine dhe sasine per cdo artikull para regjistrimit ne stok.');
       }
       const missingProduct = rows.filter(
-        (r) => r.intended_action !== 'repair' && !r.category_product_id,
+        (r) => r.intended_action !== 'repair' && !r.product_id,
       );
       if (missingProduct.length > 0) {
         throw new Error(
           'Cdo artikull duhet te kete produkt te caktuar (jo vetem kategori). Zgjidhni produktin e sakte para regjistrimit ne stok.',
         );
       }
+
+      if (!allowNegative) {
+        const shortages = computeShortages();
+        if (shortages.length > 0) {
+          setSaving(null);
+          setNegConfirm({
+            shortages,
+            onConfirm: () => {
+              setNegConfirm(null);
+              handleCompleteToStock(true);
+            },
+          });
+          return;
+        }
+      }
+
       await persistItems();
+
+      if (isOutgoing) {
+        await supabase
+          .from('delivery_notes')
+          .update({ allow_negative_stock: allowNegative })
+          .eq('id', note.id);
+      }
 
       const depotId = note.assigned_depot_id || profile?.depot_id;
       if (!depotId) throw new Error('Depoja nuk eshte caktuar per kete dergese.');
@@ -1093,9 +1155,29 @@ function ReviewModal({
                     categories={categories}
                     products={products}
                     isOutgoing={isOutgoing}
+                    stockMap={stockMap}
                     onUpdate={updateRow}
                     onRemoveRow={removeRow}
                     onAddSplit={() => addSplit(group.key)}
+                    onCreateCategory={async (name) => {
+                      const { data, error: e } = await supabase.from('product_categories').insert({
+                        company_id: note.company_id,
+                        name: name.trim(),
+                      } as any).select('id, name').maybeSingle();
+                      if (e || !data) throw e || new Error('Nuk u krijua kategoria');
+                      setCategories((prev) => [...prev, data as Category].sort((a, b) => a.name.localeCompare(b.name)));
+                      return data as Category;
+                    }}
+                    onCreateProduct={async (name, categoryId) => {
+                      const { data, error: e } = await supabase.from('category_products').insert({
+                        company_id: note.company_id,
+                        category_id: categoryId,
+                        name: name.trim(),
+                      } as any).select('id, name, sku, category_id').maybeSingle();
+                      if (e || !data) throw e || new Error('Nuk u krijua produkti');
+                      setProducts((prev) => [...prev, data as Product].sort((a, b) => a.name.localeCompare(b.name)));
+                      return data as Product;
+                    }}
                   />
                 ))}
               </div>
@@ -1156,22 +1238,20 @@ function ReviewModal({
                 {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Warehouse className="w-4 h-4" />}
                 Dergo te depo per stok
               </button>
-              {!isOutgoing && (
-                <button
-                  onClick={handleSendToSorting}
-                  disabled={!!saving}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
-                  title="Dergo ne sortire ne depo — paletat do te ndahen ne A/B/C/Defekt"
-                >
-                  {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
-                  Dergo ne Sortire
-                </button>
-              )}
+              <button
+                onClick={handleSendToSorting}
+                disabled={!!saving}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                title="Dergo ne sortire ne depo — paletat do te ndahen ne A/B/C/Defekt"
+              >
+                {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+                Dergo ne Sortire
+              </button>
             </>
           )}
           {!showRejectReason && (
             <button
-              onClick={handleCompleteToStock}
+              onClick={() => handleCompleteToStock(false)}
               disabled={!!saving}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
             >
@@ -1181,6 +1261,48 @@ function ReviewModal({
           )}
         </div>
       </div>
+
+      {negConfirm && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setNegConfirm(null)}>
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-amber-50 border-b border-amber-100 px-5 py-4 flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-gray-900">Stok i pamjaftueshem</h4>
+                <p className="text-xs text-gray-600 mt-1">Disa artikuj do te shkojne ne minus ne stok. Deshironi te vazhdoni?</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-2 max-h-80 overflow-y-auto">
+              {negConfirm.shortages.map((s, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-3 py-2 text-xs">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">{s.label}</p>
+                    <p className="text-[10px] text-gray-500">Klasi: {s.condition}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-semibold text-amber-700">-{s.requested - s.available}</p>
+                    <p className="text-[10px] text-gray-500">{s.available} / {s.requested}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
+              <button
+                onClick={() => setNegConfirm(null)}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100"
+              >
+                Anulo
+              </button>
+              <button
+                onClick={negConfirm.onConfirm}
+                className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700"
+              >
+                Vazhdo ne minus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1244,17 +1366,23 @@ function ItemGroupBlock({
   categories,
   products,
   isOutgoing = false,
+  stockMap,
   onUpdate,
   onRemoveRow,
   onAddSplit,
+  onCreateCategory,
+  onCreateProduct,
 }: {
   group: Group;
   categories: Category[];
   products: Product[];
   isOutgoing?: boolean;
+  stockMap: Record<string, number>;
   onUpdate: (key: string, patch: Partial<RowState>) => void;
   onRemoveRow: (key: string) => void;
   onAddSplit: () => void;
+  onCreateCategory: (name: string) => Promise<Category>;
+  onCreateProduct: (name: string, categoryId: string) => Promise<Product>;
 }) {
   const sumQty = useMemo(() => group.rows.reduce((s, r) => s + (r.quantity || 0), 0), [group.rows]);
   const hasSource = group.sourceQuantity > 0;
@@ -1301,9 +1429,12 @@ function ItemGroupBlock({
             categories={categories}
             products={products}
             isOutgoing={isOutgoing}
+            stockMap={stockMap}
             onUpdate={onUpdate}
             onRemove={group.rows.length > 1 || !row._persistedId ? () => onRemoveRow(row._key) : null}
             isFirst={idx === 0}
+            onCreateCategory={onCreateCategory}
+            onCreateProduct={onCreateProduct}
           />
         ))}
       </div>
@@ -1326,25 +1457,48 @@ function SplitRow({
   categories,
   products,
   isOutgoing = false,
+  stockMap,
   onUpdate,
   onRemove,
   isFirst,
+  onCreateCategory,
+  onCreateProduct,
 }: {
   row: RowState;
   categories: Category[];
   products: Product[];
   isOutgoing?: boolean;
+  stockMap: Record<string, number>;
   onUpdate: (key: string, patch: Partial<RowState>) => void;
   onRemove: (() => void) | null;
   isFirst: boolean;
+  onCreateCategory: (name: string) => Promise<Category>;
+  onCreateProduct: (name: string, categoryId: string) => Promise<Product>;
 }) {
   const productsForCategory = useMemo(
     () => (row.category_id ? products.filter((p) => p.category_id === row.category_id) : []),
     [products, row.category_id],
   );
   const invalid = !row.category_id || !row.quantity || row.quantity <= 0;
+  const [createCatName, setCreateCatName] = useState('');
+  const [createProdName, setCreateProdName] = useState('');
+  const [createMode, setCreateMode] = useState<null | 'cat' | 'prod'>(null);
+  const [creating, setCreating] = useState(false);
 
-  function handleCategoryChange(val: string) {
+  const effCond =
+    row.intended_action === 'repair' ? 'damaged' :
+    row.intended_action === 'sorting' && !['ready_a','ready_b','ready_c'].includes(row.condition) ? 'sorting' :
+    ['good','damaged','repaired','sorting','ready_a','ready_b','ready_c'].includes(row.condition) ? row.condition : 'good';
+  const stockKey = row.category_id ? `${row.category_id}|${row.product_id || ''}|${effCond}` : '';
+  const availableStock = stockKey ? (stockMap[stockKey] || 0) : null;
+  const showStockBadge = isOutgoing && row.intended_action === 'stock' && row.category_id && row.product_id;
+  const goingNegative = showStockBadge && row.quantity > 0 && (availableStock ?? 0) < row.quantity;
+
+  async function handleCategoryChange(val: string) {
+    if (val === '__create__') {
+      setCreateMode('cat');
+      return;
+    }
     const cur = products.find((p) => p.id === row.product_id);
     const keepProduct = cur && cur.category_id === val;
     onUpdate(row._key, {
@@ -1354,8 +1508,37 @@ function SplitRow({
     });
   }
 
+  async function submitCreateCategory() {
+    if (!createCatName.trim()) return;
+    setCreating(true);
+    try {
+      const cat = await onCreateCategory(createCatName);
+      setCreateCatName('');
+      setCreateMode(null);
+      onUpdate(row._key, { category_id: cat.id, product_id: null, auto_matched: false });
+    } catch (err: any) {
+      alert(err.message || 'Gabim');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function submitCreateProduct() {
+    if (!createProdName.trim() || !row.category_id) return;
+    setCreating(true);
+    try {
+      const prod = await onCreateProduct(createProdName, row.category_id);
+      setCreateProdName('');
+      setCreateMode(null);
+      onUpdate(row._key, { product_id: prod.id, auto_matched: false });
+    } catch (err: any) {
+      alert(err.message || 'Gabim');
+    } finally {
+      setCreating(false);
+    }
+  }
+
   function handleActionChange(val: 'stock' | 'sorting' | 'repair') {
-    if (isOutgoing) val = 'stock';
     let condition = row.condition;
     if (val === 'repair') condition = 'damaged';
     else if (val === 'sorting') condition = 'sorting';
@@ -1379,11 +1562,17 @@ function SplitRow({
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
+          <option value="__create__">+ Krijo kategori te re</option>
         </select>
         <select
           value={row.product_id || ''}
           onChange={(e) => {
-            const newId = e.target.value || null;
+            const v = e.target.value;
+            if (v === '__create__') {
+              setCreateMode('prod');
+              return;
+            }
+            const newId = v || null;
             const newProd = newId ? products.find((p) => p.id === newId) ?? null : null;
             const d = deriveConditionAction(row._sourceDescription || row.notes || '', newProd?.name, null, isOutgoing);
             onUpdate(row._key, {
@@ -1400,6 +1589,7 @@ function SplitRow({
           {productsForCategory.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
+          {row.category_id && <option value="__create__">+ Krijo produkt te ri</option>}
         </select>
         <input
           type="number"
@@ -1412,9 +1602,85 @@ function SplitRow({
         />
       </div>
 
+      {createMode === 'cat' && (
+        <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200 rounded-lg p-2">
+          <input
+            autoFocus
+            type="text"
+            value={createCatName}
+            onChange={(e) => setCreateCatName(e.target.value)}
+            placeholder="Emri i kategorise se re"
+            className="flex-1 bg-white border border-sky-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+            onKeyDown={(e) => { if (e.key === 'Enter') submitCreateCategory(); if (e.key === 'Escape') setCreateMode(null); }}
+          />
+          <button
+            type="button"
+            onClick={submitCreateCategory}
+            disabled={creating || !createCatName.trim()}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50"
+          >
+            {creating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+            Ruaj
+          </button>
+          <button
+            type="button"
+            onClick={() => { setCreateMode(null); setCreateCatName(''); }}
+            className="inline-flex items-center px-2 py-1.5 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+          >
+            Anulo
+          </button>
+        </div>
+      )}
+
+      {createMode === 'prod' && (
+        <div className="flex items-center gap-1.5 bg-teal-50 border border-teal-200 rounded-lg p-2">
+          <input
+            autoFocus
+            type="text"
+            value={createProdName}
+            onChange={(e) => setCreateProdName(e.target.value)}
+            placeholder="Emri i produktit te ri"
+            className="flex-1 bg-white border border-teal-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
+            onKeyDown={(e) => { if (e.key === 'Enter') submitCreateProduct(); if (e.key === 'Escape') setCreateMode(null); }}
+          />
+          <button
+            type="button"
+            onClick={submitCreateProduct}
+            disabled={creating || !createProdName.trim()}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
+          >
+            {creating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+            Ruaj
+          </button>
+          <button
+            type="button"
+            onClick={() => { setCreateMode(null); setCreateProdName(''); }}
+            className="inline-flex items-center px-2 py-1.5 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+          >
+            Anulo
+          </button>
+        </div>
+      )}
+
+      {showStockBadge && (
+        <div className="flex items-center gap-2 text-[11px]">
+          {goingNegative ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+              <AlertCircle className="w-3 h-3" />
+              Ne stok: {availableStock} — shkon ne -{row.quantity - (availableStock ?? 0)}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <Package className="w-3 h-3" />
+              Ne stok: {availableStock}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1 flex-wrap">
-          {ACTION_OPTIONS.filter((opt) => !isOutgoing || opt.value === 'stock').map((opt) => {
+          {ACTION_OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const active = row.intended_action === opt.value;
             return (
