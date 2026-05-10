@@ -182,6 +182,7 @@ export const sq = {
     review: 'Per Shqyrtim',
     overdue: 'Te Vonuara',
     partners: 'Partneret',
+    partnerFlows: 'Rrjedhat me partneret',
     reports: 'Raportet',
     repairReports: 'Raportet e Reparatures',
     workerRepairStats: 'Statistikat e Puntoreve',

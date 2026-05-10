@@ -48,6 +48,7 @@ const allNavItems = [
   { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', end: false, premium: false, bottomNav: false, badgeKey: 'review' as const },
   { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, premium: false, bottomNav: false },
   { to: '/company/partners', icon: Building2, labelKey: 'nav.partners', end: false, premium: false, bottomNav: false },
+  { to: '/company/partner-flows', icon: Building2, labelKey: 'nav.partnerFlows', end: false, premium: false, bottomNav: false },
   { to: '/company/pallet-accounts', icon: Package, labelKey: 'nav.palletAccounts', end: false, premium: false, bottomNav: false },
   { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap', end: false, premium: false, bottomNav: false },
   { to: '/company/route-planner', icon: Route, labelKey: 'nav.routePlanner', end: false, premium: false, bottomNav: false },

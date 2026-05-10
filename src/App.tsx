@@ -83,6 +83,7 @@ const CompanySettings = lazy(() => import('./pages/company/Settings'));
 const CompanyApiWebhooks = lazy(() => import('./pages/company/ApiWebhooks'));
 const CompanyOverdueDocuments = lazy(() => import('./pages/company/OverdueDocuments'));
 const CompanyPartners = lazy(() => import('./pages/company/Partners'));
+const CompanyPartnerFlows = lazy(() => import('./pages/company/PartnerFlows'));
 const CompanyReview = lazy(() => import('./pages/company/Review'));
 const CompanyVehicles = lazy(() => import('./pages/company/Vehicles'));
 const CompanyVehicleDetail = lazy(() => import('./pages/company/VehicleDetail'));
@@ -239,6 +240,7 @@ function AppRoutes() {
           <Route path="review" element={<CompanyReview />} />
           <Route path="overdue" element={<CompanyOverdueDocuments />} />
           <Route path="partners" element={<CompanyPartners />} />
+          <Route path="partner-flows" element={<CompanyPartnerFlows />} />
           <Route path="pallet-accounts" element={<CompanyPalletAccounts />} />
           <Route path="pallet-accounts/:id" element={<CompanyPalletAccountDetail />} />
           <Route path="live-map" element={<LogisticsLiveMap />} />

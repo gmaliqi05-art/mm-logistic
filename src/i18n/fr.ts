@@ -184,6 +184,7 @@ export const fr: typeof sq = {
     review: '\u00c0 r\u00e9viser',
     overdue: 'En retard',
     partners: 'Partenaires',
+    partnerFlows: 'Flux partenaires',
     reports: 'Rapports',
     repairReports: 'Rapports de r\u00e9paration',
     workerRepairStats: 'Statistiques employés',

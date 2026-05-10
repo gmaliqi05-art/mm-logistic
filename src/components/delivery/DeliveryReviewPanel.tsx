@@ -26,6 +26,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { matchProduct } from '../../utils/productMatcher';
 import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
 import { notifyUsers } from '../../utils/notifications';
+import FlowRoleSelector from './FlowRoleSelector';
+import type { FlowRole } from '../../utils/counterpartyMatch';
 
 type Role = 'company_admin' | 'depot_worker';
 
@@ -46,6 +48,13 @@ interface ReviewNote {
   assigned_driver_id: string | null;
   company_id: string;
   delivered_at: string | null;
+  flow_role?: FlowRole | null;
+  counterparty_company_id?: string | null;
+  counterparty_contact_id?: string | null;
+  counterparty_name?: string | null;
+  counterparty_vat?: string | null;
+  counterparty_email?: string | null;
+  counterparty_phone?: string | null;
 }
 
 interface NoteItem {
@@ -800,6 +809,22 @@ function ReviewModal({
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
             </div>
+          )}
+
+          {profile?.company_id && role === 'company_admin' && (
+            <FlowRoleSelector
+              ownCompanyId={profile.company_id}
+              noteId={note.id}
+              initial={{
+                flow_role: note.flow_role ?? (note.type === 'pickup' ? 'receiver' : 'sender'),
+                counterparty_company_id: note.counterparty_company_id ?? null,
+                counterparty_contact_id: note.counterparty_contact_id ?? null,
+                counterparty_name: note.counterparty_name ?? note.partner_name ?? null,
+                counterparty_vat: note.counterparty_vat ?? null,
+                counterparty_email: note.counterparty_email ?? null,
+                counterparty_phone: note.counterparty_phone ?? null,
+              }}
+            />
           )}
 
           <div className="grid lg:grid-cols-2 gap-4">
