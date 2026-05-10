@@ -31,6 +31,7 @@ import { useTranslation } from '../../i18n';
 import type { DeliveryNote } from '../../types';
 import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/SmartDocScanner';
 import { notifyUsers } from '../../utils/notifications';
+import DriverPermissionsGate from '../../components/DriverPermissionsGate';
 
 export type T = (key: string) => string;
 
@@ -221,6 +222,7 @@ export default function DriverDashboard() {
 
   return (
     <div className="space-y-5 pb-6">
+      <DriverPermissionsGate />
       <div>
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
           {t('driver.home.greeting')}, {profile?.full_name?.split(' ')[0] ?? t('roles.driver')}

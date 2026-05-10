@@ -238,6 +238,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
     const load = async () => {
       try {
         const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const liveCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
         const { data, error } = await supabase
           .from('delivery_notes')
           .select(
@@ -279,6 +280,66 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
               base_lat: r.driver?.base_lat ?? null,
               base_lng: r.driver?.base_lng ?? null,
             };
+          }
+        }
+
+        // Also pull from driver_locations so a driver who activated tracking
+        // without an in-progress delivery is still visible on the company map.
+        const { data: liveRows } = await supabase
+          .from('driver_locations')
+          .select('driver_id, lat, lng, speed_kmh, heading_deg, recorded_at')
+          .eq('company_id', companyId)
+          .gte('recorded_at', liveCutoff)
+          .order('recorded_at', { ascending: false })
+          .limit(1000);
+        const latestPerDriver: Record<string, { lat: number; lng: number; speed_kmh: number | null; heading_deg: number | null; recorded_at: string }> = {};
+        for (const r of (liveRows as Array<{ driver_id: string; lat: number; lng: number; speed_kmh: number | null; heading_deg: number | null; recorded_at: string }>) ?? []) {
+          if (!latestPerDriver[r.driver_id]) latestPerDriver[r.driver_id] = r;
+        }
+        const missingDriverIds = Object.keys(latestPerDriver).filter((id) => !byDriver[id]);
+        if (missingDriverIds.length > 0) {
+          const { data: profs } = await supabase
+            .from('profiles')
+            .select('id, full_name, phone, base_address, base_lat, base_lng')
+            .in('id', missingDriverIds);
+          const profMap: Record<string, { full_name: string | null; phone: string | null; base_address: string | null; base_lat: number | null; base_lng: number | null }> = {};
+          for (const p of (profs as Array<{ id: string; full_name: string | null; phone: string | null; base_address: string | null; base_lat: number | null; base_lng: number | null }>) ?? []) {
+            profMap[p.id] = p;
+          }
+          for (const id of missingDriverIds) {
+            const latest = latestPerDriver[id];
+            const prof = profMap[id];
+            byDriver[id] = {
+              driver_id: id,
+              driver_name: prof?.full_name ?? '',
+              phone: prof?.phone ?? null,
+              vehicle_plate: null,
+              lat: Number(latest.lat),
+              lng: Number(latest.lng),
+              speed_kmh: latest.speed_kmh != null ? Number(latest.speed_kmh) : null,
+              heading_deg: latest.heading_deg != null ? Number(latest.heading_deg) : null,
+              last_location_at: latest.recorded_at,
+              delivery_note_id: null,
+              note_number: null,
+              status: null,
+              delivery_address: null,
+              current_address: null,
+              base_address: prof?.base_address ?? null,
+              base_lat: prof?.base_lat ?? null,
+              base_lng: prof?.base_lng ?? null,
+            };
+          }
+        }
+        // Refresh existing drivers with any newer live ping.
+        for (const [id, latest] of Object.entries(latestPerDriver)) {
+          const cur = byDriver[id];
+          if (!cur) continue;
+          if (new Date(latest.recorded_at).getTime() > new Date(cur.last_location_at).getTime()) {
+            cur.lat = Number(latest.lat);
+            cur.lng = Number(latest.lng);
+            cur.speed_kmh = latest.speed_kmh != null ? Number(latest.speed_kmh) : cur.speed_kmh;
+            cur.heading_deg = latest.heading_deg != null ? Number(latest.heading_deg) : cur.heading_deg;
+            cur.last_location_at = latest.recorded_at;
           }
         }
         setDrivers(byDriver);
@@ -335,7 +396,35 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           };
           setDrivers((prev) => {
             const existing = prev[row.driver_id];
-            if (!existing) return prev;
+            if (!existing) {
+              // New driver just came online. Insert a minimal ping so they
+              // appear on the map immediately; profile details will be
+              // hydrated by the next full load() tick.
+              const newLat = Number(row.lat);
+              const newLng = Number(row.lng);
+              return {
+                ...prev,
+                [row.driver_id]: {
+                  driver_id: row.driver_id,
+                  driver_name: '',
+                  phone: null,
+                  vehicle_plate: null,
+                  lat: newLat,
+                  lng: newLng,
+                  speed_kmh: row.speed_kmh != null ? Number(row.speed_kmh) : null,
+                  heading_deg: row.heading_deg != null ? Number(row.heading_deg) : null,
+                  last_location_at: row.recorded_at,
+                  delivery_note_id: row.delivery_note_id,
+                  note_number: null,
+                  status: null,
+                  delivery_address: null,
+                  current_address: null,
+                  base_address: null,
+                  base_lat: null,
+                  base_lng: null,
+                },
+              };
+            }
             const newLat = Number(row.lat);
             const newLng = Number(row.lng);
             let derived: number | null = null;
@@ -408,7 +497,29 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           const next = { ...prev };
           for (const [driverId, latest] of Object.entries(latestByDriver)) {
             const cur = next[driverId];
-            if (!cur) continue;
+            if (!cur) {
+              next[driverId] = {
+                driver_id: driverId,
+                driver_name: '',
+                phone: null,
+                vehicle_plate: null,
+                lat: Number(latest.lat),
+                lng: Number(latest.lng),
+                speed_kmh: latest.speed_kmh != null ? Number(latest.speed_kmh) : null,
+                heading_deg: latest.heading_deg != null ? Number(latest.heading_deg) : null,
+                last_location_at: latest.recorded_at,
+                delivery_note_id: null,
+                note_number: null,
+                status: null,
+                delivery_address: null,
+                current_address: null,
+                base_address: null,
+                base_lat: null,
+                base_lng: null,
+              };
+              changed = true;
+              continue;
+            }
             const lat = Number(latest.lat);
             const lng = Number(latest.lng);
             let derived: number | null = null;

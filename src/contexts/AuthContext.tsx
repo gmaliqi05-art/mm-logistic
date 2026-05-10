@@ -42,27 +42,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) {
-        fetchProfile(s.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
+    let cancelled = false;
+    // Guard against a stuck auth bootstrap (common on installed PWAs with
+    // a stale service worker / frozen network). After 8s we release the
+    // loading state so the UI can continue to render.
+    const safety = window.setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 8000);
+
+    const bootstrap = async () => {
+      try {
+        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => {
+          window.setTimeout(() => resolve({ data: { session: null } }), 7000);
+        });
+        const result = await Promise.race([
+          supabase.auth.getSession(),
+          timeoutPromise,
+        ]);
+        if (cancelled) return;
+        const s = (result as { data: { session: Session | null } }).data.session;
+        setSession(s);
+        if (s?.user) {
+          await fetchProfile(s.user.id);
+        }
+      } catch (err) {
+        logger.warn('auth bootstrap failed', { error: err });
+      } finally {
+        if (!cancelled) {
+          window.clearTimeout(safety);
+          setLoading(false);
+        }
       }
-    });
+    };
+
+    void bootstrap();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
         (async () => {
-          await fetchProfile(s.user.id);
+          try {
+            await fetchProfile(s.user.id);
+          } catch (err) {
+            logger.warn('profile refresh after auth change failed', { error: err });
+          }
         })();
       } else {
         setProfile(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(safety);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
