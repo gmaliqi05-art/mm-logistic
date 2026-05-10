@@ -18,6 +18,7 @@ import { useCompanyBranding } from '../hooks/useCompanyBranding';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import DriverTrackingBanner from '../components/DriverTrackingBanner';
+import DriverShiftEndModal from '../components/DriverShiftEndModal';
 import { DriverTrackingProvider } from '../contexts/DriverTrackingContext';
 
 const navItems = [
@@ -138,6 +139,7 @@ export default function DriverLayout() {
         </header>
 
         <DriverTrackingBanner />
+        <DriverShiftEndModal />
         <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
           <Outlet />
         </main>

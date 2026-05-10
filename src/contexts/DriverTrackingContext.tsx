@@ -4,8 +4,8 @@ import { useDriverLocationTracking, TrackingState } from '../hooks/useDriverLoca
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 
-const AUTO_STOP_DELAY_MS = 10 * 60 * 1000;
 const ENABLED_KEY = 'driver_tracking_enabled';
+const OVERTIME_KEY = 'driver_tracking_overtime_until';
 
 interface ActiveDelivery {
   id: string;
@@ -14,10 +14,10 @@ interface ActiveDelivery {
   delivery_address: string | null;
 }
 
-interface PromptInfo {
-  id: string;
-  sent_at: string;
-}
+export type ShiftEndDialog =
+  | { kind: 'ended' }
+  | { kind: 'overtime_expired' }
+  | null;
 
 interface DriverTrackingContextValue {
   enabled: boolean;
@@ -29,14 +29,14 @@ interface DriverTrackingContextValue {
   setShiftHours: (start: number, end: number) => Promise<void>;
   activeDelivery: ActiveDelivery | null;
   state: TrackingState;
-  autoStopped: boolean;
   autoStartNote: string | null;
   clearAutoStartNote: () => void;
-  prompt: PromptInfo | null;
-  respondPrompt: (response: 'still_working' | 'finished' | 'break' | 'auto_stopped') => Promise<void>;
-  minutesRemaining: number | null;
-  nextPromptAt: Date | null;
   isWithinWorkingWindow: boolean;
+  overtimeUntil: Date | null;
+  startOvertime: (durationHours: number) => Promise<void>;
+  stopOvertime: () => Promise<void>;
+  shiftDialog: ShiftEndDialog;
+  dismissShiftDialog: () => void;
 }
 
 const DriverTrackingContext = createContext<DriverTrackingContextValue | null>(null);
@@ -53,6 +53,18 @@ function msUntilNextLocalHour(hour: number): number {
   return next.getTime() - now.getTime();
 }
 
+function readOvertimeFromStorage(): Date | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(OVERTIME_KEY);
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= Date.now()) {
+    window.localStorage.removeItem(OVERTIME_KEY);
+    return null;
+  }
+  return new Date(n);
+}
+
 export function DriverTrackingProvider({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
   const isDriver = profile?.role === 'driver';
@@ -65,21 +77,34 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
   const [shiftStartHour, setShiftStartHour] = useState(7);
   const [shiftEndHour, setShiftEndHour] = useState(17);
   const [autoTracking, setAutoTrackingState] = useState(false);
-  const [autoStopped, setAutoStopped] = useState(false);
   const [autoStartNote, setAutoStartNote] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState<PromptInfo | null>(null);
-  const [nextPromptAt, setNextPromptAt] = useState<Date | null>(null);
   const [withinWindow, setWithinWindow] = useState<boolean>(() => isWithinWorkingWindowNow(7, 17));
-  const autoStopTimer = useRef<number | null>(null);
+  const [overtimeUntil, setOvertimeUntil] = useState<Date | null>(() => readOvertimeFromStorage());
+  const [shiftDialog, setShiftDialog] = useState<ShiftEndDialog>(null);
+
+  const prevWithinRef = useRef<boolean>(withinWindow);
+  const lastShiftEndHandledRef = useRef<number | null>(null);
 
   const setEnabled = useCallback((next: boolean) => {
     setEnabledState(next);
     try {
       window.localStorage.setItem(ENABLED_KEY, next ? 'true' : 'false');
     } catch {
-      // ignore storage errors
+      // ignore
     }
-    if (!next) setAutoStopped(false);
+  }, []);
+
+  const persistOvertime = useCallback((until: Date | null) => {
+    setOvertimeUntil(until);
+    try {
+      if (until) {
+        window.localStorage.setItem(OVERTIME_KEY, String(until.getTime()));
+      } else {
+        window.localStorage.removeItem(OVERTIME_KEY);
+      }
+    } catch {
+      // ignore
+    }
   }, []);
 
   useEffect(() => {
@@ -116,28 +141,53 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
       }
     };
     void load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [isDriver, profile?.id, enabled, setEnabled]);
 
   useEffect(() => {
     if (!isDriver) return;
     const tick = () => setWithinWindow(isWithinWorkingWindowNow(shiftStartHour, shiftEndHour));
     tick();
-    const id = window.setInterval(tick, 60 * 1000);
+    const id = window.setInterval(tick, 30 * 1000);
     return () => window.clearInterval(id);
   }, [isDriver, shiftStartHour, shiftEndHour]);
 
   useEffect(() => {
+    const was = prevWithinRef.current;
+    prevWithinRef.current = withinWindow;
     if (!isDriver) return;
-    if (!autoTracking) return;
-    if (enabled) return;
-    if (withinWindow) {
+
+    if (!was && withinWindow && autoTracking && !enabled) {
       setAutoStartNote(`Tracking filloi automatikisht ne ora ${shiftStartHour}:00.`);
       setEnabled(true);
-      return;
     }
+
+    if (was && !withinWindow && enabled && !overtimeUntil) {
+      const now = Date.now();
+      if (lastShiftEndHandledRef.current && now - lastShiftEndHandledRef.current < 60 * 60 * 1000) {
+        return;
+      }
+      lastShiftEndHandledRef.current = now;
+      setEnabled(false);
+      setShiftDialog({ kind: 'ended' });
+      if (profile?.id && profile.company_id) {
+        void supabase
+          .from('tracking_prompts')
+          .insert({
+            company_id: profile.company_id,
+            driver_id: profile.id,
+            delivery_note_id: activeDelivery?.id ?? null,
+          })
+          .then(({ error }) => {
+            if (error) logger.warn('tracking_prompts insert failed', { error });
+          });
+      }
+    }
+  }, [withinWindow, isDriver, autoTracking, enabled, shiftStartHour, overtimeUntil, profile?.id, profile?.company_id, activeDelivery?.id, setEnabled]);
+
+  useEffect(() => {
+    if (!isDriver || !autoTracking || enabled) return;
+    if (withinWindow) return;
     const wait = msUntilNextLocalHour(shiftStartHour);
     const timer = window.setTimeout(() => {
       setAutoStartNote(`Tracking filloi automatikisht ne ora ${shiftStartHour}:00.`);
@@ -146,7 +196,26 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [isDriver, autoTracking, enabled, withinWindow, shiftStartHour, setEnabled]);
 
-  const shouldTrack = isDriver && enabled && withinWindow && !!profile?.id && !!profile?.company_id;
+  useEffect(() => {
+    if (!overtimeUntil) return;
+    const remaining = overtimeUntil.getTime() - Date.now();
+    if (remaining <= 0) {
+      persistOvertime(null);
+      if (enabled) {
+        setEnabled(false);
+        setShiftDialog({ kind: 'overtime_expired' });
+      }
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      persistOvertime(null);
+      setEnabled(false);
+      setShiftDialog({ kind: 'overtime_expired' });
+    }, remaining);
+    return () => window.clearTimeout(timer);
+  }, [overtimeUntil, enabled, persistOvertime, setEnabled]);
+
+  const shouldTrack = isDriver && enabled && !!profile?.id && !!profile?.company_id;
 
   const state = useDriverLocationTracking({
     enabled: shouldTrack,
@@ -154,105 +223,6 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
     driverId: profile?.id ?? null,
     deliveryNoteId: activeDelivery?.id ?? null,
   });
-
-  const nextShiftCheck = useMemo(() => {
-    const d = new Date();
-    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), shiftEndHour, 0, 0, 0);
-    if (end.getTime() <= d.getTime()) {
-      const hour = d.getHours();
-      const next = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour + 1, 0, 0, 0);
-      return next;
-    }
-    return end;
-  }, [shiftEndHour]);
-
-  const raisePrompt = useCallback(async () => {
-    if (!profile?.id || !profile.company_id) return;
-    try {
-      const { data } = await supabase
-        .from('tracking_prompts')
-        .insert({
-          company_id: profile.company_id,
-          driver_id: profile.id,
-          delivery_note_id: activeDelivery?.id ?? null,
-        })
-        .select('id, sent_at')
-        .maybeSingle();
-      if (data) {
-        setPrompt(data as PromptInfo);
-        autoStopTimer.current = window.setTimeout(() => {
-          void respondPromptInternal('auto_stopped');
-        }, AUTO_STOP_DELAY_MS);
-      }
-    } catch (err) {
-      logger.warn('raise prompt failed', { error: err });
-    }
-    // respondPromptInternal declared below; effect deps covered via useCallback below
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, profile?.company_id, activeDelivery?.id]);
-
-  const respondPromptInternal = useCallback(
-    async (response: 'still_working' | 'finished' | 'break' | 'auto_stopped') => {
-      if (!prompt || !profile?.id) return;
-      if (autoStopTimer.current) {
-        window.clearTimeout(autoStopTimer.current);
-        autoStopTimer.current = null;
-      }
-      try {
-        await supabase
-          .from('tracking_prompts')
-          .update({ response, responded_at: new Date().toISOString() })
-          .eq('id', prompt.id);
-        await supabase
-          .from('profiles')
-          .update({ tracking_last_confirmed_at: new Date().toISOString() })
-          .eq('id', profile.id);
-
-        if (response === 'finished' || response === 'auto_stopped') {
-          setEnabled(false);
-          setAutoStopped(response === 'auto_stopped');
-          if (activeDelivery?.id) {
-            await supabase
-              .from('delivery_notes')
-              .update({
-                tracking_paused: true,
-                tracking_auto_stopped_at: response === 'auto_stopped' ? new Date().toISOString() : null,
-              })
-              .eq('id', activeDelivery.id);
-          }
-        } else if (response === 'break') {
-          const nextHour = new Date(Date.now() + 30 * 60 * 1000);
-          setNextPromptAt(nextHour);
-        }
-        setPrompt(null);
-      } catch (err) {
-        logger.warn('respond prompt failed', { error: err });
-      }
-    },
-    [prompt, profile?.id, activeDelivery?.id, setEnabled]
-  );
-
-  useEffect(() => {
-    if (!enabled || !profile?.id || !profile.company_id) {
-      setNextPromptAt(null);
-      return;
-    }
-    setNextPromptAt(nextShiftCheck);
-    const now = Date.now();
-    const wait = nextShiftCheck.getTime() - now;
-    if (wait <= 0) return;
-    const timer = window.setTimeout(() => {
-      void raisePrompt();
-    }, wait);
-    return () => window.clearTimeout(timer);
-  }, [enabled, nextShiftCheck, profile?.id, profile?.company_id, raisePrompt]);
-
-  const minutesRemaining = useMemo(() => {
-    if (!prompt) return null;
-    const elapsed = Date.now() - new Date(prompt.sent_at).getTime();
-    const remain = AUTO_STOP_DELAY_MS - elapsed;
-    return Math.max(0, Math.round(remain / 60000));
-  }, [prompt, state.lastSentAt]);
 
   const setAutoTracking = useCallback(
     async (next: boolean) => {
@@ -279,9 +249,55 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
     [profile?.id]
   );
 
+  const startOvertime = useCallback(
+    async (durationHours: number) => {
+      const until = new Date(Date.now() + durationHours * 60 * 60 * 1000);
+      persistOvertime(until);
+      setEnabled(true);
+      setShiftDialog(null);
+      lastShiftEndHandledRef.current = Date.now();
+      if (profile?.id) {
+        await supabase
+          .from('profiles')
+          .update({ tracking_last_confirmed_at: new Date().toISOString() })
+          .eq('id', profile.id);
+        if (profile.company_id) {
+          await supabase
+            .from('tracking_prompts')
+            .insert({
+              company_id: profile.company_id,
+              driver_id: profile.id,
+              delivery_note_id: activeDelivery?.id ?? null,
+              response: 'still_working',
+              responded_at: new Date().toISOString(),
+            });
+        }
+      }
+    },
+    [profile?.id, profile?.company_id, activeDelivery?.id, persistOvertime, setEnabled]
+  );
+
+  const stopOvertime = useCallback(async () => {
+    persistOvertime(null);
+    setEnabled(false);
+    setShiftDialog(null);
+    if (profile?.id && profile.company_id) {
+      await supabase
+        .from('tracking_prompts')
+        .insert({
+          company_id: profile.company_id,
+          driver_id: profile.id,
+          delivery_note_id: activeDelivery?.id ?? null,
+          response: 'finished',
+          responded_at: new Date().toISOString(),
+        });
+    }
+  }, [profile?.id, profile?.company_id, activeDelivery?.id, persistOvertime, setEnabled]);
+
+  const dismissShiftDialog = useCallback(() => setShiftDialog(null), []);
   const clearAutoStartNote = useCallback(() => setAutoStartNote(null), []);
 
-  const value: DriverTrackingContextValue = {
+  const value = useMemo<DriverTrackingContextValue>(() => ({
     enabled,
     setEnabled,
     autoTracking,
@@ -291,15 +307,19 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
     setShiftHours,
     activeDelivery,
     state,
-    autoStopped,
     autoStartNote,
     clearAutoStartNote,
-    prompt,
-    respondPrompt: respondPromptInternal,
-    minutesRemaining,
-    nextPromptAt,
     isWithinWorkingWindow: withinWindow,
-  };
+    overtimeUntil,
+    startOvertime,
+    stopOvertime,
+    shiftDialog,
+    dismissShiftDialog,
+  }), [
+    enabled, setEnabled, autoTracking, setAutoTracking, shiftStartHour, shiftEndHour, setShiftHours,
+    activeDelivery, state, autoStartNote, clearAutoStartNote, withinWindow, overtimeUntil,
+    startOvertime, stopOvertime, shiftDialog, dismissShiftDialog,
+  ]);
 
   return <DriverTrackingContext.Provider value={value}>{children}</DriverTrackingContext.Provider>;
 }

@@ -8,7 +8,7 @@ const DISMISS_KEY = 'driver_tracking_banner_dismissed_until';
 
 export default function DriverTrackingBanner() {
   const { profile } = useAuth();
-  const { enabled, state, isWithinWorkingWindow, shiftStartHour, shiftEndHour } = useDriverTracking();
+  const { enabled, state, isWithinWorkingWindow, shiftStartHour, shiftEndHour, overtimeUntil } = useDriverTracking();
   const location = useLocation();
   const [dismissed, setDismissed] = useState<number>(() => Number(localStorage.getItem(DISMISS_KEY) ?? 0));
 
@@ -31,8 +31,11 @@ export default function DriverTrackingBanner() {
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
           </span>
           <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-          <span className="font-semibold">GPS aktiv</span>
-          {lastSentLabel && <span className="text-emerald-50 text-xs">· pika e fundit {lastSentLabel}</span>}
+          <span className="font-semibold">GPS aktiv{overtimeUntil ? ' (overtime)' : ''}</span>
+          {overtimeUntil && (
+            <span className="text-emerald-50 text-xs">· deri {overtimeUntil.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          )}
+          {!overtimeUntil && lastSentLabel && <span className="text-emerald-50 text-xs">· pika e fundit {lastSentLabel}</span>}
           <span className="ml-auto text-xs text-emerald-100 hidden sm:inline">Kontrollo</span>
         </div>
       </Link>
