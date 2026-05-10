@@ -120,6 +120,7 @@ export default function CompanyDeliveryNotes() {
   const [products, setProducts] = useState<CompanyProduct[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [tabType, setTabType] = useState<'delivery' | 'pickup'>('delivery');
+  const [tabScope, setTabScope] = useState<'all' | 'review' | 'invoiced'>('all');
   const [sortByPartner, setSortByPartner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -442,6 +443,8 @@ export default function CompanyDeliveryNotes() {
 
   const filtered = notes.filter((n) => {
     if (n.type !== tabType) return false;
+    if (tabScope === 'review' && !['pending_company_review', 'pending_stock_confirmation'].includes(n.status)) return false;
+    if (tabScope === 'invoiced' && !(n as any).acc_invoice_id) return false;
     if (filterStatus && n.status !== filterStatus) return false;
     if (filterDriver && n.assigned_driver_id !== filterDriver) return false;
     if (search) {
@@ -518,6 +521,26 @@ export default function CompanyDeliveryNotes() {
           <ArrowDownLeft className="w-4 h-4" />
           {t('company.deliveryNotes.tabPickup')}
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {([
+          { key: 'all', label: 'Te gjitha' },
+          { key: 'review', label: 'Per shqyrtim' },
+          { key: 'invoiced', label: 'Te faturuara' },
+        ] as const).map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setTabScope(s.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              tabScope === s.key
+                ? 'bg-teal-600 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
 
       {error && (

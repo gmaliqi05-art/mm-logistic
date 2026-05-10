@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Save, Send, Printer, Loader2, CheckCircle2,
   AlertCircle, Copy, ShieldCheck, Languages, Palette, Building2, Eye, X,
+  FileText, Truck,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -148,6 +149,11 @@ export default function InvoiceBuilder() {
   const [notes, setNotes] = useState('');
   const [buyerVatOverride, setBuyerVatOverride] = useState('');
   const [items, setItems] = useState<Item[]>([newItem()]);
+  const [deliveryNoteId, setDeliveryNoteId] = useState<string | null>(null);
+  const [deliveryNoteNumber, setDeliveryNoteNumber] = useState<string>('');
+  const [deliveryNoteSearch, setDeliveryNoteSearch] = useState('');
+  const [deliveryNoteResults, setDeliveryNoteResults] = useState<Array<{ id: string; note_number: string; partner_name: string | null; type: string; delivered_at: string | null; partner_id: string | null }>>([]);
+  const [deliveryNoteSearchOpen, setDeliveryNoteSearchOpen] = useState(false);
 
   const [layout, setLayout] = useState<Layout>('modern');
   const [primaryColor, setPrimaryColor] = useState('#0f766e');
@@ -206,8 +212,77 @@ export default function InvoiceBuilder() {
       await loadExisting(invoiceId);
     } else {
       await generateNextNumber(profile.company_id, 'invoice');
+      const params = new URLSearchParams(location.search);
+      const dnId = params.get('delivery_note_id');
+      if (dnId) await prefillFromDeliveryNote(dnId);
     }
     setLoading(false);
+  }
+
+  async function prefillFromDeliveryNote(dnId: string) {
+    const { data: dn } = await supabase
+      .from('delivery_notes')
+      .select('id, note_number, partner_id, partner_name, type, delivered_at, notes, acc_invoice_id')
+      .eq('id', dnId)
+      .maybeSingle();
+    if (!dn) return;
+    setDeliveryNoteId(dn.id as string);
+    setDeliveryNoteNumber((dn.note_number as string) || '');
+    if (dn.partner_id) setContactId(dn.partner_id as string);
+    if (dn.delivered_at) setDeliveryDate(String(dn.delivered_at).slice(0, 10));
+
+    const { data: dnItems } = await supabase
+      .from('delivery_note_items')
+      .select('quantity, notes, category:product_categories(name), category_product:category_products(name, sku, price_net, vat_rate, unit)')
+      .eq('delivery_note_id', dnId);
+    if (dnItems && dnItems.length) {
+      const rows: Item[] = (dnItems as any[]).map((r) => ({
+        id: crypto.randomUUID(),
+        description: (r.category_product?.name || r.category?.name || r.notes || 'Artikull').trim(),
+        product_code: r.category_product?.sku || '',
+        quantity: Number(r.quantity ?? 1),
+        unit_code: mapUnitToUnece(r.category_product?.unit || 'cope'),
+        unit_price: Number(r.category_product?.price_net ?? 0),
+        vat_rate: Number(r.category_product?.vat_rate ?? 19),
+        vat_category: 'S',
+        discount_amount: 0,
+      }));
+      setItems(rows);
+    }
+    setNotes((prev) => prev || `Fature ne baze te fletedergeses #${dn.note_number ?? ''}`);
+  }
+
+  async function searchDeliveryNotes(query: string) {
+    if (!profile?.company_id || !query.trim()) {
+      setDeliveryNoteResults([]);
+      return;
+    }
+    const { data } = await supabase
+      .from('delivery_notes')
+      .select('id, note_number, partner_name, partner_id, type, delivered_at, acc_invoice_id')
+      .eq('company_id', profile.company_id)
+      .is('acc_invoice_id', null)
+      .or(`note_number.ilike.%${query}%,partner_name.ilike.%${query}%`)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    setDeliveryNoteResults((data as any[]) ?? []);
+  }
+
+  function addTransportLine() {
+    setItems((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        description: 'Kosto transporti',
+        product_code: 'TRANSPORT',
+        quantity: 1,
+        unit_code: 'H87',
+        unit_price: 0,
+        vat_rate: 19,
+        vat_category: 'S',
+        discount_amount: 0,
+      },
+    ]);
   }
 
   async function loadExisting(id: string) {
@@ -436,6 +511,7 @@ export default function InvoiceBuilder() {
         vat_amount: totals.vat_total,
         discount: totals.discount,
         total: totals.total,
+        delivery_note_id: deliveryNoteId,
       };
 
       let id = invoiceDbIdRef.current;
@@ -469,6 +545,12 @@ export default function InvoiceBuilder() {
           const { error: iie } = await supabase.from('acc_invoice_items').insert(rows);
           if (iie) throw iie;
         }
+      }
+      if (id && deliveryNoteId) {
+        await supabase
+          .from('delivery_notes')
+          .update({ acc_invoice_id: id, invoiced_at: new Date().toISOString() })
+          .eq('id', deliveryNoteId);
       }
       dirtyRef.current = false;
       setSavedAt(new Date());
@@ -615,6 +697,64 @@ export default function InvoiceBuilder() {
           </section>
 
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5"><Truck className="w-4 h-4 text-teal-600" /> Fletedergesa e lidhur</h3>
+              {deliveryNoteId && (
+                <button
+                  onClick={() => { setDeliveryNoteId(null); setDeliveryNoteNumber(''); }}
+                  className="text-xs text-red-600 hover:text-red-800"
+                >
+                  Shkeput
+                </button>
+              )}
+            </div>
+            {deliveryNoteId ? (
+              <div className="rounded-lg bg-teal-50 border border-teal-200 p-3 text-sm text-teal-900">
+                Fletedergesa <span className="font-bold">#{deliveryNoteNumber || '-'}</span> eshte e lidhur me kete fature.
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  value={deliveryNoteSearch}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setDeliveryNoteSearch(v);
+                    setDeliveryNoteSearchOpen(true);
+                    searchDeliveryNotes(v);
+                  }}
+                  onFocus={() => setDeliveryNoteSearchOpen(true)}
+                  placeholder="Kerko fletedergesen (nr., partner)"
+                  className={inputCls}
+                />
+                {deliveryNoteSearchOpen && deliveryNoteResults.length > 0 && (
+                  <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {deliveryNoteResults.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={async () => {
+                          await prefillFromDeliveryNote(r.id);
+                          setDeliveryNoteSearch('');
+                          setDeliveryNoteResults([]);
+                          setDeliveryNoteSearchOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                      >
+                        <div className="text-sm font-semibold text-slate-900">#{r.note_number}</div>
+                        <div className="text-xs text-slate-500">
+                          {r.partner_name || 'Pa partner'} • {r.type === 'pickup' ? 'Marrje' : 'Dergese'}
+                          {r.delivered_at ? ` • ${String(r.delivered_at).slice(0, 10)}` : ''}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-slate-500 mt-1">Opsionale — selektimi plotesoi automatikisht kontaktin dhe artikujt.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
             <h3 className="font-bold text-slate-800 text-sm">Klienti</h3>
             <Field label="Kontakti">
               <select value={contactId} onChange={(e) => setContactId(e.target.value)} className={selectCls}>
@@ -663,9 +803,14 @@ export default function InvoiceBuilder() {
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-800 text-sm">Artikujt</h3>
-              <button onClick={addItem} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700">
-                <Plus className="w-3.5 h-3.5" /> Shto
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={addTransportLine} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold hover:bg-sky-100">
+                  <Truck className="w-3.5 h-3.5" /> Kosto transporti
+                </button>
+                <button onClick={addItem} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700">
+                  <Plus className="w-3.5 h-3.5" /> Shto
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               {items.map((it) => {

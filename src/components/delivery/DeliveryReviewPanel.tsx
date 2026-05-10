@@ -20,7 +20,9 @@ import {
   Warehouse,
   Wrench,
   X,
+  FileText,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchProduct } from '../../utils/productMatcher';
@@ -56,6 +58,8 @@ interface ReviewNote {
   counterparty_vat?: string | null;
   counterparty_email?: string | null;
   counterparty_phone?: string | null;
+  partner_id?: string | null;
+  acc_invoice_id?: string | null;
 }
 
 interface NoteItem {
@@ -302,6 +306,8 @@ function ReviewModal({
   onDone: () => void | Promise<void>;
 }) {
   const { profile } = useAuth();
+  const navigate = useNavigate();
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [rows, setRows] = useState<RowState[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -637,6 +643,29 @@ function ReviewModal({
       setError(err.message || 'Gabim');
     } finally {
       setSaving(null);
+    }
+  }
+
+  async function handleCreateInvoice() {
+    if (note.acc_invoice_id) {
+      navigate(`/accounting/invoices/${note.acc_invoice_id}`);
+      return;
+    }
+    setCreatingInvoice(true);
+    setError(null);
+    try {
+      const { data, error: err } = await supabase.rpc('create_invoice_from_delivery_note', { p_note_id: note.id });
+      if (err) throw err;
+      const invoiceId = typeof data === 'string' ? data : (data as any)?.id;
+      if (invoiceId) {
+        navigate(`/accounting/invoices/${invoiceId}`);
+      } else {
+        navigate(`/accounting/invoices/new?delivery_note_id=${note.id}`);
+      }
+    } catch (e: any) {
+      setError(e.message || 'Krijimi i fatures deshtoi');
+    } finally {
+      setCreatingInvoice(false);
     }
   }
 
@@ -1090,6 +1119,18 @@ function ReviewModal({
             >
               {saving === 'reject' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Undo2 className="w-4 h-4" />}
               Konfirmo kthimin
+            </button>
+          )}
+          {role === 'company_admin' && !showRejectReason && note.partner_id && (
+            <button
+              onClick={handleCreateInvoice}
+              disabled={!!saving || creatingInvoice}
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg disabled:opacity-50 ${
+                note.acc_invoice_id ? 'bg-teal-50 border border-teal-300 text-teal-800 hover:bg-teal-100' : 'bg-sky-600 text-white hover:bg-sky-700'
+              }`}
+            >
+              {creatingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              {note.acc_invoice_id ? 'Shiko faturen' : 'Krijo fature'}
             </button>
           )}
           {role === 'company_admin' && !showRejectReason && (

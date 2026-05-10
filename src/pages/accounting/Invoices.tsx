@@ -285,7 +285,7 @@ export default function Invoices() {
       setError(null);
       const { data, error: err } = await supabase
         .from('acc_invoices')
-        .select('*, contact:acc_contacts(name)')
+        .select('*, contact:acc_contacts(name), delivery_note:delivery_notes!acc_invoices_delivery_note_fk(id, note_number)')
         .eq('company_id', profile!.company_id!)
         .order('created_at', { ascending: false });
       if (err) throw err;
@@ -980,6 +980,7 @@ export default function Invoices() {
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Monedha</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Totali</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statusi</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fletedergesa</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Dergesa</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stok i levizur</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veprime</th>
@@ -1004,6 +1005,15 @@ export default function Invoices() {
                         >
                           {STATUS_LABELS[invoice.status]}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        {invoice.delivery_note?.note_number ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-teal-50 text-teal-700 text-xs font-semibold">
+                            #{invoice.delivery_note.note_number}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         {(() => {

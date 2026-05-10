@@ -100,6 +100,8 @@ export interface AccInvoice {
   dispatched_to_logistics_at?: string | null;
   dispatched_by?: string | null;
   source_depot_id?: string | null;
+  delivery_note_id?: string | null;
+  delivery_note?: { id: string; note_number: string | null } | null;
   created_at: string;
   updated_at: string;
   contact?: AccContact;
