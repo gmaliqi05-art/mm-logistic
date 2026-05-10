@@ -137,6 +137,9 @@ export default function CompanyDeliveryNotes() {
   const [reassigning, setReassigning] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const statusConfig: Record<string, { label: string; className: string }> = {
@@ -421,6 +424,42 @@ export default function CompanyDeliveryNotes() {
       setError(err.message || t('common.error'));
     } finally {
       setSendingId(null);
+    }
+  }
+
+  const DELETABLE_STATUSES = ['draft', 'sent', 'pending_company_review', 'cancelled'];
+
+  function canDeleteNote(note: DeliveryNote | null): boolean {
+    if (!note) return false;
+    return DELETABLE_STATUSES.includes(note.status);
+  }
+
+  async function deleteNote(note: DeliveryNote) {
+    if (!canDeleteNote(note)) {
+      setError(t('company.deliveryNotes.deleteBlockedStock'));
+      return;
+    }
+    try {
+      setDeletingId(note.id);
+      const { error: itemsErr } = await supabase
+        .from('delivery_note_items')
+        .delete()
+        .eq('delivery_note_id', note.id);
+      if (itemsErr) throw itemsErr;
+      const { error: noteErr } = await supabase
+        .from('delivery_notes')
+        .delete()
+        .eq('id', note.id);
+      if (noteErr) throw noteErr;
+      setShowDeleteConfirm(false);
+      setDeleteConfirmInput('');
+      setShowDetail(false);
+      setSelectedNote(null);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || t('common.error'));
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -1256,6 +1295,64 @@ export default function CompanyDeliveryNotes() {
                   </div>
                 )}
               </div>
+
+              {canDeleteNote(selectedNote) && (
+                <div className="mt-4 pt-4 border-t border-red-100">
+                  <p className="text-xs font-semibold text-red-700 uppercase tracking-wider mb-2">
+                    {t('company.deliveryNotes.dangerZone')}
+                  </p>
+                  {!showDeleteConfirm ? (
+                    <button
+                      onClick={() => {
+                        setDeleteConfirmInput('');
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {t('company.deliveryNotes.delete')}
+                    </button>
+                  ) : (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-red-900">
+                          {t('company.deliveryNotes.deleteConfirmTitle')}
+                        </p>
+                        <p className="text-xs text-red-700 mt-1">
+                          {t('company.deliveryNotes.deleteConfirmBody').replace('{number}', selectedNote.note_number)}
+                        </p>
+                      </div>
+                      <input
+                        type="text"
+                        value={deleteConfirmInput}
+                        onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                        placeholder={selectedNote.note_number}
+                        className="w-full px-3 py-2 text-sm border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setShowDeleteConfirm(false);
+                            setDeleteConfirmInput('');
+                          }}
+                          disabled={deletingId === selectedNote.id}
+                          className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                          {t('common.cancel')}
+                        </button>
+                        <button
+                          onClick={() => deleteNote(selectedNote)}
+                          disabled={deleteConfirmInput !== selectedNote.note_number || deletingId === selectedNote.id}
+                          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                        >
+                          {deletingId === selectedNote.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                          {t('company.deliveryNotes.delete')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

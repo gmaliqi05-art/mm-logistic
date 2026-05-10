@@ -732,6 +732,11 @@ export const en: typeof sq = {
       sendToDriver: 'Send to Driver',
       changeStatus: 'Change Status',
       creator: 'Creator',
+      dangerZone: 'Danger Zone',
+      delete: 'Delete delivery note',
+      deleteConfirmTitle: 'Confirm deletion',
+      deleteConfirmBody: 'This action is irreversible. Type {number} to confirm.',
+      deleteBlockedStock: 'Cannot delete - this note has already affected stock',
     },
     reports: {
       title: 'Reports',

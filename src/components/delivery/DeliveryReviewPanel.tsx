@@ -467,8 +467,8 @@ function ReviewModal({
         _persistedId: it.id,
         _groupKey: `g-${idx}-${it.id}`,
         _isChild: false,
-        _sourceDescription: it.notes || '',
-        _sourceQuantity: it.quantity || 0,
+        _sourceDescription: '',
+        _sourceQuantity: 0,
         category_id: categoryId,
         product_id: productId,
         quantity: it.quantity,
@@ -643,12 +643,17 @@ function ReviewModal({
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
       await persistItems();
+      const prevAi = (note.ai_extracted_json as any) || null;
+      const sanitizedAi = prevAi
+        ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
+        : null;
       const { error: upErr } = await supabase
         .from('delivery_notes')
         .update({
           status: 'pending_stock_confirmation',
           company_reviewed_by: profile!.id,
           company_reviewed_at: new Date().toISOString(),
+          ai_extracted_json: sanitizedAi,
           updated_at: new Date().toISOString(),
         })
         .eq('id', note.id);
@@ -731,12 +736,17 @@ function ReviewModal({
         setRows(originalRows);
         throw err;
       }
+      const prevAi = (note.ai_extracted_json as any) || null;
+      const sanitizedAi = prevAi
+        ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
+        : null;
       const { error: upErr } = await supabase
         .from('delivery_notes')
         .update({
           status: 'pending_stock_confirmation',
           company_reviewed_by: profile!.id,
           company_reviewed_at: new Date().toISOString(),
+          ai_extracted_json: sanitizedAi,
           updated_at: new Date().toISOString(),
         })
         .eq('id', note.id);

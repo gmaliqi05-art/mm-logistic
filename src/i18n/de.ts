@@ -732,6 +732,11 @@ export const de: typeof sq = {
       sendToDriver: 'An Fahrer senden',
       changeStatus: 'Status ändern',
       creator: 'Ersteller',
+      dangerZone: 'Gefahrenbereich',
+      delete: 'Lieferschein löschen',
+      deleteConfirmTitle: 'Löschen bestätigen',
+      deleteConfirmBody: 'Diese Aktion ist unwiderruflich. Geben Sie {number} zur Bestätigung ein.',
+      deleteBlockedStock: 'Kann nicht gelöscht werden - der Lieferschein wurde bereits im Bestand verbucht',
     },
     reports: {
       title: 'Berichte',

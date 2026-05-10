@@ -732,6 +732,11 @@ export const fr: typeof sq = {
       sendToDriver: 'Envoyer au chauffeur',
       changeStatus: 'Changer le statut',
       creator: 'Cr\u00e9ateur',
+      dangerZone: 'Zone dangereuse',
+      delete: 'Supprimer le bon de livraison',
+      deleteConfirmTitle: 'Confirmer la suppression',
+      deleteConfirmBody: 'Cette action est irr\u00e9versible. Tapez {number} pour confirmer.',
+      deleteBlockedStock: 'Impossible de supprimer - ce bon a d\u00e9j\u00e0 impact\u00e9 le stock',
     },
     reports: {
       title: 'Rapports',

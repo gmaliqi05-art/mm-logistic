@@ -730,6 +730,11 @@ export const sq = {
       sendToDriver: 'Dergo te Shoferi',
       changeStatus: 'Ndrysho Statusin',
       creator: 'Krijuesi',
+      dangerZone: 'Zona e rrezikshme',
+      delete: 'Fshij fletedergesen',
+      deleteConfirmTitle: 'Konfirmo fshirjen',
+      deleteConfirmBody: 'Ky veprim eshte i pakthyeshem. Shkruani {number} per te konfirmuar.',
+      deleteBlockedStock: 'Nuk mund te fshihet - kjo fletedergese ka prekur stokun',
     },
     reports: {
       title: 'Raportet',
