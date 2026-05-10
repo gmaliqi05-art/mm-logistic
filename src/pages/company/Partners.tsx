@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Building2,
   Plus,
@@ -13,6 +14,7 @@ import {
   Pencil,
   Trash2,
   UserPlus,
+  FileText,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -279,12 +281,21 @@ export default function CompanyPartners() {
             <article key={p.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{p.name}</h3>
+                  <Link to={`/company/partners/${p.id}`} className="block group">
+                    <h3 className="font-semibold text-gray-900 truncate group-hover:text-teal-700 transition-colors">{p.name}</h3>
+                  </Link>
                   <span className={`mt-1 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${typeBadgeCls[p.contact_type]}`}>
                     {typeLabel[p.contact_type]}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <Link
+                    to={`/company/partners/${p.id}`}
+                    className="p-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
+                    title="Kartela"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </Link>
                   <button
                     onClick={() => openEdit(p)}
                     className="p-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-teal-700 hover:border-teal-200 transition-colors"
