@@ -60,6 +60,7 @@ interface ReviewNote {
   counterparty_phone?: string | null;
   partner_id?: string | null;
   acc_invoice_id?: string | null;
+  auto_register_partner?: boolean | null;
 }
 
 interface NoteItem {
@@ -1037,6 +1038,7 @@ function ReviewModal({
             <FlowRoleSelector
               ownCompanyId={profile.company_id}
               noteId={note.id}
+              noteType={note.type}
               initial={{
                 flow_role: note.flow_role ?? (note.type === 'pickup' ? 'receiver' : 'sender'),
                 counterparty_company_id: note.counterparty_company_id ?? null,
@@ -1045,6 +1047,8 @@ function ReviewModal({
                 counterparty_vat: note.counterparty_vat ?? null,
                 counterparty_email: note.counterparty_email ?? null,
                 counterparty_phone: note.counterparty_phone ?? null,
+                partner_id: note.partner_id ?? null,
+                auto_register_partner: note.auto_register_partner ?? null,
               }}
             />
           )}

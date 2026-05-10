@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Link2, Search, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Link2, Search, AlertCircle, Loader2, UserPlus, ShieldAlert } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import {
   FLOW_ROLE_META,
@@ -11,6 +11,7 @@ import {
 interface Props {
   ownCompanyId: string;
   noteId: string;
+  noteType?: string;
   initial: {
     flow_role?: FlowRole | null;
     counterparty_company_id?: string | null;
@@ -19,6 +20,8 @@ interface Props {
     counterparty_vat?: string | null;
     counterparty_email?: string | null;
     counterparty_phone?: string | null;
+    auto_register_partner?: boolean | null;
+    partner_id?: string | null;
   };
   onChanged?: () => void;
   disabled?: boolean;
@@ -26,7 +29,7 @@ interface Props {
 
 const ROLES: FlowRole[] = ['sender', 'receiver', 'carrier_only', 'custodian_in', 'custodian_out', 'internal_transfer'];
 
-export default function FlowRoleSelector({ ownCompanyId, noteId, initial, onChanged, disabled }: Props) {
+export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, onChanged, disabled }: Props) {
   const [role, setRole] = useState<FlowRole>((initial.flow_role as FlowRole) ?? 'sender');
   const [snapshot, setSnapshot] = useState<CounterpartySnapshot>({
     name: initial.counterparty_name ?? '',
@@ -35,11 +38,40 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, initial, onChan
     phone: initial.counterparty_phone ?? '',
   });
   const [matchedCompanyId, setMatchedCompanyId] = useState<string | null>(initial.counterparty_company_id ?? null);
-  const [matchedContactId, setMatchedContactId] = useState<string | null>(initial.counterparty_contact_id ?? null);
+  const [matchedContactId, setMatchedContactId] = useState<string | null>(initial.counterparty_contact_id ?? initial.partner_id ?? null);
   const [matchLabel, setMatchLabel] = useState<string>('');
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoRegister, setAutoRegister] = useState<boolean>(!!initial.auto_register_partner);
+  const [ownCompanyName, setOwnCompanyName] = useState<string>('');
+  const [ownCompanyVat, setOwnCompanyVat] = useState<string>('');
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadOwn() {
+      const { data } = await supabase
+        .from('companies')
+        .select('name, vat_number')
+        .eq('id', ownCompanyId)
+        .maybeSingle();
+      if (cancelled) return;
+      setOwnCompanyName((data?.name || '').trim());
+      setOwnCompanyVat((data?.vat_number || '').trim());
+    }
+    void loadOwn();
+    return () => {
+      cancelled = true;
+    };
+  }, [ownCompanyId]);
+
+  const partnerIsOwnCompany = (() => {
+    const norm = (v: string) => v.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+    if (!snapshot.name && !snapshot.vat) return false;
+    if (ownCompanyVat && snapshot.vat && norm(snapshot.vat) === norm(ownCompanyVat)) return true;
+    if (ownCompanyName && snapshot.name && norm(snapshot.name) === norm(ownCompanyName)) return true;
+    return false;
+  })();
 
   useEffect(() => {
     let cancelled = false;
@@ -72,17 +104,28 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, initial, onChan
   async function save() {
     setSaving(true);
     setError(null);
+    if (partnerIsOwnCompany) {
+      setSaving(false);
+      setError('Pala e shenuar eshte kompania juaj. Korrigjojeni emrin para se te ruani.');
+      return;
+    }
+    const payload: Record<string, any> = {
+      flow_role: role,
+      counterparty_company_id: matchedCompanyId,
+      counterparty_contact_id: matchedContactId,
+      counterparty_name: snapshot.name || null,
+      counterparty_vat: snapshot.vat || null,
+      counterparty_email: snapshot.email || null,
+      counterparty_phone: snapshot.phone || null,
+      partner_name: snapshot.name || null,
+      auto_register_partner: autoRegister && !matchedContactId,
+    };
+    if (matchedContactId) {
+      payload.partner_id = matchedContactId;
+    }
     const { error: err } = await supabase
       .from('delivery_notes')
-      .update({
-        flow_role: role,
-        counterparty_company_id: matchedCompanyId,
-        counterparty_contact_id: matchedContactId,
-        counterparty_name: snapshot.name || null,
-        counterparty_vat: snapshot.vat || null,
-        counterparty_email: snapshot.email || null,
-        counterparty_phone: snapshot.phone || null,
-      })
+      .update(payload)
       .eq('id', noteId);
     setSaving(false);
     if (err) setError(err.message);
@@ -129,6 +172,36 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, initial, onChan
         <Field label="Email" value={snapshot.email ?? ''} onChange={(v) => { setSnapshot({ ...snapshot, email: v }); setMatchedCompanyId(null); }} />
         <Field label="Telefon" value={snapshot.phone ?? ''} onChange={(v) => { setSnapshot({ ...snapshot, phone: v }); setMatchedCompanyId(null); }} />
       </div>
+
+      {partnerIsOwnCompany && (
+        <div className="flex items-start gap-2 text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">
+          <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-semibold">Kjo jemi NE</div>
+            <div>Pala e shenuar perputhet me kompanine tuaj. Zevendesojeni me palen tjeter ({noteType === 'pickup' ? 'derguesin' : 'marresin'}) perpara se te ruani.</div>
+          </div>
+        </div>
+      )}
+
+      {!partnerIsOwnCompany && !matchedContactId && !matchedCompanyId && snapshot.name && snapshot.name.trim().length > 2 && (
+        <label className="flex items-start gap-2 text-xs bg-sky-50 border border-sky-200 rounded-lg px-3 py-2 cursor-pointer">
+          <input
+            type="checkbox"
+            className="mt-0.5 w-4 h-4 accent-teal-600"
+            checked={autoRegister}
+            onChange={(e) => setAutoRegister(e.target.checked)}
+            disabled={disabled}
+          />
+          <div className="flex-1">
+            <div className="font-semibold text-sky-900 inline-flex items-center gap-1">
+              <UserPlus className="w-3.5 h-3.5" /> Regjistroje si partner te ri
+            </div>
+            <div className="text-sky-800 mt-0.5">
+              Ky partner nuk eshte ne listen tuaj. Kur te ruani dhe konfirmoni dergesen per stok, do te shtohet automatikisht ne {noteType === 'pickup' ? 'furnitoret' : 'klientet'}.
+            </div>
+          </div>
+        </label>
+      )}
 
       <div className="flex items-center gap-2 text-xs min-h-[22px]">
         {searching && (

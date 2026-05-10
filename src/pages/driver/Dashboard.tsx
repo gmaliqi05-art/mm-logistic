@@ -956,22 +956,85 @@ export function TaskDetailSheet({
         updated_at: new Date().toISOString(),
       };
 
-      const detectedName = isPickup ? (ex.supplier_name || '') : (ex.customer_name || '');
-      const detectedVat = (ex as any).vat_number || (ex as any).supplier_vat || (ex as any).customer_vat || null;
-      const detectedEmail = (ex as any).email || (ex as any).supplier_email || (ex as any).customer_email || null;
-      const detectedPhone = (ex as any).phone || (ex as any).supplier_phone || (ex as any).customer_phone || null;
-      const detectedAddress = (ex as any).address || (ex as any).supplier_address || (ex as any).customer_address || null;
-      if (detectedName && !note.partner_name) {
-        update.partner_name = detectedName;
+      const supplierName = (ex.supplier_name || '').trim();
+      const customerName = (ex.customer_name || '').trim();
+      const supplierVat = (ex as any).supplier_vat || null;
+      const customerVat = (ex as any).customer_vat || null;
+      const supplierEmail = (ex as any).supplier_email || null;
+      const supplierPhone = (ex as any).supplier_phone || null;
+      const supplierAddress = (ex as any).supplier_address || null;
+      const customerAddress = (ex as any).customer_address || null;
+
+      let ownName = '';
+      let ownVat = '';
+      if (note.company_id) {
+        const { data: ownCompany } = await supabase
+          .from('companies')
+          .select('name, vat_number')
+          .eq('id', note.company_id)
+          .maybeSingle();
+        ownName = (ownCompany?.name || '').trim().toLowerCase();
+        ownVat = (ownCompany?.vat_number || '').trim().toLowerCase();
       }
-      if (detectedName) {
-        update.counterparty_name = detectedName;
+
+      const norm = (v: string) => v.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+      const tokenSim = (a: string, b: string) => {
+        const na = a.trim().toLowerCase();
+        const nb = b.trim().toLowerCase();
+        if (!na || !nb) return 0;
+        if (na === nb) return 1;
+        if (na.includes(nb) || nb.includes(na)) return 0.85;
+        const ta = new Set(na.split(/\W+/).filter((t) => t.length > 2));
+        const tb = new Set(nb.split(/\W+/).filter((t) => t.length > 2));
+        if (!ta.size || !tb.size) return 0;
+        let shared = 0;
+        for (const t of ta) if (tb.has(t)) shared++;
+        return (2 * shared) / (ta.size + tb.size);
+      };
+      const matchesOwn = (n: string, v: string | null) => {
+        if (ownVat && v && norm(v) === norm(ownVat)) return true;
+        if (ownName && n && tokenSim(n, ownName) >= 0.7) return true;
+        return false;
+      };
+
+      const supplierIsUs = matchesOwn(supplierName, supplierVat);
+      const customerIsUs = matchesOwn(customerName, customerVat);
+
+      let detectedName = '';
+      let detectedVat: string | null = null;
+      let detectedEmail: string | null = null;
+      let detectedPhone: string | null = null;
+      let detectedAddress: string | null = null;
+
+      if (supplierIsUs && !customerIsUs) {
+        detectedName = customerName;
+        detectedVat = customerVat;
+        detectedAddress = customerAddress;
+      } else if (customerIsUs && !supplierIsUs) {
+        detectedName = supplierName;
+        detectedVat = supplierVat;
+        detectedEmail = supplierEmail;
+        detectedPhone = supplierPhone;
+        detectedAddress = supplierAddress;
+      } else {
+        detectedName = isPickup ? supplierName : customerName;
+        detectedVat = isPickup ? supplierVat : customerVat;
+        detectedEmail = isPickup ? supplierEmail : null;
+        detectedPhone = isPickup ? supplierPhone : null;
+        detectedAddress = isPickup ? supplierAddress : customerAddress;
       }
+
+      if (detectedName && !note.partner_name) update.partner_name = detectedName;
+      if (detectedName) update.counterparty_name = detectedName;
       if (detectedVat) update.counterparty_vat = detectedVat;
       if (detectedPhone) update.counterparty_phone = detectedPhone;
       if (detectedEmail) update.counterparty_email = detectedEmail;
+      if (detectedAddress) {
+        const addrField = isPickup ? 'pickup_address' : 'delivery_address';
+        if (!(note as any)[addrField]) update[addrField] = detectedAddress;
+      }
 
-      if (detectedName && note.company_id && !(note as any).counterparty_contact_id) {
+      if (detectedName && note.company_id) {
         try {
           const { data: matchedCompanyId } = await supabase.rpc('match_counterparty_company', {
             p_vat: detectedVat,
@@ -979,9 +1042,7 @@ export function TaskDetailSheet({
             p_phone: detectedPhone,
             p_name: detectedName,
           });
-          if (matchedCompanyId) {
-            update.counterparty_company_id = matchedCompanyId;
-          }
+          if (matchedCompanyId) update.counterparty_company_id = matchedCompanyId;
 
           let contactId: string | null = null;
           if (detectedVat) {
@@ -993,7 +1054,7 @@ export function TaskDetailSheet({
               .maybeSingle();
             if (byVat?.id) contactId = byVat.id;
           }
-          if (!contactId) {
+          if (!contactId && detectedName) {
             const { data: byName } = await supabase
               .from('acc_contacts')
               .select('id')
@@ -1002,32 +1063,8 @@ export function TaskDetailSheet({
               .maybeSingle();
             if (byName?.id) contactId = byName.id;
           }
-          if (!contactId) {
-            const { data: created } = await supabase
-              .from('acc_contacts')
-              .insert({
-                company_id: note.company_id,
-                name: detectedName,
-                contact_type: isPickup ? 'vendor' : 'customer',
-                vat_number: detectedVat,
-                email: detectedEmail,
-                phone: detectedPhone,
-                address: detectedAddress,
-                source_document_id: result.scanId,
-                auto_created_at: new Date().toISOString(),
-                is_active: true,
-              })
-              .select('id')
-              .maybeSingle();
-            if (created?.id) contactId = created.id;
-          }
-          if (contactId) {
-            update.counterparty_contact_id = contactId;
-          }
+          if (contactId) update.counterparty_contact_id = contactId;
         } catch (err) {
-          // Non-fatal: continue with the delivery update even if partner
-          // detection fails; the company admin can still link the partner
-          // during review.
           console.warn('auto partner detect failed', err);
         }
       }
