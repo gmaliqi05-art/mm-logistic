@@ -26,10 +26,13 @@ const STOP_WORDS = new Set([
 ]);
 
 const ALIAS_MAP: Record<string, string[]> = {
-  europalette: ['euro', 'palette', 'paletten', 'epal'],
-  europaletten: ['euro', 'palette', 'paletten', 'epal'],
-  europallet: ['euro', 'palette', 'paletten', 'epal'],
-  europallets: ['euro', 'palette', 'paletten', 'epal'],
+  europalette: ['euro', 'palette', 'paletten', 'epal', 'uic', 'eur'],
+  europaletten: ['euro', 'palette', 'paletten', 'epal', 'uic', 'eur'],
+  europallet: ['euro', 'palette', 'paletten', 'epal', 'uic', 'eur'],
+  europallets: ['euro', 'palette', 'paletten', 'epal', 'uic', 'eur'],
+  epal: ['euro', 'palette', 'paletten', 'europalette', 'uic', 'eur'],
+  uic: ['euro', 'palette', 'paletten', 'europalette', 'epal', 'eur'],
+  eur: ['euro', 'palette', 'paletten', 'europalette', 'epal', 'uic'],
   palette: ['paletten', 'paleta', 'pallet', 'pallets'],
   paletten: ['palette', 'paleta', 'pallet', 'pallets'],
   paleta: ['palette', 'paletten', 'pallet', 'pallets'],

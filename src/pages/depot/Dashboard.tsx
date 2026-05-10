@@ -10,6 +10,7 @@ import {
   Loader2,
   TrendingDown,
   MessageSquare,
+  Layers,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -170,15 +171,15 @@ export default function DepotDashboard() {
       <DeliveryReviewPanel role="depot_worker" />
 
       {/* Quick Actions - Mobile */}
-      <div className="grid grid-cols-5 gap-2 lg:hidden">
+      <div className="grid grid-cols-4 gap-2 lg:hidden">
         <Link
-          to="/depot/repair-workers"
+          to="/depot/sorting"
           className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 shadow-md ring-2 ring-teal-300 active:opacity-90 transition-opacity"
         >
           <div className="p-2 bg-white/20 rounded-lg">
-            <Wrench className="w-5 h-5 text-white" />
+            <Layers className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[10px] font-bold text-white text-center leading-tight">{t('depot.repairWorkers.title')}</span>
+          <span className="text-[10px] font-bold text-white text-center leading-tight">Sortire (Selektimi)</span>
         </Link>
         <Link
           to="/depot/receiving"
@@ -197,15 +198,6 @@ export default function DepotDashboard() {
             <Package className="w-5 h-5 text-white" />
           </div>
           <span className="text-[10px] font-medium text-emerald-700 text-center leading-tight">{t('nav.stock')}</span>
-        </Link>
-        <Link
-          to="/depot/repairs"
-          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-50 active:bg-amber-100 transition-colors"
-        >
-          <div className="p-2 bg-amber-500 rounded-lg">
-            <Wrench className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[10px] font-medium text-amber-700 text-center leading-tight">{t('nav.repairs')}</span>
         </Link>
         <Link
           to="/depot/chat"
@@ -329,14 +321,14 @@ export default function DepotDashboard() {
             </div>
             <div className="p-4 space-y-2">
               <Link
-                to="/depot/repair-workers"
+                to="/depot/sorting"
                 className="flex items-center justify-between p-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-md ring-2 ring-teal-200 transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-lg">
-                    <Wrench className="w-4 h-4 text-white" />
+                    <Layers className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-sm font-bold text-white">{t('depot.repairWorkers.title')}</span>
+                  <span className="text-sm font-bold text-white">Sortire (Selektimi)</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/80 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -365,14 +357,14 @@ export default function DepotDashboard() {
                 <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
-                to="/depot/repairs"
+                to="/depot/chat"
                 className="flex items-center justify-between p-3.5 bg-cyan-50 rounded-xl hover:bg-cyan-100 transition-colors group"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-cyan-500 rounded-lg">
-                    <Wrench className="w-4 h-4 text-white" />
+                    <MessageSquare className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-cyan-900">{t('depot.dashboard.registerRepair')}</span>
+                  <span className="text-sm font-medium text-cyan-900">{t('nav.chat')}</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-1 transition-transform" />
               </Link>

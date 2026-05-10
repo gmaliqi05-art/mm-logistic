@@ -24,6 +24,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { matchProduct } from '../../utils/productMatcher';
+import { isEuroPaletteName, isNewPalletProduct, epalClassRank } from '../../utils/productSort';
 import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
 import { notifyUsers } from '../../utils/notifications';
 import FlowRoleSelector from './FlowRoleSelector';
@@ -93,6 +94,7 @@ type RowState = {
 function deriveConditionAction(
   desc: string,
   productName?: string | null,
+  categoryName?: string | null,
 ): { condition: string; intended_action: 'stock' | 'sorting' | 'repair' } {
   const d = `${desc || ''} ${productName || ''}`.toLowerCase();
   if (/\b(defekt|defect|damage|damaged|kaputt|broken|repair|riparim)\b/i.test(d)) {
@@ -109,6 +111,9 @@ function deriveConditionAction(
   }
   if (/\b(sortier|sortir|sorting|mix|mischt|gemischt|mischpalette)\b/i.test(d)) {
     return { condition: 'sorting', intended_action: 'sorting' };
+  }
+  if (isEuroPaletteName(d) || isEuroPaletteName(categoryName)) {
+    return { condition: 'good', intended_action: 'stock' };
   }
   return { condition: 'good', intended_action: 'stock' };
 }
@@ -391,10 +396,28 @@ function ReviewModal({
       }
 
       const matchedProdName = productId ? prods.find((p) => p.id === productId)?.name : null;
+      const matchedCatName = categoryId ? cats.find((c) => c.id === categoryId)?.name : null;
       if (!condition || (!it.intended_action && it.notes)) {
-        const d = deriveConditionAction(it.notes || '', matchedProdName);
+        const d = deriveConditionAction(it.notes || '', matchedProdName, matchedCatName);
         if (!condition) condition = d.condition;
         if (!it.intended_action) action = d.intended_action;
+      }
+
+      if (
+        !productId &&
+        categoryId &&
+        isEuroPaletteName(matchedCatName) &&
+        action === 'stock' &&
+        !/(klass?e?\s*[abc]\b|class\s*[abc]\b|\b[abc][-\s]?klass?e?\b)/i.test(`${it.notes || ''} ${matchedProdName || ''}`)
+      ) {
+        const euroProducts = prods.filter((p) => p.category_id === categoryId);
+        const newPallet = euroProducts.find((p) => isNewPalletProduct(p.name) || epalClassRank(p.name) === 0);
+        if (newPallet) {
+          productId = newPallet.id;
+          autoMatched = true;
+          confidence = 'medium';
+          matchedOn = matchedOn || 'combined';
+        }
       }
 
       return {
