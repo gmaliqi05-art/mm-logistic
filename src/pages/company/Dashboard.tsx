@@ -22,12 +22,14 @@ import {
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import PendingScansPanel from '../../components/scanner/PendingScansPanel';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
 import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCard';
+import FinanceSnapshot from '../../components/accounting/FinanceSnapshot';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote } from '../../types';
@@ -77,6 +79,8 @@ type RangeKey = '7d' | '30d' | '90d';
 
 export default function CompanyDashboard() {
   const { profile } = useAuth();
+  const { accountingEnabled } = useSubscription();
+  const [liveDriverCount, setLiveDriverCount] = useState(0);
   const { t } = useTranslation();
   const reviewCounts = usePendingReviewCounts(profile?.company_id);
   const [stats, setStats] = useState<Stats>(emptyStats);
@@ -140,6 +144,28 @@ export default function CompanyDashboard() {
   useEffect(() => {
     if (profile?.company_id) fetchData();
   }, [profile?.company_id, range]);
+
+  useEffect(() => {
+    if (!profile?.company_id) return;
+    let cancelled = false;
+    async function pollLiveDrivers() {
+      const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from('driver_locations')
+        .select('driver_id')
+        .eq('company_id', profile!.company_id!)
+        .gte('recorded_at', since);
+      if (cancelled) return;
+      const unique = new Set((data ?? []).map((r: { driver_id: string }) => r.driver_id));
+      setLiveDriverCount(unique.size);
+    }
+    void pollLiveDrivers();
+    const iv = window.setInterval(pollLiveDrivers, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(iv);
+    };
+  }, [profile?.company_id]);
 
   useEffect(() => {
     if (!profile?.company_id || !profile?.id) return;
@@ -315,13 +341,30 @@ export default function CompanyDashboard() {
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">{t('company.dashboard.subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowChooser(true)}
-          className="flex-shrink-0 p-2.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-colors shadow-sm lg:px-4 lg:py-2.5 lg:gap-2 lg:inline-flex lg:items-center"
-        >
-          <ScanLine className="w-5 h-5" />
-          <span className="hidden lg:inline text-sm font-medium">{t('scanner.scanDocument')}</span>
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {profile?.company_id && (
+            <Link
+              to="/company/live-map"
+              title="Ndiq shoferet ne kohe reale"
+              aria-label="Ndiq shoferet ne kohe reale"
+              className="relative p-2.5 bg-teal-50 text-teal-700 rounded-xl hover:bg-teal-100 active:bg-teal-200 transition-colors border border-teal-100"
+            >
+              <MapPin className="w-5 h-5" />
+              {liveDriverCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+                  {liveDriverCount}
+                </span>
+              )}
+            </Link>
+          )}
+          <button
+            onClick={() => setShowChooser(true)}
+            className="p-2.5 bg-teal-600 text-white rounded-xl hover:bg-teal-700 active:bg-teal-800 transition-colors shadow-sm lg:px-4 lg:py-2.5 lg:gap-2 lg:inline-flex lg:items-center"
+          >
+            <ScanLine className="w-5 h-5" />
+            <span className="hidden lg:inline text-sm font-medium">{t('scanner.scanDocument')}</span>
+          </button>
+        </div>
       </div>
 
       {/* Quick Actions - Mobile prominent */}
@@ -332,25 +375,9 @@ export default function CompanyDashboard() {
         <QuickActionTile to="/company/reports" icon={BarChart3} label={t('nav.reports')} color="gray" />
       </div>
 
-      <ComplianceHealthCard />
+      {accountingEnabled && <ComplianceHealthCard />}
 
-      {profile?.company_id && (
-        <Link
-          to="/company/live-map"
-          className="group flex items-center gap-3 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all"
-        >
-          <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
-            <MapPin className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">Ndiq shoferet ne kohe reale</p>
-            <p className="text-xs text-white/80 mt-0.5">
-              Pozicioni, adresa dhe shpejtesia e cdo shoferi ne harte
-            </p>
-          </div>
-          <ArrowRight className="w-5 h-5 opacity-90 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
-      )}
+      {accountingEnabled && <FinanceSnapshot companyId={profile?.company_id ?? null} />}
 
       <ReviewCTA counts={reviewCounts} t={t} />
 
