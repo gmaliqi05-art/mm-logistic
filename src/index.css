@@ -92,6 +92,36 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* Padding for main content above a fixed mobile bottom nav (h-16 = 4rem) */
+  .pb-safe-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 1024px) {
+    .pb-safe-nav {
+      padding-bottom: 1.5rem;
+    }
+  }
+
+  /* Standard modal panel sizing using dynamic viewport units */
+  .modal-panel {
+    max-height: 100vh;
+  }
+
+  @supports (height: 100dvh) {
+    .modal-panel {
+      max-height: 100dvh;
+    }
+  }
+
+  /* Sticky footer inside modals that respects iOS safe-area */
+  .modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+
   /* Chat page responsive container.
      Mobile: fill the viewport minus the sticky top header (~10rem) and bottom
      navigation (64px) + iOS safe-area. Uses dynamic viewport units on

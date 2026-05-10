@@ -519,8 +519,8 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
   const isDeliveryKind = chosenKind === 'delivery_out' || chosenKind === 'delivery_in';
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-[1000] bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-5xl modal-panel sm:max-h-[92vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-teal-50 rounded-xl">
@@ -838,7 +838,7 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
         </div>
 
         {step === 'preview' && (
-          <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+          <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-100 bg-slate-50 sm:rounded-b-2xl modal-footer">
             <button onClick={() => setStep('classify')} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg text-sm">
               {t('accounting.scanModal.changeKind')}
             </button>

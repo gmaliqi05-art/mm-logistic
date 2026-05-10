@@ -394,7 +394,7 @@ function RepairReviewModal({
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3 flex items-center justify-end gap-2">
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-5 py-3 flex items-center justify-end gap-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button
             onClick={() => setShowReject(true)}
             disabled={!!saving}

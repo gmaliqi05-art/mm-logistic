@@ -150,7 +150,7 @@ export default function LogisticsLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6 pb-24 lg:pb-6 overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
           <Outlet />
         </main>
 
@@ -161,8 +161,8 @@ export default function LogisticsLayout() {
         </footer>
       </div>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
-        <div className="flex items-center justify-around h-16 px-2">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
+        <div className="flex items-center justify-around h-16 px-1">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -173,8 +173,8 @@ export default function LogisticsLayout() {
                 ${isActive ? 'text-teal-600' : 'text-gray-400 active:text-gray-600'}`
               }
             >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium leading-tight truncate max-w-full px-1">{item.label}</span>
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <span className="text-[10px] font-medium leading-tight max-w-full px-0.5 text-center line-clamp-2 break-words">{item.label}</span>
             </NavLink>
           ))}
         </div>

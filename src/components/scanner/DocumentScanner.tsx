@@ -309,7 +309,7 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
                 )}
               </div>
 
-              <div className="bg-gradient-to-t from-black via-black/95 to-black/80 px-4 pb-8 pt-4">
+              <div className="bg-gradient-to-t from-black via-black/95 to-black/80 px-4 pt-4 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1rem))]">
                 {detectedSize !== 'Unknown' && confidence > 0.3 && (
                   <div className="flex justify-center mb-4">
                     <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${confidenceBg}`}>

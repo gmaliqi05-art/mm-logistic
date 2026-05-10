@@ -190,7 +190,7 @@ export default function AccountingLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6 pb-24 lg:pb-6 overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
           <Outlet />
         </main>
 
@@ -216,8 +216,8 @@ export default function AccountingLayout() {
                 }`
               }
             >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium leading-tight truncate max-w-full px-1">{getLabel(item)}</span>
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <span className="text-[10px] font-medium leading-tight max-w-full px-0.5 text-center line-clamp-2 break-words">{getLabel(item)}</span>
             </NavLink>
           ))}
           <button

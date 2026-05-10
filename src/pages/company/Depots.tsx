@@ -851,7 +851,7 @@ function Modal({ title, onClose, onSave, saving, disabled, children, t }: ModalP
           </button>
         </div>
         <div className="p-6 space-y-4">{children}</div>
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
+        <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-100 sticky bottom-0 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button
             onClick={onClose}
             className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"

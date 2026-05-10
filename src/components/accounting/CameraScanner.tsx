@@ -672,7 +672,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      <div className="bg-black/90 px-4 py-5">
+      <div className="bg-black/90 px-4 pt-5 pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))]">
         {!previewUrl ? (
           <div className="flex items-center justify-between max-w-md mx-auto">
             <button

@@ -557,7 +557,7 @@ export default function Imports() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 p-4 border-t border-gray-200 sticky bottom-0 bg-white">
+            <div className="flex justify-end gap-2 p-4 border-t border-gray-200 sticky bottom-0 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50">Anulo</button>
               <button onClick={save} className="px-4 py-2 bg-emerald-600 text-white rounded text-sm hover:bg-emerald-700 flex items-center gap-1">
                 <FileDown className="w-4 h-4" /> Ruaj importin

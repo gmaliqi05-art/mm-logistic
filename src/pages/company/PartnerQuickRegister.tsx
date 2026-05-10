@@ -134,7 +134,7 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-white p-3 border-t border-gray-100 flex justify-end gap-2">
+        <div className="sticky bottom-0 bg-white p-3 border-t border-gray-100 flex justify-end gap-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button onClick={onClose} className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">Mbyll</button>
           <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:opacity-60">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

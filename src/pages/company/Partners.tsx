@@ -434,7 +434,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-white p-4 border-t border-gray-100 flex justify-end gap-2">
+        <div className="sticky bottom-0 bg-white p-4 border-t border-gray-100 flex justify-end gap-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"

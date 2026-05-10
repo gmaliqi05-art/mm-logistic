@@ -664,7 +664,7 @@ export default function Transactions() {
                 </div>
               </div>
 
-              <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center justify-end gap-3">
+              <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 sm:px-6 py-3 sm:py-4 rounded-b-2xl flex items-center justify-end gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <button
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
