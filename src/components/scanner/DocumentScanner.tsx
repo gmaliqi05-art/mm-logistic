@@ -244,7 +244,7 @@ export default function DocumentScanner({ onClose, onScanComplete }: DocumentSca
   const confidenceBg = confidence > 0.7 ? 'bg-emerald-500/20 border-emerald-500/40' : confidence > 0.4 ? 'bg-amber-500/20 border-amber-500/40' : 'bg-gray-500/20 border-gray-500/40';
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[9999] bg-black flex flex-col modal-fullscreen">
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
         <div className="flex items-center gap-3">
           <ScanLine className="w-5 h-5 text-teal-400" />

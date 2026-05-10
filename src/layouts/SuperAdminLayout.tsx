@@ -107,7 +107,7 @@ export default function SuperAdminLayout() {
     <div className="min-h-screen bg-gray-50 flex">
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden modal-fullscreen"
           onClick={() => setMobileOpen(false)}
         />
       )}

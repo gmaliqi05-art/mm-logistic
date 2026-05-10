@@ -140,6 +140,72 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
+  /* Global safe padding for modal overlays so their content is never hidden
+     behind the platform top navbar (56px mobile / 64px desktop) or the fixed
+     bottom navigation (64px mobile, 0 desktop) + iOS safe-area inset. */
+  .modal-safe {
+    padding-top: calc(3.5rem + env(safe-area-inset-top, 0px) + 0.5rem);
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+
+  @media (min-width: 1024px) {
+    .modal-safe {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+  }
+
+  .modal-panel-safe {
+    max-height: calc(100vh - 3.5rem - 4rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @supports (height: 100dvh) {
+    .modal-panel-safe {
+      max-height: calc(100dvh - 3.5rem - 4rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .modal-panel-safe {
+      max-height: calc(100vh - 2rem);
+    }
+    @supports (height: 100dvh) {
+      .modal-panel-safe {
+        max-height: calc(100dvh - 2rem);
+      }
+    }
+  }
+}
+
+/* ============================================================================
+ * Global safety net: ensure every fixed-overlay modal in the app leaves room
+ * for the platform top navbar and bottom mobile navigation + iOS safe-area.
+ * Elements that truly need to cover the entire viewport (camera scanners,
+ * fullscreen loaders) can opt out with the `modal-fullscreen` class.
+ * ============================================================================ */
+.fixed.inset-0:not(.modal-fullscreen):not(.no-modal-safe) {
+  padding-top: calc(3.5rem + env(safe-area-inset-top, 0px) + 0.5rem);
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 0.5rem);
+}
+
+@media (min-width: 1024px) {
+  .fixed.inset-0:not(.modal-fullscreen):not(.no-modal-safe) {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* Cap any direct child panel of a modal overlay to the safe viewport so the
+ * user can always scroll to the action buttons. */
+.fixed.inset-0:not(.modal-fullscreen):not(.no-modal-safe) > div {
+  max-height: 100%;
+}
+
+@layer utilities {
+
   /* Scroll body area inside a modal */
   .modal-body-scroll {
     overflow-y: auto;

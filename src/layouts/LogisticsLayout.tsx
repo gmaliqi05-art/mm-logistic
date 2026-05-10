@@ -181,7 +181,7 @@ export default function LogisticsLayout() {
       </nav>
 
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white">
+        <div className="lg:hidden fixed inset-0 z-50 bg-white modal-fullscreen">
           <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
             <span className="font-semibold text-gray-900">{brandName}</span>
             <button

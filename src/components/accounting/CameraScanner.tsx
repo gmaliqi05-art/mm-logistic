@@ -484,7 +484,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     : null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-black flex flex-col modal-fullscreen">
       <div className="flex items-center justify-between px-4 py-3 bg-black/80 text-white">
         <div className="flex items-center gap-2">
           <Camera className="w-5 h-5 text-teal-400" />

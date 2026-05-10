@@ -184,7 +184,7 @@ export default function DepotLayout() {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-[950] bg-white flex flex-col">
+        <div className="lg:hidden fixed inset-0 z-[950] bg-white flex flex-col modal-fullscreen">
           <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100 flex-shrink-0">
             <div className="flex items-center gap-2">
               {brandLogo && (

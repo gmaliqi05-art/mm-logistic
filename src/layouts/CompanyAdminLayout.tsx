@@ -288,7 +288,7 @@ export default function CompanyAdminLayout() {
 
       {/* Mobile Full-Screen Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-[1000] bg-white animate-in slide-in-from-bottom duration-200">
+        <div className="lg:hidden fixed inset-0 z-[1000] bg-white animate-in slide-in-from-bottom duration-200 modal-fullscreen">
           <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
             <div className="flex items-center gap-3">
               {companyLogo && (
