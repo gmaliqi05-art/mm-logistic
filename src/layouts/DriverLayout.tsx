@@ -172,8 +172,8 @@ export default function DriverLayout() {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-white">
-          <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
+        <div className="lg:hidden fixed inset-0 z-[950] bg-white flex flex-col">
+          <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100 flex-shrink-0">
             <div className="flex items-center gap-2">
               {brandLogo && (
                 <img src={brandLogo} alt={brandName} className="w-7 h-7 rounded object-cover" />
@@ -188,7 +188,7 @@ export default function DriverLayout() {
             </button>
           </div>
 
-          <div className="p-4 border-b border-gray-100 bg-gray-50">
+          <div className="p-4 border-b border-gray-100 bg-gray-50 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-teal-600 overflow-hidden flex items-center justify-center text-white font-bold text-sm">
                 {profile?.avatar_url ? (
@@ -204,7 +204,7 @@ export default function DriverLayout() {
             </div>
           </div>
 
-          <div className="p-4 space-y-2">
+          <nav className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-2">
             {navItems.map((item) => {
               const isActive = item.end
                 ? location.pathname === item.to
@@ -226,9 +226,9 @@ export default function DriverLayout() {
                 </NavLink>
               );
             })}
-          </div>
+          </nav>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+          <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
             <div className="flex items-center gap-3 mb-3">
               <LanguageSwitcher variant="header" />
             </div>
