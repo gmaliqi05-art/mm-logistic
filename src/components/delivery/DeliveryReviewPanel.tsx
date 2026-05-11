@@ -696,12 +696,9 @@ function ReviewModal({
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
-      if (partnerIsOwnCompany) {
-        throw new Error(`Emri i palles i perputhet me kompanine tuaj (${ownCompany.name}). Korrigjojeni te seksioni Partneri para se te vazhdoni.`);
-      }
       const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
-      if (!hasPartnerLink && !willAutoRegister) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne stok.');
       }
       await persistItems();
@@ -716,6 +713,13 @@ function ReviewModal({
         ai_extracted_json: sanitizedAi,
         updated_at: new Date().toISOString(),
       };
+      if (partnerIsOwnCompany) {
+        updatePayload.auto_register_partner = false;
+        updatePayload.partner_id = null;
+        updatePayload.counterparty_contact_id = null;
+        updatePayload.counterparty_company_id = null;
+        if (!note.flow_role) updatePayload.flow_role = 'internal_transfer';
+      }
       const scanUrl = (note as any).scanned_photo_url as string | null;
       const attachUrl = (note as any).attachment_url as string | null;
       if (scanUrl && !attachUrl) {
@@ -792,12 +796,9 @@ function ReviewModal({
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
-      if (partnerIsOwnCompany) {
-        throw new Error(`Emri i palles i perputhet me kompanine tuaj (${ownCompany.name}). Korrigjojeni te seksioni Partneri para se te vazhdoni.`);
-      }
       const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
-      if (!hasPartnerLink && !willAutoRegister) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne sortire.');
       }
       const sortingRows = rows.map((r) => ({
@@ -823,6 +824,13 @@ function ReviewModal({
         ai_extracted_json: sanitizedAi,
         updated_at: new Date().toISOString(),
       };
+      if (partnerIsOwnCompany) {
+        updatePayload.auto_register_partner = false;
+        updatePayload.partner_id = null;
+        updatePayload.counterparty_contact_id = null;
+        updatePayload.counterparty_company_id = null;
+        if (!note.flow_role) updatePayload.flow_role = 'internal_transfer';
+      }
       const scanUrl = (note as any).scanned_photo_url as string | null;
       const attachUrl = (note as any).attachment_url as string | null;
       if (scanUrl && !attachUrl) {

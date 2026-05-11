@@ -112,24 +112,36 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
   async function save() {
     setSaving(true);
     setError(null);
-    if (partnerIsOwnCompany) {
-      setSaving(false);
-      setError('Pala e shenuar eshte kompania juaj. Korrigjojeni emrin para se te ruani.');
-      return;
-    }
-    const payload: Record<string, any> = {
-      flow_role: role,
-      counterparty_company_id: matchedCompanyId,
-      counterparty_contact_id: matchedContactId,
-      counterparty_name: snapshot.name || null,
-      counterparty_vat: snapshot.vat || null,
-      counterparty_email: snapshot.email || null,
-      counterparty_phone: snapshot.phone || null,
-      partner_name: snapshot.name || null,
-      auto_register_partner: autoRegister && !matchedContactId,
-    };
-    if (matchedContactId) {
+    const payload: Record<string, any> = partnerIsOwnCompany
+      ? {
+          flow_role: 'internal_transfer' as FlowRole,
+          counterparty_company_id: null,
+          counterparty_contact_id: null,
+          counterparty_name: snapshot.name || null,
+          counterparty_vat: snapshot.vat || null,
+          counterparty_email: snapshot.email || null,
+          counterparty_phone: snapshot.phone || null,
+          partner_name: snapshot.name || null,
+          partner_id: null,
+          auto_register_partner: false,
+        }
+      : {
+          flow_role: role,
+          counterparty_company_id: matchedCompanyId,
+          counterparty_contact_id: matchedContactId,
+          counterparty_name: snapshot.name || null,
+          counterparty_vat: snapshot.vat || null,
+          counterparty_email: snapshot.email || null,
+          counterparty_phone: snapshot.phone || null,
+          partner_name: snapshot.name || null,
+          auto_register_partner: autoRegister && !matchedContactId,
+        };
+    if (!partnerIsOwnCompany && matchedContactId) {
       payload.partner_id = matchedContactId;
+    }
+    if (partnerIsOwnCompany) {
+      setRoleState('internal_transfer' as FlowRole);
+      onRoleChange?.('internal_transfer' as FlowRole);
     }
     const { error: err } = await supabase
       .from('delivery_notes')
@@ -182,11 +194,11 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
       </div>
 
       {partnerIsOwnCompany && (
-        <div className="flex items-start gap-2 text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">
+        <div className="flex items-start gap-2 text-xs text-sky-800 bg-sky-50 border border-sky-200 px-3 py-2 rounded-lg">
           <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <div>
-            <div className="font-semibold">Kjo jemi NE</div>
-            <div>Pala e shenuar perputhet me kompanine tuaj. Zevendesojeni me palen tjeter ({noteType === 'pickup' ? 'derguesin' : 'marresin'}) perpara se te ruani.</div>
+            <div className="font-semibold">Transferte interne</div>
+            <div>Pala perputhet me kompanine tuaj. Fletedokumenti do te ruhet si transferte interne — stoku perditesohet normalisht dhe nuk krijohet asnje partner.</div>
           </div>
         </div>
       )}
