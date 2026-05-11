@@ -1,5 +1,5 @@
 import TrailersManager from '../../components/trailers/TrailersManager';
 
-export default function DepotTrailersPage() {
+export default function DriverTrailersPage() {
   return <TrailersManager />;
 }

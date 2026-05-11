@@ -119,6 +119,7 @@ const DriverSettings = lazy(() => import('./pages/driver/Settings'));
 const DriverTracking = lazy(() => import('./pages/driver/Tracking'));
 const DriverRoutePlanner = lazy(() => import('./pages/driver/RoutePlanner'));
 const DriverNavigation = lazy(() => import('./pages/driver/Navigation'));
+const DriverTrailers = lazy(() => import('./pages/driver/Trailers'));
 const CompanyRoutePlanner = lazy(() => import('./pages/company/RoutePlanner'));
 const CompanyFleetReports = lazy(() => import('./pages/company/FleetReports'));
 const LogisticsLiveMap = lazy(() => import('./pages/logistics/LiveMap'));
@@ -297,6 +298,7 @@ function AppRoutes() {
         }>
           <Route index element={<DriverDashboard />} />
           <Route path="tracking" element={<DriverTracking />} />
+          <Route path="trailers" element={<DriverTrailers />} />
           <Route path="route-planner" element={<DriverRoutePlanner />} />
           <Route path="navigation" element={<DriverNavigation />} />
           <Route path="overdue" element={<DriverOverdue />} />

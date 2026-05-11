@@ -34,6 +34,7 @@ import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/
 import { notifyUsers } from '../../utils/notifications';
 import DriverPermissionsGate from '../../components/DriverPermissionsGate';
 import DriverTrailersWidget from '../../components/driver/DriverTrailersWidget';
+import { LicensePlate } from '../../components/trailers/TrailersManager';
 
 export type T = (key: string) => string;
 
@@ -78,6 +79,7 @@ export default function DriverDashboard() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmErrors, setConfirmErrors] = useState<Record<string, string>>({});
   const [dispatchConfirm, setDispatchConfirm] = useState<NoteRow | null>(null);
+  const [assignedTrailers, setAssignedTrailers] = useState<Array<{ id: string; plate_number: string; title: string | null }>>([]);
 
   function requestConfirm(id: string) {
     const n = notes.find((x) => x.id === id);
@@ -111,6 +113,36 @@ export default function DriverDashboard() {
   useEffect(() => {
     if (profile?.id) fetchData();
   }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile?.id || !profile?.company_id) return;
+    let cancelled = false;
+    async function fetchTrailers() {
+      const { data } = await supabase
+        .from('trailer_loads')
+        .select('id, plate_number, title, claimed_by_driver_id, assigned_driver_id, updated_at')
+        .eq('company_id', profile!.company_id!)
+        .or(`claimed_by_driver_id.eq.${profile!.id},assigned_driver_id.eq.${profile!.id}`)
+        .order('updated_at', { ascending: false });
+      if (cancelled) return;
+      setAssignedTrailers(
+        (data ?? []).map((d: any) => ({ id: d.id, plate_number: d.plate_number, title: d.title })),
+      );
+    }
+    void fetchTrailers();
+    const ch = supabase
+      .channel(`driver-trailers-hero-${profile.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'trailer_loads', filter: `company_id=eq.${profile.company_id}` },
+        () => void fetchTrailers(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(ch);
+    };
+  }, [profile?.id, profile?.company_id]);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -230,6 +262,22 @@ export default function DriverDashboard() {
           {t('driver.home.greeting')}, {profile?.full_name?.split(' ')[0] ?? t('roles.driver')}
         </h1>
         <p className="text-gray-500 text-sm mt-0.5">{subtitle}</p>
+        {assignedTrailers.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {assignedTrailers.map((tr) => (
+              <Link
+                key={tr.id}
+                to="/driver/trailers"
+                className="inline-flex items-center gap-1.5 bg-white border border-sky-200 hover:border-sky-300 rounded-full pl-1.5 pr-2.5 py-1 shadow-sm transition-colors"
+              >
+                <LicensePlate plate={tr.plate_number} size="xs" />
+                {tr.title && (
+                  <span className="text-[11px] font-semibold text-gray-700 truncate max-w-[100px]">{tr.title}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       {error && (

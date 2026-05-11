@@ -21,6 +21,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
+import { Link } from 'react-router-dom';
+import { Contact as IdCard } from 'lucide-react';
 
 type RecentDoc = {
   id: string;
@@ -326,10 +328,26 @@ export default function DriverSettings() {
         </div>
       </section>
 
+      <Link
+        to="/driver/my-documents"
+        className="block bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:border-teal-300 hover:shadow-md transition-all"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-teal-50 text-teal-600 flex-shrink-0">
+            <IdCard className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-bold text-gray-900">{L.documentsTitle}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Shiko patenten, Kod 95, G25, ADR — te ruajtura per ty</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+        </div>
+      </Link>
+
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-5 h-5 text-teal-600" />
-          <h3 className="text-base font-bold text-gray-900">{L.documentsTitle}</h3>
+          <h3 className="text-base font-bold text-gray-900">Skano dokumentet e mia</h3>
         </div>
         <p className="text-sm text-gray-500 mb-4">{L.documentsSubtitle}</p>
 

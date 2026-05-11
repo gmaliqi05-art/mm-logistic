@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDriverTracking } from '../../contexts/DriverTrackingContext';
 import { supabase } from '../../lib/supabase';
+import DriverNavigation from './Navigation';
 
 function formatCountdown(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -34,6 +35,7 @@ export default function DriverTracking() {
 
   const [trafficAlert, setTrafficAlert] = useState<{ id: string; delay_minutes: number; severity: string; message: string } | null>(null);
   const [now, setNow] = useState<number>(Date.now());
+  const [view, setView] = useState<'tracking' | 'navigation'>('tracking');
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -90,6 +92,33 @@ export default function DriverTracking() {
 
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-4">
+      <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+        <button
+          onClick={() => setView('tracking')}
+          className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            view === 'tracking' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+          Gjurmimi
+        </button>
+        <button
+          onClick={() => setView('navigation')}
+          className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            view === 'navigation' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Navigation className="w-4 h-4" />
+          Navigimi
+        </button>
+      </div>
+
+      {view === 'navigation' ? (
+        <div className="-mx-4">
+          <DriverNavigation />
+        </div>
+      ) : (
+      <>
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Live Tracking</h1>
         <p className="text-sm text-slate-600 mt-1">Gjurmimi vazhdon edhe kur kalon ne faqe tjeter, per sa kohe eshte i ndezur.</p>
@@ -231,6 +260,8 @@ export default function DriverTracking() {
         </span>
         <span className="text-xs opacity-70">HGV</span>
       </Link>
+      </>
+      )}
     </div>
   );
 }
