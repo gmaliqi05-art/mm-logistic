@@ -112,7 +112,6 @@ export default function DepotSorting() {
           .from('product_categories')
           .select('*')
           .eq('company_id', companyId)
-          .in('sorting_mode', ['class', 'type'])
           .order('name'),
         supabase
           .from('category_products')
@@ -536,11 +535,13 @@ export default function DepotSorting() {
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                 >
                   <option value="">{t('depot.sorting.selectCategory')}</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({t(`depot.sorting.mode.${c.sorting_mode}`)})
-                    </option>
-                  ))}
+                  {categories
+                    .filter((c) => c.sorting_mode === 'class' || c.sorting_mode === 'type')
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({t(`depot.sorting.mode.${c.sorting_mode}`)})
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
@@ -590,7 +591,7 @@ export default function DepotSorting() {
       )}
 
       {/* Active Batch Modal */}
-      {currentBatch && currentCategory && (
+      {currentBatch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50" onClick={closeBatch} />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -601,10 +602,10 @@ export default function DepotSorting() {
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold text-gray-900 truncate">
-                    {currentCategory.name}
+                    {currentCategory?.name ?? t('depot.sorting.title')}
                   </h2>
                   <p className="text-xs text-gray-500">
-                    {t(`depot.sorting.mode.${currentCategory.sorting_mode}`)} &middot;{' '}
+                    {currentCategory ? t(`depot.sorting.mode.${currentCategory.sorting_mode}`) : '-'} &middot;{' '}
                     {new Date(currentBatch.created_at).toLocaleString()}
                   </p>
                   {currentBatch.reference_number_snapshot && (
@@ -870,7 +871,9 @@ function OtherCategoriesPanel({
   onCreate: (catId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const others = categories.filter((c) => c.id !== currentCategoryId);
+  const others = categories.filter(
+    (c) => c.id !== currentCategoryId && (c.sorting_mode === 'class' || c.sorting_mode === 'type'),
+  );
   if (others.length === 0) return null;
 
   return (
