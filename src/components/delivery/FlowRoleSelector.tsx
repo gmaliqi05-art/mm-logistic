@@ -7,6 +7,7 @@ import {
   type FlowRole,
   type CounterpartySnapshot,
 } from '../../utils/counterpartyMatch';
+import { isOwnCompanyName } from '../../utils/companyName';
 
 interface Props {
   ownCompanyId: string;
@@ -73,13 +74,12 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
     };
   }, [ownCompanyId]);
 
-  const partnerIsOwnCompany = (() => {
-    const norm = (v: string) => v.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
-    if (!snapshot.name && !snapshot.vat) return false;
-    if (ownCompanyVat && snapshot.vat && norm(snapshot.vat) === norm(ownCompanyVat)) return true;
-    if (ownCompanyName && snapshot.name && norm(snapshot.name) === norm(ownCompanyName)) return true;
-    return false;
-  })();
+  const partnerIsOwnCompany = isOwnCompanyName(
+    snapshot.name,
+    snapshot.vat,
+    ownCompanyName,
+    ownCompanyVat,
+  );
 
   useEffect(() => {
     let cancelled = false;

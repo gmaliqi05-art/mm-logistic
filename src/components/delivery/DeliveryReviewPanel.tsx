@@ -31,6 +31,7 @@ import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
 import { notifyUsers } from '../../utils/notifications';
 import FlowRoleSelector from './FlowRoleSelector';
 import type { FlowRole } from '../../utils/counterpartyMatch';
+import { isOwnCompanyName } from '../../utils/companyName';
 
 type Role = 'company_admin' | 'depot_worker';
 
@@ -339,6 +340,28 @@ function ReviewModal({
     onConfirm: () => void;
   }>(null);
   const persistingRef = useRef(false);
+  const [ownCompany, setOwnCompany] = useState<{ name: string; vat: string }>({ name: '', vat: '' });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('companies')
+        .select('name, vat_number')
+        .eq('id', note.company_id)
+        .maybeSingle();
+      if (cancelled) return;
+      setOwnCompany({ name: (data?.name || '').trim(), vat: (data?.vat_number || '').trim() });
+    })();
+    return () => { cancelled = true; };
+  }, [note.company_id]);
+
+  const partnerIsOwnCompany = isOwnCompanyName(
+    note.counterparty_name ?? note.partner_name,
+    note.counterparty_vat,
+    ownCompany.name,
+    ownCompany.vat,
+  );
 
   async function handleUploadDocument(file: File) {
     if (!file) return;
@@ -673,6 +696,9 @@ function ReviewModal({
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
+      if (partnerIsOwnCompany) {
+        throw new Error(`Emri i palles i perputhet me kompanine tuaj (${ownCompany.name}). Korrigjojeni te seksioni Partneri para se te vazhdoni.`);
+      }
       const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
       if (!hasPartnerLink && !willAutoRegister) {
@@ -765,6 +791,9 @@ function ReviewModal({
       const invalid = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
+      }
+      if (partnerIsOwnCompany) {
+        throw new Error(`Emri i palles i perputhet me kompanine tuaj (${ownCompany.name}). Korrigjojeni te seksioni Partneri para se te vazhdoni.`);
       }
       const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
