@@ -88,6 +88,7 @@ const CompanyPartnerDetail = lazy(() => import('./pages/company/PartnerDetail'))
 const CompanyPartnerFlows = lazy(() => import('./pages/company/PartnerFlows'));
 const CompanyReview = lazy(() => import('./pages/company/Review'));
 const CompanyVehicles = lazy(() => import('./pages/company/Vehicles'));
+const CompanyTrailers = lazy(() => import('./pages/company/Trailers'));
 const CompanyVehicleDetail = lazy(() => import('./pages/company/VehicleDetail'));
 const CompanyDriverDetail = lazy(() => import('./pages/company/DriverDetail'));
 const CompanyDriverReports = lazy(() => import('./pages/company/DriverReports'));
@@ -236,6 +237,7 @@ function AppRoutes() {
           <Route path="drivers/:id" element={<CompanyDriverDetail />} />
           <Route path="drivers/:id/reports" element={<CompanyDriverReports />} />
           <Route path="vehicles" element={<CompanyVehicles />} />
+          <Route path="trailers" element={<CompanyTrailers />} />
           <Route path="vehicles/:id" element={<CompanyVehicleDetail />} />
           <Route path="compliance" element={<CompanyCompliance />} />
           <Route path="fleet-scans" element={<CompanyFleetScans />} />
