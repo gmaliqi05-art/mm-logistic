@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { applyScanToDeliveryNote } from '../../utils/applyScanToDeliveryNote';
+import { isOwnCompanyName, stripOwnFromPartnerName } from '../../utils/companyName';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -956,8 +957,8 @@ export function TaskDetailSheet({
         updated_at: new Date().toISOString(),
       };
 
-      const supplierName = (ex.supplier_name || '').trim();
-      const customerName = (ex.customer_name || '').trim();
+      const rawSupplier = (ex.supplier_name || '').trim();
+      const rawCustomer = (ex.customer_name || '').trim();
       const supplierVat = (ex as any).supplier_vat || null;
       const customerVat = (ex as any).customer_vat || null;
       const supplierEmail = (ex as any).supplier_email || null;
@@ -973,40 +974,36 @@ export function TaskDetailSheet({
           .select('name, vat_number')
           .eq('id', note.company_id)
           .maybeSingle();
-        ownName = (ownCompany?.name || '').trim().toLowerCase();
-        ownVat = (ownCompany?.vat_number || '').trim().toLowerCase();
+        ownName = (ownCompany?.name || '').trim();
+        ownVat = (ownCompany?.vat_number || '').trim();
       }
 
-      const norm = (v: string) => v.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
-      const tokenSim = (a: string, b: string) => {
-        const na = a.trim().toLowerCase();
-        const nb = b.trim().toLowerCase();
-        if (!na || !nb) return 0;
-        if (na === nb) return 1;
-        if (na.includes(nb) || nb.includes(na)) return 0.85;
-        const ta = new Set(na.split(/\W+/).filter((t) => t.length > 2));
-        const tb = new Set(nb.split(/\W+/).filter((t) => t.length > 2));
-        if (!ta.size || !tb.size) return 0;
-        let shared = 0;
-        for (const t of ta) if (tb.has(t)) shared++;
-        return (2 * shared) / (ta.size + tb.size);
-      };
-      const matchesOwn = (n: string, v: string | null) => {
-        if (ownVat && v && norm(v) === norm(ownVat)) return true;
-        if (ownName && n && tokenSim(n, ownName) >= 0.7) return true;
-        return false;
-      };
+      // Strip own company from possibly concatenated AI output (e.g. "SAL PAL / Enlirat GmbH")
+      const supplierName = stripOwnFromPartnerName(rawSupplier, ownName, ownVat);
+      const customerName = stripOwnFromPartnerName(rawCustomer, ownName, ownVat);
 
-      const supplierIsUs = matchesOwn(supplierName, supplierVat);
-      const customerIsUs = matchesOwn(customerName, customerVat);
+      const supplierIsUs =
+        !supplierName && !!rawSupplier
+          ? true
+          : isOwnCompanyName(rawSupplier, supplierVat, ownName, ownVat);
+      const customerIsUs =
+        !customerName && !!rawCustomer
+          ? true
+          : isOwnCompanyName(rawCustomer, customerVat, ownName, ownVat);
 
       let detectedName = '';
       let detectedVat: string | null = null;
       let detectedEmail: string | null = null;
       let detectedPhone: string | null = null;
       let detectedAddress: string | null = null;
+      let needsReview = false;
 
-      if (supplierIsUs && !customerIsUs) {
+      if (supplierIsUs && customerIsUs) {
+        update.flow_role = 'internal_transfer';
+        update.partner_name = null;
+        update.counterparty_name = null;
+        update.counterparty_vat = null;
+      } else if (supplierIsUs && !customerIsUs) {
         detectedName = customerName;
         detectedVat = customerVat;
         detectedAddress = customerAddress;
@@ -1019,16 +1016,21 @@ export function TaskDetailSheet({
         detectedAddress = supplierAddress;
         update.flow_role = 'receiver';
       } else {
+        // Neither side matches own company - AI couldn't identify us. Needs admin review.
         detectedName = isPickup ? supplierName : customerName;
         detectedVat = isPickup ? supplierVat : customerVat;
         detectedEmail = isPickup ? supplierEmail : null;
         detectedPhone = isPickup ? supplierPhone : null;
         detectedAddress = isPickup ? supplierAddress : customerAddress;
-        if (isPickup) update.flow_role = 'receiver';
+        needsReview = true;
       }
 
-      if (detectedName && !note.partner_name) update.partner_name = detectedName;
-      if (detectedName) update.counterparty_name = detectedName;
+      if (update.flow_role !== 'internal_transfer') {
+        if (detectedName) {
+          update.partner_name = detectedName;
+          update.counterparty_name = detectedName;
+        }
+      }
       if (detectedVat) update.counterparty_vat = detectedVat;
       if (detectedPhone) update.counterparty_phone = detectedPhone;
       if (detectedEmail) update.counterparty_email = detectedEmail;

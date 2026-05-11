@@ -292,6 +292,36 @@ function similarity(a: string, b: string): number {
   return (2 * shared) / (tokensA.size + tokensB.size);
 }
 
+const SEPARATOR_REGEX = /\s*(?:\/|\||\\|•|;|,|\s-\s|\s—\s|\s–\s|\svs\.?\s)\s*/i;
+
+function splitCandidates(value: string): string[] {
+  if (!value) return [];
+  return value.split(SEPARATOR_REGEX).map((p) => p.trim()).filter((p) => p.length >= 2);
+}
+
+function isOwn(candidate: string, candidateVat: string | null, ownName: string, ownVat: string): boolean {
+  if (ownVat && candidateVat) {
+    const ov = ownVat.toLowerCase().replace(/[^a-z0-9]+/g, "");
+    const cv = candidateVat.toLowerCase().replace(/[^a-z0-9]+/g, "");
+    if (ov && cv && ov === cv) return true;
+  }
+  if (!candidate || !ownName) return false;
+  return similarity(candidate, ownName) >= 0.7;
+}
+
+function stripOwn(raw: string, ownName: string, ownVat: string): string {
+  if (!raw) return "";
+  const parts = splitCandidates(raw);
+  if (parts.length <= 1) {
+    if (isOwn(raw, null, ownName, ownVat)) return "";
+    return raw.trim();
+  }
+  const rem = parts.filter((p) => !isOwn(p, null, ownName, ownVat));
+  if (rem.length === 0) return "";
+  if (rem.length === 1) return rem[0];
+  return rem.join(" / ");
+}
+
 async function computeRouting(
   supabase: ReturnType<typeof createClient>,
   companyId: string,
@@ -311,15 +341,31 @@ async function computeRouting(
     .eq("company_id", companyId)
     .eq("is_active", true);
 
-  const supplierName = ex.supplier_name || "";
-  const customerName = ex.customer_name || "";
+  const rawSupplier = ex.supplier_name || "";
+  const rawCustomer = ex.customer_name || "";
   const vat = ex.supplier_vat || "";
+  const customerVat = (ex as any).customer_vat || "";
 
   const ourName = company?.name || "";
   const ourVat = (company as any)?.vat_number || "";
 
-  const supplierMatchesUs = similarity(supplierName, ourName) > 0.7 || (ourVat && vat && ourVat === vat);
-  const customerMatchesUs = similarity(customerName, ourName) > 0.7;
+  // Clean own company out of AI-concatenated fields (e.g. "SAL PAL / Enlirat GmbH")
+  const supplierName = stripOwn(rawSupplier, ourName, ourVat);
+  const customerName = stripOwn(rawCustomer, ourName, ourVat);
+
+  // Also mutate extracted so downstream writers get the cleaned strings
+  ex.supplier_name = supplierName || rawSupplier;
+  ex.customer_name = customerName || rawCustomer;
+
+  const supplierMatchesUs =
+    (!supplierName && !!rawSupplier) ||
+    isOwn(rawSupplier, vat, ourName, ourVat) ||
+    similarity(rawSupplier, ourName) > 0.7 ||
+    (!!ourVat && !!vat && ourVat === vat);
+  const customerMatchesUs =
+    (!customerName && !!rawCustomer) ||
+    isOwn(rawCustomer, customerVat, ourName, ourVat) ||
+    similarity(rawCustomer, ourName) > 0.7;
 
   const scored: Array<{ id: string; name: string; type: string; score: number; vat_number: string | null }> = [];
   for (const c of (contacts as Array<{ id: string; name: string; vat_number: string | null; contact_type: string }>) || []) {
@@ -439,6 +485,7 @@ Deno.serve(async (req: Request) => {
     const routing = await computeRouting(supabase, scan.company_id, extracted, role, docDirection);
 
     const needsNewCompany = routing.routing_decision === "new_company_required";
+    // extracted.supplier_name / customer_name already cleaned of own-company by computeRouting
     const counterpartyName = extracted.supplier_name || extracted.customer_name || "";
 
     await supabase
