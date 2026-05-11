@@ -29,12 +29,9 @@ interface RepairRow {
   repair_date: string;
   category_name: string | null;
   product_name: string | null;
-  unit_price: number;
-  currency: string;
   total_in: number;
   total_repaired: number;
   total_scrapped: number;
-  repaired_value: number;
 }
 
 interface SortingRow {
@@ -45,8 +42,6 @@ interface SortingRow {
   product_name: string | null;
   condition: string;
   quantity: number;
-  unit_price: number;
-  line_value: number;
 }
 
 interface DamagedRow {
@@ -54,8 +49,6 @@ interface DamagedRow {
   category_name: string | null;
   product_name: string | null;
   quantity: number;
-  unit_price: number;
-  line_value: number;
 }
 
 function isoDays(n: number): string {
@@ -67,10 +60,6 @@ function isoDays(n: number): string {
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: '2-digit' });
-}
-
-function fmtMoney(v: number, currency = 'EUR') {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 }).format(v || 0);
 }
 
 function toCsv(rows: Record<string, unknown>[]): string {
@@ -129,21 +118,21 @@ export default function DepotReports() {
         supabase.from('product_categories').select('id, name').eq('company_id', companyId),
         supabase
           .from('v_depot_repair_productivity')
-          .select('repair_date, category_name, product_name, unit_price, currency, total_in, total_repaired, total_scrapped, repaired_value')
+          .select('repair_date, category_name, product_name, total_in, total_repaired, total_scrapped')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .gte('repair_date', since.substring(0, 10))
           .order('repair_date', { ascending: false }),
         supabase
           .from('v_depot_sorting_outcomes')
-          .select('batch_id, batch_date, status, category_name, product_name, condition, quantity, unit_price, line_value')
+          .select('batch_id, batch_date, status, category_name, product_name, condition, quantity')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .gte('batch_date', since.substring(0, 10))
           .order('batch_date', { ascending: false }),
         supabase
           .from('v_depot_stock_value')
-          .select('category_id, category_name, product_name, quantity, unit_price, line_value, condition')
+          .select('category_id, category_name, product_name, quantity, condition')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .eq('condition', 'damaged'),
@@ -313,14 +302,13 @@ export default function DepotReports() {
                 </button>
               </div>
               <Table
-                headers={['Data', 'Produkti', 'Hyri', 'Reparuar', 'Scrap', 'Vlera']}
+                headers={['Data', 'Produkti', 'Hyri', 'Reparuar', 'Scrap']}
                 rows={repair.map((r) => [
                   fmtDate(r.repair_date),
                   `${r.category_name ?? ''}${r.product_name ? ` · ${r.product_name}` : ''}`,
                   r.total_in,
                   r.total_repaired,
                   r.total_scrapped,
-                  fmtMoney(r.repaired_value, r.currency),
                 ])}
                 empty="Asnje reparim i raportuar"
               />
@@ -339,14 +327,13 @@ export default function DepotReports() {
                 </button>
               </div>
               <Table
-                headers={['Data', 'Kategoria', 'Produkti i ndare', 'Gjendja', 'Sasi', 'Vlera', 'Statusi']}
+                headers={['Data', 'Kategoria', 'Produkti i ndare', 'Gjendja', 'Sasi', 'Statusi']}
                 rows={sorting.map((r) => [
                   fmtDate(r.batch_date),
                   r.category_name ?? '—',
                   r.product_name ?? '—',
                   r.condition,
                   r.quantity,
-                  fmtMoney(r.line_value),
                   r.status,
                 ])}
                 empty="Asnje sortim"
@@ -366,13 +353,11 @@ export default function DepotReports() {
                 </button>
               </div>
               <Table
-                headers={['Kategoria', 'Produkti', 'Sasi', 'Cmimi', 'Vlera']}
+                headers={['Kategoria', 'Produkti', 'Sasi']}
                 rows={damaged.map((r) => [
                   r.category_name ?? '—',
                   r.product_name ?? '—',
                   r.quantity,
-                  fmtMoney(r.unit_price),
-                  fmtMoney(r.line_value),
                 ])}
                 empty="Asnje palete e demtuar"
               />

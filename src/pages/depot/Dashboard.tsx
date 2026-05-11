@@ -11,7 +11,6 @@ import {
   TrendingDown,
   MessageSquare,
   Layers,
-  Euro,
   BarChart3,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -27,9 +26,6 @@ interface StockValueRow {
   product_name: string | null;
   condition: string;
   quantity: number;
-  unit_price: number;
-  line_value: number;
-  currency: string;
 }
 
 interface FlowRow {
@@ -53,10 +49,6 @@ function isoDaysBack(n: number) {
   d.setDate(d.getDate() - n);
   d.setHours(0, 0, 0, 0);
   return d.toISOString().substring(0, 10);
-}
-
-function fmtMoney(v: number, currency = 'EUR') {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(v || 0);
 }
 
 export default function DepotDashboard() {
@@ -92,7 +84,7 @@ export default function DepotDashboard() {
       const [stockRes, flowRes, recentRes] = await Promise.all([
         supabase
           .from('v_depot_stock_value')
-          .select('category_id, category_name, category_product_id, product_name, condition, quantity, unit_price, line_value, currency')
+          .select('category_id, category_name, category_product_id, product_name, condition, quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId),
         supabase
@@ -130,17 +122,14 @@ export default function DepotDashboard() {
     let damaged = 0;
     let repaired = 0;
     let sorting = 0;
-    let value = 0;
-    const currency = stockRows[0]?.currency ?? 'EUR';
     for (const r of stockRows) {
       total += r.quantity;
-      value += Number(r.line_value) || 0;
       if (r.condition === 'good') good += r.quantity;
       else if (r.condition === 'damaged') damaged += r.quantity;
       else if (r.condition === 'repaired') repaired += r.quantity;
       else if (r.condition === 'sorting' || r.condition === 'sorting_pending') sorting += r.quantity;
     }
-    return { total, good, damaged, repaired, sorting, value, currency };
+    return { total, good, damaged, repaired, sorting };
   }, [stockRows]);
 
   const todayFlow = useMemo(() => {
@@ -172,13 +161,12 @@ export default function DepotDashboard() {
   const maxBar = Math.max(1, ...dailyChart.map((d) => Math.max(d.entry, d.exit)));
 
   const topCategories = useMemo(() => {
-    const map = new Map<string, { name: string; quantity: number; value: number }>();
+    const map = new Map<string, { name: string; quantity: number }>();
     for (const r of stockRows) {
       if (r.condition === 'damaged' || r.condition === 'sorting' || r.condition === 'sorting_pending') continue;
       const key = r.category_id ?? 'unknown';
-      const cur = map.get(key) ?? { name: r.category_name ?? 'Pa kategori', quantity: 0, value: 0 };
+      const cur = map.get(key) ?? { name: r.category_name ?? 'Pa kategori', quantity: 0 };
       cur.quantity += r.quantity;
-      cur.value += Number(r.line_value) || 0;
       map.set(key, cur);
     }
     return Array.from(map.values()).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
@@ -252,9 +240,8 @@ export default function DepotDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Stoku total" value={totals.total} icon={Package} color="bg-teal-500" />
-        <StatCard label="Vlera stoku" value={fmtMoney(totals.value, totals.currency)} icon={Euro} color="bg-emerald-600" isText />
         <StatCard label="Te mira" value={totals.good} icon={Package} color="bg-emerald-500" />
         <StatCard label="Te demtuara" value={totals.damaged} icon={Wrench} color="bg-rose-500" />
         <StatCard label="Hyrje sot" value={todayFlow.entry} icon={ArrowUpCircle} color="bg-cyan-500" />
@@ -301,7 +288,6 @@ export default function DepotDashboard() {
                 <li key={c.name} className="flex items-center justify-between">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-900 truncate">{c.name}</p>
-                    <p className="text-[11px] text-slate-500">{fmtMoney(c.value, totals.currency)}</p>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-700">
                     {c.quantity.toLocaleString()}

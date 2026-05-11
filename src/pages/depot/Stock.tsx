@@ -11,7 +11,6 @@ import {
   Clock,
   ScanLine,
   Tag,
-  Euro,
   ChevronDown,
   ChevronRight,
   Search,
@@ -34,13 +33,6 @@ interface StockValueRow {
   product_name: string | null;
   condition: string;
   quantity: number;
-  unit_price: number;
-  line_value: number;
-  currency: string;
-}
-
-function fmtMoney(v: number, currency = 'EUR') {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 2 }).format(v || 0);
 }
 
 function toCsv(rows: Record<string, unknown>[]): string {
@@ -124,7 +116,7 @@ export default function DepotStock() {
       const [stockRes, movementRes, catRes] = await Promise.all([
         supabase
           .from('v_depot_stock_value')
-          .select('company_id, depot_id, depot_name, category_id, category_name, category_product_id, product_name, condition, quantity, unit_price, line_value, currency')
+          .select('company_id, depot_id, depot_name, category_id, category_name, category_product_id, product_name, condition, quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId),
         supabase
@@ -166,14 +158,12 @@ export default function DepotStock() {
 
   const totals = useMemo(() => {
     let qty = 0;
-    let value = 0;
     const byCond: Record<string, number> = {};
     for (const r of filtered) {
       qty += r.quantity;
-      value += Number(r.line_value) || 0;
       byCond[r.condition] = (byCond[r.condition] ?? 0) + r.quantity;
     }
-    return { qty, value, byCond, currency: filtered[0]?.currency ?? 'EUR' };
+    return { qty, byCond };
   }, [filtered]);
 
   const grouped = useMemo(() => {
@@ -181,9 +171,7 @@ export default function DepotStock() {
       categoryId: string;
       categoryName: string;
       totalQty: number;
-      totalValue: number;
-      currency: string;
-      products: Map<string, { productId: string; productName: string; rows: StockValueRow[]; qty: number; value: number; unitPrice: number }>;
+      products: Map<string, { productId: string; productName: string; rows: StockValueRow[]; qty: number }>;
     }>();
     for (const r of filtered) {
       if (!map.has(r.category_id)) {
@@ -191,14 +179,11 @@ export default function DepotStock() {
           categoryId: r.category_id,
           categoryName: r.category_name ?? 'Pa kategori',
           totalQty: 0,
-          totalValue: 0,
-          currency: r.currency ?? 'EUR',
           products: new Map(),
         });
       }
       const g = map.get(r.category_id)!;
       g.totalQty += r.quantity;
-      g.totalValue += Number(r.line_value) || 0;
       const pKey = r.category_product_id ?? '__none__';
       if (!g.products.has(pKey)) {
         g.products.set(pKey, {
@@ -206,14 +191,11 @@ export default function DepotStock() {
           productName: r.product_name ?? '—',
           rows: [],
           qty: 0,
-          value: 0,
-          unitPrice: Number(r.unit_price) || 0,
         });
       }
       const p = g.products.get(pKey)!;
       p.rows.push(r);
       p.qty += r.quantity;
-      p.value += Number(r.line_value) || 0;
     }
     return Array.from(map.values())
       .map((g) => ({ ...g, products: Array.from(g.products.values()).sort((a, b) => a.productName.localeCompare(b.productName)) }))
@@ -386,8 +368,6 @@ export default function DepotStock() {
                     produkti: r.product_name,
                     gjendja: r.condition,
                     sasi: r.quantity,
-                    cmimi: r.unit_price,
-                    vlera: r.line_value,
                   })) as unknown as Record<string, unknown>[],
                 ),
               )
@@ -423,9 +403,8 @@ export default function DepotStock() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard label="Sasia" value={totals.qty.toLocaleString()} icon={Package} color="bg-teal-500" />
-        <KpiCard label="Vlera totale" value={fmtMoney(totals.value, totals.currency)} icon={Euro} color="bg-emerald-600" />
         <KpiCard label="Te mira" value={(totals.byCond['good'] ?? 0).toLocaleString()} icon={Package} color="bg-emerald-500" />
         <KpiCard label="Te demtuara" value={(totals.byCond['damaged'] ?? 0).toLocaleString()} icon={AlertTriangle} color="bg-rose-500" />
         <KpiCard label="Te reparuara" value={(totals.byCond['repaired'] ?? 0).toLocaleString()} icon={Wrench} color="bg-amber-500" />
@@ -488,15 +467,9 @@ export default function DepotStock() {
                       <p className="text-[11px] text-slate-500">{g.products.length} produkte</p>
                     </div>
                   </div>
-                  <div className="text-right flex-shrink-0 flex items-center gap-4">
-                    <div>
-                      <p className="text-lg font-bold text-slate-900 tabular-nums leading-none">{g.totalQty.toLocaleString()}</p>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-500 mt-0.5">cope</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-emerald-700 tabular-nums leading-none">{fmtMoney(g.totalValue, g.currency)}</p>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-500 mt-0.5">vlera</p>
-                    </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-lg font-bold text-slate-900 tabular-nums leading-none">{g.totalQty.toLocaleString()}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500 mt-0.5">cope</p>
                   </div>
                 </button>
                 {open && (
@@ -506,11 +479,9 @@ export default function DepotStock() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900 truncate">{p.productName}</p>
-                            <p className="text-[11px] text-slate-500">Cmimi: {fmtMoney(p.unitPrice, g.currency)}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-bold text-slate-900 tabular-nums">{p.qty.toLocaleString()} cope</p>
-                            <p className="text-[11px] font-medium text-emerald-700">{fmtMoney(p.value, g.currency)}</p>
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
