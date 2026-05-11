@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
@@ -338,6 +338,7 @@ function ReviewModal({
     shortages: Array<{ label: string; condition: string; requested: number; available: number }>;
     onConfirm: () => void;
   }>(null);
+  const persistingRef = useRef(false);
 
   async function handleUploadDocument(file: File) {
     if (!file) return;
@@ -582,54 +583,79 @@ function ReviewModal({
   }
 
   async function persistItems() {
-    if (deletedIds.length > 0) {
-      await supabase.from('delivery_note_items').delete().in('id', deletedIds);
-      setDeletedIds([]);
-    }
-    const updates = rows.filter((r) => r._persistedId);
-    const inserts = rows.filter((r) => !r._persistedId);
+    if (persistingRef.current) return;
+    persistingRef.current = true;
+    try {
+      if (deletedIds.length > 0) {
+        await supabase.from('delivery_note_items').delete().in('id', deletedIds);
+        setDeletedIds([]);
+      }
+      const updates = rows.filter((r) => r._persistedId);
+      const inserts = rows.filter((r) => !r._persistedId);
 
-    for (const r of updates) {
-      await supabase
-        .from('delivery_note_items')
-        .update({
+      for (const r of updates) {
+        await supabase
+          .from('delivery_note_items')
+          .update({
+            category_product_id: r.product_id,
+            category_id: r.category_id,
+            quantity: r.quantity,
+            condition: r.condition,
+            intended_action: r.intended_action,
+            notes: r.notes,
+          })
+          .eq('id', r._persistedId!);
+      }
+
+      const insertedIds: string[] = [];
+      if (inserts.length > 0) {
+        const payload = inserts.map((r) => ({
+          delivery_note_id: note.id,
           category_product_id: r.product_id,
           category_id: r.category_id,
           quantity: r.quantity,
           condition: r.condition,
           intended_action: r.intended_action,
           notes: r.notes,
-        })
-        .eq('id', r._persistedId!);
-    }
-
-    if (inserts.length > 0) {
-      const payload = inserts.map((r) => ({
-        delivery_note_id: note.id,
-        category_product_id: r.product_id,
-        category_id: r.category_id,
-        quantity: r.quantity,
-        condition: r.condition,
-        intended_action: r.intended_action,
-        notes: r.notes,
-      }));
-      const { data: inserted } = await supabase
-        .from('delivery_note_items')
-        .insert(payload as any)
-        .select('id');
-      if (inserted) {
-        setRows((prev) => {
+        }));
+        const { data: inserted } = await supabase
+          .from('delivery_note_items')
+          .insert(payload as any)
+          .select('id');
+        if (inserted) {
           const ids = inserted as Array<{ id: string }>;
-          let pos = 0;
-          return prev.map((r) => {
-            if (!r._persistedId && pos < ids.length) {
-              const id = ids[pos++].id;
-              return { ...r, _persistedId: id };
-            }
-            return r;
+          for (const it of ids) insertedIds.push(it.id);
+          setRows((prev) => {
+            let pos = 0;
+            return prev.map((r) => {
+              if (!r._persistedId && pos < ids.length) {
+                const id = ids[pos++].id;
+                return { ...r, _persistedId: id };
+              }
+              return r;
+            });
           });
-        });
+        }
       }
+
+      const keepIds = new Set<string>([
+        ...rows.map((r) => r._persistedId).filter((id): id is string => !!id),
+        ...insertedIds,
+      ]);
+      const { data: existing } = await supabase
+        .from('delivery_note_items')
+        .select('id')
+        .eq('delivery_note_id', note.id);
+      if (existing) {
+        const stale = (existing as Array<{ id: string }>)
+          .map((x) => x.id)
+          .filter((id) => !keepIds.has(id));
+        if (stale.length > 0) {
+          await supabase.from('delivery_note_items').delete().in('id', stale);
+        }
+      }
+    } finally {
+      persistingRef.current = false;
     }
   }
 
