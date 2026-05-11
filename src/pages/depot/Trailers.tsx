@@ -4,14 +4,13 @@ import {
   Plus,
   Search,
   X,
-  User,
   Package,
   Loader2,
   Trash2,
   CheckCircle2,
   AlertTriangle,
-  Pencil,
-  UserCog,
+  Save,
+  ChevronDown,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -43,6 +42,7 @@ interface TrailerLoad {
   title: string;
   notes: string | null;
   status: TrailerStatus;
+  is_loaded: boolean;
   assigned_driver_id: string | null;
   claimed_by_driver_id: string | null;
   claimed_at: string | null;
@@ -70,13 +70,6 @@ interface CategoryProduct {
   category_id: string | null;
 }
 
-const statusStyle: Record<TrailerStatus, { label: string; cls: string }> = {
-  available: { label: 'E lire', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  claimed: { label: 'E marrur', cls: 'bg-sky-100 text-sky-700 border-sky-200' },
-  dispatched: { label: 'E derguar', cls: 'bg-slate-200 text-slate-700 border-slate-300' },
-  cancelled: { label: 'E anuluar', cls: 'bg-rose-100 text-rose-700 border-rose-200' },
-};
-
 function isEuroPalete(name: string) {
   return /euro\s*pale(?:te|t[aë])/i.test(name);
 }
@@ -85,6 +78,10 @@ function sortCategoriesEuroFirst(list: Category[]): Category[] {
   const euro = list.filter((c) => isEuroPalete(c.name));
   const rest = list.filter((c) => !isEuroPalete(c.name)).sort((a, b) => a.name.localeCompare(b.name));
   return [...euro, ...rest];
+}
+
+function formatPlate(raw: string): string {
+  return raw.toUpperCase().replace(/\s+/g, ' ').trim();
 }
 
 export default function DepotTrailersPage() {
@@ -96,10 +93,9 @@ export default function DepotTrailersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TrailerStatus | 'all'>('all');
-  const [editing, setEditing] = useState<TrailerLoad | 'new' | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [registerOpen, setRegisterOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [reassigningId, setReassigningId] = useState<string | null>(null);
 
   const companyId = profile?.company_id ?? null;
   const depotId = profile?.depot_id ?? null;
@@ -112,6 +108,13 @@ export default function DepotTrailersPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'trailer_loads', filter: `company_id=eq.${companyId}` },
+        () => {
+          void fetchAll();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'trailer_load_items' },
         () => {
           void fetchAll();
         },
@@ -131,7 +134,6 @@ export default function DepotTrailersPage() {
   async function fetchAll() {
     if (!companyId) return;
     try {
-      setLoading(true);
       setError(null);
       const [trailerRes, driverRes, categoryRes, productRes] = await Promise.all([
         supabase
@@ -146,7 +148,7 @@ export default function DepotTrailersPage() {
             )
           `)
           .eq('company_id', companyId)
-          .order('created_at', { ascending: false }),
+          .order('plate_number', { ascending: true }),
         supabase
           .from('profiles')
           .select('id, full_name')
@@ -187,17 +189,15 @@ export default function DepotTrailersPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return trailers.filter((t) => {
-      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
-      if (!q) return true;
-      return (
+    if (!q) return trailers;
+    return trailers.filter(
+      (t) =>
         t.plate_number.toLowerCase().includes(q) ||
         t.title.toLowerCase().includes(q) ||
         (t.assigned_driver?.full_name ?? '').toLowerCase().includes(q) ||
-        (t.claimed_driver?.full_name ?? '').toLowerCase().includes(q)
-      );
-    });
-  }, [trailers, statusFilter, search]);
+        (t.claimed_driver?.full_name ?? '').toLowerCase().includes(q),
+    );
+  }, [trailers, search]);
 
   async function handleDelete(id: string) {
     if (!confirm('Fshij kete rimorkio?')) return;
@@ -207,55 +207,25 @@ export default function DepotTrailersPage() {
       return;
     }
     setToast('Rimorkia u fshi');
+    setExpandedId(null);
     void fetchAll();
   }
 
-  async function handleReassign(tr: TrailerLoad, newDriverId: string | null) {
-    const prevDriverId = tr.claimed_by_driver_id ?? tr.assigned_driver_id ?? null;
-    if (prevDriverId === newDriverId) return;
+  async function handleResetTrailer(id: string) {
     try {
-      setReassigningId(tr.id);
-      const { error: err } = await supabase.rpc('reassign_trailer_load', {
-        load_id: tr.id,
-        new_driver_id: newDriverId,
-      });
-      if (err) throw err;
-
-      if (newDriverId) {
-        await notifyUsers({
-          userIds: [newDriverId],
-          type: 'assignment',
-          titleKey: 'notifications.trailer.assignedTitle',
-          messageKey: 'notifications.trailer.assignedMessage',
-          params: { plate: tr.plate_number, title: tr.title },
-          referenceId: tr.id,
-          fallbackTitle: 'Rimorkio e re per ty',
-          fallbackMessage: `Rimorkia ${tr.plate_number}${tr.title ? ` · ${tr.title}` : ''} eshte caktuar per ty`,
-        });
-      }
-      if (prevDriverId && prevDriverId !== newDriverId) {
-        await notifyUsers({
-          userIds: [prevDriverId],
-          type: 'assignment',
-          titleKey: 'notifications.trailer.removedTitle',
-          messageKey: 'notifications.trailer.removedMessage',
-          params: { plate: tr.plate_number },
-          referenceId: tr.id,
-          fallbackTitle: 'Rimorkio e hequr',
-          fallbackMessage: `Rimorkia ${tr.plate_number} nuk eshte me e jotja`,
-        });
-      }
-      setToast(newDriverId ? 'Shoferi u caktua' : 'Rimorkia u lirua');
+      const { error: delErr } = await supabase.from('trailer_load_items').delete().eq('trailer_load_id', id);
+      if (delErr) throw delErr;
+      await supabase.rpc('reassign_trailer_load', { load_id: id, new_driver_id: null });
+      await supabase.from('trailer_loads').update({ title: '', notes: '' }).eq('id', id);
+      setToast('Rimorkia u rikthye ne te lire');
       void fetchAll();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gabim gjate riasgjinimit');
-    } finally {
-      setReassigningId(null);
+      setError(err instanceof Error ? err.message : 'Gabim');
     }
   }
 
   return (
-    <div className="space-y-5 max-w-6xl">
+    <div className="space-y-5 max-w-7xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -263,20 +233,20 @@ export default function DepotTrailersPage() {
             Rimorkiot
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Regjistro tabelat dhe ngarkesat e rimorkiove per shoferet
+            Regjistro targat nje here, pastaj ngarko shpejt nga klikimi i tabeles
           </p>
         </div>
         <button
-          onClick={() => setEditing('new')}
-          className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors shadow-sm"
+          onClick={() => setRegisterOpen(true)}
+          className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
-          Rimorkio e re
+          Regjistro rimorkio
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[220px]">
+      <div className="bg-white rounded-xl border border-gray-200 p-3">
+        <div className="relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             value={search}
@@ -285,17 +255,6 @@ export default function DepotTrailersPage() {
             className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as TrailerStatus | 'all')}
-          className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
-        >
-          <option value="all">Te gjitha</option>
-          <option value="available">E lire</option>
-          <option value="claimed">E marrur</option>
-          <option value="dispatched">E derguar</option>
-          <option value="cancelled">E anuluar</option>
-        </select>
       </div>
 
       {error && (
@@ -312,36 +271,46 @@ export default function DepotTrailersPage() {
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center">
           <Truck className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Asnje rimorkio e regjistruar</p>
+          <p className="text-sm text-gray-500 mb-3">Asnje rimorkio e regjistruar ende</p>
+          <button
+            onClick={() => setRegisterOpen(true)}
+            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-semibold"
+          >
+            <Plus className="w-4 h-4" />
+            Regjistro te paren
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((tr) => (
-            <TrailerCard
+            <TrailerPlateCard
               key={tr.id}
               trailer={tr}
+              expanded={expandedId === tr.id}
+              onToggle={() => setExpandedId((prev) => (prev === tr.id ? null : tr.id))}
               drivers={drivers}
-              reassigning={reassigningId === tr.id}
-              onEdit={() => setEditing(tr)}
+              categories={categories}
+              products={products}
+              onSaved={(msg) => {
+                setToast(msg);
+                setExpandedId(null);
+                void fetchAll();
+              }}
               onDelete={() => handleDelete(tr.id)}
-              onReassign={(driverId) => handleReassign(tr, driverId)}
+              onReset={() => handleResetTrailer(tr.id)}
+              onError={(msg) => setError(msg)}
             />
           ))}
         </div>
       )}
 
-      {editing && (
-        <TrailerFormModal
-          trailer={editing === 'new' ? null : editing}
-          drivers={drivers}
-          categories={categories}
-          products={products}
+      {registerOpen && (
+        <RegisterPlateModal
           companyId={companyId!}
           depotId={depotId}
           createdBy={profile!.id}
-          onClose={() => setEditing(null)}
+          onClose={() => setRegisterOpen(false)}
           onSaved={(msg) => {
-            setEditing(null);
             setToast(msg);
             void fetchAll();
           }}
@@ -349,7 +318,7 @@ export default function DepotTrailersPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2">
+        <div className="fixed bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 z-[1100] bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5" />
           <span className="text-sm font-medium">{toast}</span>
         </div>
@@ -358,109 +327,119 @@ export default function DepotTrailersPage() {
   );
 }
 
-function TrailerCard({
-  trailer,
-  drivers,
-  reassigning,
-  onEdit,
-  onDelete,
-  onReassign,
-}: {
-  trailer: TrailerLoad;
-  drivers: Driver[];
-  reassigning: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-  onReassign: (driverId: string | null) => void;
-}) {
-  const meta = statusStyle[trailer.status];
-  const totalQty = (trailer.items ?? []).reduce((s, i) => s + i.quantity, 0);
-  const driverId = trailer.claimed_by_driver_id ?? trailer.assigned_driver_id ?? '';
+function LicensePlate({ plate, size = 'md' }: { plate: string; size?: 'sm' | 'md' | 'lg' }) {
+  const padding = size === 'lg' ? 'py-3' : size === 'sm' ? 'py-1.5' : 'py-2.5';
+  const text = size === 'lg' ? 'text-3xl lg:text-4xl' : size === 'sm' ? 'text-base' : 'text-2xl';
+  const stripeText = size === 'lg' ? 'text-[11px]' : 'text-[9px]';
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white font-mono text-sm font-bold tracking-wide">
-            {trailer.plate_number}
-          </div>
-          {trailer.title && (
-            <p className="text-base font-semibold text-gray-900 mt-2 truncate">{trailer.title}</p>
-          )}
+    <div className={`inline-flex items-stretch rounded-md overflow-hidden border-2 border-black bg-white shadow-sm ${padding === 'py-1.5' ? 'h-auto' : ''}`}>
+      <div className={`bg-blue-700 text-white flex flex-col items-center justify-center px-1.5 ${padding}`}>
+        <div className="flex gap-[1px]">
+          <span className="w-1 h-1 bg-yellow-300 rounded-full" />
         </div>
-        <span className={`text-[11px] uppercase tracking-wide font-bold px-2 py-1 rounded-full border ${meta.cls}`}>
-          {meta.label}
+        <span className={`${stripeText} font-bold leading-none mt-0.5`}>D</span>
+      </div>
+      <div className={`flex items-center px-3 ${padding} flex-1`}>
+        <span className={`font-mono font-black tracking-[0.15em] text-black ${text} uppercase leading-none whitespace-nowrap`}>
+          {plate || 'XX-0000'}
         </span>
       </div>
+    </div>
+  );
+}
 
-      <div className="space-y-1.5 text-sm">
-        <div className="flex items-center gap-2 text-gray-600">
-          <Package className="w-4 h-4 flex-shrink-0" />
-          <span>
-            {(trailer.items ?? []).length} artikuj · {totalQty.toLocaleString()} cope
+function TrailerPlateCard({
+  trailer,
+  expanded,
+  onToggle,
+  drivers,
+  categories,
+  products,
+  onSaved,
+  onDelete,
+  onReset,
+  onError,
+}: {
+  trailer: TrailerLoad;
+  expanded: boolean;
+  onToggle: () => void;
+  drivers: Driver[];
+  categories: Category[];
+  products: CategoryProduct[];
+  onSaved: (msg: string) => void;
+  onDelete: () => void;
+  onReset: () => void;
+  onError: (msg: string) => void;
+}) {
+  const driver = trailer.claimed_driver ?? trailer.assigned_driver;
+  const itemCount = (trailer.items ?? []).length;
+  const totalQty = (trailer.items ?? []).reduce((s, i) => s + i.quantity, 0);
+
+  const statusLabel = !trailer.is_loaded
+    ? 'E lire'
+    : trailer.claimed_by_driver_id
+      ? 'E caktuar'
+      : 'E ngarkuar';
+  const statusCls = !trailer.is_loaded
+    ? 'bg-slate-100 text-slate-700 border-slate-200'
+    : trailer.claimed_by_driver_id
+      ? 'bg-sky-100 text-sky-700 border-sky-200'
+      : 'bg-amber-100 text-amber-800 border-amber-200';
+  const stripeCls = !trailer.is_loaded
+    ? 'bg-slate-300'
+    : trailer.claimed_by_driver_id
+      ? 'bg-sky-500'
+      : 'bg-amber-500';
+
+  return (
+    <div
+      className={`bg-white rounded-xl border transition-all ${
+        expanded ? 'border-teal-400 shadow-lg ring-2 ring-teal-100' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+      }`}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full text-left p-4 flex flex-col gap-3"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <LicensePlate plate={trailer.plate_number} />
+          <ChevronDown
+            className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          />
+        </div>
+        {trailer.title && (
+          <p className="text-sm font-semibold text-gray-900 truncate">{trailer.title}</p>
+        )}
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span className={`px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide ${statusCls}`}>
+            {statusLabel}
           </span>
+          <div className="flex items-center gap-3 text-gray-600">
+            {itemCount > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <Package className="w-3.5 h-3.5" />
+                {itemCount} · {totalQty.toLocaleString()}
+              </span>
+            )}
+            {driver && <span className="truncate max-w-[120px]">{driver.full_name}</span>}
+          </div>
         </div>
+        <div className={`h-1 rounded-full ${stripeCls}`} />
+      </button>
 
-        <div className="flex items-center gap-2">
-          <UserCog className="w-4 h-4 text-gray-500 flex-shrink-0" />
-          <select
-            value={driverId}
-            onChange={(e) => onReassign(e.target.value || null)}
-            disabled={reassigning}
-            className="flex-1 text-sm px-2 py-1 rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none disabled:opacity-60"
-          >
-            <option value="">— Pa shofer —</option>
-            {drivers.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.full_name}
-              </option>
-            ))}
-          </select>
-          {reassigning && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
-        </div>
-      </div>
-
-      {(trailer.items ?? []).length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1">
-          {(trailer.items ?? []).slice(0, 4).map((i) => {
-            const cat = i.category_product?.category?.name;
-            return (
-              <div key={i.id} className="flex items-center justify-between text-xs">
-                <span className="text-gray-700 truncate min-w-0">
-                  {cat && <span className="text-gray-500">{cat} · </span>}
-                  <span className="text-gray-900">{i.product_name || '—'}</span>
-                  {i.product_title && (
-                    <span className="font-semibold text-gray-900"> · {i.product_title}</span>
-                  )}
-                </span>
-                <span className="font-bold tabular-nums text-gray-900 flex-shrink-0 ml-2">
-                  {i.quantity.toLocaleString()}
-                </span>
-              </div>
-            );
-          })}
-          {(trailer.items ?? []).length > 4 && (
-            <p className="text-[11px] text-gray-500">+{(trailer.items ?? []).length - 4} me shume</p>
-          )}
-        </div>
+      {expanded && (
+        <TrailerLoadEditor
+          trailer={trailer}
+          drivers={drivers}
+          categories={categories}
+          products={products}
+          onSaved={onSaved}
+          onDelete={onDelete}
+          onReset={onReset}
+          onError={onError}
+        />
       )}
-
-      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
-        <button
-          onClick={onEdit}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-teal-700 px-2 py-1 rounded"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-          Edito
-        </button>
-        <button
-          onClick={onDelete}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 px-2 py-1 rounded"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-          Fshij
-        </button>
-      </div>
     </div>
   );
 }
@@ -477,35 +456,32 @@ function emptyDraft(): ItemDraft {
   return { category_id: '', category_product_id: '', product_title: '', quantity: '' };
 }
 
-function TrailerFormModal({
+function TrailerLoadEditor({
   trailer,
   drivers,
   categories,
   products,
-  companyId,
-  depotId,
-  createdBy,
-  onClose,
   onSaved,
+  onDelete,
+  onReset,
+  onError,
 }: {
-  trailer: TrailerLoad | null;
+  trailer: TrailerLoad;
   drivers: Driver[];
   categories: Category[];
   products: CategoryProduct[];
-  companyId: string;
-  depotId: string | null;
-  createdBy: string;
-  onClose: () => void;
   onSaved: (msg: string) => void;
+  onDelete: () => void;
+  onReset: () => void;
+  onError: (msg: string) => void;
 }) {
-  const [plate, setPlate] = useState(trailer?.plate_number ?? '');
-  const [title, setTitle] = useState(trailer?.title ?? '');
-  const [notes, setNotes] = useState(trailer?.notes ?? '');
+  const [title, setTitle] = useState(trailer.title ?? '');
+  const [notes, setNotes] = useState(trailer.notes ?? '');
   const [assignedDriverId, setAssignedDriverId] = useState<string>(
-    trailer?.claimed_by_driver_id ?? trailer?.assigned_driver_id ?? '',
+    trailer.claimed_by_driver_id ?? trailer.assigned_driver_id ?? '',
   );
   const [items, setItems] = useState<ItemDraft[]>(() => {
-    if (trailer?.items && trailer.items.length > 0) {
+    if (trailer.items && trailer.items.length > 0) {
       return trailer.items.map((i) => ({
         id: i.id,
         category_id: i.category_product?.category_id ?? '',
@@ -534,25 +510,15 @@ function TrailerFormModal({
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
 
-  function addItem() {
-    setItems((prev) => [...prev, emptyDraft()]);
-  }
-
-  function removeItem(idx: number) {
-    setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== idx)));
-  }
-
   function onCategoryChange(idx: number, categoryId: string) {
     updateItem(idx, { category_id: categoryId, category_product_id: '' });
   }
 
   async function handleSave() {
     setFormError(null);
-    const plateTrim = plate.trim().toUpperCase();
-    if (!plateTrim) {
-      setFormError('Numri i tabeles eshte i detyrueshem');
-      return;
-    }
+    const prevAssigned = trailer.claimed_by_driver_id ?? trailer.assigned_driver_id ?? null;
+    const nextAssigned = assignedDriverId || null;
+
     const cleanItems = items
       .map((i) => ({
         ...i,
@@ -561,90 +527,46 @@ function TrailerFormModal({
       }))
       .filter((i) => i.category_id || i.category_product_id || i.quantity > 0 || i.product_title);
 
-    if (cleanItems.length === 0) {
-      setFormError('Shto te pakten nje artikull');
-      return;
-    }
     for (const it of cleanItems) {
-      if (!it.category_id) {
-        setFormError('Zgjidh kategorine per cdo artikull');
-        return;
-      }
-      if (!it.category_product_id) {
-        setFormError('Zgjidh produktin per cdo artikull');
-        return;
-      }
-      if (it.quantity <= 0) {
-        setFormError('Sasia duhet te jete me e madhe se 0');
-        return;
-      }
+      if (!it.category_id) return setFormError('Zgjidh kategorine per cdo artikull');
+      if (!it.category_product_id) return setFormError('Zgjidh produktin per cdo artikull');
+      if (it.quantity <= 0) return setFormError('Sasia duhet te jete me e madhe se 0');
     }
 
     try {
       setSaving(true);
-      const prevAssigned = trailer?.claimed_by_driver_id ?? trailer?.assigned_driver_id ?? null;
-      const nextAssigned = assignedDriverId || null;
 
-      let loadId = trailer?.id ?? null;
-      const rpcNeeded = trailer ? prevAssigned !== nextAssigned : false;
+      const { error: updErr } = await supabase
+        .from('trailer_loads')
+        .update({ title: title.trim(), notes: notes.trim() })
+        .eq('id', trailer.id);
+      if (updErr) throw updErr;
 
-      if (trailer) {
-        const { error } = await supabase
-          .from('trailer_loads')
-          .update({
-            plate_number: plateTrim,
-            title: title.trim(),
-            notes: notes.trim(),
-            depot_id: depotId,
-          })
-          .eq('id', trailer.id);
-        if (error) throw error;
+      const { error: delErr } = await supabase
+        .from('trailer_load_items')
+        .delete()
+        .eq('trailer_load_id', trailer.id);
+      if (delErr) throw delErr;
 
-        const { error: delErr } = await supabase
-          .from('trailer_load_items')
-          .delete()
-          .eq('trailer_load_id', trailer.id);
-        if (delErr) throw delErr;
-      } else {
-        const { data, error } = await supabase
-          .from('trailer_loads')
-          .insert({
-            company_id: companyId,
-            depot_id: depotId,
-            plate_number: plateTrim,
-            title: title.trim(),
-            notes: notes.trim(),
-            assigned_driver_id: nextAssigned,
-            claimed_by_driver_id: nextAssigned,
-            claimed_at: nextAssigned ? new Date().toISOString() : null,
-            status: nextAssigned ? 'claimed' : 'available',
-            created_by: createdBy,
-          })
-          .select('id')
-          .maybeSingle();
-        if (error) throw error;
-        loadId = data?.id ?? null;
+      if (cleanItems.length > 0) {
+        const itemRows = cleanItems.map((i, idx) => {
+          const prod = products.find((p) => p.id === i.category_product_id);
+          return {
+            trailer_load_id: trailer.id,
+            product_title: i.product_title,
+            category_product_id: i.category_product_id,
+            product_name: prod?.name ?? '',
+            quantity: i.quantity,
+            position: idx,
+          };
+        });
+        const { error: insErr } = await supabase.from('trailer_load_items').insert(itemRows);
+        if (insErr) throw insErr;
       }
 
-      if (!loadId) throw new Error('Gabim gjate ruajtjes');
-
-      const itemRows = cleanItems.map((i, idx) => {
-        const prod = products.find((p) => p.id === i.category_product_id);
-        return {
-          trailer_load_id: loadId!,
-          product_title: i.product_title,
-          category_product_id: i.category_product_id,
-          product_name: prod?.name ?? '',
-          quantity: i.quantity,
-          position: idx,
-        };
-      });
-      const { error: insErr } = await supabase.from('trailer_load_items').insert(itemRows);
-      if (insErr) throw insErr;
-
-      if (rpcNeeded) {
+      if (prevAssigned !== nextAssigned) {
         const { error: rpcErr } = await supabase.rpc('reassign_trailer_load', {
-          load_id: loadId,
+          load_id: trailer.id,
           new_driver_id: nextAssigned,
         });
         if (rpcErr) throw rpcErr;
@@ -654,10 +576,10 @@ function TrailerFormModal({
             type: 'assignment',
             titleKey: 'notifications.trailer.assignedTitle',
             messageKey: 'notifications.trailer.assignedMessage',
-            params: { plate: plateTrim, title: title.trim() },
-            referenceId: loadId,
+            params: { plate: trailer.plate_number, title: title.trim() },
+            referenceId: trailer.id,
             fallbackTitle: 'Rimorkio e re per ty',
-            fallbackMessage: `Rimorkia ${plateTrim}${title ? ` · ${title}` : ''} eshte caktuar per ty`,
+            fallbackMessage: `Rimorkia ${trailer.plate_number}${title ? ` · ${title}` : ''} eshte caktuar per ty`,
           });
         }
         if (prevAssigned && prevAssigned !== nextAssigned) {
@@ -666,206 +588,290 @@ function TrailerFormModal({
             type: 'assignment',
             titleKey: 'notifications.trailer.removedTitle',
             messageKey: 'notifications.trailer.removedMessage',
-            params: { plate: plateTrim },
-            referenceId: loadId,
+            params: { plate: trailer.plate_number },
+            referenceId: trailer.id,
             fallbackTitle: 'Rimorkio e hequr',
-            fallbackMessage: `Rimorkia ${plateTrim} nuk eshte me e jotja`,
+            fallbackMessage: `Rimorkia ${trailer.plate_number} nuk eshte me e jotja`,
           });
         }
-      } else if (!trailer && nextAssigned) {
-        await notifyUsers({
-          userIds: [nextAssigned],
-          type: 'assignment',
-          titleKey: 'notifications.trailer.assignedTitle',
-          messageKey: 'notifications.trailer.assignedMessage',
-          params: { plate: plateTrim, title: title.trim() },
-          referenceId: loadId,
-          fallbackTitle: 'Rimorkio e re per ty',
-          fallbackMessage: `Rimorkia ${plateTrim}${title ? ` · ${title}` : ''} eshte caktuar per ty`,
-        });
       }
 
-      onSaved(trailer ? 'Rimorkia u perditesua' : 'Rimorkia u ruajt');
+      onSaved('Ngarkesa u ruajt');
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Gabim gjate ruajtjes');
+      const msg = err instanceof Error ? err.message : 'Gabim gjate ruajtjes';
+      setFormError(msg);
+      onError(msg);
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black/60 flex items-end lg:items-center justify-center p-0 lg:p-4">
-      <div className="bg-white w-full lg:max-w-3xl lg:rounded-2xl rounded-t-2xl max-h-[95vh] flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Truck className="w-5 h-5 text-teal-600" />
-              {trailer ? 'Edito Rimorkion' : 'Rimorkio e re'}
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">Targa, titulli dhe artikujt e ngarkeses</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+    <div className="border-t border-gray-200 p-4 space-y-4 bg-gray-50/50">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[11px] font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+            Titulli
+          </label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Kautex"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+            Shoferi
+          </label>
+          <select
+            value={assignedDriverId}
+            onChange={(e) => setAssignedDriverId(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-sm"
           >
+            <option value="">— Pa shofer —</option>
+            {drivers.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.full_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-bold text-gray-900">Artikujt</h3>
+          <button
+            onClick={() => setItems((p) => [...p, emptyDraft()])}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-800"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Shto artikull
+          </button>
+        </div>
+        <div className="space-y-2">
+          {items.map((item, idx) => {
+            const prodList = item.category_id ? productsByCategory.get(item.category_id) ?? [] : [];
+            return (
+              <div key={idx} className="bg-white border border-gray-200 rounded-lg p-2.5">
+                <div className="grid grid-cols-12 gap-2">
+                  <div className="col-span-12 md:col-span-4">
+                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                      Kategoria
+                    </label>
+                    <select
+                      value={item.category_id}
+                      onChange={(e) => onCategoryChange(idx, e.target.value)}
+                      className="w-full px-2 py-1.5 text-sm rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+                    >
+                      <option value="">— Zgjidh —</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-12 md:col-span-4">
+                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                      Produkti
+                    </label>
+                    <select
+                      value={item.category_product_id}
+                      onChange={(e) => updateItem(idx, { category_product_id: e.target.value })}
+                      disabled={!item.category_id}
+                      className="w-full px-2 py-1.5 text-sm rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                    >
+                      <option value="">— Zgjidh —</option>
+                      {prodList.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-6 md:col-span-2">
+                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                      Titulli
+                    </label>
+                    <input
+                      value={item.product_title}
+                      onChange={(e) => updateItem(idx, { product_title: e.target.value })}
+                      placeholder="Black"
+                      className="w-full px-2 py-1.5 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+                    />
+                  </div>
+                  <div className="col-span-5 md:col-span-1">
+                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                      Sasia
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      value={item.quantity}
+                      onChange={(e) => updateItem(idx, { quantity: e.target.value })}
+                      placeholder="660"
+                      className="w-full px-2 py-1.5 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none tabular-nums"
+                    />
+                  </div>
+                  <div className="col-span-1 flex items-end justify-end">
+                    <button
+                      onClick={() => setItems((p) => (p.length === 1 ? p : p.filter((_, i) => i !== idx)))}
+                      disabled={items.length === 1}
+                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-md disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-[11px] font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+          Shenime
+        </label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={2}
+          className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none resize-none"
+        />
+      </div>
+
+      {formError && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg px-3 py-2 text-sm flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>{formError}</span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-2 flex-wrap pt-1">
+        <div className="flex gap-2">
+          <button
+            onClick={onDelete}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 px-3 py-2 rounded-lg"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Fshij
+          </button>
+          {trailer.is_loaded && (
+            <button
+              onClick={onReset}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 px-3 py-2 rounded-lg"
+            >
+              Rikthe ne te lire
+            </button>
+          )}
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg px-5 py-2 disabled:opacity-60 transition-colors"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Ruaj ndryshimet
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RegisterPlateModal({
+  companyId,
+  depotId,
+  createdBy,
+  onClose,
+  onSaved,
+}: {
+  companyId: string;
+  depotId: string | null;
+  createdBy: string;
+  onClose: () => void;
+  onSaved: (msg: string) => void;
+}) {
+  const [plate, setPlate] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save(keepOpen: boolean) {
+    const plateClean = formatPlate(plate);
+    if (!plateClean) {
+      setErr('Vendos numrin e tabeles');
+      return;
+    }
+    try {
+      setSaving(true);
+      setErr(null);
+      const { error } = await supabase.from('trailer_loads').insert({
+        company_id: companyId,
+        depot_id: depotId,
+        plate_number: plateClean,
+        title: '',
+        notes: '',
+        status: 'available',
+        created_by: createdBy,
+      });
+      if (error) throw error;
+      onSaved('Tabela u regjistrua');
+      if (keepOpen) {
+        setPlate('');
+      } else {
+        onClose();
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Gabim gjate ruajtjes');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[1000] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <Truck className="w-5 h-5 text-teal-600" />
+            Regjistro tabelen
+          </h2>
+          <button onClick={onClose} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100">
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Numri i tabeles</label>
-              <input
-                value={plate}
-                onChange={(e) => setPlate(e.target.value.toUpperCase())}
-                placeholder="LO-QK 3004"
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none font-mono uppercase tracking-wide font-bold"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Titulli</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Kautex"
-                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
-              />
-            </div>
-          </div>
-
+        <div className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" />
-              Shofer (opsional — mund te ndryshohet me vone)
-            </label>
-            <select
-              value={assignedDriverId}
-              onChange={(e) => setAssignedDriverId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
-            >
-              <option value="">— Pa shofer, do ta marre vete —</option>
-              {drivers.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Shenime (opsionale)</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none resize-none"
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Numri i tabeles</label>
+            <input
+              autoFocus
+              value={plate}
+              onChange={(e) => setPlate(e.target.value.toUpperCase())}
+              placeholder="LÖ QK 3006"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none font-mono uppercase tracking-wider font-bold text-lg"
             />
+            <p className="text-[11px] text-gray-500 mt-1.5">
+              Pasi regjistron tabelen, klikon mbi te per te shtuar ngarkesen.
+            </p>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-gray-900">Artikujt e ngarkeses</h3>
-              <button
-                onClick={addItem}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-800"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Shto rresht
-              </button>
+          {plate && (
+            <div className="flex justify-center py-3 bg-gray-50 rounded-lg">
+              <LicensePlate plate={formatPlate(plate)} size="lg" />
             </div>
+          )}
 
-            <div className="space-y-2">
-              {items.map((item, idx) => {
-                const prodList = item.category_id ? productsByCategory.get(item.category_id) ?? [] : [];
-                return (
-                  <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
-                    <div className="grid grid-cols-12 gap-2">
-                      <div className="col-span-12 md:col-span-4">
-                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                          Kategoria
-                        </label>
-                        <select
-                          value={item.category_id}
-                          onChange={(e) => onCategoryChange(idx, e.target.value)}
-                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
-                        >
-                          <option value="">— Zgjidh —</option>
-                          {categories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="col-span-12 md:col-span-4">
-                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                          Produkti
-                        </label>
-                        <select
-                          value={item.category_product_id}
-                          onChange={(e) => updateItem(idx, { category_product_id: e.target.value })}
-                          disabled={!item.category_id}
-                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
-                        >
-                          <option value="">— Zgjidh —</option>
-                          {prodList.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="col-span-6 md:col-span-2">
-                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                          Titulli
-                        </label>
-                        <input
-                          value={item.product_title}
-                          onChange={(e) => updateItem(idx, { product_title: e.target.value })}
-                          placeholder="Black"
-                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
-                        />
-                      </div>
-                      <div className="col-span-5 md:col-span-1">
-                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                          Sasia
-                        </label>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          min="0"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(idx, { quantity: e.target.value })}
-                          placeholder="660"
-                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none tabular-nums"
-                        />
-                      </div>
-                      <div className="col-span-1 flex items-end justify-end">
-                        <button
-                          onClick={() => removeItem(idx)}
-                          disabled={items.length === 1}
-                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-md disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {formError && (
+          {err && (
             <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg px-3 py-2 text-sm flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>{formError}</span>
+              <span>{err}</span>
             </div>
           )}
         </div>
-
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-200 flex-shrink-0 bg-gray-50 rounded-b-2xl">
+        <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 flex flex-wrap gap-2 justify-end">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
@@ -873,12 +879,20 @@ function TrailerFormModal({
             Anulo
           </button>
           <button
-            onClick={handleSave}
+            onClick={() => save(true)}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg disabled:opacity-60 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-teal-600 text-teal-700 hover:bg-teal-50 font-semibold text-sm rounded-lg disabled:opacity-60 transition-colors"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            Ruaj
+            Ruaj dhe shto tjeter
+          </button>
+          <button
+            onClick={() => save(false)}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-lg disabled:opacity-60 transition-colors"
+          >
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            Ruaj dhe mbyll
           </button>
         </div>
       </div>
