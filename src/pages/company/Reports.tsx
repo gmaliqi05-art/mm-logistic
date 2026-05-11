@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   BarChart3,
   FileText,
@@ -9,32 +9,58 @@ import {
   TrendingUp,
   Download,
   Crown,
+  Layers,
+  Wrench,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  RefreshCw,
+  Users,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
-import { useCompliance } from '../../hooks/useCompliance';
-import {
-  chartOfAccounts,
-  currency as complianceCurrency,
-  taxAuthority,
-  vatStandardRate,
-} from '../../lib/complianceEngine';
 
-interface ReportData {
-  totalNotes: number;
-  totalStock: number;
-  totalDrivers: number;
-  totalDepots: number;
-  statusCounts: Record<string, number>;
-  stockByDepot: { name: string; total: number }[];
-  driverActivity: { name: string; count: number }[];
+type TabKey = 'summary' | 'stock' | 'movements' | 'sorting_repair' | 'partners';
+
+interface StockRow {
+  company_id: string;
+  depot_id: string | null;
+  depot_name: string | null;
+  category_id: string | null;
+  category_name: string | null;
+  category_product_id: string | null;
+  product_name: string | null;
+  condition: string;
+  quantity: number;
+}
+
+interface MovementRow {
+  source_id: string;
+  source_type: 'stock_movement' | 'sorting' | 'repair';
+  movement_type: string;
+  company_id: string;
+  depot_id: string | null;
+  category_id: string | null;
+  category_product_id: string | null;
+  condition: string | null;
+  quantity_delta: number;
+  flow_role: string | null;
+  delivery_note_id: string | null;
+  movement_date: string;
+}
+
+interface PartnerRow {
+  partner_contact_id: string;
+  partner_name: string;
+  in_qty: number;
+  out_qty: number;
+  balance: number;
 }
 
 function exportToCsv(headers: string[], rows: string[][], filename: string) {
   const bom = '\uFEFF';
-  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${(c ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
   const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -44,101 +70,121 @@ function exportToCsv(headers: string[], rows: string[][], filename: string) {
   URL.revokeObjectURL(url);
 }
 
+const CONDITION_LABELS: Record<string, string> = {
+  good: 'E mire',
+  damaged: 'Defekt',
+  repaired: 'Riparuar',
+  ready_a: 'Klasi A',
+  ready_b: 'Klasi B',
+  ready_c: 'Klasi C',
+  sorting: 'Per sortim',
+};
+
+function conditionLabel(c: string | null | undefined): string {
+  if (!c) return '—';
+  return CONDITION_LABELS[c] ?? c;
+}
+
 export default function CompanyReports() {
   const { profile } = useAuth();
   const { canAccess } = useSubscription();
   const { t } = useTranslation();
-  const { ctx: complianceCtx } = useCompliance();
-  const complianceCoa = chartOfAccounts(complianceCtx);
-  const complianceAuthority = taxAuthority(complianceCtx);
-  const complianceVat = vatStandardRate(complianceCtx);
-  const complianceCur = complianceCurrency(complianceCtx);
-  const [data, setData] = useState<ReportData>({
-    totalNotes: 0,
-    totalStock: 0,
-    totalDrivers: 0,
-    totalDepots: 0,
-    statusCounts: {},
-    stockByDepot: [],
-    driverActivity: [],
-  });
+  const [activeTab, setActiveTab] = useState<TabKey>('summary');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const statusConfig: Record<string, { label: string; color: string }> = {
-    draft: { label: t('company.deliveryNotes.draft'), color: 'bg-gray-400' },
-    sent: { label: t('company.deliveryNotes.sent'), color: 'bg-blue-500' },
-    in_transit: { label: t('company.deliveryNotes.inTransit'), color: 'bg-amber-500' },
-    delivered: { label: t('company.deliveryNotes.delivered'), color: 'bg-green-500' },
-    confirmed: { label: t('company.deliveryNotes.confirmed'), color: 'bg-teal-500' },
-  };
+  const [stockRows, setStockRows] = useState<StockRow[]>([]);
+  const [movementRows, setMovementRows] = useState<MovementRow[]>([]);
+  const [partnerRows, setPartnerRows] = useState<PartnerRow[]>([]);
+  const [depotCount, setDepotCount] = useState(0);
+  const [driverCount, setDriverCount] = useState(0);
+  const [noteStatusCounts, setNoteStatusCounts] = useState<Record<string, number>>({});
+  const [dateFrom, setDateFrom] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [dateTo, setDateTo] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [depotFilter, setDepotFilter] = useState<string>('all');
+  const [depots, setDepots] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
-    if (profile?.company_id) fetchReportData();
-  }, [profile?.company_id]);
+    if (profile?.company_id) fetchAll();
+  }, [profile?.company_id, dateFrom, dateTo]);
 
-  async function fetchReportData() {
+  async function fetchAll() {
+    if (!profile?.company_id) return;
+    setLoading(true);
+    setError(null);
+    const companyId = profile.company_id;
     try {
-      setLoading(true);
-      setError(null);
-      const companyId = profile!.company_id!;
+      const fromIso = new Date(dateFrom + 'T00:00:00').toISOString();
+      const toIso = new Date(dateTo + 'T23:59:59').toISOString();
 
-      const [notesRes, stockRes, driversRes, depotsRes, depotListRes] = await Promise.all([
-        supabase.from('delivery_notes').select('id, status, assigned_driver_id').eq('company_id', companyId),
-        supabase.from('stock').select('quantity, depot_id').eq('company_id', companyId),
-        supabase.from('profiles').select('id, full_name').eq('company_id', companyId).eq('role', 'driver'),
+      const [stockRes, movRes, depotsRes, driversRes, notesRes, flowsRes, contactsRes] = await Promise.all([
+        supabase
+          .from('v_company_stock_breakdown')
+          .select('*')
+          .eq('company_id', companyId),
+        supabase
+          .from('v_company_movements')
+          .select('*')
+          .eq('company_id', companyId)
+          .gte('movement_date', fromIso)
+          .lte('movement_date', toIso)
+          .order('movement_date', { ascending: false })
+          .limit(2000),
         supabase.from('depots').select('id, name').eq('company_id', companyId),
-        supabase.from('depots').select('id, name').eq('company_id', companyId),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('role', 'driver'),
+        supabase.from('delivery_notes').select('status').eq('company_id', companyId),
+        supabase
+          .from('partner_flow_events')
+          .select('partner_contact_id, direction, quantity')
+          .eq('company_id', companyId)
+          .in('direction', ['in', 'out'])
+          .gte('event_date', fromIso)
+          .lte('event_date', toIso),
+        supabase
+          .from('acc_contacts')
+          .select('id, name')
+          .eq('company_id', companyId),
       ]);
 
-      if (notesRes.error) throw notesRes.error;
       if (stockRes.error) throw stockRes.error;
-      if (driversRes.error) throw driversRes.error;
-      if (depotsRes.error) throw depotsRes.error;
+      if (movRes.error) throw movRes.error;
 
-      const notes = notesRes.data ?? [];
-      const stocks = stockRes.data ?? [];
-      const drivers = driversRes.data ?? [];
-      const depotsList = depotListRes.data ?? [];
+      setStockRows((stockRes.data ?? []) as StockRow[]);
+      setMovementRows((movRes.data ?? []) as MovementRow[]);
+      setDepots(depotsRes.data ?? []);
+      setDepotCount((depotsRes.data ?? []).length);
+      setDriverCount(driversRes.count ?? 0);
 
-      const statusCounts: Record<string, number> = {};
-      notes.forEach((n) => {
-        statusCounts[n.status] = (statusCounts[n.status] || 0) + 1;
-      });
+      const statusMap: Record<string, number> = {};
+      for (const n of (notesRes.data ?? []) as Array<{ status: string }>) {
+        statusMap[n.status] = (statusMap[n.status] ?? 0) + 1;
+      }
+      setNoteStatusCounts(statusMap);
 
-      const depotStockMap: Record<string, number> = {};
-      stocks.forEach((s) => {
-        depotStockMap[s.depot_id] = (depotStockMap[s.depot_id] || 0) + s.quantity;
-      });
-      const stockByDepot = depotsList.map((d) => ({
-        name: d.name,
-        total: depotStockMap[d.id] || 0,
-      }));
-
-      const driverNoteCount: Record<string, number> = {};
-      notes.forEach((n) => {
-        if (n.assigned_driver_id) {
-          driverNoteCount[n.assigned_driver_id] = (driverNoteCount[n.assigned_driver_id] || 0) + 1;
-        }
-      });
-      const driverActivity = drivers
-        .map((d) => ({
-          name: d.full_name,
-          count: driverNoteCount[d.id] || 0,
-        }))
-        .sort((a, b) => b.count - a.count);
-
-      const totalStock = stocks.reduce((sum, s) => sum + s.quantity, 0);
-
-      setData({
-        totalNotes: notes.length,
-        totalStock,
-        totalDrivers: drivers.length,
-        totalDepots: depotsList.length,
-        statusCounts,
-        stockByDepot,
-        driverActivity,
-      });
+      const contactMap = new Map<string, string>();
+      for (const c of (contactsRes.data ?? []) as Array<{ id: string; name: string }>) {
+        contactMap.set(c.id, c.name);
+      }
+      const partnerAgg = new Map<string, PartnerRow>();
+      for (const f of (flowsRes.data ?? []) as Array<{ partner_contact_id: string | null; direction: string; quantity: number }>) {
+        if (!f.partner_contact_id) continue;
+        const cur = partnerAgg.get(f.partner_contact_id) ?? {
+          partner_contact_id: f.partner_contact_id,
+          partner_name: contactMap.get(f.partner_contact_id) ?? '—',
+          in_qty: 0,
+          out_qty: 0,
+          balance: 0,
+        };
+        if (f.direction === 'in') cur.in_qty += f.quantity;
+        if (f.direction === 'out') cur.out_qty += f.quantity;
+        cur.balance = cur.in_qty - cur.out_qty;
+        partnerAgg.set(f.partner_contact_id, cur);
+      }
+      setPartnerRows(Array.from(partnerAgg.values()).sort((a, b) => (b.in_qty + b.out_qty) - (a.in_qty + a.out_qty)));
     } catch (err: any) {
       setError(err.message || t('common.errorLoading'));
     } finally {
@@ -146,18 +192,107 @@ export default function CompanyReports() {
     }
   }
 
-  const statCards = [
-    { label: t('company.reports.totalNotes'), value: data.totalNotes, icon: FileText, color: 'bg-teal-500' },
-    { label: t('company.reports.totalStock'), value: data.totalStock, icon: Package, color: 'bg-emerald-500' },
-    { label: t('company.reports.totalDrivers'), value: data.totalDrivers, icon: Truck, color: 'bg-cyan-500' },
-    { label: t('company.reports.totalDepots'), value: data.totalDepots, icon: Warehouse, color: 'bg-teal-600' },
+  const filteredStock = useMemo(() => {
+    if (depotFilter === 'all') return stockRows;
+    return stockRows.filter(r => r.depot_id === depotFilter);
+  }, [stockRows, depotFilter]);
+
+  const filteredMovements = useMemo(() => {
+    if (depotFilter === 'all') return movementRows;
+    return movementRows.filter(r => r.depot_id === depotFilter);
+  }, [movementRows, depotFilter]);
+
+  const totalStock = useMemo(
+    () => filteredStock.reduce((s, r) => s + (r.quantity || 0), 0),
+    [filteredStock],
+  );
+
+  const summary = useMemo(() => {
+    let inQty = 0;
+    let outQty = 0;
+    let sortingQty = 0;
+    let repairQty = 0;
+    let internalQty = 0;
+    for (const m of filteredMovements) {
+      if (m.flow_role === 'internal_transfer') {
+        internalQty += Math.abs(m.quantity_delta);
+        continue;
+      }
+      if (m.source_type === 'sorting') sortingQty += m.quantity_delta;
+      else if (m.source_type === 'repair') repairQty += m.quantity_delta;
+      else if (m.movement_type === 'entry') inQty += m.quantity_delta;
+      else if (m.movement_type === 'exit') outQty += Math.abs(m.quantity_delta);
+    }
+    return { inQty, outQty, sortingQty, repairQty, internalQty };
+  }, [filteredMovements]);
+
+  const stockByCategory = useMemo(() => {
+    const map = new Map<string, { name: string; total: number; byProduct: Map<string, { name: string; byCondition: Record<string, number> }> }>();
+    for (const r of filteredStock) {
+      const catKey = r.category_id ?? 'none';
+      const catName = r.category_name ?? 'Pa kategori';
+      if (!map.has(catKey)) map.set(catKey, { name: catName, total: 0, byProduct: new Map() });
+      const cat = map.get(catKey)!;
+      cat.total += r.quantity;
+      const prodKey = r.category_product_id ?? 'none';
+      const prodName = r.product_name ?? '—';
+      if (!cat.byProduct.has(prodKey)) cat.byProduct.set(prodKey, { name: prodName, byCondition: {} });
+      const prod = cat.byProduct.get(prodKey)!;
+      prod.byCondition[r.condition] = (prod.byCondition[r.condition] ?? 0) + r.quantity;
+    }
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  }, [filteredStock]);
+
+  const stockByDepot = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of filteredStock) {
+      if (!r.depot_id) continue;
+      map.set(r.depot_name ?? r.depot_id, (map.get(r.depot_name ?? r.depot_id) ?? 0) + r.quantity);
+    }
+    return Array.from(map.entries()).map(([name, total]) => ({ name, total })).sort((a, b) => b.total - a.total);
+  }, [filteredStock]);
+
+  const maxStockByDepot = Math.max(...stockByDepot.map(d => d.total), 1);
+
+  const tabs: Array<{ key: TabKey; label: string; icon: typeof FileText }> = [
+    { key: 'summary', label: 'Permbledhje', icon: BarChart3 },
+    { key: 'stock', label: 'Stoku', icon: Package },
+    { key: 'movements', label: 'Levizjet', icon: TrendingUp },
+    { key: 'sorting_repair', label: 'Sortim & Riparim', icon: Wrench },
+    { key: 'partners', label: 'Partneret', icon: Users },
   ];
 
-  const maxStatusCount = Math.max(...Object.values(data.statusCounts), 1);
-  const maxStockByDepot = Math.max(...data.stockByDepot.map((d) => d.total), 1);
-  const maxDriverActivity = Math.max(...data.driverActivity.map((d) => d.count), 1);
+  function exportActiveTab() {
+    if (activeTab === 'stock') {
+      const headers = ['Kategoria', 'Produkti', 'Gjendja', 'Depoja', 'Sasia'];
+      const rows = filteredStock.map(r => [
+        r.category_name ?? '',
+        r.product_name ?? '',
+        conditionLabel(r.condition),
+        r.depot_name ?? '',
+        String(r.quantity),
+      ]);
+      exportToCsv(headers, rows, 'stoku_kompanise');
+    } else if (activeTab === 'movements') {
+      const headers = ['Data', 'Burimi', 'Tipi', 'Sasi', 'Gjendja', 'Depoja', 'Flow'];
+      const rows = filteredMovements.map(r => [
+        new Date(r.movement_date).toLocaleString(),
+        r.source_type,
+        r.movement_type,
+        String(r.quantity_delta),
+        conditionLabel(r.condition),
+        depots.find(d => d.id === r.depot_id)?.name ?? '',
+        r.flow_role ?? '',
+      ]);
+      exportToCsv(headers, rows, 'levizjet_kompanise');
+    } else if (activeTab === 'partners') {
+      const headers = ['Partneri', 'Hyrje', 'Dalje', 'Balanca'];
+      const rows = partnerRows.map(r => [r.partner_name, String(r.in_qty), String(r.out_qty), String(r.balance)]);
+      exportToCsv(headers, rows, 'partneret');
+    }
+  }
 
-  if (loading) {
+  if (loading && stockRows.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600" />
@@ -170,10 +305,7 @@ export default function CompanyReports() {
       <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
         <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-3" />
         <p className="text-red-700 font-medium">{error}</p>
-        <button
-          onClick={fetchReportData}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
+        <button onClick={fetchAll} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
           {t('common.tryAgain')}
         </button>
       </div>
@@ -182,205 +314,334 @@ export default function CompanyReports() {
 
   return (
     <div className="space-y-6">
-      {complianceCtx.country_code && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-700 font-semibold text-sm">
-                {complianceCtx.country_code}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {complianceCtx.country_name ?? complianceCtx.country_code}
-                </p>
-                <p className="text-xs text-gray-500">{t('accounting.compliance.title')}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3 text-xs">
-              {complianceCoa && (
-                <div className="px-3 py-1.5 rounded-md bg-gray-50 border border-gray-100">
-                  <span className="text-gray-500">{t('accounting.compliance.chartOfAccounts')}:</span>{' '}
-                  <span className="font-semibold text-gray-900">{complianceCoa.code}</span>
-                </div>
-              )}
-              {complianceVat !== null && (
-                <div className="px-3 py-1.5 rounded-md bg-gray-50 border border-gray-100">
-                  <span className="text-gray-500">TVSH:</span>{' '}
-                  <span className="font-semibold text-gray-900">{complianceVat}%</span>
-                </div>
-              )}
-              <div className="px-3 py-1.5 rounded-md bg-gray-50 border border-gray-100">
-                <span className="text-gray-500">{t('common.currency') || 'Monedha'}:</span>{' '}
-                <span className="font-semibold text-gray-900">{complianceCur.code}</span>
-              </div>
-              {complianceAuthority && (
-                <div className="px-3 py-1.5 rounded-md bg-emerald-50 border border-emerald-100 text-emerald-800">
-                  {complianceAuthority.name}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('company.reports.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('company.reports.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Raportet e Kompanise</h1>
+          <p className="text-gray-500 mt-1">Stoku, levizjet, sortimi dhe riparimi — vetem per kompanine tuaj.</p>
         </div>
-        {canAccess('advanced_reports') ? (
-          <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={e => setDateFrom(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+          />
+          <span className="text-gray-400 text-sm">—</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={e => setDateTo(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+          />
+          <select
+            value={depotFilter}
+            onChange={e => setDepotFilter(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+          >
+            <option value="all">Te gjitha depot</option>
+            {depots.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+          <button
+            onClick={fetchAll}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
+          >
+            <RefreshCw className="w-4 h-4" /> Rifresko
+          </button>
+          {canAccess('advanced_reports') ? (
             <button
-              onClick={() => {
-                const headers = [t('common.status'), t('company.reports.count')];
-                const rows = Object.entries(data.statusCounts).map(([k, v]) => [statusConfig[k]?.label ?? k, String(v)]);
-                exportToCsv(headers, rows, 'raporti_statuseve');
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+              onClick={exportActiveTab}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100"
             >
-              <Download className="w-4 h-4" />
-              {t('company.reports.exportCsv')}
+              <Download className="w-4 h-4" /> Eksporto CSV
             </button>
-          </div>
-        ) : (
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-            <Crown className="w-4 h-4" />
-            {t('company.reports.premiumExport')}
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((card) => (
-          <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{card.label}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{card.value}</p>
-              </div>
-              <div className={`${card.color} p-3 rounded-xl`}>
-                <card.icon className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-teal-600" />
-              <h2 className="text-lg font-semibold text-gray-900">{t('company.reports.notesByStatus')}</h2>
-            </div>
-          </div>
-          <div className="p-6 space-y-4">
-            {Object.entries(statusConfig).map(([key, cfg]) => {
-              const count = data.statusCounts[key] || 0;
-              const pct = maxStatusCount > 0 ? (count / maxStatusCount) * 100 : 0;
-              return (
-                <div key={key}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-600">{cfg.label}</span>
-                    <span className="text-sm font-semibold text-gray-900">{count}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-3">
-                    <div
-                      className={`${cfg.color} h-3 rounded-full transition-all duration-500`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            {Object.keys(data.statusCounts).length === 0 && (
-              <div className="text-center py-6">
-                <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">{t('common.noData')}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-teal-600" />
-              <h2 className="text-lg font-semibold text-gray-900">{t('company.reports.stockByDepot')}</h2>
-            </div>
-          </div>
-          <div className="p-6 space-y-4">
-            {data.stockByDepot.length === 0 ? (
-              <div className="text-center py-6">
-                <Warehouse className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">{t('common.noData')}</p>
-              </div>
-            ) : (
-              data.stockByDepot.map((depot) => {
-                const pct = maxStockByDepot > 0 ? (depot.total / maxStockByDepot) * 100 : 0;
-                return (
-                  <div key={depot.name}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-600">{depot.name}</span>
-                      <span className="text-sm font-semibold text-gray-900">{depot.total}</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-3">
-                      <div
-                        className="bg-teal-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-semibold text-gray-900">{t('company.reports.driverActivity')}</h2>
-          </div>
-        </div>
-        <div className="p-6">
-          {data.driverActivity.length === 0 ? (
-            <div className="text-center py-6">
-              <Truck className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">{t('company.drivers.noDrivers')}</p>
-            </div>
           ) : (
-            <div className="space-y-3">
-              {data.driverActivity.map((driver, idx) => {
-                const pct = maxDriverActivity > 0 ? (driver.count / maxDriverActivity) * 100 : 0;
-                return (
-                  <div key={driver.name} className="flex items-center gap-4">
-                    <div className="w-8 text-center">
-                      <span className={`text-sm font-bold ${idx < 3 ? 'text-teal-600' : 'text-gray-400'}`}>
-                        #{idx + 1}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-900">{driver.name}</span>
-                        <span className="text-sm text-gray-500">{driver.count} {t('company.reports.deliveries')}</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2.5">
-                        <div
-                          className={`h-2.5 rounded-full transition-all duration-500 ${
-                            idx === 0 ? 'bg-teal-500' : idx === 1 ? 'bg-emerald-500' : idx === 2 ? 'bg-cyan-500' : 'bg-gray-400'
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+              <Crown className="w-4 h-4" /> Eksport premium
             </div>
           )}
         </div>
+      </div>
+
+      <div className="border-b border-gray-200 flex flex-wrap gap-1">
+        {tabs.map(tab => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                active ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Icon className="w-4 h-4" /> {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === 'summary' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={Package} color="bg-emerald-500" label="Stoku aktual" value={totalStock} />
+            <StatCard icon={ArrowDownCircle} color="bg-teal-500" label="Hyrje (periudha)" value={summary.inQty} />
+            <StatCard icon={ArrowUpCircle} color="bg-rose-500" label="Dalje (periudha)" value={summary.outQty} />
+            <StatCard icon={Layers} color="bg-cyan-500" label="Transferte interne" value={summary.internalQty} />
+            <StatCard icon={RefreshCw} color="bg-blue-500" label="Sortim" value={summary.sortingQty} />
+            <StatCard icon={Wrench} color="bg-amber-500" label="Riparim" value={summary.repairQty} />
+            <StatCard icon={Warehouse} color="bg-teal-600" label="Depot" value={depotCount} />
+            <StatCard icon={Truck} color="bg-slate-600" label="Shofere" value={driverCount} />
+          </div>
+
+          <Card title="Stoku sipas depos" icon={Package}>
+            {stockByDepot.length === 0 ? (
+              <EmptyState icon={Warehouse} label="Pa te dhena stoku." />
+            ) : (
+              <div className="space-y-3">
+                {stockByDepot.map(d => {
+                  const pct = (d.total / maxStockByDepot) * 100;
+                  return (
+                    <div key={d.name}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-700">{d.name}</span>
+                        <span className="text-sm font-semibold text-gray-900">{d.total}</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-3">
+                        <div className="bg-teal-500 h-3 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          <Card title="Fletedokumente sipas statusit" icon={FileText}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {Object.entries(noteStatusCounts).map(([status, count]) => (
+                <div key={status} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">{status}</p>
+                  <p className="text-xl font-bold text-gray-900">{count}</p>
+                </div>
+              ))}
+              {Object.keys(noteStatusCounts).length === 0 && (
+                <p className="text-sm text-gray-400 col-span-full">Pa fletedokumente.</p>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'stock' && (
+        <Card title="Stoku i kompanise" icon={Package}>
+          {stockByCategory.length === 0 ? (
+            <EmptyState icon={Package} label="Nuk ka stok ne kete filter." />
+          ) : (
+            <div className="space-y-4">
+              {stockByCategory.map(cat => (
+                <div key={cat.name} className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-gray-500" />
+                      <p className="font-semibold text-gray-900">{cat.name}</p>
+                    </div>
+                    <span className="text-sm font-bold text-teal-700">{cat.total}</span>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {Array.from(cat.byProduct.values()).sort((a, b) => {
+                      const ta = Object.values(a.byCondition).reduce((x, y) => x + y, 0);
+                      const tb = Object.values(b.byCondition).reduce((x, y) => x + y, 0);
+                      return tb - ta;
+                    }).map((p, i) => {
+                      const total = Object.values(p.byCondition).reduce((x, y) => x + y, 0);
+                      return (
+                        <div key={i} className="px-4 py-2.5 flex items-center justify-between gap-3">
+                          <p className="text-sm text-gray-800 min-w-0 truncate">{p.name}</p>
+                          <div className="flex items-center gap-2 flex-wrap justify-end">
+                            {Object.entries(p.byCondition).map(([cond, qty]) => (
+                              <span key={cond} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-xs text-gray-700">
+                                {conditionLabel(cond)}: <span className="font-semibold">{qty}</span>
+                              </span>
+                            ))}
+                            <span className="text-sm font-bold text-gray-900 ml-2">{total}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {activeTab === 'movements' && (
+        <Card title="Levizjet e kompanise" icon={TrendingUp}>
+          {filteredMovements.length === 0 ? (
+            <EmptyState icon={TrendingUp} label="Asnje levizje ne kete periudhe." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
+                  <tr>
+                    <th className="text-left px-3 py-2">Data</th>
+                    <th className="text-left px-3 py-2">Burimi</th>
+                    <th className="text-left px-3 py-2">Tipi</th>
+                    <th className="text-left px-3 py-2">Gjendja</th>
+                    <th className="text-left px-3 py-2">Depoja</th>
+                    <th className="text-right px-3 py-2">Sasi</th>
+                    <th className="text-left px-3 py-2">Flow</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredMovements.slice(0, 500).map(m => (
+                    <tr key={`${m.source_type}-${m.source_id}`} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{new Date(m.movement_date).toLocaleString()}</td>
+                      <td className="px-3 py-2">
+                        <SourceBadge type={m.source_type} />
+                      </td>
+                      <td className="px-3 py-2 text-gray-700">{m.movement_type}</td>
+                      <td className="px-3 py-2 text-gray-700">{conditionLabel(m.condition)}</td>
+                      <td className="px-3 py-2 text-gray-700">{depots.find(d => d.id === m.depot_id)?.name ?? '—'}</td>
+                      <td className={`px-3 py-2 text-right font-semibold ${m.quantity_delta < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                        {m.quantity_delta > 0 ? '+' : ''}{m.quantity_delta}
+                      </td>
+                      <td className="px-3 py-2">
+                        {m.flow_role === 'internal_transfer' ? (
+                          <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-100 text-cyan-800">Interne</span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">{m.flow_role ?? '—'}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredMovements.length > 500 && (
+                <p className="text-xs text-gray-400 mt-3 text-center">Po shfaqen 500 rreshtat me te fundit. Ngushtoni intervalin per me shume detaje.</p>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {activeTab === 'sorting_repair' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card title="Sortimi" icon={Layers}>
+            <SortingOrRepairTable rows={filteredMovements.filter(m => m.source_type === 'sorting')} depots={depots} />
+          </Card>
+          <Card title="Riparimi" icon={Wrench}>
+            <SortingOrRepairTable rows={filteredMovements.filter(m => m.source_type === 'repair')} depots={depots} />
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'partners' && (
+        <Card title="Permbledhje e partnereve" icon={Users} hint="Transfertat interne jane te perjashtuara. Kliko nje partner per kartele te plote.">
+          {partnerRows.length === 0 ? (
+            <EmptyState icon={Users} label="Pa levizje me partneret ne kete periudhe." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
+                  <tr>
+                    <th className="text-left px-3 py-2">Partneri</th>
+                    <th className="text-right px-3 py-2">Hyrje</th>
+                    <th className="text-right px-3 py-2">Dalje</th>
+                    <th className="text-right px-3 py-2">Balanca</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {partnerRows.map(p => (
+                    <tr key={p.partner_contact_id} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 font-medium text-gray-900">{p.partner_name}</td>
+                      <td className="px-3 py-2 text-right text-emerald-600">{p.in_qty}</td>
+                      <td className="px-3 py-2 text-right text-rose-600">{p.out_qty}</td>
+                      <td className={`px-3 py-2 text-right font-bold ${p.balance >= 0 ? 'text-gray-900' : 'text-rose-600'}`}>
+                        {p.balance > 0 ? '+' : ''}{p.balance}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ icon: Icon, color, label, value }: { icon: typeof FileText; color: string; label: string; value: number }) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs text-gray-500 truncate">{label}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{value.toLocaleString()}</p>
+        </div>
+        <div className={`${color} p-2.5 rounded-xl`}>
+          <Icon className="w-5 h-5 text-white" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Card({ title, icon: Icon, children, hint }: { title: string; icon: typeof FileText; children: React.ReactNode; hint?: string }) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Icon className="w-5 h-5 text-teal-600" />
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        </div>
+        {hint && <p className="text-xs text-gray-400 hidden sm:block">{hint}</p>}
+      </div>
+      <div className="p-4 md:p-6">{children}</div>
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, label }: { icon: typeof FileText; label: string }) {
+  return (
+    <div className="text-center py-8">
+      <Icon className="w-9 h-9 text-gray-300 mx-auto mb-2" />
+      <p className="text-sm text-gray-400">{label}</p>
+    </div>
+  );
+}
+
+function SourceBadge({ type }: { type: 'stock_movement' | 'sorting' | 'repair' }) {
+  const map = {
+    stock_movement: { label: 'Dergese', cls: 'bg-teal-100 text-teal-800' },
+    sorting: { label: 'Sortim', cls: 'bg-blue-100 text-blue-800' },
+    repair: { label: 'Riparim', cls: 'bg-amber-100 text-amber-800' },
+  };
+  const cfg = map[type];
+  return <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.cls}`}>{cfg.label}</span>;
+}
+
+function SortingOrRepairTable({ rows, depots }: { rows: MovementRow[]; depots: Array<{ id: string; name: string }> }) {
+  if (rows.length === 0) return <EmptyState icon={Layers} label="Pa te dhena ne kete periudhe." />;
+  const total = rows.reduce((s, r) => s + r.quantity_delta, 0);
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-lg">
+        <span className="text-sm text-gray-600">Totali</span>
+        <span className="text-xl font-bold text-gray-900">{total}</span>
+      </div>
+      <div className="space-y-1 max-h-72 overflow-y-auto">
+        {rows.slice(0, 200).map(r => (
+          <div key={r.source_id} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 text-xs">
+            <div>
+              <p className="text-gray-700">{new Date(r.movement_date).toLocaleDateString()}</p>
+              <p className="text-gray-400">{depots.find(d => d.id === r.depot_id)?.name ?? '—'}</p>
+            </div>
+            <span className="font-semibold text-emerald-600">+{r.quantity_delta}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
