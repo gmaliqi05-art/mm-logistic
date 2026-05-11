@@ -182,6 +182,7 @@ export const de: typeof sq = {
     palletAccounts: 'Palettenkonten',
     apiWebhooks: 'API & Webhooks',
     deliveryNotes: 'Neue Auftr\u00e4ge',
+    trailers: 'Anh\u00e4nger',
     review: 'Zur Pr\u00fcfung',
     overdue: 'Überfällig',
     partners: 'Partner',

@@ -180,6 +180,7 @@ export const sq = {
     palletAccounts: 'Llogaritë e Paletave',
     apiWebhooks: 'API & Webhooks',
     deliveryNotes: 'Porosit e Reja',
+    trailers: 'Rimorkiot',
     review: 'Per Shqyrtim',
     overdue: 'Te Vonuara',
     partners: 'Partneret',

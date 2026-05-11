@@ -33,6 +33,7 @@ import type { DeliveryNote } from '../../types';
 import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/SmartDocScanner';
 import { notifyUsers } from '../../utils/notifications';
 import DriverPermissionsGate from '../../components/DriverPermissionsGate';
+import DriverTrailersWidget from '../../components/driver/DriverTrailersWidget';
 
 export type T = (key: string) => string;
 
@@ -324,6 +325,8 @@ export default function DriverDashboard() {
           </div>
         </div>
       ) : null}
+
+      {!showResults && <DriverTrailersWidget />}
 
       {!showResults && <DayGroup
         title={t('driver.home.today')}

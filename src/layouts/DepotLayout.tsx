@@ -13,6 +13,7 @@ import {
   X,
   FileText,
   BarChart3,
+  Truck,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -35,6 +36,7 @@ const allNavItems: Array<{
   { to: '/depot/receiving', icon: ArrowLeftRight, labelKey: 'nav.receiving', end: false, bottomNav: true, categories: ['depoist'] },
   { to: '/depot/sorting', icon: Layers, labelKey: 'nav.sorting', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, bottomNav: false, categories: ['depoist'] },
+  { to: '/depot/trailers', icon: Truck, labelKey: 'nav.trailers', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false },
   { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false },
   { to: '/depot/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, bottomNav: false },
