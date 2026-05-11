@@ -411,20 +411,44 @@ function TrailerPlateCard({
         {trailer.title && (
           <p className="text-sm font-semibold text-gray-900 truncate">{trailer.title}</p>
         )}
-        <div className="flex items-center justify-between gap-2 text-xs">
+
+        {itemCount > 0 && (
+          <div className="space-y-1">
+            {(trailer.items ?? []).slice(0, 3).map((it) => {
+              const label = [it.product_name, it.product_title].filter(Boolean).join(' · ');
+              return (
+                <div
+                  key={it.id}
+                  className="flex items-center justify-between gap-2 text-xs bg-gray-50 rounded-md px-2 py-1.5"
+                >
+                  <span className="flex items-center gap-1.5 min-w-0 text-gray-800">
+                    <Package className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="truncate font-medium">{label || '—'}</span>
+                  </span>
+                  <span className="font-bold tabular-nums text-gray-900 flex-shrink-0">
+                    {it.quantity.toLocaleString()}
+                  </span>
+                </div>
+              );
+            })}
+            {itemCount > 3 && (
+              <p className="text-[11px] text-gray-500 pl-1">+{itemCount - 3} me shume · {totalQty.toLocaleString()} cope ne total</p>
+            )}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2 text-xs pt-0.5">
           <span className={`px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide ${statusCls}`}>
             {statusLabel}
           </span>
-          <div className="flex items-center gap-3 text-gray-600">
-            {itemCount > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <Package className="w-3.5 h-3.5" />
-                {itemCount} · {totalQty.toLocaleString()}
-              </span>
-            )}
-            {driver && <span className="truncate max-w-[120px]">{driver.full_name}</span>}
-          </div>
+          {driver && (
+            <span className="inline-flex items-center gap-1 text-gray-700 font-medium truncate max-w-[55%]">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" />
+              <span className="truncate">{driver.full_name}</span>
+            </span>
+          )}
         </div>
+
         <div className={`h-1 rounded-full ${stripeCls}`} />
       </button>
 
