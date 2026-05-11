@@ -107,6 +107,7 @@ const WorkerRepairEntry = lazy(() => import('./pages/depot/WorkerRepairEntry'));
 const DepotDeliveryNotes = lazy(() => import('./pages/depot/DeliveryNotes'));
 const DepotChat = lazy(() => import('./pages/depot/Chat'));
 const DepotDocuments = lazy(() => import('./pages/depot/Documents'));
+const DepotReports = lazy(() => import('./pages/depot/Reports'));
 
 const DriverDashboard = lazy(() => import('./pages/driver/Dashboard'));
 const DriverChat = lazy(() => import('./pages/driver/Chat'));
@@ -283,6 +284,7 @@ function AppRoutes() {
           <Route path="repair-workers" element={<DepotRepairWorkers />} />
           <Route path="repair-workers/:workerId" element={<WorkerRepairEntry />} />
           <Route path="documents" element={<DepotDocuments />} />
+          <Route path="reports" element={<DepotReports />} />
           <Route path="chat" element={<DepotChat />} />
         </Route>
 

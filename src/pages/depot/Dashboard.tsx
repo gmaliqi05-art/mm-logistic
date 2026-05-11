@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Package,
   ArrowUpCircle,
@@ -11,47 +11,66 @@ import {
   TrendingDown,
   MessageSquare,
   Layers,
+  Euro,
+  BarChart3,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import DeliveryReviewPanel from '../../components/delivery/DeliveryReviewPanel';
-import type { StockMovement } from '../../types';
 
-interface DashboardStats {
-  totalStock: number;
-  entryToday: number;
-  exitToday: number;
-  pendingRepairs: number;
+interface StockValueRow {
+  category_id: string;
+  category_name: string | null;
+  category_product_id: string | null;
+  product_name: string | null;
+  condition: string;
+  quantity: number;
+  unit_price: number;
+  line_value: number;
+  currency: string;
 }
 
-interface LowStockItem {
-  id: string;
-  categoryName: string;
-  productName: string;
+interface FlowRow {
+  flow_date: string;
+  movement_type: string;
   quantity: number;
-  condition: string;
+}
+
+interface RecentMovement {
+  id: string;
+  movement_type: string;
+  quantity: number;
+  created_at: string;
+  category: { name: string } | null;
+  product: { name: string } | null;
+  performer: { full_name: string } | null;
+}
+
+function isoDaysBack(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().substring(0, 10);
+}
+
+function fmtMoney(v: number, currency = 'EUR') {
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(v || 0);
 }
 
 export default function DepotDashboard() {
   const { profile, refreshProfile } = useAuth();
   const { t } = useTranslation();
-  const [stats, setStats] = useState<DashboardStats>({ totalStock: 0, entryToday: 0, exitToday: 0, pendingRepairs: 0 });
-  const [recentMovements, setRecentMovements] = useState<StockMovement[]>([]);
-  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const movementConfig: Record<string, { label: string; className: string; icon: typeof ArrowUpCircle }> = {
-    entry: { label: t('depot.stock.entry'), className: 'bg-green-100 text-green-700', icon: ArrowUpCircle },
-    exit: { label: t('depot.stock.exit'), className: 'bg-red-100 text-red-700', icon: ArrowDownCircle },
-    repair: { label: t('depot.stock.repair'), className: 'bg-amber-100 text-amber-700', icon: Wrench },
-  };
+  const [stockRows, setStockRows] = useState<StockValueRow[]>([]);
+  const [flowRows, setFlowRows] = useState<FlowRow[]>([]);
+  const [recent, setRecent] = useState<RecentMovement[]>([]);
 
   useEffect(() => {
     if (profile?.depot_id && profile?.company_id) {
-      fetchData();
+      void fetchData();
     } else if (profile && !profile.depot_id) {
       refreshProfile().then(() => {
         if (!profile.depot_id) {
@@ -68,82 +87,110 @@ export default function DepotDashboard() {
       setError(null);
       const depotId = profile!.depot_id!;
       const companyId = profile!.company_id!;
+      const since = isoDaysBack(6);
 
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-
-      const [stockRes, entryRes, exitRes, repairRes, movementsRes, lowStockRes] = await Promise.all([
+      const [stockRes, flowRes, recentRes] = await Promise.all([
         supabase
-          .from('stock')
-          .select('quantity')
+          .from('v_depot_stock_value')
+          .select('category_id, category_name, category_product_id, product_name, condition, quantity, unit_price, line_value, currency')
           .eq('depot_id', depotId)
           .eq('company_id', companyId),
         supabase
-          .from('stock_movements')
-          .select('quantity')
+          .from('v_depot_daily_flow')
+          .select('flow_date, movement_type, quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
-          .eq('movement_type', 'entry')
-          .gte('created_at', todayStart.toISOString()),
+          .gte('flow_date', since),
         supabase
           .from('stock_movements')
-          .select('quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('movement_type', 'exit')
-          .gte('created_at', todayStart.toISOString()),
-        supabase
-          .from('stock')
-          .select('quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('condition', 'damaged'),
-        supabase
-          .from('stock_movements')
-          .select('*, category:product_categories(id, name), product:category_products(id, name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
+          .select('id, movement_type, quantity, created_at, category:product_categories(name), product:category_products(name), performer:profiles!stock_movements_performed_by_fkey(full_name)')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('stock')
-          .select('id, quantity, condition, category:product_categories(id, name), product:category_products(id, name)')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .lt('quantity', 10)
-          .order('quantity', { ascending: true })
-          .limit(5),
+          .limit(8),
       ]);
 
       if (stockRes.error) throw stockRes.error;
-      if (entryRes.error) throw entryRes.error;
-      if (exitRes.error) throw exitRes.error;
-      if (repairRes.error) throw repairRes.error;
-      if (movementsRes.error) throw movementsRes.error;
-      if (lowStockRes.error) throw lowStockRes.error;
+      if (flowRes.error) throw flowRes.error;
+      if (recentRes.error) throw recentRes.error;
 
-      const totalStock = (stockRes.data ?? []).reduce((sum, s) => sum + (s.quantity || 0), 0);
-      const entryToday = (entryRes.data ?? []).reduce((sum, s) => sum + (s.quantity || 0), 0);
-      const exitToday = (exitRes.data ?? []).reduce((sum, s) => sum + (s.quantity || 0), 0);
-      const pendingRepairs = (repairRes.data ?? []).reduce((sum, s) => sum + (s.quantity || 0), 0);
-
-      setStats({ totalStock, entryToday, exitToday, pendingRepairs });
-      setRecentMovements(movementsRes.data ?? []);
-      setLowStockItems(
-        (lowStockRes.data ?? []).map((s: any) => ({
-          id: s.id,
-          categoryName: s.category?.name ?? '-',
-          productName: s.product?.name ?? '',
-          quantity: s.quantity,
-          condition: s.condition,
-        }))
-      );
-    } catch (err: any) {
-      setError(err.message || t('common.errorLoading'));
+      setStockRows((stockRes.data ?? []) as StockValueRow[]);
+      setFlowRows((flowRes.data ?? []) as FlowRow[]);
+      setRecent((recentRes.data ?? []) as unknown as RecentMovement[]);
+    } catch (err) {
+      setError((err as Error).message || t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
   }
+
+  const totals = useMemo(() => {
+    let total = 0;
+    let good = 0;
+    let damaged = 0;
+    let repaired = 0;
+    let sorting = 0;
+    let value = 0;
+    const currency = stockRows[0]?.currency ?? 'EUR';
+    for (const r of stockRows) {
+      total += r.quantity;
+      value += Number(r.line_value) || 0;
+      if (r.condition === 'good') good += r.quantity;
+      else if (r.condition === 'damaged') damaged += r.quantity;
+      else if (r.condition === 'repaired') repaired += r.quantity;
+      else if (r.condition === 'sorting' || r.condition === 'sorting_pending') sorting += r.quantity;
+    }
+    return { total, good, damaged, repaired, sorting, value, currency };
+  }, [stockRows]);
+
+  const todayFlow = useMemo(() => {
+    const today = new Date().toISOString().substring(0, 10);
+    let entry = 0;
+    let exit = 0;
+    for (const r of flowRows) {
+      if (r.flow_date.substring(0, 10) !== today) continue;
+      if (r.movement_type === 'entry') entry += r.quantity;
+      else if (r.movement_type === 'exit') exit += r.quantity;
+    }
+    return { entry, exit };
+  }, [flowRows]);
+
+  const dailyChart = useMemo(() => {
+    const map = new Map<string, { entry: number; exit: number }>();
+    for (let i = 6; i >= 0; i--) {
+      map.set(isoDaysBack(i), { entry: 0, exit: 0 });
+    }
+    for (const r of flowRows) {
+      const b = map.get(r.flow_date.substring(0, 10));
+      if (!b) continue;
+      if (r.movement_type === 'entry') b.entry += r.quantity;
+      else if (r.movement_type === 'exit') b.exit += r.quantity;
+    }
+    return Array.from(map.entries()).map(([date, v]) => ({ date, ...v }));
+  }, [flowRows]);
+
+  const maxBar = Math.max(1, ...dailyChart.map((d) => Math.max(d.entry, d.exit)));
+
+  const topCategories = useMemo(() => {
+    const map = new Map<string, { name: string; quantity: number; value: number }>();
+    for (const r of stockRows) {
+      if (r.condition === 'damaged' || r.condition === 'sorting' || r.condition === 'sorting_pending') continue;
+      const key = r.category_id ?? 'unknown';
+      const cur = map.get(key) ?? { name: r.category_name ?? 'Pa kategori', quantity: 0, value: 0 };
+      cur.quantity += r.quantity;
+      cur.value += Number(r.line_value) || 0;
+      map.set(key, cur);
+    }
+    return Array.from(map.values()).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
+  }, [stockRows]);
+
+  const movementConfig: Record<string, { label: string; className: string; icon: typeof ArrowUpCircle }> = {
+    entry: { label: t('depot.stock.entry'), className: 'bg-emerald-100 text-emerald-700', icon: ArrowUpCircle },
+    exit: { label: t('depot.stock.exit'), className: 'bg-rose-100 text-rose-700', icon: ArrowDownCircle },
+    repair: { label: t('depot.stock.repair'), className: 'bg-amber-100 text-amber-700', icon: Wrench },
+    scrap: { label: 'Scrap', className: 'bg-slate-100 text-slate-700', icon: Package },
+    sort_in: { label: 'Sortim', className: 'bg-teal-100 text-teal-700', icon: Layers },
+  };
 
   if (loading) {
     return (
@@ -172,117 +219,134 @@ export default function DepotDashboard() {
 
       <DeliveryReviewPanel role="depot_worker" />
 
-      {/* Quick Actions - Mobile */}
       <div className="grid grid-cols-5 gap-2 lg:hidden">
-        <Link
-          to="/depot/sorting"
-          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 shadow-md ring-2 ring-teal-300 active:opacity-90 transition-opacity"
-        >
+        <Link to="/depot/sorting" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 shadow-md ring-2 ring-teal-300 active:opacity-90">
           <div className="p-2 bg-white/20 rounded-lg">
             <Layers className="w-5 h-5 text-white" />
           </div>
           <span className="text-[10px] font-bold text-white text-center leading-tight">Sortire</span>
         </Link>
-        <Link
-          to="/depot/repair-workers"
-          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-50 active:bg-amber-100 transition-colors"
-        >
+        <Link to="/depot/repair-workers" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-50 active:bg-amber-100">
           <div className="p-2 bg-amber-500 rounded-lg">
             <Wrench className="w-5 h-5 text-white" />
           </div>
           <span className="text-[10px] font-medium text-amber-700 text-center leading-tight">{t('nav.repairWorkers')}</span>
         </Link>
-        <Link
-          to="/depot/receiving"
-          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-teal-50 active:bg-teal-100 transition-colors"
-        >
+        <Link to="/depot/receiving" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-teal-50 active:bg-teal-100">
           <div className="p-2 bg-teal-500 rounded-lg">
             <ArrowUpCircle className="w-5 h-5 text-white" />
           </div>
           <span className="text-[10px] font-medium text-teal-700 text-center leading-tight">{t('depot.dashboard.registerReceiving')}</span>
         </Link>
-        <Link
-          to="/depot/stock"
-          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-emerald-50 active:bg-emerald-100 transition-colors"
-        >
+        <Link to="/depot/stock" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-emerald-50 active:bg-emerald-100">
           <div className="p-2 bg-emerald-500 rounded-lg">
             <Package className="w-5 h-5 text-white" />
           </div>
           <span className="text-[10px] font-medium text-emerald-700 text-center leading-tight">{t('nav.stock')}</span>
         </Link>
-        <Link
-          to="/depot/chat"
-          className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-cyan-50 active:bg-cyan-100 transition-colors"
-        >
+        <Link to="/depot/reports" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-cyan-50 active:bg-cyan-100">
           <div className="p-2 bg-cyan-500 rounded-lg">
-            <MessageSquare className="w-5 h-5 text-white" />
+            <BarChart3 className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[10px] font-medium text-cyan-700 text-center leading-tight">{t('nav.chat')}</span>
+          <span className="text-[10px] font-medium text-cyan-700 text-center leading-tight">Raporte</span>
         </Link>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label={t('depot.dashboard.totalStock')} value={stats.totalStock} icon={Package} color="bg-teal-500" />
-        <StatCard label={t('depot.dashboard.entryToday')} value={stats.entryToday} icon={ArrowUpCircle} color="bg-emerald-500" />
-        <StatCard label={t('depot.dashboard.exitToday')} value={stats.exitToday} icon={ArrowDownCircle} color="bg-cyan-500" />
-        <Link to="/depot/repairs" className="block">
-          <StatCard label={t('depot.dashboard.pendingRepairs')} value={stats.pendingRepairs} icon={Wrench} color="bg-amber-500" />
-        </Link>
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <StatCard label="Stoku total" value={totals.total} icon={Package} color="bg-teal-500" />
+        <StatCard label="Vlera stoku" value={fmtMoney(totals.value, totals.currency)} icon={Euro} color="bg-emerald-600" isText />
+        <StatCard label="Te mira" value={totals.good} icon={Package} color="bg-emerald-500" />
+        <StatCard label="Te demtuara" value={totals.damaged} icon={Wrench} color="bg-rose-500" />
+        <StatCard label="Hyrje sot" value={todayFlow.entry} icon={ArrowUpCircle} color="bg-cyan-500" />
+        <StatCard label="Dalje sot" value={todayFlow.exit} icon={ArrowDownCircle} color="bg-slate-500" />
       </div>
-
-      {/* Low Stock Alert Banner */}
-      {lowStockItems.length > 0 && (
-        <div className="bg-red-50 border border-red-100 rounded-xl p-3.5 lg:hidden">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingDown className="w-4 h-4 text-red-500" />
-            <span className="text-xs font-semibold text-red-700">{t('depot.dashboard.lowStock')}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {lowStockItems.map((item) => (
-              <span key={item.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white text-xs font-medium text-red-700 border border-red-200">
-                {item.productName || item.categoryName}
-                <span className="font-bold">{item.quantity}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Recent Movements */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-gray-900 text-sm">Hyrje vs Dalje — 7 dite</h2>
+            <Link to="/depot/reports" className="text-xs text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">
+              Raporte <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="flex items-end gap-2 h-36">
+            {dailyChart.map((d) => (
+              <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                <div className="flex items-end gap-0.5 h-28 w-full justify-center">
+                  <div className="w-3 bg-emerald-500 rounded-t transition-all" style={{ height: `${(d.entry / maxBar) * 100}%` }} title={`Hyrje: ${d.entry}`} />
+                  <div className="w-3 bg-rose-500 rounded-t transition-all" style={{ height: `${(d.exit / maxBar) * 100}%` }} title={`Dalje: ${d.exit}`} />
+                </div>
+                <span className="text-[10px] text-slate-500">{d.date.substring(5)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-600">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Hyrje</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-rose-500" /> Dalje</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-gray-900 text-sm">Kategorite kryesore</h2>
+            <Link to="/depot/stock" className="text-xs text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">
+              Stoku <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          {topCategories.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400">Asnje stok i regjistruar</div>
+          ) : (
+            <ul className="space-y-2">
+              {topCategories.map((c) => (
+                <li key={c.name} className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{c.name}</p>
+                    <p className="text-[11px] text-slate-500">{fmtMoney(c.value, totals.currency)}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-700">
+                    {c.quantity.toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="px-4 py-3.5 border-b border-gray-100">
+          <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 text-sm">{t('depot.dashboard.recentMovements')}</h2>
+            <Link to="/depot/reports" className="text-xs text-teal-700 hover:text-teal-900">
+              Te gjitha
+            </Link>
           </div>
           <div className="divide-y divide-gray-50">
-            {recentMovements.length === 0 ? (
+            {recent.length === 0 ? (
               <div className="p-10 text-center">
                 <Package className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-gray-400 text-xs">{t('depot.dashboard.noMovements')}</p>
               </div>
             ) : (
-              recentMovements.map((m) => {
-                const cfg = movementConfig[m.movement_type];
-                const Icon = cfg?.icon ?? Package;
+              recent.map((m) => {
+                const cfg = movementConfig[m.movement_type] ?? { label: m.movement_type, className: 'bg-gray-100 text-gray-700', icon: Package };
+                const Icon = cfg.icon;
                 return (
-                  <div key={m.id} className="px-4 py-3 hover:bg-gray-50 active:bg-gray-50 transition-colors">
+                  <div key={m.id} className="px-4 py-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`p-1.5 rounded-lg ${cfg?.className ?? 'bg-gray-100'}`}>
+                        <div className={`p-1.5 rounded-lg ${cfg.className}`}>
                           <Icon className="w-3.5 h-3.5" />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${cfg?.className ?? 'bg-gray-100 text-gray-700'}`}>
-                              {cfg?.label ?? m.movement_type}
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${cfg.className}`}>
+                              {cfg.label}
                             </span>
                             <span className="text-sm font-medium text-gray-900">{m.quantity} {t('common.pieces')}</span>
                           </div>
                           <p className="text-xs text-gray-500 mt-0.5 truncate">
-                            {(m.product as any)?.name
-                              ? `${(m.product as any).name}${(m.category as any)?.name ? ` (${(m.category as any).name})` : ''}`
-                              : (m.category as any)?.name ?? '-'} &middot; {(m.performer as any)?.full_name ?? '-'}
+                            {m.product?.name ? `${m.product.name}${m.category?.name ? ` (${m.category.name})` : ''}` : m.category?.name ?? '-'} · {m.performer?.full_name ?? '-'}
                           </p>
                         </div>
                       </div>
@@ -297,105 +361,51 @@ export default function DepotDashboard() {
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-5">
-          {/* Low Stock - Desktop */}
-          <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="px-4 py-3.5 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <TrendingDown className="w-4 h-4 text-red-500" />
-                <h2 className="font-semibold text-gray-900 text-sm">{t('depot.dashboard.lowStock')}</h2>
-              </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingDown className="w-4 h-4 text-rose-500" />
+              <h2 className="font-semibold text-gray-900 text-sm">Ne proces</h2>
             </div>
-            <div className="divide-y divide-gray-50">
-              {lowStockItems.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Package className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                  <p className="text-xs text-gray-400">{t('depot.dashboard.noLowStock')}</p>
-                </div>
-              ) : (
-                lowStockItems.map((item) => (
-                  <div key={item.id} className="px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{item.productName || item.categoryName}</p>
-                      <p className="text-xs text-gray-500 capitalize">
-                        {item.productName ? `${item.categoryName} · ` : ''}{item.condition}
-                      </p>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                      {item.quantity}
-                    </span>
-                  </div>
-                ))
-              )}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <MiniStat label="Demtuar" value={totals.damaged} tone="rose" />
+              <MiniStat label="Sortim" value={totals.sorting} tone="teal" />
+              <MiniStat label="Reparuar" value={totals.repaired} tone="amber" />
             </div>
           </div>
 
-          {/* Quick Actions - Desktop */}
           <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="px-4 py-3.5 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900 text-sm">{t('depot.dashboard.quickActions')}</h2>
             </div>
             <div className="p-4 space-y-2">
-              <Link
-                to="/depot/sorting"
-                className="flex items-center justify-between p-3.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-md ring-2 ring-teal-200 transition-all group"
-              >
+              <Link to="/depot/sorting" className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-md ring-2 ring-teal-200 transition-all group">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
-                    <Layers className="w-4 h-4 text-white" />
-                  </div>
+                  <div className="p-2 bg-white/20 rounded-lg"><Layers className="w-4 h-4 text-white" /></div>
                   <span className="text-sm font-bold text-white">Sortire (Selektimi)</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/80 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link
-                to="/depot/repair-workers"
-                className="flex items-center justify-between p-3.5 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group"
-              >
+              <Link to="/depot/repair-workers" className="flex items-center justify-between p-3 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-500 rounded-lg">
-                    <Wrench className="w-4 h-4 text-white" />
-                  </div>
+                  <div className="p-2 bg-amber-500 rounded-lg"><Wrench className="w-4 h-4 text-white" /></div>
                   <span className="text-sm font-medium text-amber-900">{t('nav.repairWorkers')}</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link
-                to="/depot/receiving"
-                className="flex items-center justify-between p-3.5 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors group"
-              >
+              <Link to="/depot/reports" className="flex items-center justify-between p-3 bg-cyan-50 rounded-xl hover:bg-cyan-100 transition-colors group">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-teal-500 rounded-lg">
-                    <ArrowUpCircle className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-teal-900">{t('depot.dashboard.registerReceiving')}</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-teal-400 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                to="/depot/receiving"
-                className="flex items-center justify-between p-3.5 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-500 rounded-lg">
-                    <ArrowDownCircle className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-emerald-900">{t('depot.dashboard.registerShipping')}</span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                to="/depot/chat"
-                className="flex items-center justify-between p-3.5 bg-cyan-50 rounded-xl hover:bg-cyan-100 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-cyan-500 rounded-lg">
-                    <MessageSquare className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-cyan-900">{t('nav.chat')}</span>
+                  <div className="p-2 bg-cyan-500 rounded-lg"><BarChart3 className="w-4 h-4 text-white" /></div>
+                  <span className="text-sm font-medium text-cyan-900">Raporte</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link to="/depot/chat" className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-500 rounded-lg"><MessageSquare className="w-4 h-4 text-white" /></div>
+                  <span className="text-sm font-medium text-slate-900">{t('nav.chat')}</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -405,20 +415,46 @@ export default function DepotDashboard() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color }: {
-  label: string; value: number; icon: typeof Package; color: string;
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  isText,
+}: {
+  label: string;
+  value: number | string;
+  icon: typeof Package;
+  color: string;
+  isText?: boolean;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3.5 lg:p-5">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3.5 lg:p-4">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] lg:text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-          <p className="text-xl lg:text-3xl font-bold text-gray-900 mt-1">{value}</p>
+        <div className="min-w-0">
+          <p className="text-[10px] lg:text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
+          <p className={`${isText ? 'text-lg lg:text-xl' : 'text-xl lg:text-2xl'} font-bold text-gray-900 mt-1 truncate`}>
+            {typeof value === 'number' ? value.toLocaleString() : value}
+          </p>
         </div>
-        <div className={`${color} p-2 lg:p-2.5 rounded-xl`}>
-          <Icon className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+        <div className={`${color} p-2 rounded-lg flex-shrink-0`}>
+          <Icon className="w-4 h-4 text-white" />
         </div>
       </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, tone }: { label: string; value: number; tone: 'rose' | 'teal' | 'amber' }) {
+  const toneMap: Record<string, string> = {
+    rose: 'bg-rose-50 text-rose-700',
+    teal: 'bg-teal-50 text-teal-700',
+    amber: 'bg-amber-50 text-amber-700',
+  };
+  return (
+    <div className={`rounded-lg p-2 ${toneMap[tone]}`}>
+      <div className="text-[10px] uppercase tracking-wide opacity-75">{label}</div>
+      <div className="text-lg font-bold">{value.toLocaleString()}</div>
     </div>
   );
 }
