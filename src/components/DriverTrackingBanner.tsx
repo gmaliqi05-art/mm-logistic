@@ -1,79 +1,42 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { MapPin, X, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDriverTracking } from '../contexts/DriverTrackingContext';
 
-const DISMISS_KEY = 'driver_tracking_banner_dismissed_until';
-
-export default function DriverTrackingBanner() {
+export default function DriverTrackingIndicator() {
   const { profile } = useAuth();
-  const { enabled, state, isWithinWorkingWindow, shiftStartHour, shiftEndHour, overtimeUntil } = useDriverTracking();
-  const location = useLocation();
-  const [dismissed, setDismissed] = useState<number>(() => Number(localStorage.getItem(DISMISS_KEY) ?? 0));
+  const { enabled, state, isWithinWorkingWindow, overtimeUntil } = useDriverTracking();
 
   if (!profile?.id || profile.role !== 'driver') return null;
 
-  const onTrackingPage = location.pathname.startsWith('/driver/tracking');
+  const active = enabled && state.active;
+  const lastSent = state.lastSentAt ? new Date(state.lastSentAt) : null;
+  const lastSentLabel = lastSent ? lastSent.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
-  if (enabled && state.active) {
-    if (onTrackingPage) return null;
-    const lastSent = state.lastSentAt ? new Date(state.lastSentAt) : null;
-    const lastSentLabel = lastSent ? lastSent.toLocaleTimeString() : '';
-    return (
-      <Link
-        to="/driver/tracking"
-        className="sticky top-14 lg:top-16 z-[850] block bg-emerald-600 text-white shadow-md hover:bg-emerald-700 transition-colors"
-      >
-        <div className="max-w-5xl mx-auto flex items-center gap-3 px-4 py-2 text-sm">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
-          </span>
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-          <span className="font-semibold">GPS aktiv{overtimeUntil ? ' (overtime)' : ''}</span>
-          {overtimeUntil && (
-            <span className="text-emerald-50 text-xs">· deri {overtimeUntil.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-          )}
-          {!overtimeUntil && lastSentLabel && <span className="text-emerald-50 text-xs">· pika e fundit {lastSentLabel}</span>}
-          <span className="ml-auto text-xs text-emerald-100 hidden sm:inline">Kontrollo</span>
-        </div>
-      </Link>
-    );
+  let colorClasses = 'bg-gray-100 text-gray-400 ring-1 ring-gray-200';
+  let title = 'GPS i fikur — klikoni per te aktivizuar';
+  if (active) {
+    colorClasses = 'bg-emerald-500 text-white ring-2 ring-emerald-200';
+    title = `GPS aktiv${overtimeUntil ? ' (overtime)' : ''}${lastSentLabel ? ` · pika e fundit ${lastSentLabel}` : ''}`;
+  } else if (isWithinWorkingWindow) {
+    colorClasses = 'bg-amber-500 text-white ring-2 ring-amber-200';
+    title = 'GPS i fikur — brenda orarit, aktivizoni ndjekjen';
   }
 
-  const dismissedUntil = dismissed;
-  const isDismissed = dismissedUntil > Date.now();
-  if (!isWithinWorkingWindow || enabled || isDismissed) return null;
-
   return (
-    <div className="sticky top-14 lg:top-16 z-[850] bg-amber-500 text-white shadow-md">
-      <div className="max-w-5xl mx-auto flex items-center gap-3 px-4 py-2.5">
-        <MapPin className="w-5 h-5 flex-shrink-0" />
-        <div className="flex-1 min-w-0 text-sm">
-          <div className="font-semibold">Tracking-u eshte i fikur</div>
-          <div className="text-xs text-amber-50 truncate">
-            Brenda orarit te punes ({shiftStartHour}:00 - {shiftEndHour}:00). Aktivizo ndjekjen e pozicionit.
-          </div>
-        </div>
-        <Link
-          to="/driver/tracking"
-          className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-white text-amber-700 text-xs font-semibold hover:bg-amber-50"
-        >
-          Hap tracking-un
-        </Link>
-        <button
-          onClick={() => {
-            const until = Date.now() + 60 * 60 * 1000;
-            localStorage.setItem(DISMISS_KEY, String(until));
-            setDismissed(until);
-          }}
-          className="flex-shrink-0 p-1 rounded hover:bg-amber-600"
-          aria-label="Mbyll"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
+    <Link
+      to="/driver/tracking"
+      aria-label={title}
+      title={title}
+      className={`relative inline-flex items-center justify-center w-9 h-9 rounded-full transition-all hover:scale-105 ${colorClasses}`}
+    >
+      <MapPin className="w-[18px] h-[18px]" />
+      {active && (
+        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 ring-2 ring-white" />
+        </span>
+      )}
+    </Link>
   );
 }

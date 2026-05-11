@@ -17,7 +17,7 @@ import { useTranslation } from '../i18n';
 import { useCompanyBranding } from '../hooks/useCompanyBranding';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import DriverTrackingBanner from '../components/DriverTrackingBanner';
+import DriverTrackingIndicator from '../components/DriverTrackingBanner';
 import DriverShiftEndModal from '../components/DriverShiftEndModal';
 import { DriverTrackingProvider } from '../contexts/DriverTrackingContext';
 
@@ -109,13 +109,14 @@ export default function DriverLayout() {
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
         {/* Mobile Header */}
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-30 lg:h-16 lg:px-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-1.5 -ml-1.5 rounded-lg text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
+            <DriverTrackingIndicator />
             <div className="flex items-center gap-2 lg:hidden">
               {brandLogo && (
                 <img src={brandLogo} alt={brandName} className="w-7 h-7 rounded object-cover" />
@@ -138,7 +139,6 @@ export default function DriverLayout() {
           </div>
         </header>
 
-        <DriverTrackingBanner />
         <DriverShiftEndModal />
         <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
           <Outlet />
