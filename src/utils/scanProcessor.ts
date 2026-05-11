@@ -48,32 +48,47 @@ export function applyScanFilter(canvas: HTMLCanvasElement, mode: ScanFilter): vo
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const width = canvas.width;
+  const height = canvas.height;
+  const imageData = ctx.getImageData(0, 0, width, height);
   const data = imageData.data;
 
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-
-    if (mode === 'bw') {
-      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-      const adjusted = gray > 140 ? 255 : gray < 60 ? 0 : Math.round((gray - 60) * (255 / 80));
-      const bw = adjusted > 128 ? 255 : 0;
-      data[i] = bw;
-      data[i + 1] = bw;
-      data[i + 2] = bw;
-    } else if (mode === 'grayscale') {
-      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-      const enhanced = Math.min(255, Math.max(0, (gray - 60) * 1.6));
-      data[i] = enhanced;
-      data[i + 1] = enhanced;
-      data[i + 2] = enhanced;
-    } else {
-      const factor = 1.4;
-      data[i] = Math.min(255, Math.max(0, (r - 128) * factor + 128));
-      data[i + 1] = Math.min(255, Math.max(0, (g - 128) * factor + 128));
-      data[i + 2] = Math.min(255, Math.max(0, (b - 128) * factor + 128));
+  if (mode === 'bw') {
+    const gray = new Uint8Array(width * height);
+    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+      gray[j] = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+    }
+    let windowSize = Math.max(15, Math.round(Math.min(width, height) / 40));
+    if (windowSize % 2 === 0) windowSize += 1;
+    const binarized = sauvolaBinarize(gray, width, height, windowSize, 0.2, 128);
+    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+      const v = binarized[j] === 1 ? 255 : 0;
+      data[i] = v;
+      data[i + 1] = v;
+      data[i + 2] = v;
+    }
+  } else if (mode === 'grayscale') {
+    let minL = 255;
+    let maxL = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const l = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+      if (l < minL) minL = l;
+      if (l > maxL) maxL = l;
+    }
+    const range = Math.max(1, maxL - minL);
+    for (let i = 0; i < data.length; i += 4) {
+      const g = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      const stretched = Math.min(255, Math.max(0, ((g - minL) * 255) / range));
+      data[i] = stretched;
+      data[i + 1] = stretched;
+      data[i + 2] = stretched;
+    }
+  } else {
+    const factor = 1.1;
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = Math.min(255, Math.max(0, (data[i] - 128) * factor + 128));
+      data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - 128) * factor + 128));
+      data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - 128) * factor + 128));
     }
   }
 

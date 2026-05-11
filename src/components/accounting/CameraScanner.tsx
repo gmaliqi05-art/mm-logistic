@@ -261,7 +261,67 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
     const area = polygonArea([tl, tr, br, bl]);
     if (area < total * 0.1) return null;
 
-    return [tl, tr, br, bl];
+    const quad: Quad = [tl, tr, br, bl];
+    if (!isQuadGeometryValid(quad)) return null;
+
+    return quad;
+  }
+
+  function isQuadGeometryValid(q: Quad): boolean {
+    const cross = (ax: number, ay: number, bx: number, by: number) => ax * by - ay * bx;
+    let sign = 0;
+    for (let i = 0; i < 4; i++) {
+      const a = q[i];
+      const b = q[(i + 1) % 4];
+      const c = q[(i + 2) % 4];
+      const z = cross(b.x - a.x, b.y - a.y, c.x - b.x, c.y - b.y);
+      if (z !== 0) {
+        const s = z > 0 ? 1 : -1;
+        if (sign === 0) sign = s;
+        else if (sign !== s) return false;
+      }
+    }
+
+    const angleDeg = (p: Pt, q1: Pt, r: Pt) => {
+      const v1x = p.x - q1.x, v1y = p.y - q1.y;
+      const v2x = r.x - q1.x, v2y = r.y - q1.y;
+      const n1 = Math.hypot(v1x, v1y);
+      const n2 = Math.hypot(v2x, v2y);
+      if (n1 === 0 || n2 === 0) return 0;
+      const cos = Math.max(-1, Math.min(1, (v1x * v2x + v1y * v2y) / (n1 * n2)));
+      return (Math.acos(cos) * 180) / Math.PI;
+    };
+    for (let i = 0; i < 4; i++) {
+      const ang = angleDeg(q[(i + 3) % 4], q[i], q[(i + 1) % 4]);
+      if (ang < 55 || ang > 125) return false;
+    }
+
+    const edgeAngle = (a: Pt, b: Pt) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+    const diffDeg = (a: number, b: number) => {
+      let d = Math.abs(a - b) % 180;
+      if (d > 90) d = 180 - d;
+      return d;
+    };
+    const topA = edgeAngle(q[0], q[1]);
+    const botA = edgeAngle(q[3], q[2]);
+    const leftA = edgeAngle(q[0], q[3]);
+    const rightA = edgeAngle(q[1], q[2]);
+    if (diffDeg(topA, botA) > 18) return false;
+    if (diffDeg(leftA, rightA) > 18) return false;
+
+    const midX = (q[0].x + q[1].x + q[2].x + q[3].x) / 4;
+    const midY = (q[0].y + q[1].y + q[2].y + q[3].y) / 4;
+    const dTL_BR = { x: (q[0].x + q[2].x) / 2, y: (q[0].y + q[2].y) / 2 };
+    const dTR_BL = { x: (q[1].x + q[3].x) / 2, y: (q[1].y + q[3].y) / 2 };
+    const diag = Math.hypot(q[2].x - q[0].x, q[2].y - q[0].y);
+    if (diag > 0) {
+      const drift = Math.hypot(dTL_BR.x - dTR_BL.x, dTL_BR.y - dTR_BL.y) / diag;
+      if (drift > 0.08) return false;
+      const centerDrift = Math.hypot(dTL_BR.x - midX, dTL_BR.y - midY) / diag;
+      if (centerDrift > 0.12) return false;
+    }
+
+    return true;
   }
 
   function polygonArea(pts: Pt[]): number {
@@ -331,16 +391,23 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
   function enhanceCanvas(ctx: CanvasRenderingContext2D, w: number, h: number) {
     const imgData = ctx.getImageData(0, 0, w, h);
     const d = imgData.data;
-    let minL = 255;
-    let maxL = 0;
+    const hist = new Uint32Array(256);
     for (let i = 0; i < d.length; i += 4) {
-      const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-      if (l < minL) minL = l;
-      if (l > maxL) maxL = l;
+      const l = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) | 0;
+      hist[l]++;
     }
+    const total = (d.length / 4) | 0;
+    const loCut = total * 0.02;
+    const hiCut = total * 0.98;
+    let acc = 0;
+    let minL = 0;
+    let maxL = 255;
+    for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= loCut) { minL = i; break; } }
+    acc = 0;
+    for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= hiCut) { maxL = i; break; } }
     const range = Math.max(1, maxL - minL);
-    const contrast = 1.25;
-    const brightness = 10;
+    const contrast = 1.08;
+    const brightness = 4;
     for (let i = 0; i < d.length; i += 4) {
       for (let c = 0; c < 3; c++) {
         let v = d[i + c];
@@ -412,7 +479,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       const paper = detectPaperSize(aspectRatio);
       setPaperInfo(paper);
 
-      const initialFilter: ScanFilter = stats.isText ? 'bw' : 'color';
+      const initialFilter: ScanFilter = 'color';
       setFilter(initialFilter);
       await renderFilter(initialFilter);
     } catch (err) {

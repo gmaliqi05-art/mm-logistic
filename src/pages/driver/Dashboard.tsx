@@ -996,8 +996,6 @@ export function TaskDetailSheet({
       let detectedEmail: string | null = null;
       let detectedPhone: string | null = null;
       let detectedAddress: string | null = null;
-      let needsReview = false;
-
       if (supplierIsUs && customerIsUs) {
         update.flow_role = 'internal_transfer';
         update.partner_name = null;
@@ -1022,7 +1020,6 @@ export function TaskDetailSheet({
         detectedEmail = isPickup ? supplierEmail : null;
         detectedPhone = isPickup ? supplierPhone : null;
         detectedAddress = isPickup ? supplierAddress : customerAddress;
-        needsReview = true;
       }
 
       if (update.flow_role !== 'internal_transfer') {
