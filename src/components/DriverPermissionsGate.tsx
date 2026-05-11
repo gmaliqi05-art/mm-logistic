@@ -32,6 +32,7 @@ export default function DriverPermissionsGate() {
   const [geoState, setGeoState] = useState<PermissionState | 'unknown'>('unknown');
   const [dismissed, setDismissed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile?.role !== 'driver') return;
@@ -119,71 +120,49 @@ export default function DriverPermissionsGate() {
   const enablePush = async () => {
     setBusy(true);
     try {
-      await subscribe({ silent: false });
+      const ok = await subscribe({ silent: false });
+      if (!ok && Notification.permission === 'denied') {
+        setHint('Njoftimet jane te bllokuara. Hapi nga cilesimet e shfletuesit.');
+      }
     } finally {
       setBusy(false);
     }
   };
 
+  const needLabel = geoBlocked && pushBlocked
+    ? 'Aktivizo lokacionin dhe njoftimet'
+    : geoBlocked
+      ? 'Aktivizo lokacionin'
+      : 'Aktivizo njoftimet';
+  const Icon = geoBlocked && !pushBlocked ? MapPin : Bell;
+  const handleClick = () => {
+    if (geoBlocked) void enableGeo();
+    if (pushBlocked) void enablePush();
+  };
+
   return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 mb-4 flex flex-col sm:flex-row sm:items-start gap-3">
-      <div className="flex-1 min-w-0">
-        <div className="font-semibold text-amber-900 mb-1">
-          Lejime te nevojshme
-        </div>
-        <ul className="text-sm text-amber-800 space-y-1">
-          {geoBlocked && (
-            <li className="flex items-start gap-2">
-              <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>
-                Lokacioni eshte i bllokuar. Hape nga cilesimet e shfletuesit qe
-                kompania te shohe gjurmimin tuaj.
-              </span>
-            </li>
-          )}
-          {pushBlocked && (
-            <li className="flex items-start gap-2">
-              <Bell className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>
-                Njoftimet jane te bllokuara. Aktivizoji per te marre lajmerime
-                kur kompania te kerkon veprim.
-              </span>
-            </li>
-          )}
-        </ul>
-        <div className="flex flex-wrap gap-2 mt-3">
-          {geoBlocked && (
-            <button
-              type="button"
-              onClick={enableGeo}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
-            >
-              <MapPin className="w-3.5 h-3.5" />
-              Lejo lokacionin
-            </button>
-          )}
-          {pushBlocked && (
-            <button
-              type="button"
-              onClick={enablePush}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
-            >
-              <Bell className="w-3.5 h-3.5" />
-              Lejo njoftimet
-            </button>
-          )}
-        </div>
+    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 mb-3">
+      <div className="flex items-center gap-2">
+        <Icon className="w-4 h-4 text-amber-700 flex-shrink-0" />
+        <span className="text-xs text-amber-900 flex-1 min-w-0 truncate">{needLabel}</span>
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={busy}
+          className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-md bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60 flex-shrink-0"
+        >
+          {busy ? '...' : 'Aktivizo'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="text-amber-700 hover:text-amber-900 flex-shrink-0"
+          aria-label="Mbyll"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={() => setDismissed(true)}
-        className="text-amber-700 hover:text-amber-900 self-start"
-        aria-label="Mbyll"
-      >
-        <X className="w-4 h-4" />
-      </button>
+      {hint && <p className="text-[11px] text-amber-800 mt-1 pl-6">{hint}</p>}
     </div>
   );
 }

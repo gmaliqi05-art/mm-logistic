@@ -13,13 +13,13 @@ export default function DriverTrackingIndicator() {
   const lastSent = state.lastSentAt ? new Date(state.lastSentAt) : null;
   const lastSentLabel = lastSent ? lastSent.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
-  let colorClasses = 'bg-gray-100 text-gray-400 ring-1 ring-gray-200';
+  let iconColor = 'text-gray-400';
   let title = 'GPS i fikur — klikoni per te aktivizuar';
   if (active) {
-    colorClasses = 'bg-emerald-500 text-white ring-2 ring-emerald-200';
+    iconColor = 'text-emerald-600';
     title = `GPS aktiv${overtimeUntil ? ' (overtime)' : ''}${lastSentLabel ? ` · pika e fundit ${lastSentLabel}` : ''}`;
   } else if (isWithinWorkingWindow) {
-    colorClasses = 'bg-amber-500 text-white ring-2 ring-amber-200';
+    iconColor = 'text-amber-600';
     title = 'GPS i fikur — brenda orarit, aktivizoni ndjekjen';
   }
 
@@ -28,13 +28,13 @@ export default function DriverTrackingIndicator() {
       to="/driver/tracking"
       aria-label={title}
       title={title}
-      className={`relative inline-flex items-center justify-center w-9 h-9 rounded-full transition-all hover:scale-105 ${colorClasses}`}
+      className="relative inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 transition-colors"
     >
-      <MapPin className="w-[18px] h-[18px]" />
+      <MapPin className={`w-[20px] h-[20px] ${iconColor}`} />
       {active && (
-        <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+        <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 ring-2 ring-white" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 ring-2 ring-white" />
         </span>
       )}
     </Link>
