@@ -173,6 +173,7 @@ export const de: typeof sq = {
     stock: 'Bestand',
     categories: 'Kategorie/Produkte',
     documents: 'Dokumente',
+    myDocuments: 'Meine Dokumente',
     tracking: 'Ortung',
     navigation: 'Navigation',
     liveMap: 'Live-Karte',

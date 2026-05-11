@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download, BarChart3 } from 'lucide-react';
+import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download, BarChart3, Contact as IdCard } from 'lucide-react';
+import DriverIdentityPanel from '../../components/fleet/DriverIdentityPanel';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
@@ -8,7 +9,7 @@ import { LICENSE_CATEGORIES, daysUntil } from '../../lib/fleetCompliance';
 import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 
-interface DriverProfile { id: string; full_name: string; email: string; phone: string; is_active: boolean; depot_id: string | null; }
+interface DriverProfile { id: string; full_name: string; email: string; phone: string; is_active: boolean; depot_id: string | null; residency_status?: 'citizen' | 'permanent_resident' | 'work_visa_holder'; }
 interface License { id: string; license_number: string; license_categories: string[]; issued_date: string | null; issued_country: string; expiry_date: string; }
 interface Qualification { id: string; qualification_type: string; expiry_date: string; module_hours: number | null; issued_date: string | null; }
 interface Medical { id: string; exam_type: string; expiry_date: string; doctor: string; issued_date: string | null; }
@@ -25,7 +26,7 @@ export default function DriverDetail() {
   const [medicals, setMedicals] = useState<Medical[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'license' | 'qualifications' | 'medical' | 'vehicles'>('license');
+  const [tab, setTab] = useState<'license' | 'qualifications' | 'medical' | 'identity' | 'vehicles'>('license');
   const [addMode, setAddMode] = useState<null | 'license' | 'qualification' | 'medical'>(null);
   const [scannerCat, setScannerCat] = useState<string | null>(null);
   const [scans, setScans] = useState<Array<{ id: string; detected_category: string; doc_category: string; file_name: string; storage_path: string; created_at: string; status: string }>>([]);
@@ -35,7 +36,7 @@ export default function DriverDetail() {
   async function fetchAll() {
     setLoading(true);
     const [p, l, q, m, a] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, email, phone, is_active, depot_id').eq('id', id!).maybeSingle(),
+      supabase.from('profiles').select('id, full_name, email, phone, is_active, depot_id, residency_status').eq('id', id!).maybeSingle(),
       supabase.from('driver_licenses').select('*').eq('driver_id', id!).order('expiry_date', { ascending: false }),
       supabase.from('driver_qualifications').select('*').eq('driver_id', id!).order('expiry_date', { ascending: false }),
       supabase.from('driver_medical').select('*').eq('driver_id', id!).order('expiry_date', { ascending: false }),
@@ -137,6 +138,7 @@ export default function DriverDetail() {
           <TabBtn active={tab === 'license'} onClick={() => setTab('license')} icon={<CreditCard className="w-4 h-4" />}>Patenta (FeV)</TabBtn>
           <TabBtn active={tab === 'qualifications'} onClick={() => setTab('qualifications')} icon={<GraduationCap className="w-4 h-4" />}>Kualifikime</TabBtn>
           <TabBtn active={tab === 'medical'} onClick={() => setTab('medical')} icon={<Stethoscope className="w-4 h-4" />}>Mjeksor</TabBtn>
+          <TabBtn active={tab === 'identity'} onClick={() => setTab('identity')} icon={<IdCard className="w-4 h-4" />}>Identiteti</TabBtn>
           <TabBtn active={tab === 'vehicles'} onClick={() => setTab('vehicles')} icon={<TruckIcon className="w-4 h-4" />}>Mjetet</TabBtn>
         </div>
 
@@ -258,6 +260,16 @@ export default function DriverDetail() {
                 </div>
               )}
             </>
+          )}
+
+          {tab === 'identity' && (
+            <DriverIdentityPanel
+              driverId={id!}
+              companyId={profile!.company_id!}
+              canEdit={profile?.role === 'company_admin' || profile?.role === 'logistics_admin'}
+              residencyStatus={driver.residency_status || 'citizen'}
+              onResidencyChange={(s) => setDriver((cur) => (cur ? { ...cur, residency_status: s } : cur))}
+            />
           )}
 
           {tab === 'vehicles' && (

@@ -173,6 +173,7 @@ export const en: typeof sq = {
     stock: 'Stock',
     categories: 'Category/Products',
     documents: 'Documents',
+    myDocuments: 'My Documents',
     tracking: 'Tracking',
     navigation: 'Navigation',
     liveMap: 'Live Map',

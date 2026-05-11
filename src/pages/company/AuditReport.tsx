@@ -125,6 +125,11 @@ export default function CompanyAuditReport() {
           .gte('started_at', ninetyDaysAgo),
         supabase.from('compliance_reminders').select('entity_type, compliance_type, expiry_date').eq('company_id', companyId),
       ]);
+      const identityRes = await supabase
+        .from('driver_identity_documents')
+        .select('driver_id, document_type, expiry_date')
+        .eq('company_id', companyId);
+      const identity = identityRes.data ?? [];
 
       if (driversRes.error) throw driversRes.error;
       const drivers = driversRes.data ?? [];
@@ -227,6 +232,61 @@ export default function CompanyAuditReport() {
           timeline: '30-90 days',
         });
       }
+      const expiredVisa = identity.filter((i) => i.document_type === 'work_visa' && (() => { const d = daysFromNow(i.expiry_date); return d !== null && d < 0; })() && driverIds.has(i.driver_id)).length;
+      const soonVisa = identity.filter((i) => i.document_type === 'work_visa' && (() => { const d = daysFromNow(i.expiry_date); return d !== null && d >= 0 && d <= 90; })() && driverIds.has(i.driver_id)).length;
+      const expiredIdDocs = identity.filter((i) => ['national_id','passport','residence_permit'].includes(i.document_type) && (() => { const d = daysFromNow(i.expiry_date); return d !== null && d < 0; })() && driverIds.has(i.driver_id)).length;
+      const driversWithAnyId = new Set(identity.filter((i) => driverIds.has(i.driver_id)).map((i) => i.driver_id));
+      const missingIdDocs = [...driverIds].filter((id) => !driversWithAnyId.has(id)).length;
+
+      if (expiredVisa > 0) {
+        findings.push({
+          id: 'drv-visa-expired',
+          domain: 'driver',
+          severity: 'critical',
+          count: expiredVisa,
+          title: 'Driver work visas expired',
+          detail: `${expiredVisa} work visa(s) have expired. Without a valid visa, drivers cannot legally work.`,
+          recommendation: 'Suspend affected drivers from dispatch; initiate visa renewal with immigration authority.',
+          timeline: '0-30 days',
+        });
+      }
+      if (soonVisa > 0) {
+        findings.push({
+          id: 'drv-visa-soon',
+          domain: 'driver',
+          severity: 'high',
+          count: soonVisa,
+          title: 'Work visas expiring within 90 days',
+          detail: `${soonVisa} work visa(s) are due to expire within 90 days.`,
+          recommendation: 'Begin renewal paperwork immediately; processing times can exceed 60 days.',
+          timeline: '0-30 days',
+        });
+      }
+      if (expiredIdDocs > 0) {
+        findings.push({
+          id: 'drv-id-expired',
+          domain: 'driver',
+          severity: 'high',
+          count: expiredIdDocs,
+          title: 'Expired identity documents (ID / passport / residence permit)',
+          detail: `${expiredIdDocs} identity document(s) past expiry across active drivers.`,
+          recommendation: 'Require renewal; cannot verify identity for cross-border operations.',
+          timeline: '0-30 days',
+        });
+      }
+      if (missingIdDocs > 0) {
+        findings.push({
+          id: 'drv-id-missing',
+          domain: 'driver',
+          severity: 'medium',
+          count: missingIdDocs,
+          title: 'Drivers with no identity document scanned',
+          detail: `${missingIdDocs} active driver(s) have no ID card, passport, residence permit or work visa on file.`,
+          recommendation: 'Collect two-sided scans (front/back) via the driver detail screen.',
+          timeline: '0-30 days',
+        });
+      }
+
       if (trackingOff > 0) {
         findings.push({
           id: 'drv-tracking-off',

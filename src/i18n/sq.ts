@@ -171,6 +171,7 @@ export const sq = {
     stock: 'Stoku',
     categories: 'Kategoria/Produktet',
     documents: 'Dokumentet',
+    myDocuments: 'Dokumentet e Mia',
     tracking: 'Gjurmimi',
     navigation: 'Navigimi',
     liveMap: 'Harta Direkt',

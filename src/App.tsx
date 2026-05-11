@@ -111,6 +111,7 @@ const DepotDocuments = lazy(() => import('./pages/depot/Documents'));
 const DriverDashboard = lazy(() => import('./pages/driver/Dashboard'));
 const DriverChat = lazy(() => import('./pages/driver/Chat'));
 const DriverDocuments = lazy(() => import('./pages/driver/Documents'));
+const DriverMyDocuments = lazy(() => import('./pages/driver/MyDocuments'));
 const DriverOverdue = lazy(() => import('./pages/driver/Overdue'));
 const DriverSettings = lazy(() => import('./pages/driver/Settings'));
 const DriverTracking = lazy(() => import('./pages/driver/Tracking'));
@@ -296,6 +297,7 @@ function AppRoutes() {
           <Route path="navigation" element={<DriverNavigation />} />
           <Route path="overdue" element={<DriverOverdue />} />
           <Route path="documents" element={<DriverDocuments />} />
+          <Route path="my-documents" element={<DriverMyDocuments />} />
           <Route path="chat" element={<DriverChat />} />
           <Route path="settings" element={<DriverSettings />} />
         </Route>

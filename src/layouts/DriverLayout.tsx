@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   FolderOpen,
+  Contact as IdCard,
   LogOut,
   Menu,
   X,
@@ -27,6 +28,7 @@ const navItems = [
   { to: '/driver/navigation', icon: Navigation, labelKey: 'nav.navigation', end: false },
   { to: '/driver/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false },
   { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false },
+  { to: '/driver/my-documents', icon: IdCard, labelKey: 'nav.myDocuments', end: false },
   { to: '/driver/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false },
   { to: '/driver/settings', icon: SettingsIcon, labelKey: 'nav.settings', end: false },
 ];

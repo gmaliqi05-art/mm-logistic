@@ -35,6 +35,10 @@ const TYPE_LABELS: Record<string, string> = {
   teilkasko: "Teilkasko",
   ladung: "Ladungsversicherung",
   kfz_steuer: "Kfz-Steuer",
+  national_id: "Karta e Identitetit",
+  passport: "Pasaporta",
+  residence_permit: "Leja e Qendrimit",
+  work_visa: "Viza e Punes",
 };
 
 function daysBetween(dateStr: string): number {
@@ -128,6 +132,13 @@ Deno.serve(async (req: Request) => {
     (meds || []).forEach((r) => {
       const d = dMap.get(r.driver_id);
       if (d) items.push({ entity: "driver", entityId: r.driver_id, companyId: d.companyId, type: r.exam_type, expiryDate: r.expiry_date, label: d.label });
+    });
+    const { data: idDocs } = await supabase
+      .from("driver_identity_documents")
+      .select("driver_id, document_type, expiry_date");
+    (idDocs || []).forEach((r) => {
+      const d = dMap.get(r.driver_id);
+      if (d && r.expiry_date) items.push({ entity: "driver", entityId: r.driver_id, companyId: d.companyId, type: r.document_type, expiryDate: r.expiry_date, label: d.label });
     });
 
     let notificationsCreated = 0;
