@@ -328,7 +328,11 @@ function ReviewModal({
   const [error, setError] = useState<string | null>(null);
   const [scannedUrl, setScannedUrl] = useState<string | null>(note.scanned_photo_url);
   const [uploading, setUploading] = useState(false);
-  const isOutgoing = note.type === 'delivery';
+  const initialFlowRole: FlowRole | null = note.flow_role ?? (note.type === 'pickup' ? 'receiver' : null);
+  const [currentFlowRole, setCurrentFlowRole] = useState<FlowRole | null>(initialFlowRole);
+  const isOutgoing = currentFlowRole
+    ? currentFlowRole === 'sender' || currentFlowRole === 'custodian_out'
+    : note.type === 'delivery';
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [negConfirm, setNegConfirm] = useState<null | {
     shortages: Array<{ label: string; condition: string; requested: number; available: number }>;
@@ -1061,6 +1065,7 @@ function ReviewModal({
               ownCompanyId={profile.company_id}
               noteId={note.id}
               noteType={note.type}
+              onRoleChange={(r) => setCurrentFlowRole(r)}
               initial={{
                 flow_role: note.flow_role ?? (note.type === 'pickup' ? 'receiver' : 'sender'),
                 counterparty_company_id: note.counterparty_company_id ?? null,

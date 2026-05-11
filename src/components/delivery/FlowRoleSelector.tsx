@@ -24,13 +24,21 @@ interface Props {
     partner_id?: string | null;
   };
   onChanged?: () => void;
+  onRoleChange?: (role: FlowRole) => void;
   disabled?: boolean;
 }
 
 const ROLES: FlowRole[] = ['sender', 'receiver', 'carrier_only', 'custodian_in', 'custodian_out', 'internal_transfer'];
 
-export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, onChanged, disabled }: Props) {
-  const [role, setRole] = useState<FlowRole>((initial.flow_role as FlowRole) ?? 'sender');
+export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, onChanged, onRoleChange, disabled }: Props) {
+  const [role, setRoleState] = useState<FlowRole>((initial.flow_role as FlowRole) ?? 'sender');
+  const setRole = (next: FlowRole) => {
+    setRoleState(next);
+    onRoleChange?.(next);
+  };
+  useEffect(() => {
+    onRoleChange?.(role);
+  }, []);
   const [snapshot, setSnapshot] = useState<CounterpartySnapshot>({
     name: initial.counterparty_name ?? '',
     vat: initial.counterparty_vat ?? '',

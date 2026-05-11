@@ -1010,18 +1010,21 @@ export function TaskDetailSheet({
         detectedName = customerName;
         detectedVat = customerVat;
         detectedAddress = customerAddress;
+        update.flow_role = 'sender';
       } else if (customerIsUs && !supplierIsUs) {
         detectedName = supplierName;
         detectedVat = supplierVat;
         detectedEmail = supplierEmail;
         detectedPhone = supplierPhone;
         detectedAddress = supplierAddress;
+        update.flow_role = 'receiver';
       } else {
         detectedName = isPickup ? supplierName : customerName;
         detectedVat = isPickup ? supplierVat : customerVat;
         detectedEmail = isPickup ? supplierEmail : null;
         detectedPhone = isPickup ? supplierPhone : null;
         detectedAddress = isPickup ? supplierAddress : customerAddress;
+        if (isPickup) update.flow_role = 'receiver';
       }
 
       if (detectedName && !note.partner_name) update.partner_name = detectedName;
