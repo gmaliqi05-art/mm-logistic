@@ -290,7 +290,7 @@ export default function CompanyRepairReports() {
             .eq('company_id', r.company_id)
             .eq('depot_id', depotId)
             .eq('category_id', categoryId)
-            .eq('condition', 'good')
+            .eq('condition', 'repaired')
             .maybeSingle();
           if (existing.error) throw existing.error;
 
@@ -306,9 +306,24 @@ export default function CompanyRepairReports() {
               depot_id: depotId,
               category_id: categoryId,
               quantity: qty,
-              condition: 'good',
+              condition: 'repaired',
             });
             if (ins.error) throw ins.error;
+          }
+
+          const damaged = await supabase
+            .from('stock')
+            .select('id, quantity')
+            .eq('company_id', r.company_id)
+            .eq('depot_id', depotId)
+            .eq('category_id', categoryId)
+            .eq('condition', 'damaged')
+            .maybeSingle();
+          if (damaged.data && (damaged.data.quantity ?? 0) >= qty) {
+            await supabase
+              .from('stock')
+              .update({ quantity: (damaged.data.quantity ?? 0) - qty, updated_at: nowIso })
+              .eq('id', damaged.data.id);
           }
 
           const mv = await supabase.from('stock_movements').insert({
@@ -318,7 +333,7 @@ export default function CompanyRepairReports() {
             movement_type: 'repair',
             quantity: qty,
             condition_before: 'damaged',
-            condition_after: 'good',
+            condition_after: 'repaired',
             notes: `Repair report ${r.report_date}`,
             performed_by: profile.id,
           });
