@@ -187,6 +187,7 @@ export const sq = {
     repairReports: 'Raportet e Reparatures',
     workerRepairStats: 'Statistikat e Puntoreve',
     auditLog: 'Regjistri',
+    auditReport: 'Raport Auditi',
     stockAlerts: 'Alarmet',
     dataExport: 'Eksporto',
     financialSummary: 'Permbledhja Financiare',

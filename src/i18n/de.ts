@@ -189,6 +189,7 @@ export const de: typeof sq = {
     repairReports: 'Reparaturberichte',
     workerRepairStats: 'Mitarbeiterstatistik',
     auditLog: 'Protokoll',
+    auditReport: 'Auditbericht',
     stockAlerts: 'Alarme',
     dataExport: 'Export',
     financialSummary: 'Finanzubersicht',

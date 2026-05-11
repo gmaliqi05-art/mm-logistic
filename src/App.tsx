@@ -77,6 +77,7 @@ const CompanyWorkerRepairStats = lazy(() => import('./pages/company/WorkerRepair
 const CompanyChat = lazy(() => import('./pages/company/Chat'));
 const CompanyDocuments = lazy(() => import('./pages/company/Documents'));
 const CompanyAuditLog = lazy(() => import('./pages/company/AuditLog'));
+const CompanyAuditReport = lazy(() => import('./pages/company/AuditReport'));
 const CompanyStockAlerts = lazy(() => import('./pages/company/StockAlerts'));
 const CompanyDataExport = lazy(() => import('./pages/company/DataExport'));
 const CompanySettings = lazy(() => import('./pages/company/Settings'));
@@ -254,6 +255,7 @@ function AppRoutes() {
           <Route path="worker-repair-stats" element={<CompanyWorkerRepairStats />} />
           <Route path="chat" element={<CompanyChat />} />
           <Route path="audit-log" element={<CompanyAuditLog />} />
+          <Route path="audit-report" element={<CompanyAuditReport />} />
           <Route path="stock-alerts" element={<CompanyStockAlerts />} />
           <Route path="data-export" element={<CompanyDataExport />} />
           <Route path="settings" element={<CompanySettings />} />

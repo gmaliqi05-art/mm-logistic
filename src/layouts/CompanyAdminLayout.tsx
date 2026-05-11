@@ -66,6 +66,7 @@ const allNavItems = [
   { to: '/company/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, premium: false, bottomNav: false },
   { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, premium: false, bottomNav: false },
   { to: '/company/audit-log', icon: ClipboardList, labelKey: 'nav.auditLog', end: false, premium: true, bottomNav: false },
+  { to: '/company/audit-report', icon: FileCheck2, labelKey: 'nav.auditReport', end: false, premium: false, bottomNav: false },
   { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', end: false, premium: true, bottomNav: false },
   { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', end: false, premium: true, bottomNav: false },
   { to: '/company/financial-summary', icon: BarChart3, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
