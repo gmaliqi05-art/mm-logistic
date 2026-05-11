@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { AlertTriangle, Copy, Crosshair, ExternalLink, Gauge, MapPin, Navigation, Phone, Route, Send } from 'lucide-react';
+import { AlertTriangle, Compass, Copy, Crosshair, ExternalLink, Gauge, Home, LocateFixed, MapPin, Navigation, Phone, Route, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
 
@@ -102,29 +102,53 @@ function deriveInitials(name: string | null | undefined): string {
   return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
 }
 
-function buildTruckIcon(initials: string, selected: boolean): L.DivIcon {
+function computeBearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const toDeg = (x: number) => (x * 180) / Math.PI;
+  const dLng = toRad(lng2 - lng1);
+  const y = Math.sin(dLng) * Math.cos(toRad(lat2));
+  const x =
+    Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLng);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function buildTruckIcon(initials: string, selected: boolean, headingDeg: number | null): L.DivIcon {
   const cargoColor = selected ? '#047857' : '#0f766e';
   const cabColor = selected ? '#064e3b' : '#115e59';
-  const width = selected ? 64 : 56;
-  const height = selected ? 36 : 32;
-  const fontSize = selected ? 14 : 12;
+  // Shrunk ~20% from previous sizes (56x32 -> 45x26, 64x36 -> 51x29).
+  const width = selected ? 51 : 45;
+  const height = selected ? 29 : 26;
+  const fontSize = selected ? 12 : 11;
+  // SVG baseline points East (cab on the right). Rotate so heading 0 = North.
+  const rotation = headingDeg != null ? (headingDeg - 90 + 360) % 360 : 0;
   return L.divIcon({
     className: 'live-truck-icon',
     html: `
-      <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 80 44" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,.45));overflow:visible;">
-        <rect x="2" y="6" width="50" height="28" rx="3" fill="${cargoColor}"/>
-        <path d="M52 14 L68 14 L76 24 L76 34 L52 34 Z" fill="${cabColor}"/>
-        <rect x="55" y="17" width="14" height="8" rx="1.5" fill="#bae6fd" opacity="0.9"/>
-        <circle cx="15" cy="36" r="5" fill="#0f172a"/>
-        <circle cx="15" cy="36" r="2" fill="#475569"/>
-        <circle cx="62" cy="36" r="5" fill="#0f172a"/>
-        <circle cx="62" cy="36" r="2" fill="#475569"/>
-        <text x="27" y="26" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="${fontSize}" font-weight="800" fill="white" letter-spacing="0.5">${initials}</text>
-      </svg>
+      <div style="width:${width}px;height:${height}px;transform:rotate(${rotation}deg);transform-origin:50% 50%;transition:transform .4s ease;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 80 44" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));overflow:visible;">
+          <rect x="2" y="6" width="50" height="28" rx="3" fill="${cargoColor}"/>
+          <path d="M52 14 L68 14 L76 24 L76 34 L52 34 Z" fill="${cabColor}"/>
+          <rect x="55" y="17" width="14" height="8" rx="1.5" fill="#bae6fd" opacity="0.9"/>
+          <circle cx="15" cy="36" r="5" fill="#0f172a"/>
+          <circle cx="15" cy="36" r="2" fill="#475569"/>
+          <circle cx="62" cy="36" r="5" fill="#0f172a"/>
+          <circle cx="62" cy="36" r="2" fill="#475569"/>
+          <text x="27" y="26" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="${fontSize}" font-weight="800" fill="white" letter-spacing="0.5">${initials}</text>
+        </svg>
+      </div>
     `,
     iconSize: [width, height],
     iconAnchor: [width / 2, height / 2],
   });
+}
+
+function MapRefCapture({ onReady }: { onReady: (map: L.Map) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    onReady(map);
+  }, [map, onReady]);
+  return null;
 }
 
 function FollowDriver({ target }: { target: [number, number] | null }) {
@@ -197,6 +221,10 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
   const [extendSaving, setExtendSaving] = useState(false);
   const [trafficAlerts, setTrafficAlerts] = useState<TrafficAlert[]>([]);
   const [nowTick, setNowTick] = useState(Date.now());
+  const [routeToBaseFor, setRouteToBaseFor] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locating, setLocating] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
     const t = window.setInterval(() => setNowTick(Date.now()), 1000);
@@ -682,6 +710,70 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           })}
         </div>
       )}
+      {!compact && !loading && (
+        <div className="absolute right-3 bottom-3 z-[7] flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setLocating(true);
+              if (!navigator.geolocation) { setLocating(false); return; }
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const c: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+                  setUserLocation(c);
+                  mapRef.current?.panTo(c, { animate: true });
+                  mapRef.current?.setZoom(Math.max(mapRef.current.getZoom() ?? 13, 14));
+                  setLocating(false);
+                },
+                () => setLocating(false),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+              );
+            }}
+            title="Lokalizo veten"
+            className="w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+          >
+            <LocateFixed className={`w-[18px] h-[18px] ${userLocation ? 'text-blue-600' : 'text-slate-700'} ${locating ? 'animate-pulse' : ''}`} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (activeDriver) {
+                mapRef.current?.panTo([activeDriver.lat, activeDriver.lng], { animate: true });
+              } else if (list.length > 0) {
+                const bounds = L.latLngBounds(list.map((d) => [d.lat, d.lng] as [number, number]));
+                mapRef.current?.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+              }
+            }}
+            title="Drejto harten"
+            className="w-10 h-10 rounded-full bg-white shadow-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+          >
+            <Compass className="w-[18px] h-[18px] text-slate-700" />
+          </button>
+          {activeDriver && activeDriver.base_lat != null && activeDriver.base_lng != null && (
+            <button
+              type="button"
+              onClick={() => {
+                setRouteToBaseFor((prev) => (prev === activeDriver.driver_id ? null : activeDriver.driver_id));
+                if (activeDriver.base_lat != null && activeDriver.base_lng != null) {
+                  const bounds = L.latLngBounds([
+                    [activeDriver.lat, activeDriver.lng],
+                    [activeDriver.base_lat, activeDriver.base_lng],
+                  ]);
+                  mapRef.current?.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+                }
+              }}
+              title={routeToBaseFor === activeDriver.driver_id ? 'Fshi vijen ne depo' : 'Drejto ne depo'}
+              className={`w-10 h-10 rounded-full shadow-lg border flex items-center justify-center transition-colors ${
+                routeToBaseFor === activeDriver.driver_id
+                  ? 'bg-teal-600 border-teal-700 text-white hover:bg-teal-700'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Home className="w-[18px] h-[18px]" />
+            </button>
+          )}
+        </div>
+      )}
       {loading && list.length === 0 ? (
         <div className="h-full flex items-center justify-center text-sm text-slate-500">Loading map...</div>
       ) : (
@@ -697,14 +789,31 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
               const trail = trails[d.driver_id];
               const isActive = activeId === d.driver_id;
               const initials = deriveInitials(d.driver_name);
+              let heading = d.heading_deg;
+              if ((heading == null || Number.isNaN(heading)) && trail && trail.length >= 2) {
+                for (let i = trail.length - 1; i > 0; i--) {
+                  const [lat2, lng2] = trail[i];
+                  const [lat1, lng1] = trail[i - 1];
+                  const dist = haversine(lat1, lng1, lat2, lng2);
+                  if (dist > 8) {
+                    heading = computeBearing(lat1, lng1, lat2, lng2);
+                    break;
+                  }
+                }
+              }
+              const showRouteToBase =
+                routeToBaseFor === d.driver_id && d.base_lat != null && d.base_lng != null;
               return (
                 <Fragment key={d.driver_id}>
-                  {trail && trail.length > 1 && (
-                    <Polyline positions={trail} pathOptions={{ color: '#0f766e', weight: 4, opacity: 0.55 }} />
+                  {showRouteToBase && (
+                    <Polyline
+                      positions={[[d.lat, d.lng], [d.base_lat as number, d.base_lng as number]]}
+                      pathOptions={{ color: '#0f766e', weight: 4, opacity: 0.8, dashArray: '6 6' }}
+                    />
                   )}
                   <Marker
                     position={[d.lat, d.lng]}
-                    icon={buildTruckIcon(initials, isActive)}
+                    icon={buildTruckIcon(initials, isActive, heading ?? null)}
                     eventHandlers={{
                       click: () => setActiveId(d.driver_id),
                     }}
@@ -712,6 +821,18 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
                 </Fragment>
               );
             })}
+            {userLocation && (
+              <Marker
+                position={userLocation}
+                icon={L.divIcon({
+                  className: 'user-location-icon',
+                  html: `<div style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 0 0 2px rgba(37,99,235,.35), 0 2px 6px rgba(0,0,0,.35);"></div>`,
+                  iconSize: [18, 18],
+                  iconAnchor: [9, 9],
+                })}
+              />
+            )}
+            <MapRefCapture onReady={(m) => { mapRef.current = m; }} />
           </MapContainer>
 
           {!compact && list.length > 0 && !activeDriver && (
