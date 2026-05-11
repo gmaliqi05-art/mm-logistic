@@ -11,12 +11,29 @@ import {
   CheckCircle2,
   AlertTriangle,
   Pencil,
+  UserCog,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyUsers } from '../../utils/notifications';
 
 type TrailerStatus = 'available' | 'claimed' | 'dispatched' | 'cancelled';
+
+interface TrailerItem {
+  id: string;
+  trailer_load_id: string;
+  product_title: string;
+  category_product_id: string | null;
+  product_name: string;
+  quantity: number;
+  position: number;
+  category_product?: {
+    id: string;
+    name: string;
+    category_id: string | null;
+    category?: { id: string; name: string } | null;
+  } | null;
+}
 
 interface TrailerLoad {
   id: string;
@@ -37,24 +54,20 @@ interface TrailerLoad {
   items?: TrailerItem[];
 }
 
-interface TrailerItem {
-  id: string;
-  trailer_load_id: string;
-  product_title: string;
-  category_product_id: string | null;
-  product_name: string;
-  quantity: number;
-  position: number;
-}
-
 interface Driver {
   id: string;
   full_name: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface CategoryProduct {
   id: string;
   name: string;
+  category_id: string | null;
 }
 
 const statusStyle: Record<TrailerStatus, { label: string; cls: string }> = {
@@ -64,10 +77,21 @@ const statusStyle: Record<TrailerStatus, { label: string; cls: string }> = {
   cancelled: { label: 'E anuluar', cls: 'bg-rose-100 text-rose-700 border-rose-200' },
 };
 
+function isEuroPalete(name: string) {
+  return /euro\s*pale(?:te|t[aë])/i.test(name);
+}
+
+function sortCategoriesEuroFirst(list: Category[]): Category[] {
+  const euro = list.filter((c) => isEuroPalete(c.name));
+  const rest = list.filter((c) => !isEuroPalete(c.name)).sort((a, b) => a.name.localeCompare(b.name));
+  return [...euro, ...rest];
+}
+
 export default function DepotTrailersPage() {
   const { profile } = useAuth();
   const [trailers, setTrailers] = useState<TrailerLoad[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<CategoryProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +99,7 @@ export default function DepotTrailersPage() {
   const [statusFilter, setStatusFilter] = useState<TrailerStatus | 'all'>('all');
   const [editing, setEditing] = useState<TrailerLoad | 'new' | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [reassigningId, setReassigningId] = useState<string | null>(null);
 
   const companyId = profile?.company_id ?? null;
   const depotId = profile?.depot_id ?? null;
@@ -82,7 +107,6 @@ export default function DepotTrailersPage() {
   useEffect(() => {
     if (!companyId) return;
     void fetchAll();
-
     const channel = supabase
       .channel(`trailer_loads_${companyId}`)
       .on(
@@ -93,7 +117,6 @@ export default function DepotTrailersPage() {
         },
       )
       .subscribe();
-
     return () => {
       void supabase.removeChannel(channel);
     };
@@ -110,14 +133,17 @@ export default function DepotTrailersPage() {
     try {
       setLoading(true);
       setError(null);
-      const [trailerRes, driverRes, productRes] = await Promise.all([
+      const [trailerRes, driverRes, categoryRes, productRes] = await Promise.all([
         supabase
           .from('trailer_loads')
           .select(`
             *,
             assigned_driver:profiles!trailer_loads_assigned_driver_id_fkey(id, full_name),
             claimed_driver:profiles!trailer_loads_claimed_by_driver_id_fkey(id, full_name),
-            items:trailer_load_items(*)
+            items:trailer_load_items(
+              *,
+              category_product:category_products(id, name, category_id, category:product_categories(id, name))
+            )
           `)
           .eq('company_id', companyId)
           .order('created_at', { ascending: false }),
@@ -129,14 +155,20 @@ export default function DepotTrailersPage() {
           .eq('is_active', true)
           .order('full_name'),
         supabase
-          .from('category_products')
+          .from('product_categories')
           .select('id, name')
+          .eq('company_id', companyId)
+          .order('name'),
+        supabase
+          .from('category_products')
+          .select('id, name, category_id')
           .eq('company_id', companyId)
           .eq('is_active', true)
           .order('name'),
       ]);
       if (trailerRes.error) throw trailerRes.error;
       if (driverRes.error) throw driverRes.error;
+      if (categoryRes.error) throw categoryRes.error;
       if (productRes.error) throw productRes.error;
       const rows = (trailerRes.data ?? []) as TrailerLoad[];
       for (const r of rows) {
@@ -144,7 +176,8 @@ export default function DepotTrailersPage() {
       }
       setTrailers(rows);
       setDrivers(driverRes.data ?? []);
-      setProducts(productRes.data ?? []);
+      setCategories(sortCategoriesEuroFirst((categoryRes.data ?? []) as Category[]));
+      setProducts((productRes.data ?? []) as CategoryProduct[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gabim gjate ngarkimit');
     } finally {
@@ -175,6 +208,50 @@ export default function DepotTrailersPage() {
     }
     setToast('Rimorkia u fshi');
     void fetchAll();
+  }
+
+  async function handleReassign(tr: TrailerLoad, newDriverId: string | null) {
+    const prevDriverId = tr.claimed_by_driver_id ?? tr.assigned_driver_id ?? null;
+    if (prevDriverId === newDriverId) return;
+    try {
+      setReassigningId(tr.id);
+      const { error: err } = await supabase.rpc('reassign_trailer_load', {
+        load_id: tr.id,
+        new_driver_id: newDriverId,
+      });
+      if (err) throw err;
+
+      if (newDriverId) {
+        await notifyUsers({
+          userIds: [newDriverId],
+          type: 'assignment',
+          titleKey: 'notifications.trailer.assignedTitle',
+          messageKey: 'notifications.trailer.assignedMessage',
+          params: { plate: tr.plate_number, title: tr.title },
+          referenceId: tr.id,
+          fallbackTitle: 'Rimorkio e re per ty',
+          fallbackMessage: `Rimorkia ${tr.plate_number}${tr.title ? ` · ${tr.title}` : ''} eshte caktuar per ty`,
+        });
+      }
+      if (prevDriverId && prevDriverId !== newDriverId) {
+        await notifyUsers({
+          userIds: [prevDriverId],
+          type: 'assignment',
+          titleKey: 'notifications.trailer.removedTitle',
+          messageKey: 'notifications.trailer.removedMessage',
+          params: { plate: tr.plate_number },
+          referenceId: tr.id,
+          fallbackTitle: 'Rimorkio e hequr',
+          fallbackMessage: `Rimorkia ${tr.plate_number} nuk eshte me e jotja`,
+        });
+      }
+      setToast(newDriverId ? 'Shoferi u caktua' : 'Rimorkia u lirua');
+      void fetchAll();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gabim gjate riasgjinimit');
+    } finally {
+      setReassigningId(null);
+    }
   }
 
   return (
@@ -243,8 +320,11 @@ export default function DepotTrailersPage() {
             <TrailerCard
               key={tr.id}
               trailer={tr}
+              drivers={drivers}
+              reassigning={reassigningId === tr.id}
               onEdit={() => setEditing(tr)}
               onDelete={() => handleDelete(tr.id)}
+              onReassign={(driverId) => handleReassign(tr, driverId)}
             />
           ))}
         </div>
@@ -254,6 +334,7 @@ export default function DepotTrailersPage() {
         <TrailerFormModal
           trailer={editing === 'new' ? null : editing}
           drivers={drivers}
+          categories={categories}
           products={products}
           companyId={companyId!}
           depotId={depotId}
@@ -279,16 +360,22 @@ export default function DepotTrailersPage() {
 
 function TrailerCard({
   trailer,
+  drivers,
+  reassigning,
   onEdit,
   onDelete,
+  onReassign,
 }: {
   trailer: TrailerLoad;
+  drivers: Driver[];
+  reassigning: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onReassign: (driverId: string | null) => void;
 }) {
   const meta = statusStyle[trailer.status];
   const totalQty = (trailer.items ?? []).reduce((s, i) => s + i.quantity, 0);
-  const driver = trailer.claimed_driver ?? trailer.assigned_driver ?? null;
+  const driverId = trailer.claimed_by_driver_id ?? trailer.assigned_driver_id ?? '';
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
@@ -313,34 +400,47 @@ function TrailerCard({
             {(trailer.items ?? []).length} artikuj · {totalQty.toLocaleString()} cope
           </span>
         </div>
-        {driver ? (
-          <div className="flex items-center gap-2 text-teal-700">
-            <User className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium truncate">{driver.full_name}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-gray-400">
-            <User className="w-4 h-4 flex-shrink-0" />
-            <span className="italic">Pa shofer te caktuar</span>
-          </div>
-        )}
+
+        <div className="flex items-center gap-2">
+          <UserCog className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <select
+            value={driverId}
+            onChange={(e) => onReassign(e.target.value || null)}
+            disabled={reassigning}
+            className="flex-1 text-sm px-2 py-1 rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none disabled:opacity-60"
+          >
+            <option value="">— Pa shofer —</option>
+            {drivers.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.full_name}
+              </option>
+            ))}
+          </select>
+          {reassigning && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
+        </div>
       </div>
 
       {(trailer.items ?? []).length > 0 && (
         <div className="mt-3 pt-3 border-t border-gray-100 space-y-1">
-          {(trailer.items ?? []).slice(0, 3).map((i) => (
-            <div key={i.id} className="flex items-center justify-between text-xs">
-              <span className="text-gray-700 truncate">
-                <span className="font-semibold text-gray-900">{i.product_title || '—'}</span>
-                {i.product_name && <span className="text-gray-500"> · {i.product_name}</span>}
-              </span>
-              <span className="font-bold tabular-nums text-gray-900 flex-shrink-0 ml-2">
-                {i.quantity.toLocaleString()}
-              </span>
-            </div>
-          ))}
-          {(trailer.items ?? []).length > 3 && (
-            <p className="text-[11px] text-gray-500">+{(trailer.items ?? []).length - 3} me shume</p>
+          {(trailer.items ?? []).slice(0, 4).map((i) => {
+            const cat = i.category_product?.category?.name;
+            return (
+              <div key={i.id} className="flex items-center justify-between text-xs">
+                <span className="text-gray-700 truncate min-w-0">
+                  {cat && <span className="text-gray-500">{cat} · </span>}
+                  <span className="text-gray-900">{i.product_name || '—'}</span>
+                  {i.product_title && (
+                    <span className="font-semibold text-gray-900"> · {i.product_title}</span>
+                  )}
+                </span>
+                <span className="font-bold tabular-nums text-gray-900 flex-shrink-0 ml-2">
+                  {i.quantity.toLocaleString()}
+                </span>
+              </div>
+            );
+          })}
+          {(trailer.items ?? []).length > 4 && (
+            <p className="text-[11px] text-gray-500">+{(trailer.items ?? []).length - 4} me shume</p>
           )}
         </div>
       )}
@@ -367,15 +467,20 @@ function TrailerCard({
 
 interface ItemDraft {
   id?: string;
+  category_id: string;
+  category_product_id: string;
   product_title: string;
-  category_product_id: string | null;
-  product_name: string;
   quantity: string;
+}
+
+function emptyDraft(): ItemDraft {
+  return { category_id: '', category_product_id: '', product_title: '', quantity: '' };
 }
 
 function TrailerFormModal({
   trailer,
   drivers,
+  categories,
   products,
   companyId,
   depotId,
@@ -385,6 +490,7 @@ function TrailerFormModal({
 }: {
   trailer: TrailerLoad | null;
   drivers: Driver[];
+  categories: Category[];
   products: CategoryProduct[];
   companyId: string;
   depotId: string | null;
@@ -395,40 +501,49 @@ function TrailerFormModal({
   const [plate, setPlate] = useState(trailer?.plate_number ?? '');
   const [title, setTitle] = useState(trailer?.title ?? '');
   const [notes, setNotes] = useState(trailer?.notes ?? '');
-  const [assignedDriverId, setAssignedDriverId] = useState<string>(trailer?.assigned_driver_id ?? '');
+  const [assignedDriverId, setAssignedDriverId] = useState<string>(
+    trailer?.claimed_by_driver_id ?? trailer?.assigned_driver_id ?? '',
+  );
   const [items, setItems] = useState<ItemDraft[]>(() => {
     if (trailer?.items && trailer.items.length > 0) {
       return trailer.items.map((i) => ({
         id: i.id,
+        category_id: i.category_product?.category_id ?? '',
+        category_product_id: i.category_product_id ?? '',
         product_title: i.product_title,
-        category_product_id: i.category_product_id,
-        product_name: i.product_name,
         quantity: String(i.quantity),
       }));
     }
-    return [{ product_title: '', category_product_id: null, product_name: '', quantity: '' }];
+    return [emptyDraft()];
   });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const productsByCategory = useMemo(() => {
+    const m = new Map<string, CategoryProduct[]>();
+    for (const p of products) {
+      if (!p.category_id) continue;
+      if (!m.has(p.category_id)) m.set(p.category_id, []);
+      m.get(p.category_id)!.push(p);
+    }
+    for (const list of m.values()) list.sort((a, b) => a.name.localeCompare(b.name));
+    return m;
+  }, [products]);
 
   function updateItem(idx: number, patch: Partial<ItemDraft>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
   }
 
   function addItem() {
-    setItems((prev) => [...prev, { product_title: '', category_product_id: null, product_name: '', quantity: '' }]);
+    setItems((prev) => [...prev, emptyDraft()]);
   }
 
   function removeItem(idx: number) {
-    setItems((prev) => prev.filter((_, i) => i !== idx));
+    setItems((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== idx)));
   }
 
-  function onProductChange(idx: number, productId: string) {
-    const p = products.find((x) => x.id === productId);
-    updateItem(idx, {
-      category_product_id: productId || null,
-      product_name: p?.name ?? '',
-    });
+  function onCategoryChange(idx: number, categoryId: string) {
+    updateItem(idx, { category_id: categoryId, category_product_id: '' });
   }
 
   async function handleSave() {
@@ -444,22 +559,35 @@ function TrailerFormModal({
         quantity: Number(i.quantity) || 0,
         product_title: i.product_title.trim(),
       }))
-      .filter((i) => i.product_title || i.category_product_id || i.quantity > 0);
+      .filter((i) => i.category_id || i.category_product_id || i.quantity > 0 || i.product_title);
+
     if (cleanItems.length === 0) {
       setFormError('Shto te pakten nje artikull');
       return;
     }
-    if (cleanItems.some((i) => i.quantity <= 0)) {
-      setFormError('Sasia duhet te jete me e madhe se 0');
-      return;
+    for (const it of cleanItems) {
+      if (!it.category_id) {
+        setFormError('Zgjidh kategorine per cdo artikull');
+        return;
+      }
+      if (!it.category_product_id) {
+        setFormError('Zgjidh produktin per cdo artikull');
+        return;
+      }
+      if (it.quantity <= 0) {
+        setFormError('Sasia duhet te jete me e madhe se 0');
+        return;
+      }
     }
 
     try {
       setSaving(true);
-      const prevAssigned = trailer?.assigned_driver_id ?? null;
+      const prevAssigned = trailer?.claimed_by_driver_id ?? trailer?.assigned_driver_id ?? null;
       const nextAssigned = assignedDriverId || null;
 
       let loadId = trailer?.id ?? null;
+      const rpcNeeded = trailer ? prevAssigned !== nextAssigned : false;
+
       if (trailer) {
         const { error } = await supabase
           .from('trailer_loads')
@@ -467,7 +595,6 @@ function TrailerFormModal({
             plate_number: plateTrim,
             title: title.trim(),
             notes: notes.trim(),
-            assigned_driver_id: nextAssigned,
             depot_id: depotId,
           })
           .eq('id', trailer.id);
@@ -488,6 +615,9 @@ function TrailerFormModal({
             title: title.trim(),
             notes: notes.trim(),
             assigned_driver_id: nextAssigned,
+            claimed_by_driver_id: nextAssigned,
+            claimed_at: nextAssigned ? new Date().toISOString() : null,
+            status: nextAssigned ? 'claimed' : 'available',
             created_by: createdBy,
           })
           .select('id')
@@ -498,18 +628,51 @@ function TrailerFormModal({
 
       if (!loadId) throw new Error('Gabim gjate ruajtjes');
 
-      const itemRows = cleanItems.map((i, idx) => ({
-        trailer_load_id: loadId!,
-        product_title: i.product_title,
-        category_product_id: i.category_product_id,
-        product_name: i.product_name,
-        quantity: i.quantity,
-        position: idx,
-      }));
+      const itemRows = cleanItems.map((i, idx) => {
+        const prod = products.find((p) => p.id === i.category_product_id);
+        return {
+          trailer_load_id: loadId!,
+          product_title: i.product_title,
+          category_product_id: i.category_product_id,
+          product_name: prod?.name ?? '',
+          quantity: i.quantity,
+          position: idx,
+        };
+      });
       const { error: insErr } = await supabase.from('trailer_load_items').insert(itemRows);
       if (insErr) throw insErr;
 
-      if (nextAssigned && nextAssigned !== prevAssigned) {
+      if (rpcNeeded) {
+        const { error: rpcErr } = await supabase.rpc('reassign_trailer_load', {
+          load_id: loadId,
+          new_driver_id: nextAssigned,
+        });
+        if (rpcErr) throw rpcErr;
+        if (nextAssigned) {
+          await notifyUsers({
+            userIds: [nextAssigned],
+            type: 'assignment',
+            titleKey: 'notifications.trailer.assignedTitle',
+            messageKey: 'notifications.trailer.assignedMessage',
+            params: { plate: plateTrim, title: title.trim() },
+            referenceId: loadId,
+            fallbackTitle: 'Rimorkio e re per ty',
+            fallbackMessage: `Rimorkia ${plateTrim}${title ? ` · ${title}` : ''} eshte caktuar per ty`,
+          });
+        }
+        if (prevAssigned && prevAssigned !== nextAssigned) {
+          await notifyUsers({
+            userIds: [prevAssigned],
+            type: 'assignment',
+            titleKey: 'notifications.trailer.removedTitle',
+            messageKey: 'notifications.trailer.removedMessage',
+            params: { plate: plateTrim },
+            referenceId: loadId,
+            fallbackTitle: 'Rimorkio e hequr',
+            fallbackMessage: `Rimorkia ${plateTrim} nuk eshte me e jotja`,
+          });
+        }
+      } else if (!trailer && nextAssigned) {
         await notifyUsers({
           userIds: [nextAssigned],
           type: 'assignment',
@@ -532,7 +695,7 @@ function TrailerFormModal({
 
   return (
     <div className="fixed inset-0 z-[1000] bg-black/60 flex items-end lg:items-center justify-center p-0 lg:p-4">
-      <div className="bg-white w-full lg:max-w-2xl lg:rounded-2xl rounded-t-2xl max-h-[95vh] flex flex-col shadow-2xl">
+      <div className="bg-white w-full lg:max-w-3xl lg:rounded-2xl rounded-t-2xl max-h-[95vh] flex flex-col shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
           <div>
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -572,13 +735,16 @@ function TrailerFormModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Shofer (opsional)</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" />
+              Shofer (opsional — mund te ndryshohet me vone)
+            </label>
             <select
               value={assignedDriverId}
               onChange={(e) => setAssignedDriverId(e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
             >
-              <option value="">— Asnje, shoferi e merr vet —</option>
+              <option value="">— Pa shofer, do ta marre vete —</option>
               {drivers.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.full_name}
@@ -610,63 +776,84 @@ function TrailerFormModal({
             </div>
 
             <div className="space-y-2">
-              {items.map((item, idx) => (
-                <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
-                  <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-12 md:col-span-4">
-                      <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                        Titulli
-                      </label>
-                      <input
-                        value={item.product_title}
-                        onChange={(e) => updateItem(idx, { product_title: e.target.value })}
-                        placeholder="Black"
-                        className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
-                      />
-                    </div>
-                    <div className="col-span-8 md:col-span-5">
-                      <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                        Produkti
-                      </label>
-                      <select
-                        value={item.category_product_id ?? ''}
-                        onChange={(e) => onProductChange(idx, e.target.value)}
-                        className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
-                      >
-                        <option value="">—</option>
-                        {products.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-3 md:col-span-2">
-                      <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                        Sasia
-                      </label>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min="0"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(idx, { quantity: e.target.value })}
-                        placeholder="660"
-                        className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none tabular-nums"
-                      />
-                    </div>
-                    <div className="col-span-1 flex items-end justify-end">
-                      <button
-                        onClick={() => removeItem(idx)}
-                        disabled={items.length === 1}
-                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-md disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+              {items.map((item, idx) => {
+                const prodList = item.category_id ? productsByCategory.get(item.category_id) ?? [] : [];
+                return (
+                  <div key={idx} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-12 md:col-span-4">
+                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                          Kategoria
+                        </label>
+                        <select
+                          value={item.category_id}
+                          onChange={(e) => onCategoryChange(idx, e.target.value)}
+                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+                        >
+                          <option value="">— Zgjidh —</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-12 md:col-span-4">
+                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                          Produkti
+                        </label>
+                        <select
+                          value={item.category_product_id}
+                          onChange={(e) => updateItem(idx, { category_product_id: e.target.value })}
+                          disabled={!item.category_id}
+                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                        >
+                          <option value="">— Zgjidh —</option>
+                          {prodList.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-6 md:col-span-2">
+                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                          Titulli
+                        </label>
+                        <input
+                          value={item.product_title}
+                          onChange={(e) => updateItem(idx, { product_title: e.target.value })}
+                          placeholder="Black"
+                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
+                        />
+                      </div>
+                      <div className="col-span-5 md:col-span-1">
+                        <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
+                          Sasia
+                        </label>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(idx, { quantity: e.target.value })}
+                          placeholder="660"
+                          className="w-full px-2.5 py-2 text-sm rounded-md border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none tabular-nums"
+                        />
+                      </div>
+                      <div className="col-span-1 flex items-end justify-end">
+                        <button
+                          onClick={() => removeItem(idx)}
+                          disabled={items.length === 1}
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-md disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

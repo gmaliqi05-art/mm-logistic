@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Truck, Package, Loader2, CheckCircle2, AlertTriangle, Hand } from 'lucide-react';
+import { Truck, Package, Loader2, CheckCircle2, AlertTriangle, Hand, LogOut } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyUsers } from '../../utils/notifications';
@@ -13,6 +13,11 @@ interface TrailerItem {
   product_name: string;
   quantity: number;
   position: number;
+  category_product?: {
+    id: string;
+    name: string;
+    category?: { id: string; name: string } | null;
+  } | null;
 }
 
 interface Trailer {
@@ -70,7 +75,7 @@ export default function DriverTrailersWidget() {
       setError(null);
       const { data, error: err } = await supabase
         .from('trailer_loads')
-        .select('*, items:trailer_load_items(*)')
+        .select('*, items:trailer_load_items(*, category_product:category_products(id, name, category:product_categories(id, name)))')
         .eq('company_id', companyId)
         .in('status', ['available', 'claimed'])
         .order('created_at', { ascending: false });
@@ -98,19 +103,26 @@ export default function DriverTrailersWidget() {
   const available = useMemo(
     () =>
       trailers.filter(
-        (t) => t.status === 'available' && !t.assigned_driver_id && t.claimed_by_driver_id === null,
+        (t) =>
+          t.claimed_by_driver_id !== driverId &&
+          t.assigned_driver_id !== driverId &&
+          (t.status === 'available' || t.status === 'claimed'),
       ),
-    [trailers],
+    [trailers, driverId],
   );
 
   async function claim(trailer: Trailer) {
     if (!driverId) return;
+    const prevDriver = trailer.claimed_by_driver_id ?? trailer.assigned_driver_id ?? null;
     try {
       setClaimingId(trailer.id);
-      const { error: err } = await supabase.rpc('claim_trailer_load', { load_id: trailer.id });
+      const { error: err } = await supabase.rpc('reassign_trailer_load', {
+        load_id: trailer.id,
+        new_driver_id: driverId,
+      });
       if (err) throw err;
       setToast('Ke marre rimorkion');
-      if (trailer.created_by) {
+      if (trailer.created_by && trailer.created_by !== driverId) {
         await notifyUsers({
           userIds: [trailer.created_by],
           type: 'assignment',
@@ -122,9 +134,50 @@ export default function DriverTrailersWidget() {
           fallbackMessage: `Shoferi ${profile?.full_name ?? ''} mori rimorkion ${trailer.plate_number}`,
         });
       }
+      if (prevDriver && prevDriver !== driverId) {
+        await notifyUsers({
+          userIds: [prevDriver],
+          type: 'assignment',
+          titleKey: 'notifications.trailer.removedTitle',
+          messageKey: 'notifications.trailer.removedMessage',
+          params: { plate: trailer.plate_number },
+          referenceId: trailer.id,
+          fallbackTitle: 'Rimorkio e hequr',
+          fallbackMessage: `Rimorkia ${trailer.plate_number} nuk eshte me e jotja`,
+        });
+      }
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Nuk u mor dot kjo rimorkio');
+    } finally {
+      setClaimingId(null);
+    }
+  }
+
+  async function release(trailer: Trailer) {
+    try {
+      setClaimingId(trailer.id);
+      const { error: err } = await supabase.rpc('reassign_trailer_load', {
+        load_id: trailer.id,
+        new_driver_id: null,
+      });
+      if (err) throw err;
+      setToast('E lirove rimorkion');
+      if (trailer.created_by && trailer.created_by !== driverId) {
+        await notifyUsers({
+          userIds: [trailer.created_by],
+          type: 'assignment',
+          titleKey: 'notifications.trailer.releasedTitle',
+          messageKey: 'notifications.trailer.releasedMessage',
+          params: { plate: trailer.plate_number, driver: profile?.full_name ?? '' },
+          referenceId: trailer.id,
+          fallbackTitle: 'Rimorkio e liruar',
+          fallbackMessage: `Shoferi ${profile?.full_name ?? ''} liroi rimorkion ${trailer.plate_number}`,
+        });
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gabim gjate lirimit');
     } finally {
       setClaimingId(null);
     }
@@ -156,7 +209,24 @@ export default function DriverTrailersWidget() {
         <Section title="Rimorkiot e tua" accent="teal">
           <div className="space-y-2">
             {mine.map((t) => (
-              <TrailerRow key={t.id} trailer={t} />
+              <TrailerRow
+                key={t.id}
+                trailer={t}
+                action={
+                  <button
+                    onClick={() => release(t)}
+                    disabled={claimingId === t.id}
+                    className="inline-flex items-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-60 transition-colors"
+                  >
+                    {claimingId === t.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <LogOut className="w-3.5 h-3.5" />
+                    )}
+                    Liroje
+                  </button>
+                }
+              />
             ))}
           </div>
         </Section>
@@ -165,26 +235,30 @@ export default function DriverTrailersWidget() {
       {available.length > 0 && (
         <Section title="Rimorkiot e disponueshme" accent="slate">
           <div className="space-y-2">
-            {available.map((t) => (
-              <TrailerRow
-                key={t.id}
-                trailer={t}
-                action={
-                  <button
-                    onClick={() => claim(t)}
-                    disabled={claimingId === t.id}
-                    className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-60 transition-colors"
-                  >
-                    {claimingId === t.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Hand className="w-3.5 h-3.5" />
-                    )}
-                    Merre
-                  </button>
-                }
-              />
-            ))}
+            {available.map((t) => {
+              const claimedByOther = t.claimed_by_driver_id && t.claimed_by_driver_id !== driverId;
+              return (
+                <TrailerRow
+                  key={t.id}
+                  trailer={t}
+                  holderNote={claimedByOther ? 'Aktualisht tek nje shofer tjeter' : undefined}
+                  action={
+                    <button
+                      onClick={() => claim(t)}
+                      disabled={claimingId === t.id}
+                      className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-60 transition-colors"
+                    >
+                      {claimingId === t.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Hand className="w-3.5 h-3.5" />
+                      )}
+                      {claimedByOther ? 'Merre' : 'Merre'}
+                    </button>
+                  }
+                />
+              );
+            })}
           </div>
         </Section>
       )}
@@ -212,7 +286,15 @@ function Section({ title, accent, children }: { title: string; accent: 'teal' | 
   );
 }
 
-function TrailerRow({ trailer, action }: { trailer: Trailer; action?: React.ReactNode }) {
+function TrailerRow({
+  trailer,
+  action,
+  holderNote,
+}: {
+  trailer: Trailer;
+  action?: React.ReactNode;
+  holderNote?: string;
+}) {
   const totalQty = (trailer.items ?? []).reduce((s, i) => s + i.quantity, 0);
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-3">
@@ -224,6 +306,7 @@ function TrailerRow({ trailer, action }: { trailer: Trailer; action?: React.Reac
           {trailer.title && (
             <p className="text-sm font-semibold text-gray-900 mt-1.5 truncate">{trailer.title}</p>
           )}
+          {holderNote && <p className="text-[11px] text-amber-700 mt-0.5">{holderNote}</p>}
         </div>
         {action}
       </div>
@@ -237,17 +320,23 @@ function TrailerRow({ trailer, action }: { trailer: Trailer; action?: React.Reac
 
       {(trailer.items ?? []).length > 0 && (
         <div className="pt-2 border-t border-gray-100 space-y-0.5">
-          {(trailer.items ?? []).map((i) => (
-            <div key={i.id} className="flex items-center justify-between text-xs">
-              <span className="truncate">
-                <span className="font-semibold text-gray-900">{i.product_title || '—'}</span>
-                {i.product_name && <span className="text-gray-500"> · {i.product_name}</span>}
-              </span>
-              <span className="font-bold tabular-nums text-gray-900 flex-shrink-0 ml-2">
-                {i.quantity.toLocaleString()}
-              </span>
-            </div>
-          ))}
+          {(trailer.items ?? []).map((i) => {
+            const cat = i.category_product?.category?.name;
+            return (
+              <div key={i.id} className="flex items-center justify-between text-xs">
+                <span className="truncate min-w-0">
+                  {cat && <span className="text-gray-500">{cat} · </span>}
+                  <span className="text-gray-900">{i.product_name || '—'}</span>
+                  {i.product_title && (
+                    <span className="font-semibold text-gray-900"> · {i.product_title}</span>
+                  )}
+                </span>
+                <span className="font-bold tabular-nums text-gray-900 flex-shrink-0 ml-2">
+                  {i.quantity.toLocaleString()}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
