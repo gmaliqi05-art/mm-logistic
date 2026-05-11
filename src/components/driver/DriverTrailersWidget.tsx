@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Truck, Package, Loader2, CheckCircle2, AlertTriangle, Hand, LogOut } from 'lucide-react';
+import { Truck, Package, Loader2, CheckCircle2, AlertTriangle, Hand, LogOut, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyUsers } from '../../utils/notifications';
@@ -40,6 +40,7 @@ export default function DriverTrailersWidget() {
   const [error, setError] = useState<string | null>(null);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
   const companyId = profile?.company_id ?? null;
   const driverId = profile?.id ?? null;
@@ -205,7 +206,38 @@ export default function DriverTrailersWidget() {
         </div>
       )}
 
-      {mine.length > 0 && (
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full bg-white rounded-2xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50/30 transition-colors p-4 flex items-center gap-3 text-left"
+      >
+        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+          <Truck className="w-5 h-5 text-teal-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-bold text-gray-900">Rimorkiot</span>
+            {mine.length > 0 && (
+              <span className="inline-flex items-center gap-1 bg-teal-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                {mine.length} e tua
+              </span>
+            )}
+            {available.length > 0 && (
+              <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                {available.length} te lira
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {open ? 'Kliko per te mbyllur' : 'Kliko per te pare detajet'}
+          </p>
+        </div>
+        <ChevronDown
+          className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && mine.length > 0 && (
         <Section title="Rimorkiot e tua" accent="teal">
           <div className="space-y-2">
             {mine.map((t) => (
@@ -232,7 +264,7 @@ export default function DriverTrailersWidget() {
         </Section>
       )}
 
-      {available.length > 0 && (
+      {open && available.length > 0 && (
         <Section title="Rimorkiot e disponueshme" accent="slate">
           <div className="space-y-2">
             {available.map((t) => {
