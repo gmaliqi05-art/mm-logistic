@@ -51,7 +51,7 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [autoRegister, setAutoRegister] = useState<boolean>(!!initial.auto_register_partner);
+  const [autoRegister, setAutoRegister] = useState<boolean>(initial.auto_register_partner ?? true);
   const [ownCompanyName, setOwnCompanyName] = useState<string>('');
   const [ownCompanyVat, setOwnCompanyVat] = useState<string>('');
 

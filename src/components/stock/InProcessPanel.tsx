@@ -16,6 +16,9 @@ interface SortingBatch {
   total_received: number;
   status: string;
   created_at: string;
+  source_item_id: string | null;
+  source_delivery_note_id: string | null;
+  category_id: string | null;
   depot?: { name: string } | null;
   category?: { name: string } | null;
 }
@@ -46,7 +49,7 @@ export default function InProcessPanel({
       setLoading(true);
       const sortingQuery = supabase
         .from('pallet_sorting_batches')
-        .select('id, reference_number_snapshot, total_received, status, created_at, depot:depots(name), category:product_categories(name)')
+        .select('id, reference_number_snapshot, total_received, status, created_at, source_item_id, source_delivery_note_id, category_id, depot:depots(name), category:product_categories(name)')
         .eq('company_id', companyId)
         .in('status', ['in_progress', 'pending'])
         .order('created_at', { ascending: false })
@@ -63,7 +66,14 @@ export default function InProcessPanel({
 
       const [sRes, rRes] = await Promise.all([sortingQuery, repairQuery]);
       if (cancelled) return;
-      setBatches((sRes.data as any) ?? []);
+      const rawBatches = ((sRes.data as any) ?? []) as SortingBatch[];
+      const seen = new Map<string, SortingBatch>();
+      for (const b of rawBatches) {
+        const key = b.source_item_id
+          ?? `${b.source_delivery_note_id ?? 'x'}-${b.category_id ?? 'x'}-${b.total_received}-${b.reference_number_snapshot ?? ''}`;
+        if (!seen.has(key)) seen.set(key, b);
+      }
+      setBatches(Array.from(seen.values()));
       const openRepairs = ((rRes.data as any) ?? []).filter(
         (r: RepairRow) => r.quantity_in - r.quantity_repaired - r.quantity_scrapped > 0,
       );
@@ -92,13 +102,18 @@ export default function InProcessPanel({
         loading={loading}
       >
         {batches.slice(0, 5).map((b) => (
-          <li key={b.id} className="flex items-center justify-between gap-3 text-xs py-1.5 border-b last:border-0 border-amber-100">
-            <span className="truncate text-slate-700">
-              <span className="font-medium">{b.category?.name ?? 'Pa kategori'}</span>
-              {b.depot?.name && <span className="text-slate-400"> · {b.depot.name}</span>}
-              {b.reference_number_snapshot && <span className="text-slate-400"> · #{b.reference_number_snapshot}</span>}
-            </span>
-            <span className="text-amber-700 font-semibold whitespace-nowrap">{b.total_received}</span>
+          <li key={b.id} className="py-1.5 border-b last:border-0 border-amber-100">
+            <Link
+              to={`${sortingPath}?batch=${b.id}`}
+              className="flex items-center justify-between gap-3 text-xs hover:text-amber-900"
+            >
+              <span className="truncate text-slate-700">
+                <span className="font-medium">{b.category?.name ?? 'Pa kategori'}</span>
+                {b.depot?.name && <span className="text-slate-400"> · {b.depot.name}</span>}
+                {b.reference_number_snapshot && <span className="text-slate-400"> · #{b.reference_number_snapshot}</span>}
+              </span>
+              <span className="text-amber-700 font-semibold whitespace-nowrap">{b.total_received}</span>
+            </Link>
           </li>
         ))}
         {batches.length > 5 && (
@@ -117,12 +132,17 @@ export default function InProcessPanel({
         {repairs.slice(0, 5).map((r) => {
           const remaining = r.quantity_in - r.quantity_repaired - r.quantity_scrapped;
           return (
-            <li key={r.id} className="flex items-center justify-between gap-3 text-xs py-1.5 border-b last:border-0 border-rose-100">
-              <span className="truncate text-slate-700">
-                <span className="font-medium">{r.category?.name ?? 'Pa kategori'}</span>
-                {r.depot?.name && <span className="text-slate-400"> · {r.depot.name}</span>}
-              </span>
-              <span className="text-rose-700 font-semibold whitespace-nowrap">{remaining}</span>
+            <li key={r.id} className="py-1.5 border-b last:border-0 border-rose-100">
+              <Link
+                to={`${repairPath}?repair=${r.id}`}
+                className="flex items-center justify-between gap-3 text-xs hover:text-rose-900"
+              >
+                <span className="truncate text-slate-700">
+                  <span className="font-medium">{r.category?.name ?? 'Pa kategori'}</span>
+                  {r.depot?.name && <span className="text-slate-400"> · {r.depot.name}</span>}
+                </span>
+                <span className="text-rose-700 font-semibold whitespace-nowrap">{remaining}</span>
+              </Link>
             </li>
           );
         })}

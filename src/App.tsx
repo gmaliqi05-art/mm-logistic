@@ -249,6 +249,7 @@ function AppRoutes() {
           <Route path="route-planner" element={<CompanyRoutePlanner />} />
           <Route path="fleet-reports" element={<CompanyFleetReports />} />
           <Route path="reports" element={<CompanyReports />} />
+          <Route path="sorting" element={<DepotSorting />} />
           <Route path="repair-reports" element={<CompanyRepairReports />} />
           <Route path="worker-repair-stats" element={<CompanyWorkerRepairStats />} />
           <Route path="chat" element={<CompanyChat />} />

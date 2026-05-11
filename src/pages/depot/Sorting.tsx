@@ -82,7 +82,7 @@ export default function DepotSorting() {
   const [editTotal, setEditTotal] = useState('');
 
   useEffect(() => {
-    if (profile?.depot_id && profile?.company_id) fetchAll();
+    if (profile?.company_id) fetchAll();
   }, [profile?.depot_id, profile?.company_id]);
 
   useEffect(() => {
@@ -97,7 +97,15 @@ export default function DepotSorting() {
       setLoading(true);
       setError(null);
       const companyId = profile!.company_id!;
-      const depotId = profile!.depot_id!;
+      const depotId = profile?.depot_id ?? null;
+
+      const batchQuery = supabase
+        .from('pallet_sorting_batches')
+        .select('*, items:pallet_sorting_items(*)')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (depotId) batchQuery.eq('depot_id', depotId);
 
       const [catRes, prodRes, batchRes] = await Promise.all([
         supabase
@@ -111,13 +119,7 @@ export default function DepotSorting() {
           .select('id, category_id, name')
           .eq('company_id', companyId)
           .order('name'),
-        supabase
-          .from('pallet_sorting_batches')
-          .select('*, items:pallet_sorting_items(*)')
-          .eq('company_id', companyId)
-          .eq('depot_id', depotId)
-          .order('created_at', { ascending: false })
-          .limit(30),
+        batchQuery,
       ]);
 
       if (catRes.error) throw catRes.error;
