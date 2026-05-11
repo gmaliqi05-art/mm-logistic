@@ -339,6 +339,10 @@ function ReviewModal({
     shortages: Array<{ label: string; condition: string; requested: number; available: number }>;
     onConfirm: () => void;
   }>(null);
+  const [warningModal, setWarningModal] = useState<null | {
+    messages: string[];
+    onConfirm: () => void;
+  }>(null);
   const persistingRef = useRef(false);
   const [ownCompany, setOwnCompany] = useState<{ name: string; vat: string }>({ name: '', vat: '' });
 
@@ -898,7 +902,24 @@ function ReviewModal({
     return out;
   }
 
-  async function handleCompleteToStock(allowNegative: boolean = false) {
+  function humanizeWarnings(raw: string[]): string[] {
+    const cleaned: string[] = [];
+    for (const w of raw) {
+      if (!w) continue;
+      // Filter out technical internals that should not reach the user.
+      if (/pallet_account/i.test(w)) continue;
+      // Translate common backend messages to Albanian.
+      const stockMatch = w.match(/Insufficient stock for item\s+([a-f0-9-]+):\s*need\s+(\d+),\s*have\s+(\d+)/i);
+      if (stockMatch) {
+        cleaned.push(`Stok i pamjaftueshem: kerkohen ${stockMatch[2]}, ne depo ${stockMatch[3]}.`);
+        continue;
+      }
+      cleaned.push(w);
+    }
+    return cleaned;
+  }
+
+  async function handleCompleteToStock(allowNegative: boolean = false, skipWarnings: boolean = false) {
     setSaving('complete');
     setError(null);
     try {
@@ -956,10 +977,17 @@ function ReviewModal({
         throw new Error((validation?.blockers || ['Validimi dështoi']).join('\n'));
       }
 
-      if (validation.warnings?.length > 0) {
-        const proceed = confirm(`Paralajmërime:\n${validation.warnings.join('\n')}\n\nVazhdo?`);
-        if (!proceed) {
+      if (!skipWarnings && validation.warnings?.length > 0) {
+        const messages = humanizeWarnings(validation.warnings as string[]);
+        if (messages.length > 0) {
           setSaving(null);
+          setWarningModal({
+            messages,
+            onConfirm: () => {
+              setWarningModal(null);
+              handleCompleteToStock(allowNegative, true);
+            },
+          });
           return;
         }
       }
@@ -1421,6 +1449,41 @@ function ReviewModal({
                 className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700"
               >
                 Vazhdo ne minus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {warningModal && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setWarningModal(null)}>
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-amber-50 border-b border-amber-100 px-5 py-4 flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-gray-900">Paralajmerime</h4>
+                <p className="text-xs text-gray-600 mt-1">Shqyrtoni paralajmerimet me poshte para se te vazhdoni.</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-2 max-h-80 overflow-y-auto">
+              {warningModal.messages.map((m, i) => (
+                <div key={i} className="bg-amber-50/60 border border-amber-100 rounded-lg px-3 py-2 text-sm text-gray-800">
+                  {m}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-3 bg-gray-50 border-t border-gray-100">
+              <button
+                onClick={() => setWarningModal(null)}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100"
+              >
+                Anulo
+              </button>
+              <button
+                onClick={warningModal.onConfirm}
+                className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700"
+              >
+                Vazhdo
               </button>
             </div>
           </div>

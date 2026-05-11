@@ -79,20 +79,8 @@ Deno.serve(async (req: Request) => {
         if (n.stock_posted === true) {
           blockers.push('Stock has already been posted for this note');
         }
-        const partnerId = (n.partner_id as string | null) ?? body.partner_id ?? null;
-        const palletType = (n.pallet_type as string | null) ?? body.pallet_type ?? null;
-        if (partnerId && palletType) {
-          const { data: acct } = await supabase
-            .from('pallet_accounts')
-            .select('id')
-            .eq('company_id', n.company_id as string)
-            .eq('partner_contact_id', partnerId)
-            .eq('pallet_type', palletType)
-            .maybeSingle();
-          if (!acct) {
-            warnings.push(`No pallet_account for partner ${partnerId} / ${palletType} — will be created automatically`);
-          }
-        }
+        // Pallet account is auto-created downstream when needed; no warning shown to user.
+        void n;
       }
     }
 
