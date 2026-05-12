@@ -68,7 +68,7 @@ BEGIN
       ) VALUES (
         NEW.company_id, NEW.origin_depot_id, item.category_id, item.category_product_id,
         'exit', item.quantity, item.condition, item.condition,
-        'Auto: Dorezim ' || NEW.note_number, NEW.confirmed_by, NEW.id, 'own', NEW.company_id
+        'Auto: Dorezim ' || NEW.note_number, NEW.stock_confirmed_by, NEW.id, 'own', NEW.company_id
       );
 
       UPDATE stock SET
@@ -113,7 +113,7 @@ BEGIN
         ) VALUES (
           NEW.company_id, NEW.destination_depot_id, item.category_id, item.category_product_id,
           'entry', item.quantity, item.condition, item.condition,
-          'Auto: Marrje ' || NEW.note_number, NEW.confirmed_by, NEW.id, 'own', NEW.company_id
+          'Auto: Marrje ' || NEW.note_number, NEW.stock_confirmed_by, NEW.id, 'own', NEW.company_id
         );
 
         INSERT INTO stock (
@@ -139,7 +139,7 @@ BEGIN
         NEW.company_id, NULL, item.category_id, item.category_product_id,
         'carrier_pass', item.quantity, item.condition, item.condition,
         'Transport per: ' || COALESCE(NEW.consignor_name, ''),
-        NEW.confirmed_by, NEW.id, 'transit', NEW.goods_owner_company_id
+        NEW.stock_confirmed_by, NEW.id, 'transit', NEW.goods_owner_company_id
       );
       -- No stock UPDATE
 
@@ -157,7 +157,7 @@ BEGIN
           condition, performed_by
         ) VALUES (
           NEW.company_id, NEW.destination_depot_id, item.category_id, item.category_product_id,
-          v_owner_id, NEW.id, 'custody_in', item.quantity, item.condition, NEW.confirmed_by
+          v_owner_id, NEW.id, 'custody_in', item.quantity, item.condition, NEW.stock_confirmed_by
         );
 
         INSERT INTO held_stock (
@@ -187,7 +187,7 @@ BEGIN
           condition, performed_by
         ) VALUES (
           NEW.company_id, NEW.origin_depot_id, item.category_id, item.category_product_id,
-          v_owner_id, NEW.id, 'custody_out', item.quantity, item.condition, NEW.confirmed_by
+          v_owner_id, NEW.id, 'custody_out', item.quantity, item.condition, NEW.stock_confirmed_by
         );
 
         UPDATE held_stock SET
@@ -210,7 +210,7 @@ BEGIN
       ) VALUES (
         NEW.company_id, NEW.origin_depot_id, item.category_id, item.category_product_id,
         'exit', item.quantity, item.condition, item.condition,
-        'Transfer i brendshem ' || NEW.note_number, NEW.confirmed_by, NEW.id, 'own', NEW.company_id
+        'Transfer i brendshem ' || NEW.note_number, NEW.stock_confirmed_by, NEW.id, 'own', NEW.company_id
       );
 
       UPDATE stock SET quantity = GREATEST(0, quantity - item.quantity)
@@ -228,7 +228,7 @@ BEGIN
       ) VALUES (
         NEW.company_id, NEW.destination_depot_id, item.category_id, item.category_product_id,
         'entry', item.quantity, item.condition, item.condition,
-        'Transfer i brendshem ' || NEW.note_number, NEW.confirmed_by, NEW.id, 'own', NEW.company_id
+        'Transfer i brendshem ' || NEW.note_number, NEW.stock_confirmed_by, NEW.id, 'own', NEW.company_id
       );
 
       INSERT INTO stock (
