@@ -26,6 +26,23 @@ import DocumentScanner from '../../components/scanner/DocumentScanner';
 import type { DeliveryNote, DeliveryNoteItem, Profile, Depot, ProductCategory } from '../../types';
 import { createNotificationAndPush } from '../../utils/pushNotifications';
 import PartnerQuickRegister from './PartnerQuickRegister';
+import OurRoleSelector, { type OurRole } from '../../components/delivery/OurRoleSelector';
+import ThreePartyForm, { type ThreePartyData } from '../../components/delivery/ThreePartyForm';
+
+function emptyThreeParty(): ThreePartyData {
+  return {
+    consignor: { contact_id: null, name: '', vat: '', address: '', city: '', country: '' },
+    carrier: { contact_id: null, name: '', vat: '', address: '', city: '', country: '' },
+    consignee: { contact_id: null, name: '', vat: '', address: '', city: '', country: '' },
+    carrier_vehicle_plate: '',
+    goods_owner_contact_id: null,
+  };
+}
+
+function mapRoleToType(role: OurRole): 'pickup' | 'delivery' {
+  if (role === 'consignor' || role === 'custodian_out' || role === 'internal_transfer' || role === 'carrier') return 'delivery';
+  return 'pickup';
+}
 
 interface NoteItemForm {
   category_id: string;
@@ -129,6 +146,8 @@ export default function CompanyDeliveryNotes() {
   const [filterDriver, setFilterDriver] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState<NoteForm>({ ...emptyForm });
+  const [ourRole, setOurRole] = useState<OurRole>('consignor');
+  const [threePartyData, setThreePartyData] = useState<ThreePartyData>(emptyThreeParty());
   const [saving, setSaving] = useState(false);
   const [selectedNote, setSelectedNote] = useState<DeliveryNote | null>(null);
   const [noteItems, setNoteItems] = useState<DeliveryNoteItem[]>([]);
@@ -297,6 +316,24 @@ export default function CompanyDeliveryNotes() {
           note_number: noteNumber,
           type: form.type,
           status: 'draft',
+          our_role: ourRole,
+          consignor_contact_id: threePartyData.consignor.contact_id || null,
+          consignor_name: threePartyData.consignor.name || null,
+          consignor_vat: threePartyData.consignor.vat || null,
+          consignor_address: threePartyData.consignor.address || null,
+          consignor_city: threePartyData.consignor.city || null,
+          consignor_country: threePartyData.consignor.country || null,
+          carrier_contact_id: threePartyData.carrier.contact_id || null,
+          carrier_name: threePartyData.carrier.name || null,
+          carrier_vat: threePartyData.carrier.vat || null,
+          carrier_vehicle_plate: threePartyData.carrier_vehicle_plate || null,
+          consignee_contact_id: threePartyData.consignee.contact_id || null,
+          consignee_name: threePartyData.consignee.name || null,
+          consignee_vat: threePartyData.consignee.vat || null,
+          consignee_address: threePartyData.consignee.address || null,
+          consignee_city: threePartyData.consignee.city || null,
+          consignee_country: threePartyData.consignee.country || null,
+          goods_owner_contact_id: threePartyData.goods_owner_contact_id || null,
           partner_id: form.partner_id || null,
           partner_name: form.partner_name || '',
           delivery_address: form.delivery_address,
@@ -781,31 +818,28 @@ export default function CompanyDeliveryNotes() {
             </div>
 
             <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.type')}</label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setForm({ ...form, type: 'delivery' })}
-                    className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
-                      form.type === 'delivery'
-                        ? 'border-teal-500 bg-teal-50 text-teal-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    {t('company.deliveryNotes.delivery')}
-                  </button>
-                  <button
-                    onClick={() => setForm({ ...form, type: 'pickup' })}
-                    className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-colors ${
-                      form.type === 'pickup'
-                        ? 'border-teal-500 bg-teal-50 text-teal-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    {t('company.deliveryNotes.pickup')}
-                  </button>
-                </div>
-              </div>
+              <OurRoleSelector
+                value={ourRole}
+                onChange={(role) => {
+                  setOurRole(role);
+                  setForm((f) => ({ ...f, type: mapRoleToType(role) }));
+                }}
+              />
+              <ThreePartyForm
+                ourRole={ourRole}
+                ourCompanyName={(profile as any)?.company?.name || ''}
+                data={threePartyData}
+                onChange={(next) => {
+                  setThreePartyData(next);
+                  setForm((f) => ({
+                    ...f,
+                    partner_name: ourRole === 'consignor' ? next.consignee.name : ourRole === 'consignee' ? next.consignor.name : next.carrier.name || f.partner_name,
+                    delivery_address: [next.consignee.address, next.consignee.city, next.consignee.country].filter(Boolean).join(', ') || f.delivery_address,
+                    pickup_address: [next.consignor.address, next.consignor.city, next.consignor.country].filter(Boolean).join(', ') || f.pickup_address,
+                  }));
+                }}
+                companyId={profile!.company_id!}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">

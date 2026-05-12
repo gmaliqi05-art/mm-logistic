@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { Building2, Truck, MapPin, Search } from 'lucide-react';
-import { useLanguage } from '../../i18n';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 import type { OurRole } from './OurRoleSelector';
 
@@ -44,12 +44,8 @@ interface Props {
   disabled?: boolean;
 }
 
-function emptyParty(): PartyData {
-  return { contact_id: null, name: '', vat: '', address: '', city: '', country: '' };
-}
-
 export default function ThreePartyForm({ ourRole, ourCompanyName, data, onChange, companyId, disabled }: Props) {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchTerm, setSearchTerm] = useState<{ consignor: string; consignee: string }>({ consignor: '', consignee: '' });
   const [showDropdown, setShowDropdown] = useState<{ consignor: boolean; consignee: boolean }>({ consignor: false, consignee: false });

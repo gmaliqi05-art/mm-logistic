@@ -22,6 +22,10 @@ import {
   AlertCircle,
   ArrowUpRight,
   ArrowDownLeft,
+  Truck as TruckIcon,
+  PackageOpen,
+  PackageCheck,
+  Repeat,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { applyScanToDeliveryNote } from '../../utils/applyScanToDeliveryNote';
@@ -669,19 +673,18 @@ function TaskCard({
     : 'bg-white shadow-sm hover:shadow-md';
   const borderWidth = isInProcess ? 'border-l-8' : 'border-l-4';
 
-  const directionBanner = isPickup
-    ? {
-        bg: 'bg-gradient-to-r from-orange-500 to-amber-500',
-        Icon: ArrowDownLeft,
-        label: t('driver.directionPickup'),
-        sub: t('driver.directionPickupSub'),
-      }
-    : {
-        bg: 'bg-gradient-to-r from-blue-600 to-sky-500',
-        Icon: ArrowUpRight,
-        label: t('driver.directionDelivery'),
-        sub: t('driver.directionDeliverySub'),
-      };
+  const directionBanner = ((): { bg: string; Icon: typeof ArrowUpRight; label: string; sub: string } => {
+    const role = (note as any).our_role as string | null | undefined;
+    if (role === 'consignor') return { bg: 'bg-gradient-to-r from-blue-600 to-sky-500', Icon: ArrowUpRight, label: t('driver.directionDelivery'), sub: t('driver.directionDeliverySub') };
+    if (role === 'consignee') return { bg: 'bg-gradient-to-r from-orange-500 to-amber-500', Icon: ArrowDownLeft, label: t('driver.directionPickup'), sub: t('driver.directionPickupSub') };
+    if (role === 'carrier') return { bg: 'bg-gradient-to-r from-fuchsia-600 to-pink-500', Icon: TruckIcon, label: t('driver.directionCarrier'), sub: t('driver.directionCarrierSub') };
+    if (role === 'custodian_in') return { bg: 'bg-gradient-to-r from-rose-400 to-orange-400', Icon: PackageOpen, label: t('driver.directionCustodyIn'), sub: t('driver.directionCarrierSub') };
+    if (role === 'custodian_out') return { bg: 'bg-gradient-to-r from-rose-400 to-orange-400', Icon: PackageCheck, label: t('driver.directionCustodyOut'), sub: t('driver.directionCarrierSub') };
+    if (role === 'internal_transfer') return { bg: 'bg-gradient-to-r from-slate-500 to-slate-600', Icon: Repeat, label: t('driver.directionInternalTransfer'), sub: t('driver.directionCarrierSub') };
+    return isPickup
+      ? { bg: 'bg-gradient-to-r from-orange-500 to-amber-500', Icon: ArrowDownLeft, label: t('driver.directionPickup'), sub: t('driver.directionPickupSub') }
+      : { bg: 'bg-gradient-to-r from-blue-600 to-sky-500', Icon: ArrowUpRight, label: t('driver.directionDelivery'), sub: t('driver.directionDeliverySub') };
+  })();
 
   return (
     <div

@@ -3,7 +3,7 @@
 // Place at: src/components/delivery/OurRoleSelector.tsx
 
 import { ArrowUpRight, ArrowDownLeft, Truck, PackageOpen, PackageCheck, Repeat } from 'lucide-react';
-import { useLanguage } from '../../i18n';
+import { useTranslation } from '../../i18n';
 
 export type OurRole = 'consignor' | 'consignee' | 'carrier' | 'custodian_in' | 'custodian_out' | 'internal_transfer';
 
@@ -82,7 +82,7 @@ const ROLE_OPTIONS: RoleOption[] = [
 ];
 
 export default function OurRoleSelector({ value, onChange, disabled, compact = false }: Props) {
-  const { t } = useLanguage();
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-2">

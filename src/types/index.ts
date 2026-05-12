@@ -157,6 +157,28 @@ export interface DeliveryNote {
   scheduled_pickup_at?: string | null;
   scheduled_delivery_at?: string | null;
   delivered_at?: string | null;
+  our_role?: 'consignor' | 'carrier' | 'consignee' | 'custodian_in' | 'custodian_out' | 'internal_transfer' | null;
+  consignor_company_id?: string | null;
+  consignor_contact_id?: string | null;
+  consignor_name?: string | null;
+  consignor_vat?: string | null;
+  consignor_address?: string | null;
+  consignor_city?: string | null;
+  consignor_country?: string | null;
+  carrier_company_id?: string | null;
+  carrier_contact_id?: string | null;
+  carrier_name?: string | null;
+  carrier_vat?: string | null;
+  carrier_vehicle_plate?: string | null;
+  consignee_company_id?: string | null;
+  consignee_contact_id?: string | null;
+  consignee_name?: string | null;
+  consignee_vat?: string | null;
+  consignee_address?: string | null;
+  consignee_city?: string | null;
+  consignee_country?: string | null;
+  goods_owner_company_id?: string | null;
+  goods_owner_contact_id?: string | null;
 }
 
 export interface DeliveryNoteItem {

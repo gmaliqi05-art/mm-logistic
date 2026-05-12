@@ -4,6 +4,18 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
+import OurRoleSelector, { type OurRole } from '../../components/delivery/OurRoleSelector';
+import ThreePartyForm, { type ThreePartyData } from '../../components/delivery/ThreePartyForm';
+
+function emptyThreeParty(): ThreePartyData {
+  return {
+    consignor: { contact_id: null, name: '', vat: '', address: '', city: '', country: '' },
+    carrier: { contact_id: null, name: '', vat: '', address: '', city: '', country: '' },
+    consignee: { contact_id: null, name: '', vat: '', address: '', city: '', country: '' },
+    carrier_vehicle_plate: '',
+    goods_owner_contact_id: null,
+  };
+}
 import type {
   AccDeliveryNote,
   AccDeliveryNoteStatus,
@@ -98,6 +110,8 @@ export default function AccDeliveryNotes() {
   const [previewNote, setPreviewNote] = useState<AccDeliveryNote | null>(null);
   const [form, setForm] = useState<NoteForm>(emptyNoteForm);
   const [items, setItems] = useState<ItemForm[]>([{ ...emptyItemForm }]);
+  const [ourRole, setOurRole] = useState<OurRole>('consignor');
+  const [threePartyData, setThreePartyData] = useState<ThreePartyData>(emptyThreeParty());
 
   useEffect(() => {
     if (profile?.company_id) fetchData();
@@ -291,6 +305,24 @@ export default function AccDeliveryNotes() {
             notes: form.notes.trim(),
             invoice_id: form.invoice_id || null,
             kind: form.kind,
+            our_role: ourRole,
+            consignor_contact_id: threePartyData.consignor.contact_id || null,
+            consignor_name: threePartyData.consignor.name || null,
+            consignor_vat: threePartyData.consignor.vat || null,
+            consignor_address: threePartyData.consignor.address || null,
+            consignor_city: threePartyData.consignor.city || null,
+            consignor_country: threePartyData.consignor.country || null,
+            carrier_contact_id: threePartyData.carrier.contact_id || null,
+            carrier_name: threePartyData.carrier.name || null,
+            carrier_vat: threePartyData.carrier.vat || null,
+            carrier_vehicle_plate: threePartyData.carrier_vehicle_plate || null,
+            consignee_contact_id: threePartyData.consignee.contact_id || null,
+            consignee_name: threePartyData.consignee.name || null,
+            consignee_vat: threePartyData.consignee.vat || null,
+            consignee_address: threePartyData.consignee.address || null,
+            consignee_city: threePartyData.consignee.city || null,
+            consignee_country: threePartyData.consignee.country || null,
+            goods_owner_contact_id: threePartyData.goods_owner_contact_id || null,
           })
           .select()
           .single();
@@ -548,6 +580,14 @@ export default function AccDeliveryNotes() {
               </div>
 
               <div className="p-6 space-y-6">
+                <OurRoleSelector value={ourRole} onChange={setOurRole} />
+                <ThreePartyForm
+                  ourRole={ourRole}
+                  ourCompanyName={(profile as any)?.company?.name || ''}
+                  data={threePartyData}
+                  onChange={setThreePartyData}
+                  companyId={profile!.company_id!}
+                />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.deliveryNotes.kindLabel')} *</label>
                   <select
