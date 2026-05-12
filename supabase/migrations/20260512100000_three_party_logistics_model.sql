@@ -167,3 +167,4 @@ LEFT JOIN acc_contacts cc_owner ON cc_owner.id = dn.goods_owner_contact_id
 LEFT JOIN companies comp_owner ON comp_owner.id = dn.goods_owner_company_id;
 
 GRANT SELECT ON delivery_notes_3party_view TO authenticated;
+.
