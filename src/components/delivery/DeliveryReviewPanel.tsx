@@ -1298,7 +1298,12 @@ function ReviewModal({
 
             <div className="space-y-3 text-sm">
               <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Te dhenat AI</p>
-              <DataRow label="Partner" value={ex.supplier_name || ex.customer_name || note.partner_name || '-'} />
+              <PartnerSnapshot
+                note={note}
+                ex={ex}
+                isPickup={isPickup}
+                partnerIsOwnCompany={partnerIsOwnCompany}
+              />
               <DataRow label="Nr. dokumenti" value={ex.invoice_number || note.reference_number || '-'} />
               <DataRow label="Data" value={ex.invoice_date || '-'} />
               <DataRow
@@ -1538,6 +1543,110 @@ function DataRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-start gap-3 py-1.5 border-b border-gray-100 last:border-0">
       <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide w-28 flex-shrink-0 pt-0.5">{label}</p>
       <p className="text-sm text-gray-900 break-words flex-1">{value}</p>
+    </div>
+  );
+}
+
+function PartnerSnapshot({
+  note,
+  ex,
+  isPickup,
+  partnerIsOwnCompany,
+}: {
+  note: ReviewNote;
+  ex: any;
+  isPickup: boolean;
+  partnerIsOwnCompany: boolean;
+}) {
+  const partnerName =
+    note.counterparty_name ||
+    (isPickup ? ex.consignor_name : ex.consignee_name) ||
+    ex.supplier_name ||
+    ex.customer_name ||
+    note.partner_name ||
+    '';
+  const partnerVat =
+    note.counterparty_vat ||
+    (isPickup ? ex.consignor_vat : ex.consignee_vat) ||
+    ex.supplier_vat ||
+    ex.customer_vat ||
+    '';
+  const partnerAddress =
+    (isPickup ? ex.consignor_address : ex.consignee_address) ||
+    ex.supplier_address ||
+    ex.customer_address ||
+    (isPickup ? note.pickup_address : note.delivery_address) ||
+    '';
+  const partnerEmail =
+    note.counterparty_email ||
+    (isPickup ? ex.consignor_email : ex.consignee_email) ||
+    ex.supplier_email ||
+    '';
+  const partnerPhone =
+    note.counterparty_phone ||
+    (isPickup ? ex.consignor_phone : ex.consignee_phone) ||
+    ex.supplier_phone ||
+    '';
+
+  const isLinked = !!(note.counterparty_contact_id || note.partner_id || note.counterparty_company_id);
+  const isNew = !!note.auto_register_partner && !isLinked;
+  const role = isPickup ? 'Derguesi' : 'Marresi';
+
+  if (partnerIsOwnCompany) {
+    return (
+      <div className="flex items-start gap-3 py-1.5 border-b border-gray-100">
+        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide w-28 flex-shrink-0 pt-0.5">Partner</p>
+        <p className="text-sm text-gray-900 break-words flex-1">Kompania jone (transfer i brendshem)</p>
+      </div>
+    );
+  }
+
+  if (!partnerName) {
+    return <DataRow label="Partner" value="-" />;
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-sky-50/40 to-white p-3">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{role}</p>
+          <p className="text-sm font-bold text-gray-900 break-words">{partnerName}</p>
+        </div>
+        {isLinked ? (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
+            <CheckCircle2 className="w-3 h-3" /> Ekziston
+          </span>
+        ) : isNew ? (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
+            <Sparkles className="w-3 h-3" /> I ri
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200 flex-shrink-0">
+            Pa lidhje
+          </span>
+        )}
+      </div>
+      <div className="space-y-1 text-xs text-gray-700">
+        {partnerVat && (
+          <p><span className="text-gray-500">VAT:</span> <span className="font-semibold">{partnerVat}</span></p>
+        )}
+        {partnerAddress && (
+          <p className="break-words"><span className="text-gray-500">Adresa:</span> {partnerAddress}</p>
+        )}
+        {partnerEmail && (
+          <p className="break-words"><span className="text-gray-500">Email:</span> {partnerEmail}</p>
+        )}
+        {partnerPhone && (
+          <p><span className="text-gray-500">Telefoni:</span> {partnerPhone}</p>
+        )}
+      </div>
+      <p className="mt-2 text-[10px] text-gray-500">
+        {isLinked
+          ? 'Te dhenat e mbushura nga skanimi. Ndryshoji te seksioni Partneri me lart.'
+          : isNew
+            ? 'Ky partner do te regjistrohet automatikisht kur ta dergoni ne stok. Mund ta editoni te seksioni Partneri.'
+            : 'Lidhni nje partner ekzistues ose aktivizoni regjistrimin automatik te seksioni Partneri.'}
+      </p>
     </div>
   );
 }
