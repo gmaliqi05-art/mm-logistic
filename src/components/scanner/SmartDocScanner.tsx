@@ -249,6 +249,9 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                   {disallowed && (
                     <p className="text-xs text-amber-800 mt-2 font-medium">{t('common.scanner.notAllowed')}</p>
                   )}
+                  {role === 'driver' && (
+                    <p className="text-xs text-slate-600 mt-2">{t('common.scanner.driverHandoffHint')}</p>
+                  )}
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full bg-white font-bold ${disallowed ? 'text-amber-700' : 'text-teal-700'}`}>
                   {Math.round((result.routing?.confidence || result.extracted.confidence) * 100)}%

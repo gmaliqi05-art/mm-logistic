@@ -125,6 +125,7 @@ export const en: typeof sq = {
       analysisFailed: 'AI analysis failed',
       processingError: 'Processing error',
       notAllowed: 'This document type is not allowed for your role. You can only scan delivery notes, receiving notes and expense invoices.',
+      driverHandoffHint: 'Your job is just to upload the document. The company will process and confirm it afterwards.',
       kinds: {
         purchase: 'Purchase invoice',
         expense: 'Expense invoice',
@@ -2147,6 +2148,7 @@ export const en: typeof sq = {
       analysisFailed: 'AI analysis failed',
       processingError: 'Processing error',
       notAllowed: 'This document type is not allowed for your role. You can only scan delivery notes, receiving notes and expense invoices.',
+      driverHandoffHint: 'Your job is just to upload the document. The company will process and confirm it afterwards.',
       kinds: {
         purchase: 'Purchase / Incoming invoice',
         expense: 'Expense',

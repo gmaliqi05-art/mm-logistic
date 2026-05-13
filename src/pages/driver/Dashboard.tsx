@@ -1556,7 +1556,6 @@ export function TaskDetailSheet({
         role="driver"
         title={t('driver.taskDetail.scanDocTitle').replace('{number}', note.note_number)}
         subtitle={isPickup ? t('driver.taskDetail.scanPickupSubtitle') : t('driver.taskDetail.scanDeliverySubtitle')}
-        allowedKinds={isPickup ? ['delivery_in'] : ['delivery_out']}
         docDirection={isPickup ? 'in' : 'out'}
         onClose={() => setShowScanner(false)}
         onConfirm={handleSmartScanResult}
