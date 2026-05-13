@@ -367,6 +367,13 @@ function ReviewModal({
     ownCompany.vat,
   );
 
+  function getAiPartnerName(): string {
+    const e = (note.ai_extracted_json as any) || {};
+    const pickFromConsignor = note.type === 'pickup' || note.flow_role === 'receiver' || (note as any).our_role === 'consignee';
+    const fromAi = pickFromConsignor ? e.consignor_name : e.consignee_name;
+    return ((note.counterparty_name || note.partner_name || fromAi || '') as string).trim();
+  }
+
   async function handleUploadDocument(file: File) {
     if (!file) return;
     setUploading(true);
@@ -726,7 +733,7 @@ function ReviewModal({
       }
       let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
-      if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && (willAutoRegister || !!getAiPartnerName()) && getAiPartnerName()) {
         const { data: contactId, error: rpcErr } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
         if (rpcErr) throw new Error(rpcErr.message);
         if (contactId) {
@@ -735,7 +742,7 @@ function ReviewModal({
           hasPartnerLink = true;
         }
       }
-      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister && !getAiPartnerName()) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne stok.');
       }
       await persistItems();
@@ -836,7 +843,7 @@ function ReviewModal({
       }
       let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
-      if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && (willAutoRegister || !!getAiPartnerName()) && getAiPartnerName()) {
         const { data: contactId, error: rpcErr } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
         if (rpcErr) throw new Error(rpcErr.message);
         if (contactId) {
@@ -845,7 +852,7 @@ function ReviewModal({
           hasPartnerLink = true;
         }
       }
-      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister && !getAiPartnerName()) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne sortire.');
       }
       const sortingRows: RowState[] = rows.map((r) => ({
@@ -993,7 +1000,7 @@ function ReviewModal({
 
       let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
-      if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && (willAutoRegister || !!getAiPartnerName()) && getAiPartnerName()) {
         const { data: contactId, error: rpcErr } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
         if (rpcErr) throw new Error(rpcErr.message);
         if (contactId) {
@@ -1002,7 +1009,7 @@ function ReviewModal({
           hasPartnerLink = true;
         }
       }
-      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
+      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister && !getAiPartnerName()) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta regjistroni ne stok.');
       }
 
@@ -1209,6 +1216,7 @@ function ReviewModal({
               noteId={note.id}
               noteType={note.type}
               onRoleChange={(r) => setCurrentFlowRole(r)}
+              onChanged={onDone}
               initial={{
                 flow_role: note.flow_role ?? (note.type === 'pickup' ? 'receiver' : 'sender'),
                 counterparty_company_id: note.counterparty_company_id ?? null,
@@ -1220,6 +1228,25 @@ function ReviewModal({
                 partner_id: note.partner_id ?? null,
                 auto_register_partner: note.auto_register_partner ?? null,
               }}
+              aiSnapshot={(() => {
+                const e = (note.ai_extracted_json as any) || {};
+                const pickFromConsignor = note.type === 'pickup' || note.flow_role === 'receiver' || (note as any).our_role === 'consignee';
+                return pickFromConsignor
+                  ? {
+                      name: e.consignor_name || null,
+                      vat: e.consignor_vat || null,
+                      email: e.consignor_email || null,
+                      phone: e.consignor_phone || null,
+                      address: e.consignor_address || null,
+                    }
+                  : {
+                      name: e.consignee_name || null,
+                      vat: e.consignee_vat || null,
+                      email: e.consignee_email || null,
+                      phone: e.consignee_phone || null,
+                      address: e.consignee_address || null,
+                    };
+              })()}
             />
           )}
 

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { CheckCircle2, Link2, Search, AlertCircle, Loader2, UserPlus, ShieldAlert } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, Link2, Search, AlertCircle, Loader2, UserPlus, ShieldAlert, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import {
   FLOW_ROLE_META,
@@ -24,6 +24,13 @@ interface Props {
     auto_register_partner?: boolean | null;
     partner_id?: string | null;
   };
+  aiSnapshot?: {
+    name?: string | null;
+    vat?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    address?: string | null;
+  } | null;
   onChanged?: () => void;
   onRoleChange?: (role: FlowRole) => void;
   disabled?: boolean;
@@ -43,7 +50,7 @@ function flowRoleToOurRole(role: FlowRole): string {
   }
 }
 
-export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, onChanged, onRoleChange, disabled }: Props) {
+export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, aiSnapshot, onChanged, onRoleChange, disabled }: Props) {
   const [role, setRoleState] = useState<FlowRole>((initial.flow_role as FlowRole) ?? 'sender');
   const setRole = (next: FlowRole) => {
     setRoleState(next);
@@ -53,11 +60,12 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
     onRoleChange?.(role);
   }, []);
   const [snapshot, setSnapshot] = useState<CounterpartySnapshot>({
-    name: initial.counterparty_name ?? '',
-    vat: initial.counterparty_vat ?? '',
-    email: initial.counterparty_email ?? '',
-    phone: initial.counterparty_phone ?? '',
+    name: (initial.counterparty_name && initial.counterparty_name.trim()) || aiSnapshot?.name || '',
+    vat: (initial.counterparty_vat && initial.counterparty_vat.trim()) || aiSnapshot?.vat || '',
+    email: (initial.counterparty_email && initial.counterparty_email.trim()) || aiSnapshot?.email || '',
+    phone: (initial.counterparty_phone && initial.counterparty_phone.trim()) || aiSnapshot?.phone || '',
   });
+  const aiAutoFilledRef = useRef(false);
   const [matchedCompanyId, setMatchedCompanyId] = useState<string | null>(initial.counterparty_company_id ?? null);
   const [matchedContactId, setMatchedContactId] = useState<string | null>(initial.counterparty_contact_id ?? initial.partner_id ?? null);
   const [matchLabel, setMatchLabel] = useState<string>('');
@@ -92,6 +100,45 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
     ownCompanyName,
     ownCompanyVat,
   );
+
+  const hasAiData = !!(aiSnapshot && (aiSnapshot.name || aiSnapshot.vat || aiSnapshot.email || aiSnapshot.phone));
+  const canAutoFillFromAi = hasAiData && (
+    (!snapshot.name && aiSnapshot?.name) ||
+    (!snapshot.vat && aiSnapshot?.vat) ||
+    (!snapshot.email && aiSnapshot?.email) ||
+    (!snapshot.phone && aiSnapshot?.phone)
+  );
+
+  function applyAiSnapshot() {
+    if (!aiSnapshot) return;
+    setSnapshot((prev) => ({
+      name: prev.name?.trim() || aiSnapshot.name || '',
+      vat: prev.vat?.trim() || aiSnapshot.vat || '',
+      email: prev.email?.trim() || aiSnapshot.email || '',
+      phone: prev.phone?.trim() || aiSnapshot.phone || '',
+    }));
+  }
+
+  useEffect(() => {
+    if (aiAutoFilledRef.current) return;
+    if (disabled) return;
+    if (partnerIsOwnCompany) return;
+    if (initial.counterparty_name && initial.counterparty_name.trim()) return;
+    if (!aiSnapshot?.name) return;
+    aiAutoFilledRef.current = true;
+    const payload: Record<string, any> = {
+      counterparty_name: aiSnapshot.name || null,
+      counterparty_vat: aiSnapshot.vat || null,
+      counterparty_email: aiSnapshot.email || null,
+      counterparty_phone: aiSnapshot.phone || null,
+      partner_name: aiSnapshot.name || null,
+      auto_register_partner: true,
+      updated_at: new Date().toISOString(),
+    };
+    void supabase.from('delivery_notes').update(payload).eq('id', noteId).then(({ error }) => {
+      if (!error) onChanged?.();
+    });
+  }, [aiSnapshot, disabled, partnerIsOwnCompany, initial.counterparty_name, noteId, onChanged]);
 
   useEffect(() => {
     let cancelled = false;
@@ -206,6 +253,17 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
         <Field label="Email" value={snapshot.email ?? ''} onChange={(v) => { setSnapshot({ ...snapshot, email: v }); setMatchedCompanyId(null); }} />
         <Field label="Telefon" value={snapshot.phone ?? ''} onChange={(v) => { setSnapshot({ ...snapshot, phone: v }); setMatchedCompanyId(null); }} />
       </div>
+
+      {canAutoFillFromAi && (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={applyAiSnapshot}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg px-3 py-1.5 transition-colors"
+        >
+          <Sparkles className="w-3.5 h-3.5" /> Mbush nga AI
+        </button>
+      )}
 
       {partnerIsOwnCompany && (
         <div className="flex items-start gap-2 text-xs text-sky-800 bg-sky-50 border border-sky-200 px-3 py-2 rounded-lg">
