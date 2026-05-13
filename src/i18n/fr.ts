@@ -1589,6 +1589,14 @@ export const fr: typeof sq = {
         title: 'Livraison scann\u00e9e en attente de v\u00e9rification',
         body: '{number} a \u00e9t\u00e9 scann\u00e9e/t\u00e9l\u00e9vers\u00e9e par le chauffeur et attend approbation.',
       },
+      quickDraftAssigned: {
+        title: 'Document physique \u00e0 scanner',
+        body: 'La commande "{{noteNumber}}" vous a \u00e9t\u00e9 attribu\u00e9e. Scannez le document \u00e0 la r\u00e9ception.',
+      },
+      quickDraftCompleted: {
+        title: 'Le chauffeur a termin\u00e9 la commande',
+        body: 'La commande "{{noteNumber}}" attend votre v\u00e9rification.',
+      },
     },
   },
   support: {
@@ -2309,6 +2317,8 @@ export const fr: typeof sq = {
         return_in: 'Retour client',
         return_out: 'Retour fournisseur',
       },
+      quickDraftHint: 'Pour une cr\u00e9ation rapide : saisissez le titre + s\u00e9lectionnez le chauffeur. Vous pouvez ajouter les articles plus tard, ou le chauffeur les scanne.',
+      quickDraftBadge: 'Quick Draft',
     },
     overdue: {
       statusDraft: 'Brouillon',
@@ -2491,23 +2501,3 @@ export const fr: typeof sq = {
     internalTransfer: 'Transfert interne',
   },
 };
-notifications: {
-  templates: {
-    // ... existing ...
-    quickDraftAssigned: {
-      title: 'Dokument fizik per skanim',
-      body: 'Te eshte caktuar porosia "{{noteNumber}}". Skano dokumentin kur ta marresh.',
-    },
-    quickDraftCompleted: {
-      title: 'Shoferi plotesoi porosine',
-      body: 'Porosia "{{noteNumber}}" pret shqyrtimin tend.',
-    },
-  },
-},
-companyAdmin: {
-  deliveryNotes: {
-    // ... existing ...
-    quickDraftHint: 'Per krijim te shpejte: vendos titullin + zgjidh shoferin. Artikujt mund t\'i shtosh me vone, ose shoferi i skanon.',
-    quickDraftBadge: 'Quick Draft',
-  },
-},

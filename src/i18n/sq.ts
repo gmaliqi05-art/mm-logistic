@@ -1587,6 +1587,14 @@ export const sq = {
         title: 'Dergese e skanuar per shqyrtim',
         body: '{number} u skanua/ngarkua nga shoferi dhe pret miratim.',
       },
+      quickDraftAssigned: {
+        title: 'Dokument fizik per skanim',
+        body: 'Te eshte caktuar porosia "{{noteNumber}}". Skano dokumentin kur ta marresh.',
+      },
+      quickDraftCompleted: {
+        title: 'Shoferi plotesoi porosine',
+        body: 'Porosia "{{noteNumber}}" pret shqyrtimin tend.',
+      },
     },
   },
   support: {
@@ -2307,6 +2315,8 @@ export const sq = {
         return_in: 'Kthim nga klienti',
         return_out: 'Kthim te furnitori',
       },
+      quickDraftHint: 'Per krijim te shpejte: vendos titullin + zgjidh shoferin. Artikujt mund t\'i shtosh me vone, ose shoferi i skanon.',
+      quickDraftBadge: 'Quick Draft',
     },
     overdue: {
       statusDraft: 'Draft',
@@ -2489,23 +2499,3 @@ export const sq = {
     internalTransfer: 'Transfer i brendshem',
   },
 };
-notifications: {
-  templates: {
-    // ... existing ...
-    quickDraftAssigned: {
-      title: 'Dokument fizik per skanim',
-      body: 'Te eshte caktuar porosia "{{noteNumber}}". Skano dokumentin kur ta marresh.',
-    },
-    quickDraftCompleted: {
-      title: 'Shoferi plotesoi porosine',
-      body: 'Porosia "{{noteNumber}}" pret shqyrtimin tend.',
-    },
-  },
-},
-companyAdmin: {
-  deliveryNotes: {
-    // ... existing ...
-    quickDraftHint: 'Per krijim te shpejte: vendos titullin + zgjidh shoferin. Artikujt mund t\'i shtosh me vone, ose shoferi i skanon.',
-    quickDraftBadge: 'Quick Draft',
-  },
-},

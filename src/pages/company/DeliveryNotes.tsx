@@ -259,122 +259,63 @@ export default function CompanyDeliveryNotes() {
   }
 
   async function handleCreate() {
-  const trimmedTitle = form.note_number.trim();
+    const trimmedTitle = form.note_number.trim();
 
-  // 1. Titulli është OBLIGUES gjithmonë
-  if (!trimmedTitle) {
-    setError(t('companyAdmin.deliveryNotes.errOrderTitle'));
-    return;
-  }
+    if (!trimmedTitle) {
+      setError(t('companyAdmin.deliveryNotes.errOrderTitle'));
+      return;
+    }
 
-  // 2. QUICK DRAFT MODE: nese nuk ka artikuj ne forme,
-  //    kerkojme te kete te pakten nje shofer te caktuar
-  const isQuickDraft = form.items.length === 0;
+    const isQuickDraft = form.items.length === 0;
 
-  if (isQuickDraft && !form.assigned_driver_id) {
-    setError(
-      'Per te krijuar porosi te shpejte, duhet te caktoni nje shofer. ' +
-      'Shoferi do ta plotesoje porosine me skanim te dokumentit fizik.'
-    );
-    return;
-  }
-
-  // 3. NESE KA ARTIKUJ, valido si me pare
-  try {
-    setSaving(true);
-    const companyId = profile!.company_id!;
-    const noteNumber = trimmedTitle;
-
-    // Validimi i stokut vetem kur ka artikuj
-    if (!isQuickDraft && form.type === 'delivery' && form.items.length > 0) {
-      const validationItems = form.items
-        .filter((item) => item.category_id)
-        .map((item) => ({
-          category_id: item.category_id,
-          category_product_id: item.product_id || null,
-          quantity: item.quantity,
-          condition: item.condition,
-        }));
-
-      const { data: validation, error: vErr } = await supabase.functions.invoke(
-        'validate-delivery-action',
-        {
-          body: {
-            action: 'create',
-            type: 'delivery',
-            items: validationItems,
-            company_id: companyId,
-          },
-        }
+    if (isQuickDraft && !form.assigned_driver_id) {
+      setError(
+        'Per te krijuar porosi te shpejte, duhet te caktoni nje shofer. ' +
+        'Shoferi do ta plotesoje porosine me skanim te dokumentit fizik.'
       );
+      return;
+    }
 
-      if (vErr || !validation?.valid) {
-        const blockerMsg = (validation?.blockers || ['Validimi deshtoi']).join('\n');
-        setError(blockerMsg);
-        setSaving(false);
-        return;
-      }
+    try {
+      setSaving(true);
+      const companyId = profile!.company_id!;
+      const noteNumber = trimmedTitle;
 
-      if (validation.warnings?.length > 0) {
-        const proceed = confirm(`Paralajmerime:\n${validation.warnings.join('\n')}\n\nVazhdo?`);
-        if (!proceed) {
+      if (!isQuickDraft && form.type === 'delivery' && form.items.length > 0) {
+        const validationItems = form.items
+          .filter((item) => item.category_id)
+          .map((item) => ({
+            category_id: item.category_id,
+            category_product_id: item.product_id || null,
+            quantity: item.quantity,
+            condition: item.condition,
+          }));
+
+        const { data: validation, error: vErr } = await supabase.functions.invoke(
+          'validate-delivery-action',
+          {
+            body: {
+              action: 'create',
+              type: 'delivery',
+              items: validationItems,
+              company_id: companyId,
+            },
+          }
+        );
+
+        if (vErr || !validation?.valid) {
+          const blockerMsg = (validation?.blockers || ['Validimi deshtoi']).join('\n');
+          setError(blockerMsg);
           setSaving(false);
           return;
         }
-      }
-    }
 
-    // 4. INSERT me flag te ri is_quick_draft
-    const { data: noteData, error: noteErr } = await supabase
-      .from('delivery_notes')
-      .insert({
-        company_id: companyId,
-        created_by: profile!.id,
-        assigned_driver_id: form.assigned_driver_id || null,
-        assigned_depot_id: form.assigned_depot_id || null,
-        note_number: noteNumber,
-        type: form.type,
-        // Statusi varet nga modi:
-        //   quick draft  → 'sent' (shoferi e sheh menjehere ne dashboard)
-        //   normal       → 'draft' (kompania e dergon kur eshte gati)
-        status: isQuickDraft ? 'sent' : 'draft',
-        is_quick_draft: isQuickDraft,
-        our_role: ourRole,
-        // ... fushat 3-party (te lejuara te jene null ne quick draft)
-        consignor_contact_id: threePartyData.consignor.contact_id || null,
-        consignor_name: threePartyData.consignor.name || null,
-        // ... (mbaj te njejten gje per consignor/carrier/consignee)
-        // ... (kopjo nga kodi ekzistues)
-      })
-      .select()
-      .single();
-
-    if (noteErr) throw noteErr;
-
-    // 5. NJOFTO shoferin nese eshte quick draft
-    if (isQuickDraft && form.assigned_driver_id) {
-      await notifyUsers({
-        userIds: [form.assigned_driver_id],
-        type: 'delivery',
-        titleKey: 'notifications.templates.quickDraftAssigned.title',
-        bodyKey: 'notifications.templates.quickDraftAssigned.body',
-        bodyParams: { noteNumber: trimmedTitle },
-        link: `/driver/dashboard?note=${noteData.id}`,
-      });
-    }
-
-    // 6. SHTO artikujt vetem nese ekzistojne (jo ne quick draft)
-    if (!isQuickDraft && form.items.length > 0) {
-      // ... kodi ekzistues per insert items
-    }
-
-    // ... reset form, fetch list, etc.
-  } catch (err: any) {
-    setError(err.message || 'Gabim ne krijim');
-  } finally {
-    setSaving(false);
-  }
-}
+        if (validation.warnings?.length > 0) {
+          const proceed = confirm(`Paralajmerime:\n${validation.warnings.join('\n')}\n\nVazhdo?`);
+          if (!proceed) {
+            setSaving(false);
+            return;
+          }
         }
       }
 
@@ -387,7 +328,8 @@ export default function CompanyDeliveryNotes() {
           assigned_depot_id: form.assigned_depot_id || null,
           note_number: noteNumber,
           type: form.type,
-          status: 'draft',
+          status: isQuickDraft ? 'sent' : 'draft',
+          is_quick_draft: isQuickDraft,
           our_role: ourRole,
           consignor_contact_id: threePartyData.consignor.contact_id || null,
           consignor_name: threePartyData.consignor.name || null,
@@ -441,12 +383,22 @@ export default function CompanyDeliveryNotes() {
         if (itemsErr) throw itemsErr;
       }
 
-      if (form.assigned_driver_id) {
+      if (!isQuickDraft && form.assigned_driver_id) {
         const { error: sendErr } = await supabase
           .from('delivery_notes')
           .update({ status: 'sent', updated_at: new Date().toISOString() })
           .eq('id', noteData.id);
         if (sendErr) throw sendErr;
+      }
+
+      if (isQuickDraft && form.assigned_driver_id) {
+        await createNotificationAndPush(
+          form.assigned_driver_id,
+          'delivery',
+          t('notifications.templates.quickDraftAssigned.title'),
+          t('notifications.templates.quickDraftAssigned.body').replace('{{noteNumber}}', trimmedTitle),
+          `/driver/dashboard?note=${noteData.id}`
+        );
       }
 
       await logAudit('create', 'delivery_note', noteData.id, { note_number: noteNumber, type: form.type });

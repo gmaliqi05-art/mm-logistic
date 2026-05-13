@@ -1589,6 +1589,14 @@ export const de: typeof sq = {
         title: 'Lieferung zur Prüfung gescannt',
         body: '{number} wurde vom Fahrer gescannt/hochgeladen und wartet auf Freigabe.',
       },
+      quickDraftAssigned: {
+        title: 'Physisches Dokument zum Scannen',
+        body: 'Auftrag "{{noteNumber}}" wurde Ihnen zugewiesen. Scannen Sie das Dokument bei Erhalt.',
+      },
+      quickDraftCompleted: {
+        title: 'Fahrer hat den Auftrag abgeschlossen',
+        body: 'Auftrag "{{noteNumber}}" wartet auf Ihre Prüfung.',
+      },
     },
   },
   support: {
@@ -2309,6 +2317,8 @@ export const de: typeof sq = {
         return_in: 'Kundenretoure',
         return_out: 'Lieferantenretoure',
       },
+      quickDraftHint: 'Für schnelle Erstellung: Titel eingeben + Fahrer auswählen. Artikel können später hinzugefügt werden, oder der Fahrer scannt sie.',
+      quickDraftBadge: 'Quick Draft',
     },
     overdue: {
       statusDraft: 'Entwurf',
@@ -2491,23 +2501,3 @@ export const de: typeof sq = {
     internalTransfer: 'Interne Übertragung',
   },
 };
-notifications: {
-  templates: {
-    // ... existing ...
-    quickDraftAssigned: {
-      title: 'Dokument fizik per skanim',
-      body: 'Te eshte caktuar porosia "{{noteNumber}}". Skano dokumentin kur ta marresh.',
-    },
-    quickDraftCompleted: {
-      title: 'Shoferi plotesoi porosine',
-      body: 'Porosia "{{noteNumber}}" pret shqyrtimin tend.',
-    },
-  },
-},
-companyAdmin: {
-  deliveryNotes: {
-    // ... existing ...
-    quickDraftHint: 'Per krijim te shpejte: vendos titullin + zgjidh shoferin. Artikujt mund t\'i shtosh me vone, ose shoferi i skanon.',
-    quickDraftBadge: 'Quick Draft',
-  },
-},
