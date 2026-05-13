@@ -320,23 +320,22 @@ async function decideRouting(
     partner_to_register = "none";
   }
 
-  // Override by explicit driver/depot role hint
-  if (docDirection === "in" && our_role === "unknown") {
-    our_role = "consignee";
+  // Override by explicit driver/depot context: physical movement always wins
+  // over accounting nature (sale/purchase) when the user is a driver or the
+  // delivery direction is provided. The partner_to_register is preserved
+  // from the role detection above.
+  if (docDirection === "in" || (role === "depot" && !docDirection)) {
     suggested_kind = "delivery_in";
-    partner_to_register = "consignor";
-  } else if (docDirection === "out" && our_role === "unknown") {
-    our_role = "consignor";
+    if (our_role === "unknown") {
+      our_role = "consignee";
+      partner_to_register = "consignor";
+    }
+  } else if (docDirection === "out" || (role === "driver" && !docDirection)) {
     suggested_kind = "delivery_out";
-    partner_to_register = "consignee";
-  } else if (role === "driver" && our_role === "unknown") {
-    our_role = "consignor";
-    suggested_kind = "delivery_out";
-    partner_to_register = "consignee";
-  } else if (role === "depot" && our_role === "unknown") {
-    our_role = "consignee";
-    suggested_kind = "delivery_in";
-    partner_to_register = "consignor";
+    if (our_role === "unknown") {
+      our_role = "consignor";
+      partner_to_register = "consignee";
+    }
   }
 
   // Match each party against existing contacts
