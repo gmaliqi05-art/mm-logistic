@@ -125,7 +125,6 @@ export const de: typeof sq = {
       analysisFailed: 'KI-Analyse fehlgeschlagen',
       processingError: 'Verarbeitungsfehler',
       notAllowed: 'Dieser Dokumenttyp ist fuer Ihre Rolle nicht erlaubt. Sie koennen nur Lieferscheine, Wareneingaenge und Spesenrechnungen scannen.',
-      driverHandoffHint: 'Ihre Aufgabe ist nur das Hochladen des Dokuments. Das Unternehmen wird es danach verarbeiten und bestaetigen.',
       kinds: {
         purchase: 'Eingangsrechnung',
         expense: 'Spesenrechnung',
@@ -2148,7 +2147,6 @@ export const de: typeof sq = {
       analysisFailed: 'KI-Analyse fehlgeschlagen',
       processingError: 'Verarbeitungsfehler',
       notAllowed: 'Dieser Dokumenttyp ist fuer Ihre Rolle nicht erlaubt. Sie koennen nur Lieferscheine, Wareneingaenge und Spesenbelege scannen.',
-      driverHandoffHint: 'Ihre Aufgabe ist nur das Hochladen des Dokuments. Das Unternehmen wird es danach verarbeiten und bestaetigen.',
       kinds: {
         purchase: 'Einkauf / Eingangsrechnung',
         expense: 'Ausgabe',

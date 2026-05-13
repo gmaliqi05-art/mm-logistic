@@ -125,7 +125,6 @@ export const fr: typeof sq = {
       analysisFailed: 'L\'analyse IA a echoue',
       processingError: 'Erreur de traitement',
       notAllowed: 'Ce type de document n\'est pas autorise pour votre role. Vous ne pouvez scanner que des bons de livraison, bons de reception et factures de frais.',
-      driverHandoffHint: 'Votre tache est uniquement de telecharger le document. L\'entreprise le traitera et le confirmera ensuite.',
       kinds: {
         purchase: 'Facture d\'achat',
         expense: 'Facture de frais',
@@ -2148,7 +2147,6 @@ export const fr: typeof sq = {
       analysisFailed: 'L\'analyse IA a echoue',
       processingError: 'Erreur de traitement',
       notAllowed: 'Ce type de document n\'est pas autorise pour votre role. Vous ne pouvez scanner que les bons de livraison, bons de reception et factures de frais.',
-      driverHandoffHint: 'Votre tache est uniquement de telecharger le document. L\'entreprise le traitera et le confirmera ensuite.',
       kinds: {
         purchase: 'Achat / Facture d\'achat',
         expense: 'Depense',

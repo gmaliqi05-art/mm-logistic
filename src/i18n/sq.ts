@@ -123,7 +123,6 @@ export const sq = {
       analysisFailed: 'Analiza me AI deshtoi',
       processingError: 'Gabim gjate perpunimit',
       notAllowed: 'Ky lloj dokumenti nuk lejohet per rolin tuaj. Ju mund te skanoni vetem fletedergesa, fletepranime dhe fatura shpenzimi.',
-      driverHandoffHint: 'Detyra juaj eshte vetem te ngarkoni dokumentin. Kompania do ta procesoje dhe konfirmoje me pas.',
       kinds: {
         purchase: 'Fature blerje',
         expense: 'Fature shpenzimi',
@@ -2146,7 +2145,6 @@ export const sq = {
       analysisFailed: 'Analiza AI deshtoi',
       processingError: 'Gabim gjate perpunimit',
       notAllowed: 'Ky lloj dokumenti nuk lejohet per rolin tuaj. Ju mund te skanoni vetem fletdergesa, fletpranime dhe fatura shpenzimi.',
-      driverHandoffHint: 'Detyra juaj eshte vetem te ngarkoni dokumentin. Kompania do ta procesoje dhe konfirmoje me pas.',
       kinds: {
         purchase: 'Blerje / Fature hyrese',
         expense: 'Shpenzim',
