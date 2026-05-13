@@ -151,7 +151,41 @@ function stripOwn(name: string, ourName: string, ourVat: string): string {
   return name;
 }
 
-async function callAi(rawText: string): Promise<Extracted> {
+const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+function bufferToBase64(buf: Uint8Array): string {
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < buf.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + chunk)));
+  }
+  return btoa(bin);
+}
+
+async function extractRawText(buf: Uint8Array, mime: string): Promise<string> {
+  try {
+    if (mime.includes("wordprocessingml") || mime === "application/msword") {
+      const result = await mammoth.extractRawText({ buffer: buf });
+      return result.value || "";
+    }
+    if (mime.includes("spreadsheetml") || mime === "application/vnd.ms-excel") {
+      const wb = XLSX.read(buf, { type: "array" });
+      let text = "";
+      for (const name of wb.SheetNames) {
+        text += XLSX.utils.sheet_to_csv(wb.Sheets[name]) + "\n";
+      }
+      return text;
+    }
+    if (mime.startsWith("text/")) {
+      return new TextDecoder().decode(buf);
+    }
+  } catch (err) {
+    console.error("extractRawText failed:", err);
+  }
+  return "";
+}
+
+async function callAi(rawText: string, base64?: string, mime?: string): Promise<Extracted> {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) {
     console.error("ANTHROPIC_API_KEY not set");
@@ -183,6 +217,14 @@ Return strict JSON matching this shape (no comments, no markdown):
 If a party is missing from the document, leave its fields as empty strings. Never guess.`;
 
   try {
+    const useVision = !!base64 && !!mime && (IMAGE_MIMES.includes(mime) || mime === "application/pdf");
+    const userContent: unknown = useVision
+      ? [
+          { type: mime === "application/pdf" ? "document" : "image", source: { type: "base64", media_type: mime, data: base64 } },
+          { type: "text", text: "Extract structured data from this document according to the schema in the system prompt. Return strict JSON only." },
+        ]
+      : `Document content:\n\n${rawText || "(no text extracted)"}`;
+
     const resp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -194,13 +236,20 @@ If a party is missing from the document, leave its fields as empty strings. Neve
         model: "claude-sonnet-4-5-20250929",
         max_tokens: 4000,
         system: systemPrompt,
-        messages: [{ role: "user", content: `Document content:\n\n${rawText}` }],
+        messages: [{ role: "user", content: userContent }],
       }),
     });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error("Anthropic API error:", resp.status, errText.slice(0, 300));
+      return emptyExtracted();
+    }
     const data = await resp.json();
     const text = data?.content?.[0]?.text || "{}";
     const cleaned = text.replace(/```json|```/g, "").trim();
-    return { ...emptyExtracted(), ...JSON.parse(cleaned) };
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    const jsonStr = match ? match[0] : cleaned;
+    return { ...emptyExtracted(), ...JSON.parse(jsonStr) };
   } catch (err) {
     console.error("AI extraction failed:", err);
     return emptyExtracted();
@@ -447,22 +496,50 @@ Deno.serve(async (req: Request) => {
       .eq("company_id", profile.company_id)
       .eq("is_active", true);
 
-    // Get scan with file content (this is simplified; original has download logic)
-    const { data: scan } = await adminSb
-      .from("document_scans")
+    const { data: scan, error: scanErr } = await adminSb
+      .from("acc_scanned_documents")
       .select("*")
       .eq("id", scanId)
-      .single();
+      .maybeSingle();
 
-    if (!scan) {
+    if (scanErr || !scan) {
       return new Response(JSON.stringify({ error: "Scan not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
-    // Download + extract raw text (truncated for brevity - original has full impl)
-    const rawText = scan.raw_text || "";
-    const extracted = await callAi(rawText);
+    if (scan.company_id !== profile.company_id) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    await adminSb
+      .from("acc_scanned_documents")
+      .update({ status: "processing", updated_at: new Date().toISOString() })
+      .eq("id", scanId);
+
+    const { data: fileData, error: fileErr } = await adminSb.storage
+      .from("acc-scans")
+      .download(scan.storage_path);
+    if (fileErr || !fileData) {
+      await adminSb
+        .from("acc_scanned_documents")
+        .update({ status: "failed", error_message: "File download failed", updated_at: new Date().toISOString() })
+        .eq("id", scanId);
+      return new Response(JSON.stringify({ error: "File download failed" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    const buf = new Uint8Array(await fileData.arrayBuffer());
+    const mime = scan.file_mime || "application/octet-stream";
+
+    const useVision = IMAGE_MIMES.includes(mime) || mime === "application/pdf";
+    const base64 = useVision ? bufferToBase64(buf) : undefined;
+    const rawText = useVision ? "" : await extractRawText(buf, mime);
+
+    const extracted = await callAi(rawText, base64, mime);
     const routing = await decideRouting(
       extracted,
       company || { id: profile.company_id, name: "", vat_number: null },
@@ -471,14 +548,16 @@ Deno.serve(async (req: Request) => {
       docDirection
     );
 
-    // Save back to scan
     await adminSb
-      .from("document_scans")
+      .from("acc_scanned_documents")
       .update({
-        extracted_data: extracted,
-        routing_data: routing,
-        status: "completed",
-        processed_at: new Date().toISOString(),
+        extracted_json: extracted,
+        routing_decision: routing.routing_decision,
+        raw_ocr_text: rawText || null,
+        suggested_contact_name: routing.matched_contact_name,
+        match_confidence: routing.confidence,
+        status: "parsed",
+        updated_at: new Date().toISOString(),
       })
       .eq("id", scanId);
 
