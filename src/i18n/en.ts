@@ -2491,3 +2491,23 @@ export const en: typeof sq = {
     internalTransfer: 'Internal transfer',
   },
 };
+notifications: {
+  templates: {
+    // ... existing ...
+    quickDraftAssigned: {
+      title: 'Dokument fizik per skanim',
+      body: 'Te eshte caktuar porosia "{{noteNumber}}". Skano dokumentin kur ta marresh.',
+    },
+    quickDraftCompleted: {
+      title: 'Shoferi plotesoi porosine',
+      body: 'Porosia "{{noteNumber}}" pret shqyrtimin tend.',
+    },
+  },
+},
+companyAdmin: {
+  deliveryNotes: {
+    // ... existing ...
+    quickDraftHint: 'Per krijim te shpejte: vendos titullin + zgjidh shoferin. Artikujt mund t\'i shtosh me vone, ose shoferi i skanon.',
+    quickDraftBadge: 'Quick Draft',
+  },
+},
