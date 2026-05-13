@@ -37,13 +37,32 @@ export interface SmartScanResult {
     }>;
     confidence: number;
     notes: string;
+    consignor_name?: string;
+    consignor_vat?: string;
+    consignor_address?: string;
+    consignor_email?: string;
+    consignor_phone?: string;
+    carrier_name?: string;
+    carrier_vat?: string;
+    consignee_name?: string;
+    consignee_vat?: string;
+    consignee_address?: string;
+    consignee_email?: string;
+    consignee_phone?: string;
   };
   routing: {
     suggested_kind: DocKind;
+    our_role?: 'consignor' | 'carrier' | 'consignee' | 'custodian_in' | 'custodian_out' | 'internal_transfer' | 'unknown';
+    partner_to_register?: 'consignor' | 'consignee' | 'goods_owner' | 'none';
     matched_contact_id: string | null;
     matched_contact_name: string | null;
     match_reason: string;
     confidence: number;
+    three_parties?: {
+      consignor: { name: string; vat: string; matched_company: boolean; matched_contact_id: string | null };
+      carrier: { name: string; vat: string; matched_company: boolean; matched_contact_id: string | null };
+      consignee: { name: string; vat: string; matched_company: boolean; matched_contact_id: string | null };
+    };
   } | null;
 }
 

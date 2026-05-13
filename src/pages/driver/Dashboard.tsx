@@ -1001,6 +1001,7 @@ export function TaskDetailSheet({
       }
 
       const ex = result.extracted;
+      const routing = result.routing;
       const hasLineItems = !!(ex.line_items && ex.line_items.length > 0);
       const enrichedJson = { ...ex, _needs_manual_items: !hasLineItems, _scan_direction: isPickup ? 'in' : 'out' };
       const update: Record<string, any> = {
@@ -1011,14 +1012,29 @@ export function TaskDetailSheet({
         updated_at: new Date().toISOString(),
       };
 
-      const rawSupplier = (ex.supplier_name || '').trim();
-      const rawCustomer = (ex.customer_name || '').trim();
-      const supplierVat = (ex as any).supplier_vat || null;
-      const customerVat = (ex as any).customer_vat || null;
-      const supplierEmail = (ex as any).supplier_email || null;
-      const supplierPhone = (ex as any).supplier_phone || null;
-      const supplierAddress = (ex as any).supplier_address || null;
-      const customerAddress = (ex as any).customer_address || null;
+      const consignorName = ((ex as any).consignor_name || '').trim();
+      const consignorVat = (ex as any).consignor_vat || null;
+      const consignorAddress = (ex as any).consignor_address || null;
+      const consignorEmail = (ex as any).consignor_email || null;
+      const consignorPhone = (ex as any).consignor_phone || null;
+      const consigneeName = ((ex as any).consignee_name || '').trim();
+      const consigneeVat = (ex as any).consignee_vat || null;
+      const consigneeAddress = (ex as any).consignee_address || null;
+      const consigneeEmail = (ex as any).consignee_email || null;
+      const consigneePhone = (ex as any).consignee_phone || null;
+
+      const rawSupplier = consignorName || (ex.supplier_name || '').trim();
+      const rawCustomer = consigneeName || (ex.customer_name || '').trim();
+      const supplierVat = consignorVat || (ex as any).supplier_vat || null;
+      const customerVat = consigneeVat || (ex as any).customer_vat || null;
+      const supplierEmail = consignorEmail || (ex as any).supplier_email || null;
+      const supplierPhone = consignorPhone || (ex as any).supplier_phone || null;
+      const supplierAddress = consignorAddress || (ex as any).supplier_address || null;
+      const customerAddress = consigneeAddress || (ex as any).customer_address || null;
+
+      if (routing?.our_role && routing.our_role !== 'unknown') {
+        update.our_role = routing.our_role;
+      }
 
       let ownName = '';
       let ownVat = '';
@@ -1058,6 +1074,8 @@ export function TaskDetailSheet({
       } else if (supplierIsUs && !customerIsUs) {
         detectedName = customerName;
         detectedVat = customerVat;
+        detectedEmail = consigneeEmail;
+        detectedPhone = consigneePhone;
         detectedAddress = customerAddress;
         update.flow_role = 'sender';
       } else if (customerIsUs && !supplierIsUs) {
@@ -1100,8 +1118,8 @@ export function TaskDetailSheet({
           });
           if (matchedCompanyId) update.counterparty_company_id = matchedCompanyId;
 
-          let contactId: string | null = null;
-          if (detectedVat) {
+          let contactId: string | null = routing?.matched_contact_id ?? null;
+          if (!contactId && detectedVat) {
             const { data: byVat } = await supabase
               .from('acc_contacts')
               .select('id')
@@ -1119,9 +1137,18 @@ export function TaskDetailSheet({
               .maybeSingle();
             if (byName?.id) contactId = byName.id;
           }
-          if (contactId) update.counterparty_contact_id = contactId;
+          if (contactId) {
+            update.counterparty_contact_id = contactId;
+            update.partner_id = contactId;
+            update.auto_register_partner = false;
+          } else if (!matchedCompanyId) {
+            // No match found anywhere - flag for auto-registration so company
+            // admin doesn't have to lift a finger.
+            update.auto_register_partner = true;
+          }
         } catch (err) {
           console.warn('auto partner detect failed', err);
+          if (detectedName) update.auto_register_partner = true;
         }
       }
 

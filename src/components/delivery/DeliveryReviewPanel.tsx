@@ -723,8 +723,16 @@ function ReviewModal({
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
-      const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
+      let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
+      if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
+        const { data: contactId } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
+        if (contactId) {
+          (note as any).counterparty_contact_id = contactId;
+          (note as any).partner_id = contactId;
+          hasPartnerLink = true;
+        }
+      }
       if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne stok.');
       }
@@ -824,8 +832,16 @@ function ReviewModal({
       if (invalid.length > 0) {
         throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
       }
-      const hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
+      let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
+      if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
+        const { data: contactId } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
+        if (contactId) {
+          (note as any).counterparty_contact_id = contactId;
+          (note as any).partner_id = contactId;
+          hasPartnerLink = true;
+        }
+      }
       if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne sortire.');
       }
