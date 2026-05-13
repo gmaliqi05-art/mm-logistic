@@ -12,6 +12,9 @@ export type DocKind =
   | 'sale'
   | 'delivery_out'
   | 'delivery_in'
+  | 'carrier_service'
+  | 'custody_service'
+  | 'internal_transfer'
   | 'unknown';
 
 export interface SmartScanResult {
@@ -20,9 +23,9 @@ export interface SmartScanResult {
   fileMime: string;
   extracted: {
     document_nature_guess: string;
-    supplier_name: string;
-    supplier_vat: string;
-    customer_name: string;
+    supplier_name?: string;
+    supplier_vat?: string;
+    customer_name?: string;
     invoice_number: string;
     invoice_date: string;
     total: number;
@@ -293,14 +296,14 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                 <div>
                   <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.keyData')}</p>
                   <dl className="space-y-2 text-sm">
-                    {result.extracted.supplier_name && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.supplier')}</dt><dd className="font-medium text-slate-900">{result.extracted.supplier_name}</dd></div>
+                    {(result.extracted.consignor_name || result.extracted.supplier_name) && (
+                      <div><dt className="text-xs text-slate-500">{t('common.scanner.supplier')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignor_name || result.extracted.supplier_name}</dd></div>
                     )}
-                    {result.extracted.customer_name && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.customer')}</dt><dd className="font-medium text-slate-900">{result.extracted.customer_name}</dd></div>
+                    {(result.extracted.consignee_name || result.extracted.customer_name) && (
+                      <div><dt className="text-xs text-slate-500">{t('common.scanner.customer')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignee_name || result.extracted.customer_name}</dd></div>
                     )}
-                    {result.extracted.supplier_vat && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.vatNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.supplier_vat}</dd></div>
+                    {(result.extracted.consignor_vat || result.extracted.supplier_vat) && (
+                      <div><dt className="text-xs text-slate-500">{t('common.scanner.vatNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.consignor_vat || result.extracted.supplier_vat}</dd></div>
                     )}
                     {result.extracted.invoice_number && (
                       <div><dt className="text-xs text-slate-500">{t('common.scanner.docNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.invoice_number}</dd></div>

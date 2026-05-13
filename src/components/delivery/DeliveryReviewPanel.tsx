@@ -609,16 +609,17 @@ function ReviewModal({
     setRows((prev) => [...prev, row]);
   }
 
-  async function persistItems() {
+  async function persistItems(rowsOverride?: RowState[]) {
     if (persistingRef.current) return;
     persistingRef.current = true;
+    const rowsToPersist = rowsOverride ?? rows;
     try {
       if (deletedIds.length > 0) {
         await supabase.from('delivery_note_items').delete().in('id', deletedIds);
         setDeletedIds([]);
       }
-      const updates = rows.filter((r) => r._persistedId);
-      const inserts = rows.filter((r) => !r._persistedId);
+      const updates = rowsToPersist.filter((r) => r._persistedId);
+      const inserts = rowsToPersist.filter((r) => !r._persistedId);
 
       for (const r of updates) {
         await supabase
@@ -666,7 +667,7 @@ function ReviewModal({
       }
 
       const keepIds = new Set<string>([
-        ...rows.map((r) => r._persistedId).filter((id): id is string => !!id),
+        ...rowsToPersist.map((r) => r._persistedId).filter((id): id is string => !!id),
         ...insertedIds,
       ]);
       const { data: existing } = await supabase
@@ -726,7 +727,8 @@ function ReviewModal({
       let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
       if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
-        const { data: contactId } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
+        const { data: contactId, error: rpcErr } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
+        if (rpcErr) throw new Error(rpcErr.message);
         if (contactId) {
           (note as any).counterparty_contact_id = contactId;
           (note as any).partner_id = contactId;
@@ -835,7 +837,8 @@ function ReviewModal({
       let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
       if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
-        const { data: contactId } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
+        const { data: contactId, error: rpcErr } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
+        if (rpcErr) throw new Error(rpcErr.message);
         if (contactId) {
           (note as any).counterparty_contact_id = contactId;
           (note as any).partner_id = contactId;
@@ -845,18 +848,12 @@ function ReviewModal({
       if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
         throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne sortire.');
       }
-      const sortingRows = rows.map((r) => ({
+      const sortingRows: RowState[] = rows.map((r) => ({
         ...r,
         intended_action: r.intended_action === 'repair' ? 'repair' : 'sorting',
       }));
-      setRows(sortingRows as any);
-      const originalRows = rows;
-      try {
-        await persistItems();
-      } catch (err) {
-        setRows(originalRows);
-        throw err;
-      }
+      await persistItems(sortingRows);
+      setRows(sortingRows);
       const prevAi = (note.ai_extracted_json as any) || null;
       const sanitizedAi = prevAi
         ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
@@ -992,6 +989,21 @@ function ReviewModal({
           });
           return;
         }
+      }
+
+      let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
+      const willAutoRegister = !!(note as any).auto_register_partner;
+      if (!partnerIsOwnCompany && !hasPartnerLink && willAutoRegister && note.counterparty_name) {
+        const { data: contactId, error: rpcErr } = await supabase.rpc('auto_register_counterparty', { p_note_id: note.id });
+        if (rpcErr) throw new Error(rpcErr.message);
+        if (contactId) {
+          (note as any).counterparty_contact_id = contactId;
+          (note as any).partner_id = contactId;
+          hasPartnerLink = true;
+        }
+      }
+      if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
+        throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta regjistroni ne stok.');
       }
 
       await persistItems();
@@ -1561,31 +1573,23 @@ function PartnerSnapshot({
   const partnerName =
     note.counterparty_name ||
     (isPickup ? ex.consignor_name : ex.consignee_name) ||
-    ex.supplier_name ||
-    ex.customer_name ||
     note.partner_name ||
     '';
   const partnerVat =
     note.counterparty_vat ||
     (isPickup ? ex.consignor_vat : ex.consignee_vat) ||
-    ex.supplier_vat ||
-    ex.customer_vat ||
     '';
   const partnerAddress =
     (isPickup ? ex.consignor_address : ex.consignee_address) ||
-    ex.supplier_address ||
-    ex.customer_address ||
     (isPickup ? note.pickup_address : note.delivery_address) ||
     '';
   const partnerEmail =
     note.counterparty_email ||
     (isPickup ? ex.consignor_email : ex.consignee_email) ||
-    ex.supplier_email ||
     '';
   const partnerPhone =
     note.counterparty_phone ||
     (isPickup ? ex.consignor_phone : ex.consignee_phone) ||
-    ex.supplier_phone ||
     '';
 
   const isLinked = !!(note.counterparty_contact_id || note.partner_id || note.counterparty_company_id);

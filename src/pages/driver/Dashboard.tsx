@@ -1003,7 +1003,13 @@ export function TaskDetailSheet({
       const ex = result.extracted;
       const routing = result.routing;
       const hasLineItems = !!(ex.line_items && ex.line_items.length > 0);
-      const enrichedJson = { ...ex, _needs_manual_items: !hasLineItems, _scan_direction: isPickup ? 'in' : 'out' };
+      const ourRole = routing?.our_role && routing.our_role !== 'unknown' ? routing.our_role : null;
+      const scanDirection = ourRole === 'consignor'
+        ? 'out'
+        : ourRole === 'consignee'
+          ? 'in'
+          : (isPickup ? 'in' : 'out');
+      const enrichedJson = { ...ex, _needs_manual_items: !hasLineItems, _scan_direction: scanDirection };
       const update: Record<string, any> = {
         scanned_photo_url: publicUrl,
         status: 'pending_company_review',

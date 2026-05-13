@@ -31,6 +31,18 @@ interface Props {
 
 const ROLES: FlowRole[] = ['sender', 'receiver', 'carrier_only', 'custodian_in', 'custodian_out', 'internal_transfer'];
 
+function flowRoleToOurRole(role: FlowRole): string {
+  switch (role) {
+    case 'sender': return 'consignor';
+    case 'receiver': return 'consignee';
+    case 'carrier_only': return 'carrier';
+    case 'custodian_in': return 'custodian_in';
+    case 'custodian_out': return 'custodian_out';
+    case 'internal_transfer': return 'internal_transfer';
+    default: return 'unknown';
+  }
+}
+
 export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, onChanged, onRoleChange, disabled }: Props) {
   const [role, setRoleState] = useState<FlowRole>((initial.flow_role as FlowRole) ?? 'sender');
   const setRole = (next: FlowRole) => {
@@ -115,6 +127,7 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
     const payload: Record<string, any> = partnerIsOwnCompany
       ? {
           flow_role: 'internal_transfer' as FlowRole,
+          our_role: 'internal_transfer',
           counterparty_company_id: null,
           counterparty_contact_id: null,
           counterparty_name: snapshot.name || null,
@@ -127,6 +140,7 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
         }
       : {
           flow_role: role,
+          our_role: flowRoleToOurRole(role),
           counterparty_company_id: matchedCompanyId,
           counterparty_contact_id: matchedContactId,
           counterparty_name: snapshot.name || null,
