@@ -1720,3 +1720,35 @@ function InfoRow({
     </div>
   );
 }
+// Kur shoferi skanon dokumentin per nje quick draft:
+async function handleScanQuickDraft(noteId: string, file: File) {
+  // 1. Upload file ne storage
+  const fileName = `${profile!.company_id}/quick_drafts/${noteId}_${Date.now()}.jpg`;
+  const { error: upErr } = await supabase.storage
+    .from('attachments')
+    .upload(fileName, file);
+
+  if (upErr) throw upErr;
+
+  // 2. Merr signed URL
+  const { data: urlData } = await supabase.storage
+    .from('attachments')
+    .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
+
+  // 3. Therrit OCR edge function
+  const { data: ocrData } = await supabase.functions.invoke('scan-document', {
+    body: { file_url: urlData?.signedUrl, doc_type: 'delivery_note' },
+  });
+
+  // 4. Therrit funksionin e ri SQL qe e kompleton drafted
+  const { data, error } = await supabase.rpc('driver_complete_quick_draft', {
+    p_note_id: noteId,
+    p_scan_url: urlData?.signedUrl,
+    p_extracted: ocrData?.extracted || {},
+  });
+
+  if (error) throw error;
+
+  // 5. UI feedback: porosia tani eshte 'pending_company_review'
+  alert('Dokumenti u dergua! Po pret shqyrtimin e kompanise.');
+}
