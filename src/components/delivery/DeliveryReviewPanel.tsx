@@ -686,12 +686,35 @@ function ReviewModal({
     }
   }
 
+  async function ensureDepotAssigned(): Promise<string | null> {
+    if (note.assigned_depot_id) return note.assigned_depot_id;
+    let depotId: string | null = profile?.depot_id || null;
+    if (!depotId) {
+      const { data: defaultDepot } = await supabase
+        .from('depots')
+        .select('id')
+        .eq('company_id', note.company_id)
+        .eq('is_active', true)
+        .order('depot_type', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      depotId = defaultDepot?.id || null;
+    }
+    if (depotId) {
+      await supabase.from('delivery_notes').update({ assigned_depot_id: depotId }).eq('id', note.id);
+      (note as any).assigned_depot_id = depotId;
+    }
+    return depotId;
+  }
+
   async function handleApprove() {
     setSaving('approve');
     setError(null);
     try {
-      if (!note.assigned_depot_id) {
-        throw new Error('Cakto nje depo per kete dergese para se ta dergosh per regjistrim.');
+      const depotId = await ensureDepotAssigned();
+      if (!depotId) {
+        throw new Error('Asnje depo e caktuar dhe asnje depo qendrore. Krijoni nje depo per kompanine para se ta dergoni ne stok.');
       }
       if (rows.length === 0) {
         throw new Error('Shtoni se paku nje artikull para se ta dergoni ne depo.');
@@ -790,8 +813,9 @@ function ReviewModal({
     setSaving('approve');
     setError(null);
     try {
-      if (!note.assigned_depot_id) {
-        throw new Error('Cakto nje depo per kete dergese para se ta dergosh ne sortire.');
+      const depotId = await ensureDepotAssigned();
+      if (!depotId) {
+        throw new Error('Asnje depo e caktuar dhe asnje depo qendrore. Krijoni nje depo per kompanine para sortirimit.');
       }
       if (rows.length === 0) {
         throw new Error('Shtoni se paku nje artikull para se ta dergoni ne sortire.');
@@ -849,7 +873,7 @@ function ReviewModal({
       const { data: depotUsers } = await supabase
         .from('profiles')
         .select('id')
-        .eq('depot_id', note.assigned_depot_id)
+        .eq('depot_id', depotId)
         .eq('role', 'depot_worker')
         .eq('is_active', true);
       if (depotUsers && depotUsers.length > 0) {
@@ -963,8 +987,8 @@ function ReviewModal({
           .eq('id', note.id);
       }
 
-      const depotId = note.assigned_depot_id || profile?.depot_id;
-      if (!depotId) throw new Error('Depoja nuk eshte caktuar per kete dergese.');
+      const depotId = await ensureDepotAssigned();
+      if (!depotId) throw new Error('Asnje depo e caktuar dhe asnje depo qendrore.');
 
       const { data: validation, error: vErr } = await supabase.functions.invoke('validate-delivery-action', {
         body: {
