@@ -33,7 +33,6 @@ import {
   GitBranch,
   Layers,
   CheckCircle2,
-  Building,
   type LucideIcon,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -69,17 +68,6 @@ interface PricingPlan {
   popular: boolean;
   cta: string;
   productType: ProductType;
-}
-
-interface PublicStats {
-  total_companies: number;
-  total_users: number;
-  total_deliveries: number;
-  total_depots: number;
-  total_partners: number;
-  total_invoices: number;
-  total_countries: number;
-  uptime_pct: number;
 }
 
 const PRODUCT_TAB_ICONS: Record<ProductType, LucideIcon> = {
@@ -119,12 +107,6 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string; hover: string }>
   rose: { bg: 'bg-rose-50', text: 'text-rose-600', hover: 'hover:border-rose-300' },
 };
 
-function formatStat(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
-  return String(n);
-}
-
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -134,7 +116,6 @@ export default function HomePage() {
   const [pricingTab, setPricingTab] = useState<ProductType>('logistics');
   const [pricingLoading, setPricingLoading] = useState(true);
   const [pricingError, setPricingError] = useState<string | null>(null);
-  const [stats, setStats] = useState<PublicStats | null>(null);
   const [activeRoleTab, setActiveRoleTab] = useState<'company' | 'accounting' | 'depot' | 'driver'>('company');
   const clickTimestamps = useRef<number[]>([]);
   const navigate = useNavigate();
@@ -150,16 +131,6 @@ export default function HomePage() {
       navigate('/sa-access');
     }
   }, [navigate]);
-
-  useEffect(() => {
-    async function loadStats() {
-      const { data, error } = await supabase.rpc('get_homepage_stats');
-      if (!error && data && data.length > 0) {
-        setStats(data[0] as PublicStats);
-      }
-    }
-    loadStats();
-  }, []);
 
   useEffect(() => {
     async function loadBanners() {
@@ -235,17 +206,6 @@ export default function HomePage() {
   const heroBanner = banners.find((b) => b.section_type === 'banner');
   const activePlans = pricingTab === 'logistics' ? logisticsPlans : accountingPlans;
 
-  const displayStats = stats || {
-    total_companies: 0,
-    total_users: 0,
-    total_deliveries: 0,
-    total_depots: 0,
-    total_partners: 0,
-    total_invoices: 0,
-    total_countries: 1,
-    uptime_pct: 99.9,
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 scroll-smooth">
       <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100' : 'bg-transparent'}`}>
@@ -320,32 +280,35 @@ export default function HomePage() {
 
             <div className="relative">
               <div className="relative rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl p-6 shadow-2xl">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-3 h-3 rounded-full bg-rose-400/80" />
-                  <div className="w-3 h-3 rounded-full bg-amber-400/80" />
-                  <div className="w-3 h-3 rounded-full bg-emerald-400/80" />
-                  <span className="ml-3 text-xs text-slate-400">dashboard.{platformName.toLowerCase().replace(/\s+/g, '')}.com</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-rose-400/80" />
+                    <div className="w-3 h-3 rounded-full bg-amber-400/80" />
+                    <div className="w-3 h-3 rounded-full bg-emerald-400/80" />
+                    <span className="ml-3 text-xs text-slate-400">dashboard.{platformName.toLowerCase().replace(/\s+/g, '')}.com</span>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">{t('home.v3.hero.previewBadge')}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
                     <div className="flex items-center gap-2 text-xs text-slate-400"><Truck className="h-3.5 w-3.5" />{t('home.v3.hero.cardDeliveries')}</div>
-                    <div className="mt-1 text-2xl font-bold">{formatStat(displayStats.total_deliveries)}</div>
-                    <div className="mt-1 text-xs text-emerald-300">{t('home.v3.hero.cardLifetime')}</div>
+                    <div className="mt-1 text-2xl font-bold">148</div>
+                    <div className="mt-1 text-xs text-emerald-300">+12%</div>
                   </div>
                   <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-400"><Warehouse className="h-3.5 w-3.5" />{t('home.v3.hero.cardDepots')}</div>
-                    <div className="mt-1 text-2xl font-bold">{displayStats.total_depots}</div>
-                    <div className="mt-1 text-xs text-emerald-300">{t('home.v3.hero.cardActive')}</div>
+                    <div className="flex items-center gap-2 text-xs text-slate-400"><Warehouse className="h-3.5 w-3.5" />{t('home.v3.hero.cardStock')}</div>
+                    <div className="mt-1 text-2xl font-bold">32.4k</div>
+                    <div className="mt-1 text-xs text-emerald-300">+3.4%</div>
                   </div>
                   <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-400"><Receipt className="h-3.5 w-3.5" />{t('home.v3.hero.cardInvoices')}</div>
-                    <div className="mt-1 text-2xl font-bold">{formatStat(displayStats.total_invoices)}</div>
-                    <div className="mt-1 text-xs text-emerald-300">{t('home.v3.hero.cardProcessed')}</div>
+                    <div className="flex items-center gap-2 text-xs text-slate-400"><Receipt className="h-3.5 w-3.5" />{t('home.v3.hero.cardRevenue')}</div>
+                    <div className="mt-1 text-2xl font-bold">€84k</div>
+                    <div className="mt-1 text-xs text-emerald-300">+8%</div>
                   </div>
                   <div className="rounded-2xl bg-slate-900/60 border border-white/5 p-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-400"><Users className="h-3.5 w-3.5" />{t('home.v3.hero.cardUsers')}</div>
-                    <div className="mt-1 text-2xl font-bold">{formatStat(displayStats.total_users)}</div>
-                    <div className="mt-1 text-xs text-emerald-300">{t('home.v3.hero.cardOnPlatform')}</div>
+                    <div className="flex items-center gap-2 text-xs text-slate-400"><Users className="h-3.5 w-3.5" />{t('home.v3.hero.cardDrivers')}</div>
+                    <div className="mt-1 text-2xl font-bold">26</div>
+                    <div className="mt-1 text-xs text-emerald-300">100%</div>
                   </div>
                 </div>
 
@@ -395,7 +358,7 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* REAL STATS */}
+      {/* PLATFORM AT-A-GLANCE - characteristics about the platform, not user data */}
       <section className="py-16 bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
@@ -404,17 +367,17 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { value: displayStats.total_companies, label: t('home.v3.stats.companies'), icon: Building, suffix: '' },
-              { value: displayStats.total_users, label: t('home.v3.stats.users'), icon: Users, suffix: '' },
-              { value: displayStats.total_deliveries, label: t('home.v3.stats.deliveries'), icon: Truck, suffix: '' },
-              { value: displayStats.uptime_pct, label: t('home.v3.stats.uptime'), icon: Zap, suffix: '%' },
+              { value: '6', label: t('home.v3.stats.modules'), icon: Boxes, suffix: '' },
+              { value: '5', label: t('home.v3.stats.roles'), icon: Users, suffix: '' },
+              { value: '4', label: t('home.v3.stats.languages'), icon: Globe2, suffix: '' },
+              { value: '99.9', label: t('home.v3.stats.uptime'), icon: Zap, suffix: '%' },
             ].map((s) => {
               const Ic = s.icon;
               return (
                 <div key={s.label} className="text-center">
                   <div className="inline-flex p-3 rounded-2xl bg-teal-50 text-teal-600 mb-3"><Ic className="h-6 w-6" /></div>
                   <div className="text-3xl lg:text-4xl font-extrabold text-slate-900">
-                    {typeof s.value === 'number' && s.value >= 1000 ? formatStat(s.value) : s.value}{s.suffix}
+                    {s.value}{s.suffix}
                   </div>
                   <div className="mt-1 text-sm text-slate-500 font-medium">{s.label}</div>
                 </div>
