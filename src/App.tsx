@@ -24,6 +24,7 @@ import LoginPage from './pages/LoginPage';
 import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+const LegalPage = lazy(() => import('./pages/LegalPage'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings'));
 import InstallPromptBanner from './components/InstallPromptBanner';
 import PushAutoSubscribe from './components/PushAutoSubscribe';
@@ -184,6 +185,8 @@ function AppRoutes() {
         <Route path="/sa-access" element={<SuperAdminLoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/legal" element={<LegalPage documentKey="impressum" />} />
+        <Route path="/legal/:slug" element={<LegalPage />} />
         <Route path="/settings/security" element={
           <ProtectedRoute>
             <SecuritySettings />
