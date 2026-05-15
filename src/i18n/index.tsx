@@ -1,27 +1,14 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { sq } from './sq';
 import { en } from './en';
 import { de } from './de';
 import { fr } from './fr';
-import { legalTranslations } from './legal';
 
 export type Language = 'sq' | 'en' | 'de' | 'fr';
 
 export type Translations = typeof sq;
 
-// Base translations as-loaded from each language file.
-const baseTranslations: Record<Language, Translations> = { sq, en, de, fr };
-
-// Merge `legal` block into each language at module load time.
-// `legalTranslations` is imported from ./legal/index.ts and contains
-// all 8 legal documents (impressum, terms, cookies, privacy, dpa,
-// subprocessors, aup, refund) plus common labels.
-const translations: Record<Language, Translations> = {
-  sq: { ...baseTranslations.sq, legal: legalTranslations.sq } as unknown as Translations,
-  en: { ...baseTranslations.en, legal: legalTranslations.en } as unknown as Translations,
-  de: { ...baseTranslations.de, legal: legalTranslations.de } as unknown as Translations,
-  fr: { ...baseTranslations.fr, legal: legalTranslations.fr } as unknown as Translations,
-};
+const translations: Record<Language, Translations> = { sq, en, de, fr };
 
 export const languageNames: Record<Language, string> = {
   sq: 'Shqip',
@@ -72,10 +59,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return getNestedValue(translations[language] as unknown as Record<string, unknown>, key);
   }, [language]);
 
-  const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
-
   return (
-    <LanguageContext.Provider value={value}>
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );

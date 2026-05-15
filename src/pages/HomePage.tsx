@@ -943,14 +943,8 @@ export default function HomePage() {
             <div>
               <h4 className="text-white font-semibold mb-3">{t('home.v3.footer.legal')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/legal/impressum" className="hover:text-white transition">{t('legal.impressum.shortTitle')}</Link></li>
-                <li><Link to="/legal/privacy-policy" className="hover:text-white transition">{t('legal.privacy.shortTitle')}</Link></li>
-                <li><Link to="/legal/terms" className="hover:text-white transition">{t('legal.terms.shortTitle')}</Link></li>
-                <li><Link to="/legal/cookies" className="hover:text-white transition">{t('legal.cookies.shortTitle')}</Link></li>
-                <li><Link to="/legal/dpa" className="hover:text-white transition">{t('legal.dpa.shortTitle')}</Link></li>
-                <li><Link to="/legal/subprocessors" className="hover:text-white transition">{t('legal.subprocessors.shortTitle')}</Link></li>
-                <li><Link to="/legal/acceptable-use" className="hover:text-white transition">{t('legal.aup.shortTitle')}</Link></li>
-                <li><Link to="/legal/refund-policy" className="hover:text-white transition">{t('legal.refund.shortTitle')}</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-white transition">{t('home.v3.footer.privacy')}</Link></li>
+                <li><a href="#" className="hover:text-white transition">{t('home.v3.footer.terms')}</a></li>
               </ul>
             </div>
           </div>
