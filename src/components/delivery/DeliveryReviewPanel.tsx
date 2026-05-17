@@ -349,6 +349,7 @@ function ReviewModal({
     messages: string[];
     onConfirm: () => void;
   }>(null);
+  const [showInvoicePrompt, setShowInvoicePrompt] = useState(false);
   const persistingRef = useRef(false);
   const [ownCompany, setOwnCompany] = useState<{ name: string; vat: string }>({ name: '', vat: '' });
 
@@ -1183,7 +1184,11 @@ function ReviewModal({
         }
       }
 
-      await onDone();
+      if (isOutgoing && !note.acc_invoice_id) {
+        setShowInvoicePrompt(true);
+      } else {
+        await onDone();
+      }
     } catch (err: any) {
       setError(err.message || 'Gabim gjate regjistrimit ne stok');
     } finally {
@@ -1417,7 +1422,7 @@ function ReviewModal({
             </div>
 
             <div className="space-y-3 text-sm">
-              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Te dhenat AI</p>
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Te dhenat Doc</p>
               <PartnerSnapshot
                 note={note}
                 ex={ex}
@@ -1567,7 +1572,7 @@ function ReviewModal({
               Konfirmo kthimin
             </button>
           )}
-          {role === 'company_admin' && !showRejectReason && isOutgoing && (
+          {role === 'company_admin' && !showRejectReason && isOutgoing && note.status === 'confirmed' && (
             <button
               onClick={handleCreateInvoice}
               disabled={!!saving || creatingInvoice}
@@ -1589,15 +1594,17 @@ function ReviewModal({
                 {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Warehouse className="w-4 h-4" />}
                 Dergo te depo per stok
               </button>
-              <button
-                onClick={handleSendToSorting}
-                disabled={!!saving}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
-                title="Dergo ne sortire ne depo — paletat do te ndahen ne A/B/C/Defekt"
-              >
-                {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
-                Dergo ne Sortire
-              </button>
+              {!isOutgoing && (
+                <button
+                  onClick={handleSendToSorting}
+                  disabled={!!saving}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                  title="Dergo ne sortire ne depo — paletat do te ndahen ne A/B/C/Defekt"
+                >
+                  {saving === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+                  Dergo ne Sortire
+                </button>
+              )}
             </>
           )}
           {!showRejectReason && (
@@ -1684,6 +1691,34 @@ function ReviewModal({
                 className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700"
               >
                 Vazhdo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInvoicePrompt && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setShowInvoicePrompt(false); onDone(); }}>
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-emerald-50 border-b border-emerald-100 px-5 py-4 flex items-start gap-3">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-gray-900">Dergesa u regjistrua ne stok</h4>
+                <p className="text-sm text-gray-600 mt-1">Deshironi te krijoni fature per kete dergese?</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4">
+              <button
+                onClick={() => { setShowInvoicePrompt(false); onDone(); }}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100"
+              >
+                Jo
+              </button>
+              <button
+                onClick={() => { setShowInvoicePrompt(false); handleCreateInvoice(); }}
+                className="px-4 py-2 text-sm font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700"
+              >
+                Po, krijo fature
               </button>
             </div>
           </div>
