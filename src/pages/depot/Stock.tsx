@@ -57,8 +57,7 @@ function downloadCsv(name: string, csv: string) {
 
 const CONDITIONS: Array<{ key: string; label: string; className: string }> = [
   { key: 'good', label: 'Te mira', className: 'bg-emerald-100 text-emerald-700' },
-  { key: 'damaged', label: 'Te demtuara', className: 'bg-rose-100 text-rose-700' },
-  { key: 'repaired', label: 'Te reparuara', className: 'bg-amber-100 text-amber-700' },
+  { key: 'damaged', label: 'Defekt', className: 'bg-rose-100 text-rose-700' },
   { key: 'sorting', label: 'Ne sortim', className: 'bg-teal-100 text-teal-700' },
   { key: 'sorting_pending', label: 'Pritje sortim', className: 'bg-slate-100 text-slate-700' },
   { key: 'ready_a', label: 'Klasa A', className: 'bg-emerald-100 text-emerald-700' },
@@ -403,11 +402,10 @@ export default function DepotStock() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <KpiCard label="Sasia" value={totals.qty.toLocaleString()} icon={Package} color="bg-teal-500" />
         <KpiCard label="Te mira" value={(totals.byCond['good'] ?? 0).toLocaleString()} icon={Package} color="bg-emerald-500" />
-        <KpiCard label="Te demtuara" value={(totals.byCond['damaged'] ?? 0).toLocaleString()} icon={AlertTriangle} color="bg-rose-500" />
-        <KpiCard label="Te reparuara" value={(totals.byCond['repaired'] ?? 0).toLocaleString()} icon={Wrench} color="bg-amber-500" />
+        <KpiCard label="Defekt" value={(totals.byCond['damaged'] ?? 0).toLocaleString()} icon={AlertTriangle} color="bg-rose-500" />
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-col sm:flex-row gap-2">
@@ -625,7 +623,7 @@ export default function DepotStock() {
                       onChange={(e) => setFormConditionBefore(e.target.value)}
                       className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                     >
-                      <option value="damaged">Demtuar</option>
+                      <option value="damaged">Defekt</option>
                       <option value="good">Te mira</option>
                     </select>
                   </div>
@@ -636,7 +634,6 @@ export default function DepotStock() {
                       onChange={(e) => setFormConditionAfter(e.target.value)}
                       className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                     >
-                      <option value="repaired">Reparuar</option>
                       <option value="good">Te mira</option>
                     </select>
                   </div>
@@ -652,8 +649,7 @@ export default function DepotStock() {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                   >
                     <option value="good">Te mira</option>
-                    <option value="damaged">Te demtuara</option>
-                    <option value="repaired">Te reparuara</option>
+                    <option value="damaged">Defekt</option>
                   </select>
                 </div>
               )}

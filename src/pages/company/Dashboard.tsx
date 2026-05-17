@@ -695,7 +695,6 @@ export default function CompanyDashboard() {
             <div className="space-y-2.5">
               <ConditionRow label={t('company.stock.good')} value={stats.stockGood} total={stats.stock} color="bg-green-500" icon={CheckCircle2} />
               <ConditionRow label={t('company.stock.damaged')} value={stats.stockDamaged} total={stats.stock} color="bg-red-500" icon={AlertTriangle} />
-              <ConditionRow label={t('company.stock.repaired')} value={stats.stockRepaired} total={stats.stock} color="bg-amber-500" icon={Wrench} />
             </div>
           </div>
 

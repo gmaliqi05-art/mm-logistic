@@ -240,7 +240,6 @@ export default function CompanyStock() {
         card.damaged += s.quantity;
       } else {
         card.total += s.quantity;
-        if (s.condition === 'repaired') card.repairedCondition += s.quantity;
       }
       if (s.quantity > 0 || s.condition === 'damaged') {
         card.byDepot.push({
@@ -676,20 +675,12 @@ export default function CompanyStock() {
                         </div>
                       )}
 
-                      {(c.damaged > 0 || c.repairedCondition > 0) && (
+                      {c.damaged > 0 && (
                         <div className="mt-3 flex items-center gap-3 text-xs">
-                          {c.repairedCondition > 0 && (
-                            <span className="inline-flex items-center gap-1 text-amber-700">
-                              <Wrench className="w-3 h-3" />
-                              {c.repairedCondition} {t('company.stock.repaired').toLowerCase()}
-                            </span>
-                          )}
-                          {c.damaged > 0 && (
-                            <span className="inline-flex items-center gap-1 text-rose-600">
-                              <ShieldAlert className="w-3 h-3" />
-                              {c.damaged} {t('company.stock.damaged').toLowerCase()}
-                            </span>
-                          )}
+                          <span className="inline-flex items-center gap-1 text-rose-600">
+                            <ShieldAlert className="w-3 h-3" />
+                            {c.damaged} {t('company.stock.damaged').toLowerCase()}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -713,8 +704,8 @@ export default function CompanyStock() {
                                 <span className="text-gray-700 inline-flex items-center gap-2">
                                   <Building2 className="w-3.5 h-3.5 text-gray-400" />
                                   {d.depotName}
-                                  {d.condition === 'repaired' && (
-                                    <span className="text-[10px] uppercase font-semibold text-amber-700 bg-amber-100 rounded px-1">R</span>
+                                  {d.condition === 'damaged' && (
+                                    <span className="text-[10px] uppercase font-semibold text-rose-700 bg-rose-100 rounded px-1">D</span>
                                   )}
                                 </span>
                                 <div className="flex items-center gap-2">

@@ -243,7 +243,7 @@ export default function DepotReports() {
           ['flow', 'Hyrje / Dalje', BarChart3],
           ['repair', 'Reparime', Wrench],
           ['sorting', 'Sortime', Layers],
-          ['damaged', 'Te demtuara', Package],
+          ['damaged', 'Defekt', Package],
         ] as Array<[Tab, string, typeof BarChart3]>).map(([key, label, Icon]) => (
           <button
             key={key}

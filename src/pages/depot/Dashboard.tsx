@@ -294,7 +294,7 @@ export default function DepotDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard label="Stoku total" value={totals.total} icon={Package} color="bg-teal-500" />
         <StatCard label="Te mira" value={totals.good} icon={Package} color="bg-emerald-500" />
-        <StatCard label="Te demtuara" value={totals.damaged} icon={Wrench} color="bg-rose-500" />
+        <StatCard label="Defekt" value={totals.damaged} icon={Wrench} color="bg-rose-500" />
         <StatCard label="Hyrje sot" value={todayFlow.entry} icon={ArrowUpCircle} color="bg-cyan-500" />
         <StatCard label="Dalje sot" value={todayFlow.exit} icon={ArrowDownCircle} color="bg-slate-500" />
       </div>
@@ -404,10 +404,9 @@ export default function DepotDashboard() {
               <TrendingDown className="w-4 h-4 text-rose-500" />
               <h2 className="font-semibold text-gray-900 text-sm">Ne proces</h2>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <MiniStat label="Demtuar" value={totals.damaged} tone="rose" />
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <MiniStat label="Defekt" value={totals.damaged} tone="rose" />
               <MiniStat label="Sortim" value={totals.sorting} tone="teal" />
-              <MiniStat label="Reparuar" value={totals.repaired} tone="amber" />
             </div>
           </div>
 
