@@ -235,16 +235,12 @@ export default function HomePage() {
           <div className="flex items-center justify-between h-16 lg:h-20">
             <Link to="/" className="flex items-center gap-2.5">
               {platformSettings.logo ? (
-                <img src={platformSettings.logo} alt={platformName} onClick={handleSecretClick} className="w-10 h-10 rounded-xl object-contain cursor-pointer" />
+                <img src={platformSettings.logo} alt={platformName} onClick={handleSecretClick} className="h-10 rounded-xl object-contain cursor-pointer" />
               ) : (
                 <div onClick={handleSecretClick} className={`p-2 rounded-xl transition-all cursor-pointer ${scrolled ? 'bg-teal-600 text-white shadow-sm' : 'bg-white/15 text-white backdrop-blur-sm'}`}>
                   <Package className="h-6 w-6" />
                 </div>
               )}
-              <div className="flex flex-col leading-tight">
-                <span className={`text-base font-bold tracking-tight transition-colors ${scrolled ? 'text-slate-900' : 'text-white'}`}>{platformName}</span>
-                <span className={`text-[11px] font-medium tracking-wider uppercase transition-colors ${scrolled ? 'text-slate-400' : 'text-white/70'}`}>{t('home.v3.nav.tagline')}</span>
-              </div>
             </Link>
 
             <div className="hidden lg:flex items-center gap-8">
@@ -943,14 +939,14 @@ export default function HomePage() {
             <div>
               <h4 className="text-white font-semibold mb-3">{t('home.v3.footer.legal')}</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/legal/impressum" className="hover:text-white transition">{t('legal.impressum.shortTitle')}</Link></li>
-                <li><Link to="/legal/privacy-policy" className="hover:text-white transition">{t('legal.privacy.shortTitle')}</Link></li>
-                <li><Link to="/legal/terms" className="hover:text-white transition">{t('legal.terms.shortTitle')}</Link></li>
-                <li><Link to="/legal/cookies" className="hover:text-white transition">{t('legal.cookies.shortTitle')}</Link></li>
-                <li><Link to="/legal/dpa" className="hover:text-white transition">{t('legal.dpa.shortTitle')}</Link></li>
-                <li><Link to="/legal/subprocessors" className="hover:text-white transition">{t('legal.subprocessors.shortTitle')}</Link></li>
-                <li><Link to="/legal/acceptable-use" className="hover:text-white transition">{t('legal.aup.shortTitle')}</Link></li>
-                <li><Link to="/legal/refund-policy" className="hover:text-white transition">{t('legal.refund.shortTitle')}</Link></li>
+                <li><Link to="/legal/impressum" className="hover:text-white transition">{t('legal.nav.impressum')}</Link></li>
+                <li><Link to="/legal/privacy" className="hover:text-white transition">{t('legal.nav.privacy')}</Link></li>
+                <li><Link to="/legal/terms" className="hover:text-white transition">{t('legal.nav.terms')}</Link></li>
+                <li><Link to="/legal/cookies" className="hover:text-white transition">{t('legal.nav.cookies')}</Link></li>
+                <li><Link to="/legal/dpa" className="hover:text-white transition">{t('legal.nav.dpa')}</Link></li>
+                <li><Link to="/legal/subprocessors" className="hover:text-white transition">{t('legal.nav.subprocessors')}</Link></li>
+                <li><Link to="/legal/aup" className="hover:text-white transition">{t('legal.nav.aup')}</Link></li>
+                <li><Link to="/legal/refund" className="hover:text-white transition">{t('legal.nav.refund')}</Link></li>
               </ul>
             </div>
           </div>
