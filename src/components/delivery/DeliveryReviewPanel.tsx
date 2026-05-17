@@ -30,6 +30,7 @@ import { isEuroPaletteName, isNewPalletProduct, epalClassRank } from '../../util
 import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
 import { notifyUsers } from '../../utils/notifications';
 import FlowRoleSelector from './FlowRoleSelector';
+import StockDeductionConfirmModal from './StockDeductionConfirmModal';
 import type { FlowRole } from '../../utils/counterpartyMatch';
 import { isOwnCompanyName } from '../../utils/companyName';
 
@@ -318,6 +319,8 @@ function ReviewModal({
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [showStockDeduction, setShowStockDeduction] = useState(false);
+  const [stockDeductionItems, setStockDeductionItems] = useState<Array<{ product_name: string; category_name: string; quantity: number; condition: string; stock_available: number | null }>>([]);
   const [rows, setRows] = useState<RowState[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -805,22 +808,46 @@ function ReviewModal({
 
   async function handleCreateInvoice() {
     if (note.acc_invoice_id) {
-      navigate(`/accounting/invoices/${note.acc_invoice_id}`);
+      navigate(`/accounting/invoices/${note.acc_invoice_id}/edit`);
       return;
     }
+    setError(null);
+    // Build stock deduction preview
+    const items: typeof stockDeductionItems = [];
+    for (const r of rows) {
+      if (!r.category_id || !r.quantity) continue;
+      const cat = categories.find((c) => c.id === r.category_id);
+      const prod = products.find((p) => p.id === r.product_id);
+      const cond = r.condition || 'good';
+      const key = `${r.category_id}|${r.product_id || ''}|${cond}`;
+      const available = stockMap[key] ?? null;
+      items.push({
+        product_name: prod?.name || '',
+        category_name: cat?.name || '',
+        quantity: r.quantity,
+        condition: cond,
+        stock_available: available,
+      });
+    }
+    setStockDeductionItems(items);
+    setShowStockDeduction(true);
+  }
+
+  async function executeInvoiceCreation() {
     setCreatingInvoice(true);
     setError(null);
     try {
-      const { data, error: err } = await supabase.rpc('create_invoice_from_delivery_note', { p_note_id: note.id });
+      const { data, error: err } = await supabase.rpc('create_invoice_with_stock_deduction', { p_note_id: note.id });
       if (err) throw err;
       const invoiceId = typeof data === 'string' ? data : (data as any)?.id;
       if (invoiceId) {
-        navigate(`/accounting/invoices/${invoiceId}`);
+        navigate(`/accounting/invoices/${invoiceId}/edit`);
       } else {
         navigate(`/accounting/invoices/new?delivery_note_id=${note.id}`);
       }
     } catch (e: any) {
       setError(e.message || 'Krijimi i fatures deshtoi');
+      setShowStockDeduction(false);
     } finally {
       setCreatingInvoice(false);
     }
@@ -1513,7 +1540,7 @@ function ReviewModal({
               Konfirmo kthimin
             </button>
           )}
-          {role === 'company_admin' && !showRejectReason && note.partner_id && (
+          {role === 'company_admin' && !showRejectReason && isOutgoing && (
             <button
               onClick={handleCreateInvoice}
               disabled={!!saving || creatingInvoice}
@@ -1634,6 +1661,16 @@ function ReviewModal({
             </div>
           </div>
         </div>
+      )}
+
+      {showStockDeduction && (
+        <StockDeductionConfirmModal
+          items={stockDeductionItems}
+          noteNumber={note.note_number}
+          partnerName={note.partner_name}
+          onConfirm={executeInvoiceCreation}
+          onCancel={() => setShowStockDeduction(false)}
+        />
       )}
     </div>
   );

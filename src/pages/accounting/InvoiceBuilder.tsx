@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Save, Send, Printer, Loader2, CheckCircle2,
   AlertCircle, Copy, ShieldCheck, Languages, Palette, Building2, Eye, X,
-  FileText, Truck,
+  FileText, Truck, Pencil, UserPlus,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -40,7 +40,13 @@ interface Company {
   tax_number?: string | null;
   email?: string | null;
   phone?: string | null;
+  website?: string | null;
   logo_url?: string | null;
+  legal_form?: string | null;
+  commercial_register?: string | null;
+  registration_court?: string | null;
+  invoice_footer_text?: string | null;
+  invoice_header_note?: string | null;
 }
 
 interface Contact {
@@ -51,7 +57,13 @@ interface Contact {
   city?: string | null;
   country?: string | null;
   vat_number?: string | null;
+  tax_number?: string | null;
   email?: string | null;
+  phone?: string | null;
+  iban?: string | null;
+  bic?: string | null;
+  bank_name?: string | null;
+  payment_days?: number | null;
   contact_type?: string | null;
 }
 
@@ -154,6 +166,9 @@ export default function InvoiceBuilder() {
   const [deliveryNoteSearch, setDeliveryNoteSearch] = useState('');
   const [deliveryNoteResults, setDeliveryNoteResults] = useState<Array<{ id: string; note_number: string; partner_name: string | null; type: string; delivered_at: string | null; partner_id: string | null }>>([]);
   const [deliveryNoteSearchOpen, setDeliveryNoteSearchOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState(false);
+  const [newContactForm, setNewContactForm] = useState<Partial<Contact> & { name: string }>({ name: '' });
+  const [savingContact, setSavingContact] = useState(false);
 
   const [layout, setLayout] = useState<Layout>('modern');
   const [primaryColor, setPrimaryColor] = useState('#0f766e');
@@ -168,7 +183,7 @@ export default function InvoiceBuilder() {
     setLoading(true);
     const [{ data: co }, { data: cs }, { data: bs }, { data: countryRows }, { data: rates }, { data: accProds }, { data: catProds }] = await Promise.all([
       supabase.from('companies').select('*').eq('id', profile.company_id).maybeSingle(),
-      supabase.from('acc_contacts').select('id, name, address, postal_code, city, country, vat_number, email, contact_type')
+      supabase.from('acc_contacts').select('id, name, address, postal_code, city, country, vat_number, tax_number, email, phone, iban, bic, bank_name, payment_days, contact_type')
         .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
       supabase.from('acc_bank_accounts').select('id, name, iban, bic, bank_name, is_default')
         .eq('company_id', profile.company_id).eq('is_active', true),
@@ -266,6 +281,60 @@ export default function InvoiceBuilder() {
       .order('created_at', { ascending: false })
       .limit(10);
     setDeliveryNoteResults((data as any[]) ?? []);
+  }
+
+  async function saveNewContact() {
+    if (!profile?.company_id || !newContactForm.name.trim()) return;
+    setSavingContact(true);
+    try {
+      const { data, error: err } = await supabase
+        .from('acc_contacts')
+        .insert({
+          company_id: profile.company_id,
+          name: newContactForm.name.trim(),
+          contact_type: newContactForm.contact_type || 'customer',
+          address: newContactForm.address || '',
+          postal_code: newContactForm.postal_code || '',
+          city: newContactForm.city || '',
+          country: newContactForm.country || '',
+          vat_number: newContactForm.vat_number || '',
+          tax_number: newContactForm.tax_number || '',
+          email: newContactForm.email || '',
+          phone: newContactForm.phone || '',
+          is_active: true,
+        })
+        .select('id, name, address, postal_code, city, country, vat_number, tax_number, email, phone, iban, bic, bank_name, payment_days, contact_type')
+        .maybeSingle();
+      if (err) throw err;
+      if (data) {
+        setContacts((prev) => [...prev, data as Contact].sort((a, b) => a.name.localeCompare(b.name)));
+        setContactId(data.id);
+        setNewContactForm({ name: '' });
+        setEditingContact(false);
+      }
+    } catch (e: any) {
+      setError(e.message || 'Regjistrimi deshtoi');
+    } finally {
+      setSavingContact(false);
+    }
+  }
+
+  async function updateExistingContact(fields: Partial<Contact>) {
+    if (!contactId) return;
+    setSavingContact(true);
+    try {
+      const { error: err } = await supabase
+        .from('acc_contacts')
+        .update(fields)
+        .eq('id', contactId);
+      if (err) throw err;
+      setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, ...fields } : c));
+      setEditingContact(false);
+    } catch (e: any) {
+      setError(e.message || 'Ruajtja deshtoi');
+    } finally {
+      setSavingContact(false);
+    }
   }
 
   function addTransportLine() {
@@ -754,16 +823,131 @@ export default function InvoiceBuilder() {
             )}
           </section>
 
+          {/* Seller info */}
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-slate-800 text-sm">Klienti</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-teal-600" /> Kompania jone (Shitesi)
+              </h3>
+              <Link to="/company/settings" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-teal-700">
+                <Pencil className="w-3 h-3" /> Edito
+              </Link>
+            </div>
+            {company && (
+              <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                <InfoRow label="Emri" value={company.name} />
+                {company.address && <InfoRow label="Adresa" value={`${company.address}${company.postal_code ? ', ' + company.postal_code : ''} ${company.city || ''}`} />}
+                {company.country && <InfoRow label="Shteti" value={company.country} />}
+                {company.vat_number && <InfoRow label="Nr. TVSH" value={company.vat_number} />}
+                {company.tax_number && <InfoRow label="Nr. Tatimor" value={company.tax_number} />}
+                {company.legal_form && <InfoRow label="Forma juridike" value={company.legal_form} />}
+                {company.commercial_register && <InfoRow label="Regjistri tregtar" value={company.commercial_register} />}
+                {company.email && <InfoRow label="Email" value={company.email} />}
+                {company.phone && <InfoRow label="Telefon" value={company.phone} />}
+                {bank && <InfoRow label="IBAN" value={bank.iban} />}
+                {bank && bank.bic && <InfoRow label="BIC" value={bank.bic} />}
+                {bank && bank.bank_name && <InfoRow label="Banka" value={bank.bank_name} />}
+              </div>
+            )}
+            {company && !company.vat_number && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                <AlertCircle className="w-3.5 h-3.5" /> Plotesoni numrin e TVSH-se ne cilesimet e kompanise.
+              </div>
+            )}
+          </section>
+
+          {/* Buyer section */}
+          <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-sm">Klienti (Bleresi)</h3>
+              {contact && !editingContact && (
+                <button onClick={() => { setEditingContact(true); setNewContactForm(contact as any); }} className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-teal-700">
+                  <Pencil className="w-3 h-3" /> Edito
+                </button>
+              )}
+            </div>
+
+            {/* Contact selector */}
             <Field label="Kontakti">
-              <select value={contactId} onChange={(e) => setContactId(e.target.value)} className={selectCls}>
+              <select value={contactId} onChange={(e) => { setContactId(e.target.value); setEditingContact(false); }} className={selectCls}>
                 <option value="">Zgjidh kontakt...</option>
                 {contacts.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}{c.country ? ` — ${c.country}` : ''}</option>
                 ))}
               </select>
             </Field>
+
+            {/* Existing contact - full data card */}
+            {contact && !editingContact && (
+              <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                <InfoRow label="Emri" value={contact.name} />
+                {contact.address && <InfoRow label="Adresa" value={`${contact.address}${contact.postal_code ? ', ' + contact.postal_code : ''} ${contact.city || ''}`} />}
+                {contact.country && <InfoRow label="Shteti" value={contact.country} />}
+                {contact.vat_number && <InfoRow label="Nr. TVSH" value={contact.vat_number} />}
+                {contact.tax_number && <InfoRow label="Nr. Tatimor" value={contact.tax_number} />}
+                {contact.email && <InfoRow label="Email" value={contact.email} />}
+                {contact.phone && <InfoRow label="Telefon" value={contact.phone} />}
+                {contact.iban && <InfoRow label="IBAN" value={contact.iban} />}
+                {contact.payment_days && <InfoRow label="Dite pagese" value={`${contact.payment_days} dite`} />}
+              </div>
+            )}
+
+            {/* Edit existing contact form */}
+            {contact && editingContact && (
+              <div className="rounded-lg border border-teal-200 bg-teal-50/30 p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Emri"><input value={newContactForm.name || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, name: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Shteti"><input value={newContactForm.country || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, country: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Adresa"><input value={newContactForm.address || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, address: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Qyteti"><input value={newContactForm.city || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, city: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Kodi Postar"><input value={newContactForm.postal_code || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, postal_code: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Nr. TVSH"><input value={newContactForm.vat_number || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, vat_number: e.target.value.toUpperCase() }))} className={inputCls} /></Field>
+                  <Field label="Email"><input type="email" value={newContactForm.email || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, email: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Telefon"><input value={newContactForm.phone || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, phone: e.target.value }))} className={inputCls} /></Field>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button onClick={() => updateExistingContact(newContactForm)} disabled={savingContact} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 disabled:opacity-60">
+                    {savingContact ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Ruaj ndryshimet
+                  </button>
+                  <button onClick={() => setEditingContact(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Anulo</button>
+                </div>
+              </div>
+            )}
+
+            {/* No contact selected - offer to register new */}
+            {!contactId && !editingContact && (
+              <button
+                onClick={() => { setEditingContact(true); setNewContactForm({ name: '', contact_type: 'customer' }); }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-50 w-full justify-center"
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Regjistro klient te ri
+              </button>
+            )}
+
+            {/* New contact registration form */}
+            {!contactId && editingContact && (
+              <div className="rounded-lg border border-sky-200 bg-sky-50/30 p-3 space-y-2">
+                <p className="text-xs font-semibold text-slate-700">Regjistro klient te ri</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Emri *"><input value={newContactForm.name || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, name: e.target.value }))} placeholder="Emri i kompanise" className={inputCls} /></Field>
+                  <Field label="Shteti"><input value={newContactForm.country || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, country: e.target.value }))} placeholder="DE" className={inputCls} /></Field>
+                  <Field label="Adresa"><input value={newContactForm.address || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, address: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Qyteti"><input value={newContactForm.city || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, city: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Kodi Postar"><input value={newContactForm.postal_code || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, postal_code: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Nr. TVSH"><input value={newContactForm.vat_number || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, vat_number: e.target.value.toUpperCase() }))} placeholder="DE123456789" className={inputCls} /></Field>
+                  <Field label="Email"><input type="email" value={newContactForm.email || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, email: e.target.value }))} className={inputCls} /></Field>
+                  <Field label="Telefon"><input value={newContactForm.phone || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, phone: e.target.value }))} className={inputCls} /></Field>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button onClick={saveNewContact} disabled={savingContact || !newContactForm.name.trim()} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-semibold hover:bg-sky-700 disabled:opacity-60">
+                    {savingContact ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />} Ruaj klientin
+                  </button>
+                  <button onClick={() => setEditingContact(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Anulo</button>
+                </div>
+              </div>
+            )}
+
+            {/* VAT override */}
             <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
               <Field label="Nr. TVSH i bleresit">
                 <input
@@ -783,7 +967,7 @@ export default function InvoiceBuilder() {
                 {viesStatus === 'loading' && <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />}
                 {viesStatus === 'valid' && <span className="inline-flex items-center gap-1 text-emerald-700"><CheckCircle2 className="w-3.5 h-3.5" /> VIES: valid</span>}
                 {viesStatus === 'invalid' && <span className="inline-flex items-center gap-1 text-red-700"><AlertCircle className="w-3.5 h-3.5" /> VIES: i pavlefshem ose format i gabuar</span>}
-                {viesStatus === 'idle' && (
+                {viesStatus === 'idle' && buyerVat && (
                   <span className={`inline-flex items-center gap-1 ${vatCheck.valid ? 'text-emerald-700' : 'text-amber-700'}`}>
                     {vatCheck.valid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                     Format: {vatCheck.valid ? `OK (${vatCheck.country})` : 'jo-standard'}
@@ -959,6 +1143,15 @@ export default function InvoiceBuilder() {
 
 const inputCls = 'w-full text-sm px-3 py-2 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
 const selectCls = inputCls;
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline gap-2 py-0.5">
+      <span className="text-slate-500 font-medium w-20 flex-shrink-0">{label}:</span>
+      <span className="text-slate-800 font-medium">{value}</span>
+    </div>
+  );
+}
 
 function Field({ label, children, full = false }: { label: React.ReactNode; children: React.ReactNode; full?: boolean }) {
   return (
