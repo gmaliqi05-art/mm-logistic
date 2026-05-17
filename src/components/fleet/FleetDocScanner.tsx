@@ -66,7 +66,9 @@ interface Props {
   onSaved?: (scanId: string, linkedId: string | null) => void;
 }
 
-type Step = 'category' | 'choose' | 'camera' | 'uploading' | 'analyzing' | 'review';
+type Step = 'category' | 'choose' | 'camera' | 'uploading' | 'analyzing' | 'review' | 'choose_back' | 'camera_back' | 'uploading_back';
+
+const TWO_SIDED_CATEGORIES = ['fuehrerschein', 'kod95', 'adr', 'fahrerkarte'];
 
 export default function FleetDocScanner({ mode, defaultCategory, presetTargetId, onClose, onSaved }: Props) {
   const { profile } = useAuth();
@@ -86,6 +88,9 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
   const [targetEntityId, setTargetEntityId] = useState<string>(presetTargetId || '');
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputBackRef = useRef<HTMLInputElement>(null);
+  const [frontStoragePath, setFrontStoragePath] = useState<string>('');
+  const [backStoragePath, setBackStoragePath] = useState<string>('');
 
   useEffect(() => {
     if (!companyId) return;
@@ -115,6 +120,8 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
         upsert: false,
       });
       if (upErr) throw upErr;
+
+      setFrontStoragePath(path);
 
       const { data: scan, error: scanErr } = await supabase
         .from('fleet_scanned_documents')
@@ -166,6 +173,29 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
     }
   }
 
+  async function processBackFile(file: File) {
+    setError('');
+    if (file.size > 15 * 1024 * 1024) {
+      setError('Skedari eshte shume i madh (max 15 MB).');
+      return;
+    }
+    setStep('uploading_back');
+    try {
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${companyId}/${Date.now()}_back_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('fleet-scans').upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      setBackStoragePath(path);
+      setStep('review');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gabim gjate ngarkimit te anes se pasme');
+      setStep('review');
+    }
+  }
+
   function onCameraCapture(file: File) {
     setStep('choose');
     processFile(file);
@@ -184,7 +214,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
         linkedType = result.entity_type;
         linkedId = result.entity_id;
       } else {
-        const result = await saveDriverSide(editMap, category, targetEntityId, companyId);
+        const result = await saveDriverSide(editMap, category, targetEntityId, companyId, frontStoragePath, backStoragePath);
         linkedType = result.entity_type;
         linkedId = result.entity_id;
       }
@@ -304,11 +334,58 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
             <CameraScanner onCapture={onCameraCapture} onClose={() => setStep('choose')} />
           )}
 
-          {(step === 'uploading' || step === 'analyzing') && (
+          {step === 'choose_back' && (
+            <div className="space-y-4">
+              <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                <p className="text-sm font-semibold text-teal-900">Skano anen e pasme te dokumentit</p>
+                <p className="text-xs text-teal-700 mt-0.5">Kthejeni dokumentin dhe skanoni anen e pasme</p>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <button
+                  onClick={() => setStep('camera_back')}
+                  className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
+                >
+                  <Camera className="w-8 h-8 text-teal-600 mb-2" />
+                  <p className="text-sm font-semibold text-slate-900">Skano me kamere</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Fotografo anen e pasme</p>
+                </button>
+                <button
+                  onClick={() => fileInputBackRef.current?.click()}
+                  className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
+                >
+                  <Upload className="w-8 h-8 text-teal-600 mb-2" />
+                  <p className="text-sm font-semibold text-slate-900">Ngarko skedar</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Foto e anes se pasme</p>
+                </button>
+              </div>
+              <input
+                ref={fileInputBackRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) processBackFile(f);
+                }}
+              />
+              <button
+                onClick={() => setStep('review')}
+                className="w-full text-center text-sm text-slate-500 hover:text-slate-700 py-2"
+              >
+                Kalo kete hap
+              </button>
+            </div>
+          )}
+
+          {step === 'camera_back' && (
+            <CameraScanner onCapture={(file: File) => { setStep('choose_back'); processBackFile(file); }} onClose={() => setStep('choose_back')} />
+          )}
+
+          {(step === 'uploading' || step === 'analyzing' || step === 'uploading_back') && (
             <div className="py-16 text-center">
               <Loader2 className="w-12 h-12 mx-auto text-teal-600 animate-spin mb-4" />
               <p className="text-base font-semibold text-slate-800">
-                {step === 'uploading' ? 'Duke ngarkuar...' : 'Duke analizuar me AI...'}
+                {step === 'uploading_back' ? 'Duke ngarkuar anen e pasme...' : step === 'uploading' ? 'Duke ngarkuar...' : 'Duke analizuar...'}
               </p>
               <p className="text-sm text-slate-500 mt-1">Kjo zakonisht zgjat 5-15 sekonda</p>
             </div>
@@ -394,6 +471,31 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                   </div>
                 </div>
               </div>
+
+              {mode === 'driver' && TWO_SIDED_CATEGORIES.includes(category) && (
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Ana e pasme</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {backStoragePath ? 'Ana e pasme u ngarkua me sukses' : 'Skanoni edhe anen e pasme te dokumentit'}
+                      </p>
+                    </div>
+                    {backStoragePath ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
+                        <Check className="w-3.5 h-3.5" /> E skanuar
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setStep('choose_back')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-white border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors"
+                      >
+                        <Camera className="w-4 h-4" /> Skano
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -663,7 +765,9 @@ async function saveDriverSide(
   m: Record<string, string | number | string[]>,
   cat: string,
   targetId: string,
-  companyId: string
+  companyId: string,
+  frontPath?: string,
+  backPath?: string
 ): Promise<{ entity_type: string; entity_id: string | null }> {
   if (!targetId) throw new Error('Ju lutem zgjidhni shoferin');
   if (cat === 'fuehrerschein') {
@@ -680,6 +784,8 @@ async function saveDriverSide(
       issued_country: String(m.issued_country || 'DE'),
       issuing_authority: String(m.issuing_authority || ''),
       expiry_date: m.expiry_date,
+      photo_front_url: frontPath || '',
+      photo_back_url: backPath || '',
     }).select('id').maybeSingle();
     if (error) throw error;
     return { entity_type: 'driver_license', entity_id: data?.id as string };
@@ -707,6 +813,8 @@ async function saveDriverSide(
     expiry_date: m.expiry_date,
     module_hours: Number(m.module_hours || 0),
     issuing_authority: String(m.issuing_authority || ''),
+    photo_front_url: frontPath || '',
+    photo_back_url: backPath || '',
   }).select('id').maybeSingle();
   if (error) throw error;
   return { entity_type: 'driver_qualification', entity_id: data?.id as string };

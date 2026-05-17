@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   MessageSquare,
   FolderOpen,
-  Contact as IdCard,
   LogOut,
   Menu,
   X,
@@ -30,7 +29,6 @@ const navItems = [
   { to: '/driver/navigation', icon: Navigation, labelKey: 'nav.navigation', end: false, bottomNav: false },
   { to: '/driver/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, bottomNav: false },
   { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
-  { to: '/driver/my-documents', icon: IdCard, labelKey: 'nav.myDocuments', end: false, bottomNav: false },
   { to: '/driver/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/driver/settings', icon: SettingsIcon, labelKey: 'nav.settings', end: false, bottomNav: true },
 ];
@@ -95,10 +93,6 @@ export default function DriverLayout() {
             </NavLink>
           ))}
         </nav>
-
-        <div className="px-2 pb-2">
-          <LanguageSwitcher variant="minimal" />
-        </div>
 
         <div className="p-4 border-t border-teal-800">
           <button

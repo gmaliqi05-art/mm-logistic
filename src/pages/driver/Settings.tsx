@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Camera,
   Loader2,
-  ScanLine,
   Mail,
   Phone,
   Building2,
@@ -11,26 +10,15 @@ import {
   CheckCircle2,
   Trash2,
   Shield,
-  FileText,
-  Calendar,
   MapPin,
   Save,
+  Contact as IdCard,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
-import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
 import { Link } from 'react-router-dom';
-import { Contact as IdCard } from 'lucide-react';
-
-type RecentDoc = {
-  id: string;
-  doc_category: string | null;
-  status: string;
-  created_at: string;
-  expiry_date?: string | null;
-};
 
 const L = {
   title: 'Cilesimet',
@@ -47,16 +35,6 @@ const L = {
   errorTooLarge: 'Imazhi nuk mund te jete me i madh se 5MB',
   errorSaving: 'Gabim gjate ruajtjes',
   documentsTitle: 'Dokumentet e mia',
-  documentsSubtitle: 'Skano patenten, Kod 95, G25, ADR — AI ekstrakton te dhenat.',
-  scanCta: 'Skano dokumentet e mia',
-  scanDescription: 'Patente, Kod 95, G25, ADR — AI ekstrakton te dhenat',
-  recentDocs: 'Dokumentet e fundit',
-  noDocs: 'Nuk ka dokumente te skanuara',
-  expires: 'Skadon',
-  docSaved: 'Dokumenti u skanua dhe u dergua tek admin.',
-  statusPending: 'Per shqyrtim',
-  statusApproved: 'Aprovuar',
-  statusRejected: 'Refuzuar',
 };
 
 export default function DriverSettings() {
@@ -66,12 +44,9 @@ export default function DriverSettings() {
 
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const [showScanner, setShowScanner] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string>('');
   const [depotName, setDepotName] = useState<string>('');
-  const [recentDocs, setRecentDocs] = useState<RecentDoc[]>([]);
-  const [loadingDocs, setLoadingDocs] = useState(true);
   const [baseAddress, setBaseAddress] = useState('');
   const [baseLat, setBaseLat] = useState<number | null>(null);
   const [baseLng, setBaseLng] = useState<number | null>(null);
@@ -82,19 +57,13 @@ export default function DriverSettings() {
     let cancelled = false;
     async function load() {
       if (!profile) return;
-      const [companyRes, depotRes, docsRes, baseRes] = await Promise.all([
+      const [companyRes, depotRes, baseRes] = await Promise.all([
         profile.company_id
           ? supabase.from('companies').select('name').eq('id', profile.company_id).maybeSingle()
           : Promise.resolve({ data: null }),
         profile.depot_id
           ? supabase.from('depots').select('name').eq('id', profile.depot_id).maybeSingle()
           : Promise.resolve({ data: null }),
-        supabase
-          .from('fleet_scanned_documents')
-          .select('id, doc_category, status, created_at, extracted_data')
-          .eq('target_driver_id', profile.id)
-          .order('created_at', { ascending: false })
-          .limit(5),
         supabase
           .from('profiles')
           .select('base_address, base_lat, base_lng')
@@ -104,19 +73,6 @@ export default function DriverSettings() {
       if (cancelled) return;
       setCompanyName((companyRes.data as any)?.name ?? '');
       setDepotName((depotRes.data as any)?.name ?? '');
-      const docs = ((docsRes as any).data ?? []).map((d: any) => ({
-        id: d.id,
-        doc_category: d.doc_category,
-        status: d.status,
-        created_at: d.created_at,
-        expiry_date:
-          d.extracted_data?.license?.expiry_date ||
-          d.extracted_data?.qualification?.expiry_date ||
-          d.extracted_data?.medical?.expiry_date ||
-          null,
-      }));
-      setRecentDocs(docs);
-      setLoadingDocs(false);
       const base = (baseRes as any)?.data;
       if (base) {
         setBaseAddress(base.base_address ?? '');
@@ -347,68 +303,6 @@ export default function DriverSettings() {
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-5 h-5 text-teal-600" />
-          <h3 className="text-base font-bold text-gray-900">Skano dokumentet e mia</h3>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">{L.documentsSubtitle}</p>
-
-        <button
-          onClick={() => setShowScanner(true)}
-          className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl p-4 shadow-sm text-left flex items-center gap-3 hover:from-teal-700 hover:to-teal-800 transition-colors"
-        >
-          <div className="p-2 bg-white/20 rounded-lg flex-shrink-0">
-            <ScanLine className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">{L.scanCta}</p>
-            <p className="text-xs text-teal-50 mt-0.5">{L.scanDescription}</p>
-          </div>
-          <ChevronRight className="w-5 h-5 flex-shrink-0 opacity-75" />
-        </button>
-
-        <div className="mt-5">
-          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{L.recentDocs}</h4>
-          {loadingDocs ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-            </div>
-          ) : recentDocs.length === 0 ? (
-            <p className="text-sm text-gray-400 py-3 text-center">{L.noDocs}</p>
-          ) : (
-            <ul className="space-y-2">
-              {recentDocs.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50"
-                >
-                  <div className="p-2 rounded-lg bg-white border border-gray-100 flex-shrink-0">
-                    <FileText className="w-4 h-4 text-teal-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {formatCategory(d.doc_category)}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                      <Calendar className="w-3 h-3" />
-                      <span>{new Date(d.created_at).toLocaleDateString()}</span>
-                      {d.expiry_date && (
-                        <span className="text-gray-400">
-                          {' '}
-                          • {L.expires}: {new Date(d.expiry_date).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <StatusPill status={d.status} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Shield className="w-5 h-5 text-teal-600" />
           <h3 className="text-base font-bold text-gray-900">Njoftimet</h3>
         </div>
         <PushNotificationSettings />
@@ -424,17 +318,6 @@ export default function DriverSettings() {
         </div>
       )}
 
-      {showScanner && profile?.id && (
-        <FleetDocScanner
-          mode="driver"
-          presetTargetId={profile.id}
-          onClose={() => setShowScanner(false)}
-          onSaved={() => {
-            setShowScanner(false);
-            setToast(L.docSaved);
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -453,32 +336,3 @@ function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const map: Record<string, { cls: string; label: string }> = {
-    pending_review: { cls: 'bg-amber-100 text-amber-700', label: L.statusPending },
-    approved: { cls: 'bg-emerald-100 text-emerald-700', label: L.statusApproved },
-    rejected: { cls: 'bg-red-100 text-red-700', label: L.statusRejected },
-  };
-  const meta = map[status] ?? { cls: 'bg-gray-100 text-gray-700', label: L.statusPending };
-  return (
-    <span className={`px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${meta.cls}`}>
-      {meta.label}
-    </span>
-  );
-}
-
-function formatCategory(cat: string | null): string {
-  if (!cat) return '-';
-  const map: Record<string, string> = {
-    fuehrerschein: 'Patente',
-    kod95: 'Kod 95',
-    adr: 'ADR',
-    fahrerkarte: 'Fahrerkarte',
-    gabelstapler: 'Gabelstapler',
-    ladungssicherung: 'Ladungssicherung',
-    erste_hilfe: 'Erste Hilfe',
-    g25_medical: 'G25',
-    other: 'Tjeter',
-  };
-  return map[cat] ?? cat;
-}

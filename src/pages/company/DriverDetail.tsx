@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download, BarChart3, Contact as IdCard } from 'lucide-react';
+import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download, BarChart3, Contact as IdCard, ClipboardList } from 'lucide-react';
 import DriverIdentityPanel from '../../components/fleet/DriverIdentityPanel';
+import DriverCVSummary from '../../components/fleet/DriverCVSummary';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
@@ -26,7 +27,7 @@ export default function DriverDetail() {
   const [medicals, setMedicals] = useState<Medical[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'license' | 'qualifications' | 'medical' | 'identity' | 'vehicles'>('license');
+  const [tab, setTab] = useState<'license' | 'qualifications' | 'medical' | 'identity' | 'vehicles' | 'cv'>('license');
   const [addMode, setAddMode] = useState<null | 'license' | 'qualification' | 'medical'>(null);
   const [scannerCat, setScannerCat] = useState<string | null>(null);
   const [scans, setScans] = useState<Array<{ id: string; detected_category: string; doc_category: string; file_name: string; storage_path: string; created_at: string; status: string }>>([]);
@@ -140,6 +141,7 @@ export default function DriverDetail() {
           <TabBtn active={tab === 'medical'} onClick={() => setTab('medical')} icon={<Stethoscope className="w-4 h-4" />}>Mjeksor</TabBtn>
           <TabBtn active={tab === 'identity'} onClick={() => setTab('identity')} icon={<IdCard className="w-4 h-4" />}>Identiteti</TabBtn>
           <TabBtn active={tab === 'vehicles'} onClick={() => setTab('vehicles')} icon={<TruckIcon className="w-4 h-4" />}>Mjetet</TabBtn>
+          <TabBtn active={tab === 'cv'} onClick={() => setTab('cv')} icon={<ClipboardList className="w-4 h-4" />}>CV</TabBtn>
         </div>
 
         <div className="p-5 space-y-4">
@@ -296,6 +298,10 @@ export default function DriverDetail() {
                 </div>
               )}
             </>
+          )}
+
+          {tab === 'cv' && id && (
+            <DriverCVSummary driverId={id} />
           )}
         </div>
       </div>
