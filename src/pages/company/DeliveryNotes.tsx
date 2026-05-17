@@ -17,6 +17,10 @@ import {
   Trash2,
   ArrowUpRight,
   ArrowDownLeft,
+  ChevronDown,
+  Building2,
+  Layers,
+  Truck,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,7 +31,7 @@ import type { DeliveryNote, DeliveryNoteItem, Profile, Depot, ProductCategory } 
 import { createNotificationAndPush } from '../../utils/pushNotifications';
 import PartnerQuickRegister from './PartnerQuickRegister';
 import OurRoleSelector, { type OurRole } from '../../components/delivery/OurRoleSelector';
-import ThreePartyForm, { type ThreePartyData } from '../../components/delivery/ThreePartyForm';
+import { type ThreePartyData } from '../../components/delivery/ThreePartyForm';
 
 function emptyThreeParty(): ThreePartyData {
   return {
@@ -126,6 +130,20 @@ const emptyForm: NoteForm = {
   pallet_type: 'EPAL',
 };
 
+function CollapsibleHeader({ label, icon, isOpen, onToggle }: { label: string; icon: React.ReactNode; isOpen: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+    >
+      <span className="text-gray-500">{icon}</span>
+      <span className="flex-1 text-sm font-medium text-gray-700">{label}</span>
+      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+    </button>
+  );
+}
+
 export default function CompanyDeliveryNotes() {
   const { profile } = useAuth();
   const { logAudit } = useSubscription();
@@ -156,6 +174,7 @@ export default function CompanyDeliveryNotes() {
   const [reassigning, setReassigning] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -841,47 +860,17 @@ export default function CompanyDeliveryNotes() {
               </button>
             </div>
 
-            <div className="p-6 space-y-5">
-              <OurRoleSelector
-                value={ourRole}
-                onChange={(role) => {
-                  setOurRole(role);
-                  setForm((f) => ({ ...f, type: mapRoleToType(role) }));
-                }}
-              />
-              <ThreePartyForm
-                ourRole={ourRole}
-                ourCompanyName={(profile as any)?.company?.name || ''}
-                data={threePartyData}
-                onChange={(next) => {
-                  setThreePartyData(next);
-                  setForm((f) => ({
-                    ...f,
-                    partner_name: ourRole === 'consignor' ? next.consignee.name : ourRole === 'consignee' ? next.consignor.name : next.carrier.name || f.partner_name,
-                    delivery_address: [next.consignee.address, next.consignee.city, next.consignee.country].filter(Boolean).join(', ') || f.delivery_address,
-                    pickup_address: [next.consignor.address, next.consignor.city, next.consignor.country].filter(Boolean).join(', ') || f.pickup_address,
-                  }));
-                }}
-                companyId={profile!.company_id!}
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Titull / Identifikim
-                  <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.note_number}
-                  onChange={(e) => setForm({ ...form, note_number: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                  placeholder="p.sh. Emer kompanie, emer personi, numer reference, etj."
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Ky tekst paraqitet ne dashboard-in e shoferit dhe ne te gjitha listat per identifikim.
-                </p>
+            <div className="p-6 space-y-4">
+              {/* Derguesi - always visible, auto-filled with our company */}
+              <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+                <Building2 className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Derguesi (Kompania jone)</span>
+                  <p className="text-sm font-semibold text-slate-800">{(profile as any)?.company?.name || '—'}</p>
+                </div>
               </div>
 
+              {/* Essential fields: Driver, Depot */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.driver')}</label>
@@ -911,147 +900,59 @@ export default function CompanyDeliveryNotes() {
                 </div>
               </div>
 
-              <PartnerSearchField
-                contacts={contacts}
-                form={form}
-                setForm={setForm}
-                onCreated={(c) => {
-                  setContacts((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)));
-                  const addr = [c.address, [c.postal_code, c.city].filter(Boolean).join(' '), c.country].filter(Boolean).join(', ');
-                  setForm({
-                    ...form,
-                    partner_id: c.id,
-                    partner_name: c.name,
-                    delivery_address: form.type === 'delivery' ? addr : form.delivery_address,
-                    pickup_address: form.type === 'pickup' ? addr : form.pickup_address,
-                  });
-                }}
-              />
-
-              {form.type === 'delivery' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.deliveryAddress')}</label>
-                  <input
-                    type="text"
-                    value={form.delivery_address}
-                    onChange={(e) => setForm({ ...form, delivery_address: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                    placeholder={t('company.deliveryNotes.deliveryAddressPlaceholder')}
-                  />
-                </div>
-              )}
-
-              {form.type === 'pickup' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.pickupAddress')}</label>
-                  <input
-                    type="text"
-                    value={form.pickup_address}
-                    onChange={(e) => setForm({ ...form, pickup_address: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                    placeholder={t('company.deliveryNotes.pickupAddressPlaceholder')}
-                  />
-                </div>
-              )}
-
-              {form.type === 'pickup' && (
-                <div className="p-3 bg-orange-50 border border-orange-100 rounded-lg space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('companyAdmin.deliveryNotes.referenceNumberLabel')}</label>
-                    <input
-                      type="text"
-                      value={form.reference_number}
-                      onChange={(e) => setForm({ ...form, reference_number: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white"
-                      placeholder="p.sh. REF-2026-0012 (jepet nga kompania qe mallin)"
-                    />
-                    <p className="mt-1 text-xs text-orange-700">Shoferi e tregon kete numer kur shkon te merr mallin per t'u identifikuar.</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Data e marrjes</label>
-                      <input
-                        type="date"
-                        value={form.scheduled_pickup_date}
-                        onChange={(e) => setForm({ ...form, scheduled_pickup_date: e.target.value })}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Ora <span className="text-gray-400 font-normal">(opsionale)</span>
-                      </label>
-                      <input
-                        type="time"
-                        value={form.scheduled_pickup_time}
-                        onChange={(e) => setForm({ ...form, scheduled_pickup_time: e.target.value })}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm bg-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {form.type === 'delivery' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Data e dorezimit</label>
-                    <input
-                      type="date"
-                      value={form.scheduled_delivery_date}
-                      onChange={(e) => setForm({ ...form, scheduled_delivery_date: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Ora <span className="text-gray-400 font-normal">(opsionale)</span>
-                    </label>
-                    <input
-                      type="time"
-                      value={form.scheduled_delivery_time}
-                      onChange={(e) => setForm({ ...form, scheduled_delivery_time: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="border border-teal-100 bg-teal-50/50 rounded-lg p-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-teal-900">Shkembim paletash</span>
-                  <select
-                    value={form.pallet_type}
-                    onChange={(e) => setForm({ ...form, pallet_type: e.target.value })}
-                    className="px-2 py-1 text-xs border border-teal-200 rounded bg-white"
-                  >
-                    <option value="EPAL">EPAL</option>
-                    <option value="UIC">UIC</option>
-                    <option value="CHEP">CHEP</option>
-                    <option value="Disposable">Disposable</option>
-                  </select>
-                </div>
-                <p className="text-xs text-teal-900 leading-relaxed">
-                  Sasia e paletave do te llogaritet automatikisht nga artikujt e shtuar.
-                  {(contacts.find((c) => c.id === form.partner_id)?.name || form.partner_name) && (
-                    <>
-                      {' '}Partner: <span className="font-semibold">{contacts.find((c) => c.id === form.partner_id)?.name || form.partner_name}</span>,
-                    </>
-                  )}{' '}
-                  Lloji: <span className="font-semibold">{form.pallet_type}</span>
+              {/* Titull / Identifikim - always visible */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Titull / Identifikim
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.note_number}
+                  onChange={(e) => setForm({ ...form, note_number: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                  placeholder="p.sh. Emer kompanie, emer personi, numer reference, etj."
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Vetem per identifikim nga shoferi. Nuk regjistrohet ne raporte apo fatura.
                 </p>
-                <div className="flex items-center justify-between rounded-md bg-white border border-teal-200 px-3 py-2">
-                  <span className="text-xs text-gray-600">Total (vleresim live)</span>
-                  <span className="text-sm font-bold text-teal-900">
-                    {form.items
-                      .filter((i) => i.category_id)
-                      .reduce((s, i) => s + (Number(i.quantity) || 0), 0)}{' '}
-                    paleta
-                  </span>
-                </div>
-                <p className="text-[11px] text-teal-800">Regjistri i paletave azhurnohet automatikisht kur porosia konfirmohet.</p>
               </div>
 
+              {/* Data dhe Ora - always visible */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Data</label>
+                  <input
+                    type="date"
+                    value={form.type === 'pickup' ? form.scheduled_pickup_date : form.scheduled_delivery_date}
+                    onChange={(e) => setForm({
+                      ...form,
+                      ...(form.type === 'pickup'
+                        ? { scheduled_pickup_date: e.target.value }
+                        : { scheduled_delivery_date: e.target.value }),
+                    })}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Ora <span className="text-gray-400 font-normal">(opsionale)</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={form.type === 'pickup' ? form.scheduled_pickup_time : form.scheduled_delivery_time}
+                    onChange={(e) => setForm({
+                      ...form,
+                      ...(form.type === 'pickup'
+                        ? { scheduled_pickup_time: e.target.value }
+                        : { scheduled_delivery_time: e.target.value }),
+                    })}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Shenime - always visible */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.notes')}</label>
                 <textarea
@@ -1063,78 +964,261 @@ export default function CompanyDeliveryNotes() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Dokument / Foto</label>
-                {form.attachment_url ? (
-                  <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <File className="w-5 h-5 text-teal-600 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 flex-1 truncate">Dokument i bashkangjitur</span>
-                    <button
-                      onClick={removeAttachment}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Hiq dokumentin"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingAttachment}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 text-sm font-medium"
-                    >
-                      {uploadingAttachment ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Ngarko Dokument
-                    </button>
-                    <button
-                      onClick={() => setShowScanner(true)}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-teal-500 text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors text-sm font-medium"
-                    >
-                      <Camera className="w-4 h-4" />
-                      Skano Dokument
-                    </button>
-                  </div>
-                )}
-              </div>
+              {/* --- COLLAPSIBLE SECTIONS --- */}
 
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700">{t('company.deliveryNotes.items')}</label>
-                  <button
-                    onClick={addItem}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    {t('company.deliveryNotes.addItem')}
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {form.items.map((item, index) => (
-                    <ItemRow
-                      key={index}
-                      item={item}
-                      categories={categories}
-                      products={products}
-                      onChange={(field, value) => updateItem(index, field, value)}
-                      onRemove={() => removeItem(index)}
-                      canRemove={form.items.length > 1}
-                      t={t}
+              {/* Spedicioni (Carrier) */}
+              <CollapsibleHeader
+                label="Spedicioni (Carrier)"
+                icon={<Truck className="w-4 h-4" />}
+                isOpen={!!openSections.carrier}
+                onToggle={() => setOpenSections((s) => ({ ...s, carrier: !s.carrier }))}
+              />
+              {openSections.carrier && (
+                <div className="pl-2 border-l-2 border-slate-200 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Emri i spedicionit</label>
+                    <input
+                      type="text"
+                      value={threePartyData.carrier.name}
+                      onChange={(e) => setThreePartyData({ ...threePartyData, carrier: { ...threePartyData.carrier, name: e.target.value } })}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                      placeholder="Emri spedicionit"
                     />
-                  ))}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Targa e mjetit</label>
+                    <input
+                      type="text"
+                      value={threePartyData.carrier_vehicle_plate}
+                      onChange={(e) => setThreePartyData({ ...threePartyData, carrier_vehicle_plate: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                      placeholder="Targa e mjetit"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Marresi (Consignee) */}
+              <CollapsibleHeader
+                label="Marresi (Consignee)"
+                icon={<MapPin className="w-4 h-4" />}
+                isOpen={!!openSections.consignee}
+                onToggle={() => setOpenSections((s) => ({ ...s, consignee: !s.consignee }))}
+              />
+              {openSections.consignee && (
+                <div className="pl-2 border-l-2 border-slate-200 space-y-3">
+                  {form.type === 'delivery' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.deliveryAddress')}</label>
+                      <input
+                        type="text"
+                        value={form.delivery_address}
+                        onChange={(e) => setForm({ ...form, delivery_address: e.target.value })}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                        placeholder={t('company.deliveryNotes.deliveryAddressPlaceholder')}
+                      />
+                    </div>
+                  )}
+                  {form.type === 'pickup' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.pickupAddress')}</label>
+                      <input
+                        type="text"
+                        value={form.pickup_address}
+                        onChange={(e) => setForm({ ...form, pickup_address: e.target.value })}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                        placeholder={t('company.deliveryNotes.pickupAddressPlaceholder')}
+                      />
+                    </div>
+                  )}
+                  {form.type === 'pickup' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('companyAdmin.deliveryNotes.referenceNumberLabel')}</label>
+                      <input
+                        type="text"
+                        value={form.reference_number}
+                        onChange={(e) => setForm({ ...form, reference_number: e.target.value })}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                        placeholder="p.sh. REF-2026-0012 (jepet nga kompania qe mallin)"
+                      />
+                      <p className="mt-1 text-xs text-orange-700">Shoferi e tregon kete numer kur shkon te merr mallin per t'u identifikuar.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Kompania Partnere */}
+              <CollapsibleHeader
+                label="Kompania Partnere (Klient/Furnitor)"
+                icon={<Building2 className="w-4 h-4" />}
+                isOpen={!!openSections.partner}
+                onToggle={() => setOpenSections((s) => ({ ...s, partner: !s.partner }))}
+              />
+              {openSections.partner && (
+                <div className="pl-2 border-l-2 border-slate-200">
+                  <PartnerSearchField
+                    contacts={contacts}
+                    form={form}
+                    setForm={setForm}
+                    onCreated={(c) => {
+                      setContacts((prev) => [...prev, c].sort((a, b) => a.name.localeCompare(b.name)));
+                      const addr = [c.address, [c.postal_code, c.city].filter(Boolean).join(' '), c.country].filter(Boolean).join(', ');
+                      setForm({
+                        ...form,
+                        partner_id: c.id,
+                        partner_name: c.name,
+                        delivery_address: form.type === 'delivery' ? addr : form.delivery_address,
+                        pickup_address: form.type === 'pickup' ? addr : form.pickup_address,
+                      });
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Roli juaj ne kete dorezim */}
+              <CollapsibleHeader
+                label="Roli juaj ne kete dorezim"
+                icon={<Package className="w-4 h-4" />}
+                isOpen={!!openSections.role}
+                onToggle={() => setOpenSections((s) => ({ ...s, role: !s.role }))}
+              />
+              {openSections.role && (
+                <div className="pl-2 border-l-2 border-slate-200">
+                  <OurRoleSelector
+                    value={ourRole}
+                    onChange={(role) => {
+                      setOurRole(role);
+                      setForm((f) => ({ ...f, type: mapRoleToType(role) }));
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Dokument / Foto */}
+              <CollapsibleHeader
+                label="Dokument / Foto"
+                icon={<File className="w-4 h-4" />}
+                isOpen={!!openSections.document}
+                onToggle={() => setOpenSections((s) => ({ ...s, document: !s.document }))}
+              />
+              {openSections.document && (
+                <div className="pl-2 border-l-2 border-slate-200">
+                  {form.attachment_url ? (
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <File className="w-5 h-5 text-teal-600 flex-shrink-0" />
+                      <span className="text-sm text-gray-700 flex-1 truncate">Dokument i bashkangjitur</span>
+                      <button
+                        onClick={removeAttachment}
+                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Hiq dokumentin"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingAttachment}
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 text-sm font-medium"
+                      >
+                        {uploadingAttachment ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                        Ngarko Dokument
+                      </button>
+                      <button
+                        onClick={() => setShowScanner(true)}
+                        className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-teal-500 text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors text-sm font-medium"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Skano Dokument
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Artikujt */}
+              <CollapsibleHeader
+                label={t('company.deliveryNotes.items')}
+                icon={<Package className="w-4 h-4" />}
+                isOpen={!!openSections.items}
+                onToggle={() => setOpenSections((s) => ({ ...s, items: !s.items }))}
+              />
+              {openSections.items && (
+                <div className="pl-2 border-l-2 border-slate-200 space-y-3">
+                  <div className="flex justify-end">
+                    <button
+                      onClick={addItem}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      {t('company.deliveryNotes.addItem')}
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {form.items.map((item, index) => (
+                      <ItemRow
+                        key={index}
+                        item={item}
+                        categories={categories}
+                        products={products}
+                        onChange={(field, value) => updateItem(index, field, value)}
+                        onRemove={() => removeItem(index)}
+                        canRemove={form.items.length > 1}
+                        t={t}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Shkembim paletash */}
+              <CollapsibleHeader
+                label="Shkembim paletash"
+                icon={<Layers className="w-4 h-4" />}
+                isOpen={!!openSections.pallets}
+                onToggle={() => setOpenSections((s) => ({ ...s, pallets: !s.pallets }))}
+              />
+              {openSections.pallets && (
+                <div className="pl-2 border-l-2 border-slate-200">
+                  <div className="border border-teal-100 bg-teal-50/50 rounded-lg p-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-teal-900">Lloji</span>
+                      <select
+                        value={form.pallet_type}
+                        onChange={(e) => setForm({ ...form, pallet_type: e.target.value })}
+                        className="px-2 py-1 text-xs border border-teal-200 rounded bg-white"
+                      >
+                        <option value="EPAL">EPAL</option>
+                        <option value="UIC">UIC</option>
+                        <option value="CHEP">CHEP</option>
+                        <option value="Disposable">Disposable</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between rounded-md bg-white border border-teal-200 px-3 py-2">
+                      <span className="text-xs text-gray-600">Total (vleresim live)</span>
+                      <span className="text-sm font-bold text-teal-900">
+                        {form.items
+                          .filter((i) => i.category_id)
+                          .reduce((s, i) => s + (Number(i.quantity) || 0), 0)}{' '}
+                        paleta
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-teal-800">Regjistri i paletave azhurnohet automatikisht kur porosia konfirmohet.</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-100 sticky bottom-0 bg-white rounded-b-2xl pb-[max(1rem,env(safe-area-inset-bottom))]">
