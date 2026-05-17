@@ -33,15 +33,12 @@ interface OverdueRow {
   reference_number: string | null;
 }
 
-// Show everything except fully-closed flows (completed / confirmed drop to history)
-// so drivers still see admin-cancelled notes with their status clearly visible.
 const OVERDUE_STATUSES = [
   'sent',
   'in_transit',
   'pending_company_review',
   'pending_stock_confirmation',
   'delivered',
-  'cancelled',
 ];
 
 const statusBadge: Record<string, { cls: string; label: string }> = {

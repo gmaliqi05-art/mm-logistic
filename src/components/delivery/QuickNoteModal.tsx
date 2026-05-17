@@ -39,6 +39,7 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [form, setForm] = useState({
     assigned_driver_id: '',
     assigned_depot_id: '',
@@ -169,6 +170,26 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
       setError(e instanceof Error ? e.message : 'Error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  const CANCELLABLE = ['sent', 'in_transit', 'pending_company_review', 'pending_stock_confirmation', 'delivered'];
+
+  async function handleCancel() {
+    if (!note) return;
+    try {
+      setCancelling(true);
+      const { error: err } = await supabase
+        .from('delivery_notes')
+        .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), cancelled_by: profile!.id })
+        .eq('id', note.id);
+      if (err) throw err;
+      onSaved?.();
+      onClose();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -376,6 +397,15 @@ export default function QuickNoteModal({ noteId, onClose, onSaved }: Props) {
               </>
             ) : (
               <>
+                {note && CANCELLABLE.includes(note.status) && (
+                  <button
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                    className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                  >
+                    {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Anulo porosin'}
+                  </button>
+                )}
                 <button
                   onClick={onClose}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"

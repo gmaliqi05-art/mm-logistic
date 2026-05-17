@@ -244,7 +244,9 @@ export default function InvoiceBuilder() {
       .maybeSingle();
     if (!dn) return;
     setDeliveryNoteId(dn.id as string);
-    setDeliveryNoteNumber((dn.note_number as string) || '');
+    const ext = (dn.ai_extracted_json as any) || {};
+    const resolvedDocNumber = ext.document_number || ext.invoice_number || (dn.reference_number as string) || (dn.note_number as string) || '';
+    setDeliveryNoteNumber(resolvedDocNumber);
     setDeliveryNotePartner((dn.partner_name as string) || '');
     setDeliveryNoteDate(dn.delivered_at ? String(dn.delivered_at).slice(0, 10) : '');
     if (dn.partner_id) setContactId(dn.partner_id as string);
@@ -268,10 +270,7 @@ export default function InvoiceBuilder() {
       }));
       setItems(rows);
     }
-    // Use document number from scanned paper (AI extracted or reference_number), fallback to note_number
-    const ext = (dn.ai_extracted_json as any) || {};
-    const docNum = ext.document_number || ext.invoice_number || (dn.reference_number as string) || (dn.note_number as string) || '';
-    setNotes((prev) => prev || `Sipas fletedergeses Nr. ${docNum}`);
+    setNotes((prev) => prev || `Sipas fletedergeses Nr. ${resolvedDocNumber}`);
   }
 
   async function searchDeliveryNotes(query: string) {

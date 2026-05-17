@@ -179,6 +179,7 @@ export default function CompanyDeliveryNotes() {
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const statusConfig: Record<string, { label: string; className: string }> = {
@@ -209,6 +210,7 @@ export default function CompanyDeliveryNotes() {
           .from('delivery_notes')
           .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(id, full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(id, name), creator:profiles!delivery_notes_created_by_fkey(full_name)')
           .eq('company_id', companyId)
+          .neq('status', 'cancelled')
           .order('created_at', { ascending: false }),
         supabase
           .from('profiles')
@@ -561,6 +563,26 @@ export default function CompanyDeliveryNotes() {
       setError(err.message || t('common.error'));
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  const CANCELLABLE_STATUSES = ['sent', 'in_transit', 'pending_company_review', 'pending_stock_confirmation', 'delivered'];
+
+  async function cancelNote(note: DeliveryNote) {
+    try {
+      setCancellingId(note.id);
+      const { error: err } = await supabase
+        .from('delivery_notes')
+        .update({ status: 'cancelled', cancelled_at: new Date().toISOString(), cancelled_by: profile!.id })
+        .eq('id', note.id);
+      if (err) throw err;
+      setShowDetail(false);
+      setSelectedNote(null);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || t('common.error'));
+    } finally {
+      setCancellingId(null);
     }
   }
 
@@ -1504,6 +1526,41 @@ export default function CompanyDeliveryNotes() {
                   </div>
                 )}
               </div>
+
+              {selectedNote.type === 'delivery' && ['confirmed', 'completed'].includes(selectedNote.status) && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => {
+                      if ((selectedNote as any).acc_invoice_id) {
+                        window.location.href = `/accounting/invoices/${(selectedNote as any).acc_invoice_id}/edit`;
+                      } else {
+                        window.location.href = `/accounting/invoices/new?delivery_note_id=${selectedNote.id}`;
+                      }
+                    }}
+                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                      (selectedNote as any).acc_invoice_id
+                        ? 'text-teal-800 bg-teal-50 border border-teal-200 hover:bg-teal-100'
+                        : 'text-white bg-sky-600 hover:bg-sky-700'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    {(selectedNote as any).acc_invoice_id ? 'Shiko faturen' : 'Krijo fature'}
+                  </button>
+                </div>
+              )}
+
+              {CANCELLABLE_STATUSES.includes(selectedNote.status) && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => cancelNote(selectedNote)}
+                    disabled={cancellingId === selectedNote.id}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                  >
+                    {cancellingId === selectedNote.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                    Anulo porosin
+                  </button>
+                </div>
+              )}
 
               {canDeleteNote(selectedNote) && (
                 <div className="mt-4 pt-4 border-t border-red-100">

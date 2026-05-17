@@ -184,6 +184,7 @@ export default function DriverDashboard() {
         .select('*, depot:depots!delivery_notes_assigned_depot_id_fkey(name)')
         .eq('assigned_driver_id', profile!.id)
         .neq('status', 'draft')
+        .neq('status', 'cancelled')
         .order('scheduled_delivery_at', { ascending: true, nullsFirst: false })
         .limit(300);
       if (err) throw err;

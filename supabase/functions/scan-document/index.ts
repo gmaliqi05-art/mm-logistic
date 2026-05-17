@@ -201,6 +201,15 @@ CRITICAL: European transport documents have THREE distinct parties:
 
 Extract ALL THREE parties even if some are missing. Do NOT confuse them.
 
+CRITICAL for document_number: Extract the delivery note / consignment note number as the primary document identifier. Look for these labels in ANY language:
+- German: "Lieferschein Nr.", "LS Nr.", "LS-Nr.", "Lieferschein-Nr."
+- English: "Delivery Note No.", "DN No.", "Consignment No.", "Packing Slip No."
+- Albanian: "Nr. Fletedergeses", "Fletedergesa Nr."
+- French: "Bon de livraison No.", "BL No."
+- Italian: "DDT Nr.", "Bolla No."
+- Also look for: "Bestellnr.", "Bestell-Nr." (order number as fallback)
+The document_number should be the NUMBER ONLY (e.g. "12658"), not the label. Prioritize the Lieferschein/delivery note number over invoice or order numbers.
+
 Return strict JSON matching this shape (no comments, no markdown):
 {
   "document_nature_guess": "purchase|sale|transport_only|custody_in|custody_out|internal_transfer|unknown",
