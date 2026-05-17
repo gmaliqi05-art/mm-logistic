@@ -72,14 +72,14 @@ export default function SubscriptionPlans() {
     setFormData({
       name: plan.name,
       display_name: plan.display_name,
-      description: plan.description,
+      description: plan.description ?? '',
       price_monthly: plan.price_monthly,
-      trial_days: plan.trial_days,
-      max_drivers: plan.max_drivers,
-      max_depots: plan.max_depots,
-      features: [...(plan.features as string[])],
+      trial_days: plan.trial_days ?? 0,
+      max_drivers: plan.max_drivers ?? 0,
+      max_depots: plan.max_depots ?? 0,
+      features: Array.isArray(plan.features) ? [...(plan.features as string[])] : [],
       is_active: plan.is_active,
-      sort_order: plan.sort_order,
+      sort_order: plan.sort_order ?? 0,
       product_type: plan.product_type ?? 'logistics',
       is_addon: plan.is_addon ?? false,
       price_addon_monthly: plan.price_addon_monthly ?? null,
@@ -129,12 +129,13 @@ export default function SubscriptionPlans() {
         trial_days: formData.trial_days,
         max_drivers: isAccounting ? 0 : formData.max_drivers,
         max_depots: isAccounting ? 0 : formData.max_depots,
-        features: formData.features,
+        features: formData.features ?? [],
         is_active: formData.is_active,
         sort_order: formData.sort_order,
         product_type: formData.product_type,
         is_addon: formData.is_addon,
-        price_addon_monthly: formData.price_addon_monthly,
+        price_addon_monthly: formData.price_addon_monthly ?? 0,
+        feature_keys: [],
       };
 
       if (isCreating) {
@@ -625,6 +626,7 @@ export default function SubscriptionPlans() {
                 </div>
                 <div className="flex items-end">
                   <button
+                    type="button"
                     onClick={() => setFormData((p) => ({ ...p, is_active: !p.is_active }))}
                     className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-colors w-full ${
                       formData.is_active
@@ -652,13 +654,26 @@ export default function SubscriptionPlans() {
                   {(formData.features as string[]).map((feature, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg"
+                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg group"
                     >
                       <Check className="w-4 h-4 text-teal-500 flex-shrink-0" />
-                      <span className="text-sm text-gray-700 flex-1">{feature}</span>
+                      <input
+                        type="text"
+                        value={feature}
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            features: (prev.features as string[]).map((f, i) =>
+                              i === idx ? e.target.value : f
+                            ),
+                          }));
+                        }}
+                        className="text-sm text-gray-700 flex-1 bg-transparent border-0 outline-none focus:ring-0 p-0"
+                      />
                       <button
+                        type="button"
                         onClick={() => removeFeature(idx)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -670,11 +685,18 @@ export default function SubscriptionPlans() {
                     type="text"
                     value={newFeature}
                     onChange={(e) => setNewFeature(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-                    placeholder={`${t('common.add')} ${t('superAdmin.plans.features').toLowerCase()}...`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addFeature();
+                      }
+                    }}
+                    placeholder={`Shto vecorite...`}
                     className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                   />
                   <button
+                    type="button"
                     onClick={addFeature}
                     className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
@@ -686,12 +708,14 @@ export default function SubscriptionPlans() {
 
             <div className="p-6 border-t border-gray-100 flex gap-3 justify-end">
               <button
+                type="button"
                 onClick={closeModal}
                 className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
               >
                 {t('common.cancel')}
               </button>
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={saving}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50"

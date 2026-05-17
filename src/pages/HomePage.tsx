@@ -945,7 +945,7 @@ export default function HomePage() {
                         </li>
                       ))}
                     </ul>
-                    <Link to="/register" className={`mt-7 inline-flex items-center justify-center w-full gap-2 px-5 py-3 rounded-xl font-semibold transition ${p.popular ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
+                    <Link to={`/register?plan=${encodeURIComponent(p.slug)}&type=${p.productType}`} className={`mt-7 inline-flex items-center justify-center w-full gap-2 px-5 py-3 rounded-xl font-semibold transition ${p.popular ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
                       {p.cta}<ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
