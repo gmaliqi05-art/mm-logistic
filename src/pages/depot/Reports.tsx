@@ -23,6 +23,8 @@ interface FlowRow {
   quantity: number;
   category_name?: string;
   product_name?: string;
+  performer_name?: string;
+  source_partner?: string;
 }
 
 interface RepairRow {
@@ -107,16 +109,18 @@ export default function DepotReports() {
       const companyId = profile!.company_id!;
       const since = isoDays(days);
 
-      const [flowRes, flowLookup, prodLookup, repRes, sortRes, damRes] = await Promise.all([
+      const [flowRes, flowLookup, prodLookup, performerLookup, repRes, sortRes, damRes] = await Promise.all([
         supabase
-          .from('v_depot_daily_flow')
-          .select('flow_date, movement_type, category_id, category_product_id, quantity')
+          .from('stock_movements')
+          .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
-          .gte('flow_date', since.substring(0, 10))
-          .order('flow_date', { ascending: false }),
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(200),
         supabase.from('product_categories').select('id, name').eq('company_id', companyId),
         supabase.from('category_products').select('id, name').eq('company_id', companyId),
+        supabase.from('profiles').select('id, full_name').eq('company_id', companyId),
         supabase
           .from('v_depot_repair_productivity')
           .select('repair_date, category_name, product_name, total_in, total_repaired, total_scrapped')
@@ -149,11 +153,19 @@ export default function DepotReports() {
       (flowLookup.data ?? []).forEach((c: { id: string; name: string }) => catMap.set(c.id, c.name));
       const prodMap = new Map<string, string>();
       (prodLookup.data ?? []).forEach((p: { id: string; name: string }) => prodMap.set(p.id, p.name));
-      const flowEnriched = (flowRes.data ?? []).map((r: FlowRow) => ({
-        ...r,
+      const perfMap = new Map<string, string>();
+      (performerLookup.data ?? []).forEach((p: { id: string; full_name: string }) => perfMap.set(p.id, p.full_name));
+      const flowEnriched = (flowRes.data ?? []).map((r: any) => ({
+        flow_date: (r.created_at || '').substring(0, 10),
+        movement_type: r.movement_type,
+        category_id: r.category_id,
+        category_product_id: r.category_product_id,
+        quantity: r.quantity,
         category_name: r.category_id ? catMap.get(r.category_id) ?? '' : '',
         product_name: r.category_product_id ? prodMap.get(r.category_product_id) ?? '' : '',
-      }));
+        performer_name: r.performed_by ? perfMap.get(r.performed_by) ?? '' : '',
+        source_partner: r.source_partner || '',
+      })) as FlowRow[];
 
       setFlow(flowEnriched);
       setRepair(repRes.data ?? []);
@@ -283,13 +295,15 @@ export default function DepotReports() {
                 ))}
               </div>
               <Table
-                headers={['Data', 'Lloji', 'Kategoria', 'Produkti', 'Sasi']}
+                headers={['Data', 'Lloji', 'Kategoria', 'Produkti', 'Sasi', 'Punetori', 'Nga kush']}
                 rows={flow.slice(0, 60).map((r) => [
                   fmtDate(r.flow_date),
                   r.movement_type,
                   r.category_name || '—',
                   r.product_name || '—',
                   r.quantity,
+                  r.performer_name || '—',
+                  r.source_partner || '—',
                 ])}
                 empty="Asnje levizje"
               />

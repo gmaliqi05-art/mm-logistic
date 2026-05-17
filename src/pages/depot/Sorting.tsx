@@ -504,6 +504,7 @@ export default function DepotSorting() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 truncate">{cat?.name ?? '-'}</p>
                       <p className="text-xs text-gray-500 mt-0.5">
+                        {b.reference_number_snapshot && <span className="text-teal-600 font-medium">{b.reference_number_snapshot} · </span>}
                         {new Date(b.created_at).toLocaleDateString()} {new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>

@@ -40,7 +40,6 @@ function createRow(): ItemRow {
 export default function DepotReceiving() {
   const { profile } = useAuth();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'receiving' | 'shipping'>('receiving');
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [products, setProducts] = useState<CategoryProductLite[]>([]);
   const [history, setHistory] = useState<StockMovement[]>([]);
@@ -51,10 +50,8 @@ export default function DepotReceiving() {
 
   const [receivingRows, setReceivingRows] = useState<ItemRow[]>([createRow()]);
   const [receivingNotes, setReceivingNotes] = useState('');
+  const [sourcePartner, setSourcePartner] = useState('');
 
-  const [shippingRows, setShippingRows] = useState<ItemRow[]>([createRow()]);
-  const [shippingNotes, setShippingNotes] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
   const [showScanner, setShowScanner] = useState(false);
   const [showPalletScanner, setShowPalletScanner] = useState(false);
 
@@ -100,8 +97,6 @@ export default function DepotReceiving() {
   }
 
   async function handleScanConfirm(r: SmartScanResult) {
-    const kind = r.routing?.suggested_kind;
-    const isShipping = kind === 'delivery_out';
 
     const rows: ItemRow[] = (r.extracted.line_items || [])
       .map((li) => {
@@ -124,40 +119,16 @@ export default function DepotReceiving() {
 
     const finalRows = rows.length > 0 ? rows : [createRow()];
 
-    const partnerName = isShipping ? (r.extracted.customer_name || '') : (r.extracted.supplier_name || '');
-    let partnerId = r.routing?.matched_contact_id || '';
-    let resolvedAddress = '';
-    if (profile?.company_id && (partnerId || partnerName)) {
-      const q = supabase.from('acc_contacts')
-        .select('id, name, address, city, postal_code, country')
-        .eq('company_id', profile.company_id).limit(1);
-      const { data: contact } = partnerId
-        ? await q.eq('id', partnerId).maybeSingle()
-        : await q.ilike('name', partnerName).maybeSingle();
-      if (contact) {
-        partnerId = contact.id;
-        const parts = [contact.address, [contact.postal_code, contact.city].filter(Boolean).join(' '), contact.country].filter(Boolean);
-        resolvedAddress = parts.join(', ');
-      }
-    }
+    const partnerName = r.extracted.supplier_name || r.extracted.customer_name || '';
 
     const refNote = [
       r.extracted.supplier_name ? `Furnitor: ${r.extracted.supplier_name}` : '',
-      r.extracted.customer_name ? `Klient: ${r.extracted.customer_name}` : '',
       r.extracted.invoice_number ? `Ref: ${r.extracted.invoice_number}` : '',
-      partnerId ? '(Kontakt i njohur)' : '',
     ].filter(Boolean).join(' · ');
 
-    if (isShipping) {
-      setActiveTab('shipping');
-      setShippingRows(finalRows);
-      setShippingNotes(refNote);
-      setShippingAddress(resolvedAddress || r.extracted.customer_name || '');
-    } else {
-      setActiveTab('receiving');
-      setReceivingRows(finalRows);
-      setReceivingNotes(refNote);
-    }
+    setReceivingRows(finalRows);
+    setReceivingNotes(refNote);
+    setSourcePartner(partnerName);
 
     const unmatched = (r.extracted.line_items || []).length - rows.length;
     const parts = [t('common.scanner.depotScan.aiFilled'), `${rows.length} ${t('common.scanner.depotScan.itemsRecognized')}`];
@@ -235,22 +206,7 @@ export default function DepotReceiving() {
     }));
   }
 
-  function addShippingRow() {
-    setShippingRows((prev) => [...prev, createRow()]);
-  }
 
-  function removeShippingRow(id: string) {
-    setShippingRows((prev) => prev.length > 1 ? prev.filter((r) => r.id !== id) : prev);
-  }
-
-  function updateShippingRow(id: string, field: keyof ItemRow, value: string) {
-    setShippingRows((prev) => prev.map((r) => {
-      if (r.id !== id) return r;
-      const next = { ...r, [field]: value };
-      if (field === 'category_id') next.category_product_id = '';
-      return next;
-    }));
-  }
 
   function productsForCategory(categoryId: string): CategoryProductLite[] {
     return products
@@ -294,6 +250,7 @@ export default function DepotReceiving() {
         condition_after: r.condition,
         notes: receivingNotes,
         performed_by: profile!.id,
+        source_partner: sourcePartner.trim() || '',
       }));
 
       const { error: movErr } = await supabase.from('stock_movements').insert(movements);
@@ -331,6 +288,7 @@ export default function DepotReceiving() {
 
       setReceivingRows([createRow()]);
       setReceivingNotes('');
+      setSourcePartner('');
       setSuccess('Pranimi u regjistrua me sukses');
       await fetchData();
     } catch (err: any) {
@@ -340,98 +298,6 @@ export default function DepotReceiving() {
     }
   }
 
-  async function handleShipping(e: React.FormEvent) {
-    e.preventDefault();
-    const validRows = shippingRows.filter((r) => r.category_id && r.quantity && parseInt(r.quantity, 10) > 0);
-    if (validRows.length === 0) {
-      setError('Shto te pakten nje artikull valid');
-      return;
-    }
-    const missingProduct = validRows.find((r) => categoryHasProducts(r.category_id) && !r.category_product_id);
-    if (missingProduct) {
-      const cat = categories.find((c) => c.id === missingProduct.category_id);
-      setError(`Zgjedh produktin specifik per kategorin "${cat?.name ?? ''}".`);
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      setError(null);
-      setSuccess(null);
-      const depotId = profile!.depot_id!;
-      const companyId = profile!.company_id!;
-
-      const notesWithAddress = [shippingNotes, shippingAddress ? `Destinacioni: ${shippingAddress}` : ''].filter(Boolean).join(' | ');
-
-      const movements = validRows.map((r) => ({
-        company_id: companyId,
-        depot_id: depotId,
-        category_id: r.category_id,
-        category_product_id: r.category_product_id || null,
-        movement_type: 'exit' as const,
-        quantity: parseInt(r.quantity, 10),
-        condition_before: r.condition,
-        condition_after: r.condition,
-        notes: notesWithAddress,
-        performed_by: profile!.id,
-      }));
-
-      for (const row of validRows) {
-        const qty = parseInt(row.quantity, 10);
-        const productId = row.category_product_id || null;
-        let lookup = supabase
-          .from('stock')
-          .select('id, quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('category_id', row.category_id)
-          .eq('condition', row.condition);
-        lookup = productId ? lookup.eq('category_product_id', productId) : lookup.is('category_product_id', null);
-        const { data: existing } = await lookup.maybeSingle();
-
-        if (!existing || existing.quantity < qty) {
-          const cat = categories.find((c) => c.id === row.category_id);
-          const prod = products.find((p) => p.id === productId);
-          setError(`Stok i pamjaftueshem per ${prod?.name ?? cat?.name ?? 'artikullin'} (${row.condition}).`);
-          return;
-        }
-      }
-
-      const { error: movErr } = await supabase.from('stock_movements').insert(movements);
-      if (movErr) throw movErr;
-
-      for (const row of validRows) {
-        const qty = parseInt(row.quantity, 10);
-        const productId = row.category_product_id || null;
-        let lookup = supabase
-          .from('stock')
-          .select('id, quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('category_id', row.category_id)
-          .eq('condition', row.condition);
-        lookup = productId ? lookup.eq('category_product_id', productId) : lookup.is('category_product_id', null);
-        const { data: existing } = await lookup.maybeSingle();
-
-        if (existing) {
-          await supabase
-            .from('stock')
-            .update({ quantity: Math.max(0, existing.quantity - qty), updated_at: new Date().toISOString() })
-            .eq('id', existing.id);
-        }
-      }
-
-      setShippingRows([createRow()]);
-      setShippingNotes('');
-      setShippingAddress('');
-      setSuccess('Dergesa u regjistrua me sukses');
-      await fetchData();
-    } catch (err: any) {
-      setError(err.message || t('common.errorSaving'));
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   if (loading) {
     return (
@@ -445,8 +311,8 @@ export default function DepotReceiving() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('depot.receiving.title')}</h1>
-          <p className="text-gray-500 mt-1">{t('depot.receiving.subtitle')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Pranim</h1>
+          <p className="text-gray-500 mt-1">Regjistro pranime ne depo</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -490,7 +356,7 @@ export default function DepotReceiving() {
           role="depot"
           title={t('common.scanner.depotScan.title')}
           subtitle={t('common.scanner.depotScan.subtitle')}
-          allowedKinds={['delivery_in', 'delivery_out']}
+          allowedKinds={['delivery_in']}
           onClose={() => setShowScanner(false)}
           onConfirm={handleScanConfirm}
         />
@@ -517,45 +383,14 @@ export default function DepotReceiving() {
       )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="border-b border-gray-100">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('receiving')}
-              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors relative ${
-                activeTab === 'receiving'
-                  ? 'text-teal-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <ArrowUpCircle className="w-4 h-4" />
-                {t('depot.receiving.tabReceiving')}
-              </div>
-              {activeTab === 'receiving' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('shipping')}
-              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors relative ${
-                activeTab === 'shipping'
-                  ? 'text-teal-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <ArrowDownCircle className="w-4 h-4" />
-                {t('depot.receiving.tabShipping')}
-              </div>
-              {activeTab === 'shipping' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600" />
-              )}
-            </button>
+        <div className="border-b border-gray-100 px-6 py-3">
+          <div className="flex items-center gap-2 text-teal-600 font-medium text-sm">
+            <ArrowUpCircle className="w-4 h-4" />
+            Pranim
           </div>
         </div>
 
         <div className="p-6">
-          {activeTab === 'receiving' ? (
             <form onSubmit={handleReceiving} className="space-y-4">
               {receivingRows.some((r) => {
                 const c = categories.find((x) => x.id === r.category_id);
@@ -654,6 +489,17 @@ export default function DepotReceiving() {
               </button>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nga kush? (Kompania/Personi)</label>
+                <input
+                  type="text"
+                  value={sourcePartner}
+                  onChange={(e) => setSourcePartner(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                  placeholder="Emri i kompanise ose personit qe ka sjelle paletat..."
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.notes')}</label>
                 <textarea
                   value={receivingNotes}
@@ -675,119 +521,13 @@ export default function DepotReceiving() {
                 </button>
               </div>
             </form>
-          ) : (
-            <form onSubmit={handleShipping} className="space-y-4">
-              <div className="space-y-3">
-                {shippingRows.map((row) => {
-                  const rowProducts = productsForCategory(row.category_id);
-                  const hasProducts = rowProducts.length > 0;
-                  return (
-                  <div key={row.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">{t('depot.stock.category')}</label>
-                        <select
-                          value={row.category_id}
-                          onChange={(e) => updateShippingRow(row.id, 'category_id', e.target.value)}
-                          required
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                        >
-                          <option value="">{t('depot.stock.selectCategory')}</option>
-                          {categories.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Produkti</label>
-                        <select
-                          value={row.category_product_id}
-                          onChange={(e) => updateShippingRow(row.id, 'category_product_id', e.target.value)}
-                          disabled={!row.category_id || !hasProducts}
-                          required={hasProducts}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                        >
-                          <option value="">{hasProducts ? 'Zgjedh produktin' : '— pa produkte —'}</option>
-                          {rowProducts.map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.quantity')}</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={row.quantity}
-                          onChange={(e) => updateShippingRow(row.id, 'quantity', e.target.value)}
-                          required
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeShippingRow(row.id)}
-                      className="mt-6 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  );
-                })}
-              </div>
-
-              <button
-                type="button"
-                onClick={addShippingRow}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                {t('depot.receiving.addItem')}
-              </button>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.address')}</label>
-                <input
-                  type="text"
-                  value={shippingAddress}
-                  onChange={(e) => setShippingAddress(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                  placeholder="Adresa ku do te dergohen mallrat..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.notes')}</label>
-                <textarea
-                  value={shippingNotes}
-                  onChange={(e) => setShippingNotes(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm resize-none"
-                  placeholder="Shenime shtese per dergesen..."
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {t('depot.receiving.registerShipping')}
-                </button>
-              </div>
-            </form>
-          )}
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">
-            {activeTab === 'receiving' ? t('depot.receiving.receivingHistory') : t('depot.receiving.shippingHistory')}
+            {t('depot.receiving.receivingHistory')}
           </h2>
         </div>
         <div className="overflow-x-auto">
@@ -808,7 +548,7 @@ export default function DepotReceiving() {
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                     <Package className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                    {activeTab === 'receiving' ? t('depot.receiving.noReceiving') : t('depot.receiving.noShipping')}
+                    {t('depot.receiving.noReceiving')}
                   </td>
                 </tr>
               ) : (

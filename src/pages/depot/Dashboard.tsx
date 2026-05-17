@@ -44,6 +44,15 @@ interface RecentMovement {
   performer: { full_name: string } | null;
 }
 
+interface PendingSortingBatch {
+  id: string;
+  category_id: string;
+  total_received: number;
+  created_at: string;
+  reference_number_snapshot: string;
+  category: { name: string } | null;
+}
+
 function isoDaysBack(n: number) {
   const d = new Date();
   d.setDate(d.getDate() - n);
@@ -59,6 +68,7 @@ export default function DepotDashboard() {
   const [stockRows, setStockRows] = useState<StockValueRow[]>([]);
   const [flowRows, setFlowRows] = useState<FlowRow[]>([]);
   const [recent, setRecent] = useState<RecentMovement[]>([]);
+  const [pendingSorting, setPendingSorting] = useState<PendingSortingBatch[]>([]);
 
   useEffect(() => {
     if (profile?.depot_id && profile?.company_id) {
@@ -81,7 +91,7 @@ export default function DepotDashboard() {
       const companyId = profile!.company_id!;
       const since = isoDaysBack(6);
 
-      const [stockRes, flowRes, recentRes] = await Promise.all([
+      const [stockRes, flowRes, recentRes, sortingRes] = await Promise.all([
         supabase
           .from('v_depot_stock_value')
           .select('category_id, category_name, category_product_id, product_name, condition, quantity')
@@ -100,6 +110,13 @@ export default function DepotDashboard() {
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
           .limit(8),
+        supabase
+          .from('pallet_sorting_batches')
+          .select('id, category_id, total_received, created_at, reference_number_snapshot, category:product_categories(name)')
+          .eq('depot_id', depotId)
+          .eq('company_id', companyId)
+          .eq('status', 'in_progress')
+          .order('created_at', { ascending: false }),
       ]);
 
       if (stockRes.error) throw stockRes.error;
@@ -109,6 +126,7 @@ export default function DepotDashboard() {
       setStockRows((stockRes.data ?? []) as StockValueRow[]);
       setFlowRows((flowRes.data ?? []) as FlowRow[]);
       setRecent((recentRes.data ?? []) as unknown as RecentMovement[]);
+      setPendingSorting((sortingRes.data ?? []) as unknown as PendingSortingBatch[]);
     } catch (err) {
       setError((err as Error).message || t('common.errorLoading'));
     } finally {
@@ -207,8 +225,41 @@ export default function DepotDashboard() {
 
       <DeliveryReviewPanel role="depot_worker" />
 
+      {pendingSorting.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Layers className="w-5 h-5 text-amber-600" />
+            <h3 className="font-semibold text-amber-900 text-sm">Sortim ne pritje ({pendingSorting.length})</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {pendingSorting.map((b) => (
+              <Link
+                key={b.id}
+                to={`/depot/sorting?batch=${b.id}`}
+                className="flex items-center gap-3 p-3 bg-white rounded-lg border border-amber-100 hover:border-teal-300 hover:shadow-sm transition-all"
+              >
+                <div className="p-2 bg-teal-100 rounded-lg flex-shrink-0">
+                  <Layers className="w-4 h-4 text-teal-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{(b.category as any)?.name ?? 'Sortim'}</p>
+                  <p className="text-xs text-gray-500">
+                    {b.total_received} cope
+                    {b.reference_number_snapshot ? ` · ${b.reference_number_snapshot}` : ''}
+                  </p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-5 gap-2 lg:hidden">
-        <Link to="/depot/sorting" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 shadow-md ring-2 ring-teal-300 active:opacity-90">
+        <Link to="/depot/sorting" className="relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 shadow-md ring-2 ring-teal-300 active:opacity-90">
+          {pendingSorting.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{pendingSorting.length}</span>
+          )}
           <div className="p-2 bg-white/20 rounded-lg">
             <Layers className="w-5 h-5 text-white" />
           </div>
