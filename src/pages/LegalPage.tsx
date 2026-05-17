@@ -23,12 +23,12 @@ interface LegalPageProps {
 
 export default function LegalPage({ documentKey }: LegalPageProps) {
   const { slug } = useParams<{ slug: string }>();
-  const { t } = useTranslation();
+  const { t, tRaw } = useTranslation();
 
   const key = (documentKey ?? slug ?? 'impressum') as LegalDocumentKey;
   const isValid = validKeys.includes(key);
 
-  const legal = (t as unknown as (k: string) => unknown)('legal') as {
+  const legal = tRaw('legal') as {
     documents: Record<string, {
       title?: string;
       subtitle?: string;

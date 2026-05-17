@@ -41,6 +41,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  tRaw: (key: string) => unknown;
 }
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
@@ -72,7 +73,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return getNestedValue(translations[language] as unknown as Record<string, unknown>, key);
   }, [language]);
 
-  const value = useMemo(() => ({ language, setLanguage, t }), [language, setLanguage, t]);
+  const tRaw = useCallback((key: string): unknown => {
+    const keys = key.split('.');
+    let current: unknown = translations[language];
+    for (const k of keys) {
+      if (current === undefined || current === null) return undefined;
+      current = (current as Record<string, unknown>)[k];
+    }
+    return current;
+  }, [language]);
+
+  const value = useMemo(() => ({ language, setLanguage, t, tRaw }), [language, setLanguage, t, tRaw]);
 
   return (
     <LanguageContext.Provider value={value}>
