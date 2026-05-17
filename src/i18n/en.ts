@@ -1517,6 +1517,7 @@ export const en: typeof sq = {
       confirmDispatch: 'Confirm pickup and dispatch',
       or: 'or',
       scanWithAi: 'Scan delivery note with AI',
+      scanDoc: 'Scan Document',
       saving: 'Saving...',
       scanHint: 'AI will detect the data and close the delivery automatically',
       openFullDetails: 'Open full details',

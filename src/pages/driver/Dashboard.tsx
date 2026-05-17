@@ -15,7 +15,6 @@ import {
   PlayCircle,
   FileText,
   ScanLine,
-  Sparkles,
   ArrowRight,
   Search,
   Calendar,
@@ -82,12 +81,10 @@ export default function DriverDashboard() {
   const [range, setRange] = useState<'default' | 'today' | '7d' | '30d' | 'all'>('default');
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmErrors, setConfirmErrors] = useState<Record<string, string>>({});
-  const [dispatchConfirm, setDispatchConfirm] = useState<NoteRow | null>(null);
   const [assignedTrailers, setAssignedTrailers] = useState<Array<{ id: string; plate_number: string; title: string | null }>>([]);
 
   function requestConfirm(id: string) {
-    const n = notes.find((x) => x.id === id);
-    if (n) setDispatchConfirm(n);
+    handleQuickConfirm(id);
   }
 
   async function handleQuickConfirm(id: string) {
@@ -456,70 +453,7 @@ export default function DriverDashboard() {
         </div>
       )}
 
-      {dispatchConfirm && (
-        <DispatchConfirmModal
-          note={dispatchConfirm}
-          t={t}
-          onCancel={() => setDispatchConfirm(null)}
-          onConfirm={async () => {
-            const id = dispatchConfirm.id;
-            setDispatchConfirm(null);
-            await handleQuickConfirm(id);
-          }}
-        />
-      )}
 
-    </div>
-  );
-}
-
-function DispatchConfirmModal({ note, t, onCancel, onConfirm }: {
-  note: NoteRow;
-  t: T;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  const isPickup = note.type === 'pickup';
-  const directionLabel = isPickup ? t('driver.directionPickup') : t('driver.directionDelivery');
-  const stockLine = isPickup
-    ? t('driver.dispatchConfirm.stockInc')
-    : t('driver.dispatchConfirm.stockDec');
-  return (
-    <div className="fixed inset-0 z-[70] bg-black/60 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <div className={`px-5 py-4 text-white ${isPickup ? 'bg-gradient-to-r from-orange-500 to-amber-500' : 'bg-gradient-to-r from-blue-600 to-sky-500'}`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              {isPickup ? <ArrowDownLeft className="w-6 h-6" /> : <ArrowUpRight className="w-6 h-6" />}
-            </div>
-            <div>
-              <div className="text-xs font-medium uppercase tracking-wider opacity-90">{t('driver.dispatchConfirm.title')}</div>
-              <div className="text-lg font-bold leading-tight">{directionLabel} — {note.note_number}</div>
-            </div>
-          </div>
-        </div>
-        <div className="p-5 space-y-3 text-sm text-gray-700">
-          <p>{t('driver.dispatchConfirm.body')}</p>
-          <ul className="space-y-2 bg-gray-50 border border-gray-100 rounded-lg p-3">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-              <span>{t('driver.dispatchConfirm.stepDepot')}</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <Package className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <span className="font-semibold">{stockLine}</span>
-            </li>
-          </ul>
-        </div>
-        <div className="px-5 pb-5 flex items-center justify-end gap-3">
-          <button onClick={onCancel} className="px-4 py-2.5 text-sm font-medium bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 rounded-lg transition-colors">
-            {t('common.cancel')}
-          </button>
-          <button onClick={onConfirm} className="px-4 py-2.5 text-sm font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors inline-flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" /> {t('common.confirm')}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -1511,16 +1445,10 @@ export function TaskDetailSheet({
                   {uploading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      <ScanLine className="w-4 h-4" />
-                    </>
+                    <ScanLine className="w-4 h-4" />
                   )}
-                  {uploading ? t('driver.taskDetail.saving') : t('driver.taskDetail.scanWithAi')}
+                  {uploading ? t('driver.taskDetail.saving') : t('driver.taskDetail.scanDoc')}
                 </button>
-                <p className="text-[11px] text-gray-500 text-center leading-snug">
-                  {t('driver.taskDetail.scanHint')}
-                </p>
                 {!showCloseConfirm ? (
                   <button
                     onClick={() => setShowCloseConfirm(true)}

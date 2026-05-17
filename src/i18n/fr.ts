@@ -1514,6 +1514,7 @@ export const fr: typeof sq = {
       confirmDispatch: 'Confirmer la r\u00e9ception et le d\u00e9part',
       or: 'ou',
       scanWithAi: 'Scanner le bon de livraison avec IA',
+      scanDoc: 'Scanner le document',
       saving: 'Enregistrement...',
       scanHint: 'L\'IA d\u00e9tectera les donn\u00e9es et cl\u00f4turera la livraison automatiquement',
       openFullDetails: 'Ouvrir les d\u00e9tails complets',

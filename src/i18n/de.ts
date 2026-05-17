@@ -1514,6 +1514,7 @@ export const de: typeof sq = {
       confirmDispatch: 'Abholung und Start best\u00e4tigen',
       or: 'oder',
       scanWithAi: 'Lieferschein mit KI scannen',
+      scanDoc: 'Dokument scannen',
       saving: 'Speichern...',
       scanHint: 'KI erkennt die Daten und schlie\u00dft die Lieferung automatisch ab',
       openFullDetails: 'Vollst\u00e4ndige Details \u00f6ffnen',

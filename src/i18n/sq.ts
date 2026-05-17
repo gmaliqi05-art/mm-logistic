@@ -1512,6 +1512,7 @@ export const sq = {
       confirmDispatch: 'Konfirmo marrjen dhe nisjen',
       or: 'ose',
       scanWithAi: 'Skano fletedergesen me AI',
+      scanDoc: 'Skano Dokumentin',
       saving: 'Duke ruajtur...',
       scanHint: 'AI do te detektoje te dhenat dhe do ta mbylle automatikisht dergesen',
       openFullDetails: 'Hap ne detaje te plota',
