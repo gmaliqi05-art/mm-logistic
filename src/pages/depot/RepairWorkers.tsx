@@ -381,19 +381,46 @@ export default function DepotRepairWorkers() {
       const total = workersPayload.reduce((s, w) => s + w.total_quantity, 0);
       const entryCount = workersPayload.reduce((s, w) => s + w.entry_count, 0);
 
-      const { error: insErr } = await supabase.from('depot_repair_reports').insert({
-        company_id: companyId,
-        depot_id: profile!.depot_id ?? null,
-        worker_id: null,
-        scope: 'company',
-        report_date: today,
-        total_quantity: total,
-        entry_count: entryCount,
-        details: { workers: workersPayload },
-        created_by: profile!.id,
-        review_status: 'pending_company_review',
-      });
-      if (insErr) throw insErr;
+      const nowIsoReport = new Date().toISOString();
+      const depotId = profile!.depot_id ?? null;
+
+      const { data: existingReport } = await supabase
+        .from('depot_repair_reports')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('depot_id', depotId)
+        .eq('report_date', today)
+        .eq('scope', 'company')
+        .maybeSingle();
+
+      if (existingReport) {
+        const { error: updErr } = await supabase
+          .from('depot_repair_reports')
+          .update({
+            total_quantity: total,
+            entry_count: entryCount,
+            details: { workers: workersPayload },
+            sent_to_stock_at: nowIsoReport,
+            sent_to_stock_by: profile!.id,
+          })
+          .eq('id', existingReport.id);
+        if (updErr) throw updErr;
+      } else {
+        const { error: insErr } = await supabase.from('depot_repair_reports').insert({
+          company_id: companyId,
+          depot_id: depotId,
+          worker_id: null,
+          scope: 'company',
+          report_date: today,
+          total_quantity: total,
+          entry_count: entryCount,
+          details: { workers: workersPayload },
+          created_by: profile!.id,
+          sent_to_stock_at: nowIsoReport,
+          sent_to_stock_by: profile!.id,
+        });
+        if (insErr) throw insErr;
+      }
 
       const nowIso = new Date().toISOString();
       const { error: upErr } = await supabase

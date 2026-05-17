@@ -233,27 +233,59 @@ export default function WorkerRepairEntry() {
         if (p) byProdMap.set(p, (byProdMap.get(p) ?? 0) + e.quantity);
       }
 
-      const { data: reportRow, error: repErr } = await supabase
+      const reportPayload = {
+        company_id: companyId,
+        depot_id: profile!.depot_id ?? null,
+        worker_id: workerId,
+        scope: 'worker',
+        report_date: todayDateStr(),
+        total_quantity: total,
+        entry_count: entries.length,
+        details: {
+          entries: detailEntries,
+          by_category: Array.from(byCatMap.entries()).map(([name, quantity]) => ({ name, quantity })),
+          by_product: Array.from(byProdMap.entries()).map(([name, quantity]) => ({ name, quantity })),
+        },
+        created_by: profile!.id,
+        sent_to_stock_at: nowIso,
+        sent_to_stock_by: profile!.id,
+      };
+
+      const { data: existing } = await supabase
         .from('depot_repair_reports')
-        .insert({
-          company_id: companyId,
-          depot_id: profile!.depot_id ?? null,
-          worker_id: workerId,
-          scope: 'worker',
-          report_date: todayDateStr(),
-          total_quantity: total,
-          entry_count: entries.length,
-          details: {
-            entries: detailEntries,
-            by_category: Array.from(byCatMap.entries()).map(([name, quantity]) => ({ name, quantity })),
-            by_product: Array.from(byProdMap.entries()).map(([name, quantity]) => ({ name, quantity })),
-          },
-          created_by: profile!.id,
-          review_status: 'pending_company_review',
-        })
         .select('id')
+        .eq('worker_id', workerId)
+        .eq('report_date', todayDateStr())
+        .eq('company_id', companyId)
+        .eq('scope', 'worker')
         .maybeSingle();
-      if (repErr) throw repErr;
+
+      let reportRow: { id: string } | null = null;
+      if (existing) {
+        const { data, error: upErr } = await supabase
+          .from('depot_repair_reports')
+          .update({
+            total_quantity: total,
+            entry_count: entries.length,
+            details: reportPayload.details,
+            sent_to_stock_at: nowIso,
+            sent_to_stock_by: profile!.id,
+          })
+          .eq('id', existing.id)
+          .select('id')
+          .maybeSingle();
+        if (upErr) throw upErr;
+        reportRow = data;
+      } else {
+        const { data, error: insErr } = await supabase
+          .from('depot_repair_reports')
+          .insert(reportPayload)
+          .select('id')
+          .maybeSingle();
+        if (insErr) throw insErr;
+        reportRow = data;
+      }
+      if (!reportRow) throw new Error('Failed to save report');
 
       const ids = entries.map((e) => e.id);
       const { error: upErr } = await supabase
