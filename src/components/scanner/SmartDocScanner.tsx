@@ -283,7 +283,7 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                 )}
               </div>
 
-              <div className={role === 'driver' ? '' : 'grid sm:grid-cols-2 gap-6'}>
+              <div className="grid sm:grid-cols-2 gap-6">
                 <div>
                   <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.document')}</p>
                   <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
@@ -299,31 +299,23 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                   </div>
                 </div>
 
-                {role !== 'driver' && (
-                  <div>
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.keyData')}</p>
-                    <dl className="space-y-2 text-sm">
-                      {(result.extracted.consignor_name || result.extracted.supplier_name) && (
-                        <div><dt className="text-xs text-slate-500">{t('common.scanner.supplier')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignor_name || result.extracted.supplier_name}</dd></div>
-                      )}
-                      {(result.extracted.consignee_name || result.extracted.customer_name) && (
-                        <div><dt className="text-xs text-slate-500">{t('common.scanner.customer')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignee_name || result.extracted.customer_name}</dd></div>
-                      )}
-                      {(result.extracted.consignor_vat || result.extracted.supplier_vat) && (
-                        <div><dt className="text-xs text-slate-500">{t('common.scanner.vatNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.consignor_vat || result.extracted.supplier_vat}</dd></div>
-                      )}
-                      {result.extracted.invoice_number && (
-                        <div><dt className="text-xs text-slate-500">{t('common.scanner.docNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.invoice_number}</dd></div>
-                      )}
-                      {result.extracted.invoice_date && (
-                        <div><dt className="text-xs text-slate-500">{t('common.scanner.date')}</dt><dd className="text-slate-800">{result.extracted.invoice_date}</dd></div>
-                      )}
-                      {result.extracted.total > 0 && (
-                        <div><dt className="text-xs text-slate-500">{t('common.scanner.total')}</dt><dd className="font-bold text-slate-900">{result.extracted.total.toFixed(2)}</dd></div>
-                      )}
-                    </dl>
-                  </div>
-                )}
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.keyData')}</p>
+                  <dl className="space-y-2 text-sm">
+                    {(result.extracted.consignor_name || result.extracted.supplier_name) && (
+                      <div><dt className="text-xs text-slate-500">{t('common.scanner.supplier')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignor_name || result.extracted.supplier_name}</dd></div>
+                    )}
+                    {(result.extracted.consignee_name || result.extracted.customer_name) && (
+                      <div><dt className="text-xs text-slate-500">{t('common.scanner.customer')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignee_name || result.extracted.customer_name}</dd></div>
+                    )}
+                    {(result.extracted.document_number || result.extracted.invoice_number) && (
+                      <div><dt className="text-xs text-slate-500">{t('common.scanner.docNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.document_number || result.extracted.invoice_number}</dd></div>
+                    )}
+                    {(result.extracted.document_date || result.extracted.invoice_date) && (
+                      <div><dt className="text-xs text-slate-500">{t('common.scanner.date')}</dt><dd className="text-slate-800">{result.extracted.document_date || result.extracted.invoice_date}</dd></div>
+                    )}
+                  </dl>
+                </div>
               </div>
 
               {result.extracted.line_items && result.extracted.line_items.length > 0 && (
@@ -337,9 +329,6 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                         <tr>
                           <th className="px-3 py-2">{t('common.scanner.description')}</th>
                           <th className="px-3 py-2 text-right">{t('common.scanner.quantity')}</th>
-                          {role !== 'driver' && (
-                            <th className="px-3 py-2 text-right">{t('common.scanner.unitPrice')}</th>
-                          )}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -347,9 +336,6 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                           <tr key={i}>
                             <td className="px-3 py-2 text-slate-800">{it.description}</td>
                             <td className="px-3 py-2 text-right text-slate-700">{it.quantity} {it.unit || ''}</td>
-                            {role !== 'driver' && (
-                              <td className="px-3 py-2 text-right text-slate-700">{it.unit_price?.toFixed(2) || '-'}</td>
-                            )}
                           </tr>
                         ))}
                       </tbody>

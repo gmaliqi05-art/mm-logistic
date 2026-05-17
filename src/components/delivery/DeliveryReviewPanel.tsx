@@ -890,6 +890,41 @@ function ReviewModal({
         .eq('id', note.id);
       if (upErr) throw upErr;
 
+      // Create sorting batches immediately so depot sees them without extra confirmation
+      const { data: persistedItems } = await supabase
+        .from('delivery_note_items')
+        .select('id, category_id, quantity, intended_action, notes')
+        .eq('delivery_note_id', note.id)
+        .eq('intended_action', 'sorting');
+      if (persistedItems && persistedItems.length > 0) {
+        for (const item of persistedItems) {
+          if (!item.category_id || !item.quantity) continue;
+          const { data: existing } = await supabase
+            .from('pallet_sorting_batches')
+            .select('id')
+            .eq('source_item_id', item.id)
+            .maybeSingle();
+          if (existing) {
+            await supabase.from('pallet_sorting_batches')
+              .update({ total_received: item.quantity, category_id: item.category_id })
+              .eq('id', existing.id);
+          } else {
+            await supabase.from('pallet_sorting_batches').insert({
+              company_id: profile!.company_id!,
+              depot_id: depotId,
+              category_id: item.category_id,
+              source_delivery_note_id: note.id,
+              source_item_id: item.id,
+              total_received: item.quantity,
+              status: 'in_progress',
+              notes: item.notes || '',
+              created_by: profile!.id,
+              reference_number_snapshot: (note as any).reference_number || note.note_number || '',
+            });
+          }
+        }
+      }
+
       const { data: depotUsers } = await supabase
         .from('profiles')
         .select('id')
@@ -1240,7 +1275,7 @@ function ReviewModal({
                       email: e.consignor_email || null,
                       phone: e.consignor_phone || null,
                       address: e.consignor_address || null,
-                      order_number: e.invoice_number || e.order_number || e.reference_number || null,
+                      order_number: e.document_number || e.invoice_number || e.order_number || e.reference_number || null,
                     }
                   : {
                       name: e.consignee_name || null,
@@ -1248,7 +1283,7 @@ function ReviewModal({
                       email: e.consignee_email || null,
                       phone: e.consignee_phone || null,
                       address: e.consignee_address || null,
-                      order_number: e.invoice_number || e.order_number || e.reference_number || null,
+                      order_number: e.document_number || e.invoice_number || e.order_number || e.reference_number || null,
                     };
               })()}
             />
@@ -1347,32 +1382,8 @@ function ReviewModal({
                 isPickup={isPickup}
                 partnerIsOwnCompany={partnerIsOwnCompany}
               />
-              <DataRow label="Nr. dokumenti" value={ex.invoice_number || note.reference_number || '-'} />
-              <DataRow label="Data" value={ex.invoice_date || '-'} />
-
-              {(ex.total != null || ex.subtotal != null || ex.vat_amount != null) && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5">
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Permbledhje Financiare</p>
-                  {ex.subtotal != null && ex.subtotal > 0 && (
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">Nentotali</span>
-                      <span className="font-medium text-slate-800">{Number(ex.subtotal).toFixed(2)} {ex.currency || 'EUR'}</span>
-                    </div>
-                  )}
-                  {ex.vat_amount != null && ex.vat_amount > 0 && (
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600">TVSH</span>
-                      <span className="font-medium text-slate-800">{Number(ex.vat_amount).toFixed(2)} {ex.currency || 'EUR'}</span>
-                    </div>
-                  )}
-                  {ex.total != null && (
-                    <div className="flex items-center justify-between text-sm pt-1.5 border-t border-slate-200">
-                      <span className="font-semibold text-slate-700">Totali</span>
-                      <span className="font-bold text-slate-900">{Number(ex.total).toFixed(2)} {ex.currency || 'EUR'}</span>
-                    </div>
-                  )}
-                </div>
-              )}
+              <DataRow label="Nr. dokumenti" value={ex.document_number || ex.invoice_number || note.reference_number || '-'} />
+              <DataRow label="Data" value={ex.document_date || ex.invoice_date || '-'} />
 
               {ex.line_items && ex.line_items.length > 0 && (
                 <div>
@@ -1385,8 +1396,6 @@ function ReviewModal({
                         <tr>
                           <th className="px-2.5 py-1.5 font-semibold text-slate-600">Pershkrim</th>
                           <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Sasi</th>
-                          <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Cmim/nj</th>
-                          <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Total</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -1394,8 +1403,6 @@ function ReviewModal({
                           <tr key={idx} className="hover:bg-slate-50">
                             <td className="px-2.5 py-1.5 text-slate-800">{li.description}</td>
                             <td className="px-2.5 py-1.5 text-right text-slate-700">{li.quantity} {li.unit || ''}</td>
-                            <td className="px-2.5 py-1.5 text-right text-slate-700">{li.unit_price != null ? Number(li.unit_price).toFixed(2) : '-'}</td>
-                            <td className="px-2.5 py-1.5 text-right font-medium text-slate-800">{li.line_total != null ? Number(li.line_total).toFixed(2) : '-'}</td>
                           </tr>
                         ))}
                       </tbody>

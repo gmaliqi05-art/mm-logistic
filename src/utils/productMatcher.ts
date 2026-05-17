@@ -74,24 +74,19 @@ export function extractDimensions(text: string): string[] {
   const out = new Set<string>();
   const clean = text.toLowerCase().replace(/×/g, 'x').replace(/,/g, '.');
 
-  const re = /(\d+(?:\.\d+)?)\s*(mm|cm|m)?\s*x\s*(\d+(?:\.\d+)?)\s*(mm|cm|m)?/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(clean)) !== null) {
-    const a = parseFloat(m[1]);
-    const b = parseFloat(m[3]);
-    const unitA = m[2] || m[4] || '';
-    const unitB = m[4] || m[2] || '';
-    const toMm = (v: number, u: string): number => {
-      if (!u) {
-        if (v < 10) return Math.round(v * 1000);
-        if (v < 300) return Math.round(v * 10);
-        return Math.round(v);
-      }
-      if (u === 'mm') return Math.round(v);
-      if (u === 'cm') return Math.round(v * 10);
-      if (u === 'm') return Math.round(v * 1000);
+  const toMm = (v: number, u: string): number => {
+    if (!u) {
+      if (v < 10) return Math.round(v * 1000);
+      if (v < 300) return Math.round(v * 10);
       return Math.round(v);
-    };
+    }
+    if (u === 'mm') return Math.round(v);
+    if (u === 'cm') return Math.round(v * 10);
+    if (u === 'm') return Math.round(v * 1000);
+    return Math.round(v);
+  };
+
+  const addPair = (a: number, unitA: string, b: number, unitB: string) => {
     const ax = toMm(a, unitA);
     const bx = toMm(b, unitB);
     if (ax > 0 && bx > 0) {
@@ -99,7 +94,21 @@ export function extractDimensions(text: string): string[] {
       const hi = Math.max(ax, bx);
       out.add(`${lo}x${hi}`);
     }
+  };
+
+  // Standard "AxB" format
+  const re = /(\d+(?:\.\d+)?)\s*(mm|cm|m)?\s*x\s*(\d+(?:\.\d+)?)\s*(mm|cm|m)?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(clean)) !== null) {
+    addPair(parseFloat(m[1]), m[2] || m[4] || '', parseFloat(m[3]), m[4] || m[2] || '');
   }
+
+  // Dash-separated format: "60cm-80cm", "600-800mm", "60-80 cm"
+  const reDash = /(\d+(?:\.\d+)?)\s*(mm|cm|m)\s*[-–]\s*(\d+(?:\.\d+)?)\s*(mm|cm|m)?/g;
+  while ((m = reDash.exec(clean)) !== null) {
+    addPair(parseFloat(m[1]), m[2] || '', parseFloat(m[3]), m[4] || m[2] || '');
+  }
+
   return Array.from(out);
 }
 
@@ -205,7 +214,10 @@ export function matchProduct(
     const inCatBonus = bestCat && p.category_id === bestCat.c.id ? 0.15 : 0;
     const dimBonus = dimMatch ? 0.8 : 0;
     const dimMismatchPenalty = descDims.length > 0 && prodDimsRaw.length > 0 && !dimMatch ? -0.5 : 0;
-    const aliasBonus = aliasHit ? 0.9 : 0;
+    // When description has dimensions but product has none, reduce alias bonus
+    const aliasBonus = aliasHit
+      ? (descDims.length > 0 && prodDimsRaw.length === 0 ? 0.3 : 0.9)
+      : 0;
     const keywordBonus = Math.min(keywordHits * 0.2, 0.4);
     const total = ratio + contained + (skuHit ? 0.6 : 0) + inCatBonus + dimBonus + dimMismatchPenalty + aliasBonus + keywordBonus;
 

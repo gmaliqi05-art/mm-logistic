@@ -1158,13 +1158,15 @@ export function TaskDetailSheet({
         }
       }
 
-      if (ex.invoice_number && !(note as any).reference_number) {
-        update.reference_number = ex.invoice_number;
+      const docNumber = ex.document_number || ex.invoice_number;
+      const docDate = ex.document_date || ex.invoice_date;
+      if (docNumber && !(note as any).reference_number) {
+        update.reference_number = docNumber;
       }
 
       const extraNotes: string[] = [];
-      if (ex.invoice_date) extraNotes.push(`Data: ${ex.invoice_date}`);
-      if (ex.invoice_number) extraNotes.push(`Nr. dok: ${ex.invoice_number}`);
+      if (docDate) extraNotes.push(`Data: ${docDate}`);
+      if (docNumber) extraNotes.push(`Nr. dok: ${docNumber}`);
       if (ex.line_items && ex.line_items.length > 0) {
         const lines = ex.line_items.slice(0, 8).map((li) => {
           const qty = li.quantity ? `${li.quantity}${li.unit ? ' ' + li.unit : ''} x ` : '';

@@ -59,14 +59,12 @@ interface PartnerRow {
   balance: number;
 }
 
-interface ScannedFinancialRow {
+interface ScannedDocRow {
   id: string;
   note_number: string;
   partner_name: string | null;
   type: string;
-  total: number;
-  vat_amount: number;
-  currency: string;
+  total_quantity: number;
   scanned_at: string;
   line_items_count: number;
 }
@@ -109,7 +107,7 @@ export default function CompanyReports() {
   const [stockRows, setStockRows] = useState<StockRow[]>([]);
   const [movementRows, setMovementRows] = useState<MovementRow[]>([]);
   const [partnerRows, setPartnerRows] = useState<PartnerRow[]>([]);
-  const [financialRows, setFinancialRows] = useState<ScannedFinancialRow[]>([]);
+  const [scannedRows, setScannedRows] = useState<ScannedDocRow[]>([]);
   const [depotCount, setDepotCount] = useState(0);
   const [driverCount, setDriverCount] = useState(0);
   const [noteStatusCounts, setNoteStatusCounts] = useState<Record<string, number>>({});
@@ -209,23 +207,22 @@ export default function CompanyReports() {
         .lte('updated_at', toIso)
         .order('updated_at', { ascending: false })
         .limit(500);
-      const finRows: ScannedFinancialRow[] = [];
+      const scanRows: ScannedDocRow[] = [];
       for (const n of (scannedNotes ?? []) as Array<any>) {
         const ex = n.ai_extracted_json;
-        if (!ex || (ex.total == null && (!ex.line_items || ex.line_items.length === 0))) continue;
-        finRows.push({
+        if (!ex || (!ex.line_items || ex.line_items.length === 0)) continue;
+        const totalQty = (ex.line_items as Array<any>).reduce((s: number, li: any) => s + (Number(li.quantity) || 0), 0);
+        scanRows.push({
           id: n.id,
           note_number: n.note_number,
           partner_name: n.partner_name,
           type: n.type,
-          total: Number(ex.total) || 0,
-          vat_amount: Number(ex.vat_amount) || 0,
-          currency: ex.currency || 'EUR',
+          total_quantity: totalQty,
           scanned_at: n.updated_at,
           line_items_count: ex.line_items?.length || 0,
         });
       }
-      setFinancialRows(finRows);
+      setScannedRows(scanRows);
     } catch (err: any) {
       setError(err.message || t('common.errorLoading'));
     } finally {
@@ -301,7 +298,7 @@ export default function CompanyReports() {
     { key: 'movements', label: 'Levizjet', icon: TrendingUp },
     { key: 'sorting_repair', label: 'Sortim & Riparim', icon: Wrench },
     { key: 'partners', label: 'Partneret', icon: Users },
-    { key: 'financials', label: 'Financat (AI)', icon: Sparkles },
+    { key: 'financials', label: 'Skanimet AI', icon: Sparkles },
   ];
 
   function exportActiveTab() {
@@ -332,18 +329,16 @@ export default function CompanyReports() {
       const rows = partnerRows.map(r => [r.partner_name, String(r.in_qty), String(r.out_qty), String(r.balance)]);
       exportToCsv(headers, rows, 'partneret');
     } else if (activeTab === 'financials') {
-      const headers = ['Nr. Dok', 'Partneri', 'Tipi', 'Totali', 'TVSH', 'Monedha', 'Data', 'Artikuj'];
-      const rows = financialRows.map(r => [
+      const headers = ['Nr. Dok', 'Partneri', 'Tipi', 'Sasia totale', 'Artikuj', 'Data'];
+      const rows = scannedRows.map(r => [
         r.note_number,
         r.partner_name ?? '',
         r.type === 'pickup' ? 'Marrje' : 'Dergese',
-        r.total.toFixed(2),
-        r.vat_amount.toFixed(2),
-        r.currency,
-        new Date(r.scanned_at).toLocaleDateString(),
+        String(r.total_quantity),
         String(r.line_items_count),
+        new Date(r.scanned_at).toLocaleDateString(),
       ]);
-      exportToCsv(headers, rows, 'financat_skanimet');
+      exportToCsv(headers, rows, 'skanimet_ai');
     }
   }
 
@@ -626,36 +621,35 @@ export default function CompanyReports() {
       )}
 
       {activeTab === 'financials' && (
-        <FinancialsTab rows={financialRows} />
+        <ScansTab rows={scannedRows} />
       )}
     </div>
   );
 }
 
-function FinancialsTab({ rows }: { rows: ScannedFinancialRow[] }) {
-  const totalAmount = rows.reduce((s, r) => s + r.total, 0);
-  const totalVat = rows.reduce((s, r) => s + r.vat_amount, 0);
+function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
+  const totalQty = rows.reduce((s, r) => s + r.total_quantity, 0);
   const inRows = rows.filter(r => r.type === 'pickup');
   const outRows = rows.filter(r => r.type !== 'pickup');
-  const inTotal = inRows.reduce((s, r) => s + r.total, 0);
-  const outTotal = outRows.reduce((s, r) => s + r.total, 0);
+  const inQty = inRows.reduce((s, r) => s + r.total_quantity, 0);
+  const outQty = outRows.reduce((s, r) => s + r.total_quantity, 0);
 
   const byPartner = useMemo(() => {
-    const map = new Map<string, { name: string; total: number; count: number }>();
+    const map = new Map<string, { name: string; qty: number; count: number }>();
     for (const r of rows) {
       const name = r.partner_name || '(Pa partner)';
-      const cur = map.get(name) ?? { name, total: 0, count: 0 };
-      cur.total += r.total;
+      const cur = map.get(name) ?? { name, qty: 0, count: 0 };
+      cur.qty += r.total_quantity;
       cur.count += 1;
       map.set(name, cur);
     }
-    return Array.from(map.values()).sort((a, b) => b.total - a.total).slice(0, 10);
+    return Array.from(map.values()).sort((a, b) => b.qty - a.qty).slice(0, 10);
   }, [rows]);
 
   if (rows.length === 0) {
     return (
-      <Card title="Financat nga skanimet AI" icon={Sparkles}>
-        <EmptyState icon={Sparkles} label="Asnje dokument i skanuar me te dhena financiare ne kete periudhe." />
+      <Card title="Skanimet AI" icon={Sparkles}>
+        <EmptyState icon={Sparkles} label="Asnje dokument i skanuar ne kete periudhe." />
       </Card>
     );
   }
@@ -664,37 +658,36 @@ function FinancialsTab({ rows }: { rows: ScannedFinancialRow[] }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-xs text-gray-500">Totali i skanuar</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{totalAmount.toFixed(2)} EUR</p>
-          <p className="text-xs text-gray-400 mt-1">{rows.length} dokumente</p>
+          <p className="text-xs text-gray-500">Dokumente te skanuara</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{rows.length}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-xs text-gray-500">TVSH totale</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{totalVat.toFixed(2)} EUR</p>
+          <p className="text-xs text-gray-500">Sasia totale</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{totalQty.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <p className="text-xs text-gray-500">Marrje (hyrje)</p>
-          <p className="text-2xl font-bold text-emerald-700 mt-1">{inTotal.toFixed(2)} EUR</p>
+          <p className="text-2xl font-bold text-emerald-700 mt-1">{inQty.toLocaleString()}</p>
           <p className="text-xs text-gray-400 mt-1">{inRows.length} dokumente</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <p className="text-xs text-gray-500">Dergese (dalje)</p>
-          <p className="text-2xl font-bold text-rose-700 mt-1">{outTotal.toFixed(2)} EUR</p>
+          <p className="text-2xl font-bold text-rose-700 mt-1">{outQty.toLocaleString()}</p>
           <p className="text-xs text-gray-400 mt-1">{outRows.length} dokumente</p>
         </div>
       </div>
 
       {byPartner.length > 0 && (
-        <Card title="Top partneret sipas vleres" icon={Users}>
+        <Card title="Top partneret sipas sasise" icon={Users}>
           <div className="space-y-2">
             {byPartner.map((p, i) => {
-              const pct = totalAmount > 0 ? (p.total / totalAmount) * 100 : 0;
+              const pct = totalQty > 0 ? (p.qty / totalQty) * 100 : 0;
               return (
                 <div key={i} className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
-                      <p className="text-sm font-bold text-gray-900 flex-shrink-0 ml-2">{p.total.toFixed(2)} EUR</p>
+                      <p className="text-sm font-bold text-gray-900 flex-shrink-0 ml-2">{p.qty} cope</p>
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full bg-teal-500 rounded-full" style={{ width: `${pct}%` }} />
@@ -716,8 +709,7 @@ function FinancialsTab({ rows }: { rows: ScannedFinancialRow[] }) {
                 <th className="text-left px-3 py-2">Nr. Dok</th>
                 <th className="text-left px-3 py-2">Partneri</th>
                 <th className="text-left px-3 py-2">Tipi</th>
-                <th className="text-right px-3 py-2">Totali</th>
-                <th className="text-right px-3 py-2">TVSH</th>
+                <th className="text-right px-3 py-2">Sasia totale</th>
                 <th className="text-right px-3 py-2">Artikuj</th>
                 <th className="text-right px-3 py-2">Data</th>
               </tr>
@@ -732,8 +724,7 @@ function FinancialsTab({ rows }: { rows: ScannedFinancialRow[] }) {
                       {r.type === 'pickup' ? 'Marrje' : 'Dergese'}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-right font-semibold text-gray-900">{r.total.toFixed(2)}</td>
-                  <td className="px-3 py-2 text-right text-gray-600">{r.vat_amount > 0 ? r.vat_amount.toFixed(2) : '—'}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-gray-900">{r.total_quantity}</td>
                   <td className="px-3 py-2 text-right text-gray-500">{r.line_items_count}</td>
                   <td className="px-3 py-2 text-right text-gray-500 text-xs">{new Date(r.scanned_at).toLocaleDateString()}</td>
                 </tr>
