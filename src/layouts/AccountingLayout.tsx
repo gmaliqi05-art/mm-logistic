@@ -99,7 +99,7 @@ export default function AccountingLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
-      <aside className="hidden lg:flex w-64 flex-col bg-emerald-900 text-white fixed inset-y-0 left-0 z-40">
+      <aside className="hidden lg:flex print:!hidden w-64 flex-col bg-emerald-900 text-white fixed inset-y-0 left-0 z-40">
         <div className="flex items-center gap-3 h-16 px-4 border-b border-emerald-800">
           {companyLogo && (
             <img src={companyLogo} alt={companyName} className="w-8 h-8 rounded object-cover flex-shrink-0" />
@@ -159,8 +159,8 @@ export default function AccountingLayout() {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-30 lg:h-16 lg:px-6">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64 print:!ml-0">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-30 lg:h-16 lg:px-6 print:hidden">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -190,18 +190,18 @@ export default function AccountingLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto print:p-0">
           <Outlet />
         </main>
 
-        <footer className="hidden lg:block border-t border-gray-200 bg-white px-6 py-3 text-center">
+        <footer className="hidden lg:block print:!hidden border-t border-gray-200 bg-white px-6 py-3 text-center">
           <p className="text-gray-400 text-xs">
             {t('common.createdBy')} <span className="text-gray-500 font-medium">MM Logistic</span>
           </p>
         </footer>
       </div>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
+      <nav className="lg:hidden print:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
         <div className="flex items-center justify-around h-16 px-1">
           {bottomNavItems.map((item) => (
             <NavLink

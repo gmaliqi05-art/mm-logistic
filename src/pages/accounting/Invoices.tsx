@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, X, AlertTriangle, Loader2, CreditCard as Edit2, Copy, Printer, ChevronDown, Trash2, FileText, FileCode2, Eye, Truck, PackageCheck, PackageOpen, PackageX } from 'lucide-react';
+import { Plus, Search, X, AlertTriangle, Loader2, CreditCard as Edit2, Printer, ChevronDown, Trash2, FileText, FileCode2, Eye, Truck, PackageCheck, PackageOpen, PackageX } from 'lucide-react';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCompanySubscriptions } from '../../hooks/useCompanySubscriptions';
 import { useTranslation } from '../../i18n';
 import type {
   AccInvoice,
@@ -121,7 +120,6 @@ function calcLineTotal(item: ItemForm): number {
 
 export default function Invoices() {
   const { profile, session } = useAuth();
-  const { hasLogistics } = useCompanySubscriptions();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { rates: vatRates, standardRate: defaultVat } = useCountryVatRates();
@@ -153,10 +151,6 @@ export default function Invoices() {
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<AccInvoice | null>(null);
   const [previewItems, setPreviewItems] = useState<AccInvoiceItem[]>([]);
-  const [dispatchInvoice, setDispatchInvoice] = useState<AccInvoice | null>(null);
-  const [dispatchDepotId, setDispatchDepotId] = useState<string>('');
-  const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
-  const [depots, setDepots] = useState<Array<{ id: string; name: string }>>([]);
 
   async function openPreview(invoice: AccInvoice) {
     setPreviewInvoice(invoice);
@@ -171,113 +165,9 @@ export default function Invoices() {
   useEffect(() => {
     if (profile?.company_id) {
       fetchInvoices();
-      fetchDepots();
     }
   }, [profile?.company_id]);
 
-  async function fetchDepots() {
-    if (!profile?.company_id) return;
-    const { data } = await supabase
-      .from('depots')
-      .select('id, name')
-      .eq('company_id', profile.company_id)
-      .eq('is_active', true)
-      .order('name');
-    setDepots((data as Array<{ id: string; name: string }>) ?? []);
-  }
-
-  async function handleDispatchToLogistics() {
-    if (!dispatchInvoice || !profile?.company_id) return;
-    try {
-      setDispatchSubmitting(true);
-      setError(null);
-      const companyId = profile.company_id;
-      const inv = dispatchInvoice;
-
-      const { data: items } = await supabase
-        .from('acc_invoice_items')
-        .select('*')
-        .eq('invoice_id', inv.id)
-        .order('created_at');
-
-      const { data: contact } = inv.contact_id
-        ? await supabase
-            .from('acc_contacts')
-            .select('id, name, address, city, postal_code, country')
-            .eq('id', inv.contact_id)
-            .maybeSingle()
-        : { data: null };
-
-      const shippingAddress = contact
-        ? [contact.address, [contact.postal_code, contact.city].filter(Boolean).join(' '), contact.country]
-            .filter(Boolean)
-            .join(', ')
-        : '';
-
-      let noteNumber = '';
-      try {
-        const { data: rpcData } = await supabase.rpc('get_next_acc_number', {
-          p_company_id: companyId,
-          p_prefix: 'LS',
-        });
-        noteNumber = rpcData || `LS-${Date.now()}`;
-      } catch {
-        noteNumber = `LS-${Date.now()}`;
-      }
-
-      const { data: newNote, error: noteErr } = await supabase
-        .from('acc_delivery_notes')
-        .insert({
-          company_id: companyId,
-          created_by: profile.id,
-          contact_id: inv.contact_id || null,
-          note_number: noteNumber,
-          note_date: inv.invoice_date,
-          status: 'pending_dispatch',
-          direction: 'outgoing',
-          shipping_address: shippingAddress,
-          source_depot_id: dispatchDepotId || null,
-          dispatched_at: new Date().toISOString(),
-          notes: `Lidhur me faturen ${inv.invoice_number}`,
-          invoice_id: inv.id,
-        })
-        .select()
-        .single();
-      if (noteErr) throw noteErr;
-
-      if (items && items.length > 0 && newNote) {
-        const itemsPayload = items.map((it: AccInvoiceItem) => ({
-          delivery_note_id: newNote.id,
-          product_id: it.product_id || null,
-          description: it.description,
-          quantity: it.quantity,
-          unit: it.unit,
-          unit_price: it.unit_price,
-          vat_rate: it.vat_rate,
-          line_total: it.line_total,
-        }));
-        await supabase.from('acc_delivery_note_items').insert(itemsPayload);
-      }
-
-      await supabase
-        .from('acc_invoices')
-        .update({
-          delivery_status: 'pending',
-          dispatched_to_logistics_at: new Date().toISOString(),
-          dispatched_by: profile.id,
-          source_depot_id: dispatchDepotId || null,
-        })
-        .eq('id', inv.id);
-
-      setDispatchInvoice(null);
-      setDispatchDepotId('');
-      await fetchInvoices();
-    } catch (err) {
-      setError((err as Error).message || 'Gabim gjate dergimit ne logjistike');
-    } finally {
-      setDispatchSubmitting(false);
-    }
-  }
 
   async function fetchInvoices() {
     try {
@@ -663,70 +553,6 @@ export default function Invoices() {
     }
   }
 
-  async function handleDuplicate(invoice: AccInvoice) {
-    try {
-      setError(null);
-      const companyId = profile!.company_id!;
-
-      let invoiceNumber = '';
-      try {
-        const { data: rpcData } = await supabase.rpc('get_next_acc_number', {
-          p_company_id: companyId,
-          p_prefix: 'RE',
-        });
-        invoiceNumber = rpcData || `INV-${Date.now()}`;
-      } catch {
-        invoiceNumber = `INV-${Date.now()}`;
-      }
-
-      const { data: newInvoice, error: insertErr } = await supabase
-        .from('acc_invoices')
-        .insert({
-          company_id: companyId,
-          created_by: session!.user.id,
-          invoice_type: invoice.invoice_type,
-          invoice_number: invoiceNumber,
-          currency: invoice.currency,
-          bank_account_id: invoice.bank_account_id,
-          contact_id: invoice.contact_id,
-          invoice_date: new Date().toISOString().slice(0, 10),
-          due_date: invoice.due_date,
-          status: 'draft' as AccInvoiceStatus,
-          discount: invoice.discount,
-          notes: invoice.notes,
-          subtotal: invoice.subtotal,
-          vat_amount: invoice.vat_amount,
-          total: invoice.total,
-        })
-        .select()
-        .single();
-      if (insertErr) throw insertErr;
-
-      const { data: origItems } = await supabase
-        .from('acc_invoice_items')
-        .select('*')
-        .eq('invoice_id', invoice.id);
-
-      if (origItems && origItems.length > 0) {
-        const itemsPayload = origItems.map((it: AccInvoiceItem) => ({
-          invoice_id: newInvoice.id,
-          product_id: it.product_id,
-          description: it.description,
-          quantity: it.quantity,
-          unit: it.unit,
-          unit_price: it.unit_price,
-          vat_rate: it.vat_rate,
-          line_discount: it.line_discount,
-          line_total: it.line_total,
-        }));
-        await supabase.from('acc_invoice_items').insert(itemsPayload);
-      }
-
-      await fetchInvoices();
-    } catch (err: any) {
-      setError(err.message || t('common.error'));
-    }
-  }
 
   async function handleXRechnung(invoice: AccInvoice) {
     try {
@@ -1068,31 +894,12 @@ export default function Invoices() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          {hasLogistics && (invoice.delivery_status ?? 'none') === 'none' && invoice.status !== 'cancelled' && (
-                            <button
-                              onClick={() => {
-                                setDispatchInvoice(invoice);
-                                setDispatchDepotId(invoice.source_depot_id || depots[0]?.id || '');
-                              }}
-                              className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                              title="Dergo ne Logjistike"
-                            >
-                              <Truck className="w-4 h-4" />
-                            </button>
-                          )}
                           <button
                             onClick={() => openEdit(invoice)}
                             className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                             title="Ndrysho"
                           >
                             <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDuplicate(invoice)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Dupliko"
-                          >
-                            <Copy className="w-4 h-4" />
                           </button>
                           {getStatusActions(invoice.status).length > 0 && (
                             <div className="relative">
@@ -1216,14 +1023,8 @@ export default function Invoices() {
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDuplicate(invoice)}
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  <button
                     onClick={() => handlePrintPreview(invoice)}
-                    className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                    className="p-2 text-gray-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                   >
                     <Printer className="w-4 h-4" />
                   </button>
@@ -1278,71 +1079,6 @@ export default function Invoices() {
         />
       )}
 
-      {dispatchInvoice && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-black/50"
-            onClick={() => !dispatchSubmitting && setDispatchInvoice(null)}
-          />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-teal-50 rounded-xl">
-                  <Truck className="w-6 h-6 text-teal-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Dergo ne Logjistike</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Fatura {dispatchInvoice.invoice_number}
-                  </p>
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Krijon nje fletedergese te lidhur me kete fature dhe e dergon te admin-i i logjistikes per
-                caktim shoferi. Stoku i depos burimore do te zbritet automatikisht kur fatura te kaloje ne
-                statusin "Derguar".
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Depoja burimore</label>
-                <select
-                  value={dispatchDepotId}
-                  onChange={(e) => setDispatchDepotId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white"
-                >
-                  <option value="">Zgjidh depon...</option>
-                  {depots.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-                {depots.length === 0 && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    Nuk ka depo aktive. Krijoni nje ne /company/depots para se te dergoni.
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-              <button
-                onClick={() => setDispatchInvoice(null)}
-                disabled={dispatchSubmitting}
-                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 disabled:opacity-50"
-              >
-                Anulo
-              </button>
-              <button
-                onClick={handleDispatchToLogistics}
-                disabled={dispatchSubmitting}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
-              >
-                {dispatchSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
-                Dergo ne Logjistike
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {deliveryPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
