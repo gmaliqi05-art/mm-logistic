@@ -213,6 +213,7 @@ export const fr: typeof sq = {
     support: 'Support',
     homepage: 'Page d\'accueil',
     staticPages: 'Pages statiques',
+    legalPages: 'Pages juridiques',
     footerSettings: 'Pied de page',
     footerSocial: 'Pied de page & Social',
     metadataSeo: 'M\u00e9tadonn\u00e9es & SEO',

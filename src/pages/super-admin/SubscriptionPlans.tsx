@@ -17,6 +17,8 @@ const emptyPlan: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'> = {
   is_active: true,
   sort_order: 0,
   product_type: 'logistics',
+  is_addon: false,
+  price_addon_monthly: null,
 };
 
 export default function SubscriptionPlans() {
@@ -79,6 +81,8 @@ export default function SubscriptionPlans() {
       is_active: plan.is_active,
       sort_order: plan.sort_order,
       product_type: plan.product_type ?? 'logistics',
+      is_addon: plan.is_addon ?? false,
+      price_addon_monthly: plan.price_addon_monthly ?? null,
     });
     setNewFeature('');
   }
@@ -129,6 +133,8 @@ export default function SubscriptionPlans() {
         is_active: formData.is_active,
         sort_order: formData.sort_order,
         product_type: formData.product_type,
+        is_addon: formData.is_addon,
+        price_addon_monthly: formData.price_addon_monthly,
       };
 
       if (isCreating) {
@@ -292,6 +298,12 @@ export default function SubscriptionPlans() {
                         {plan.trial_days > 0 && (
                           <div className="text-sm text-gray-600">
                             <span className="font-medium">{plan.trial_days}</span> {t('superAdmin.plans.trialDays').toLowerCase()}
+                          </div>
+                        )}
+                        {plan.is_addon && plan.price_addon_monthly != null && (
+                          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+                            <span className="text-sm font-bold text-emerald-700">{plan.price_addon_monthly}&euro;</span>
+                            <span className="text-xs text-emerald-600 ml-1">addon</span>
                           </div>
                         )}
                         {plan.product_type !== 'accounting' && (
@@ -553,6 +565,48 @@ export default function SubscriptionPlans() {
                   </>
                 )}
               </div>
+
+              {formData.product_type === 'accounting' && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData((p) => ({ ...p, is_addon: !p.is_addon }))}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+                        formData.is_addon
+                          ? 'border-emerald-500 bg-emerald-100 text-emerald-800'
+                          : 'border-gray-200 bg-white text-gray-600'
+                      }`}
+                    >
+                      {formData.is_addon ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                      Addon (per kompani logjistike)
+                    </button>
+                  </div>
+                  {formData.is_addon && (
+                    <div>
+                      <label className="block text-sm font-medium text-emerald-800 mb-1.5">
+                        Cmimi Addon (kur lidhet me logjistike)
+                      </label>
+                      <div className="relative w-48">
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          value={formData.price_addon_monthly ?? ''}
+                          onChange={(e) =>
+                            setFormData((p) => ({ ...p, price_addon_monthly: e.target.value ? Number(e.target.value) : null }))
+                          }
+                          placeholder="p.sh. 24.50"
+                          className="w-full px-3 py-2.5 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white"
+                        />
+                      </div>
+                      <p className="text-xs text-emerald-700 mt-1.5">
+                        Ky cmim aplikohet kur kompania ka tashme plan logjistike dhe shton kontabilitetin si addon
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>

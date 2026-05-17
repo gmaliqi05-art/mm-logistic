@@ -59,6 +59,7 @@ const navSections: NavSection[] = [
     items: [
       { to: '/super-admin/homepage', icon: Globe, labelKey: 'nav.homepage', end: false },
       { to: '/super-admin/static-pages', icon: FileText, labelKey: 'nav.staticPages', end: false },
+      { to: '/super-admin/legal-pages', icon: FileText, labelKey: 'nav.legalPages', end: false },
       { to: '/super-admin/footer-settings', icon: FileText, labelKey: 'nav.footerSettings', end: false },
       { to: '/super-admin/footer-links', icon: Link2, labelKey: 'nav.footerSocial', end: false, badgeKey: 'common.new' },
       { to: '/super-admin/metadata-seo', icon: Search, labelKey: 'nav.metadataSeo', end: false, badgeKey: 'common.new' },

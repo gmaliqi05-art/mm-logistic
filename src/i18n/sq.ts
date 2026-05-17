@@ -211,6 +211,7 @@ export const sq = {
     support: 'Suport',
     homepage: 'Homepage',
     staticPages: 'Faqet Statike',
+    legalPages: 'Faqe Ligjore',
     footerSettings: 'Footer Settings',
     footerSocial: 'Footer & Social',
     metadataSeo: 'Metadata & SEO',

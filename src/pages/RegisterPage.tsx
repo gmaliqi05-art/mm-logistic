@@ -43,7 +43,7 @@ const planIcons: Record<string, typeof Zap> = {
   acc_premium: Shield,
 };
 
-type BusinessType = 'logistics' | 'accounting';
+type BusinessType = 'logistics' | 'accounting' | 'both';
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
@@ -247,7 +247,8 @@ export default function RegisterPage() {
           adminEmail: form.companyEmail,
           adminPassword: form.adminPassword,
           planName: selectedPlan,
-          businessType,
+          businessType: businessType === 'both' ? 'logistics' : businessType,
+          accountingEnabled: businessType === 'both',
         }),
       });
 
@@ -266,14 +267,19 @@ export default function RegisterPage() {
 
   const filteredPlans = plans.filter((p) => {
     const type = (p as SubscriptionPlan & { product_type?: string }).product_type || 'logistics';
+    if (businessType === 'both') return type === 'logistics';
     return type === businessType;
   });
   const currentPlan = plans.find((p) => p.name === selectedPlan);
 
+  const accountingAddonPlan = businessType === 'both'
+    ? plans.find((p) => p.product_type === 'accounting' && p.is_addon && p.price_addon_monthly != null)
+    : null;
+
   function switchBusinessType(type: BusinessType) {
     setBusinessType(type);
-    const defaults = type === 'accounting' ? 'acc_free_trial' : 'free_trial';
-    setSelectedPlan(defaults);
+    if (type === 'accounting') setSelectedPlan('acc_free_trial');
+    else setSelectedPlan('free_trial');
   }
 
   return (
@@ -378,6 +384,7 @@ export default function RegisterPage() {
             selectedPlan={selectedPlan}
             setSelectedPlan={setSelectedPlan}
             businessType={businessType}
+            accountingAddonPlan={accountingAddonPlan}
             t={t}
           />
         )}
@@ -436,56 +443,65 @@ export default function RegisterPage() {
 }
 
 function BusinessTypeSelector({ businessType, onChange }: { businessType: BusinessType; onChange: (t: BusinessType) => void }) {
+  const options: { type: BusinessType; icon: typeof Truck; title: string; desc: string }[] = [
+    {
+      type: 'logistics',
+      icon: Truck,
+      title: 'Logjistike & Transport',
+      desc: 'Depo, shofere, fletedergesa, stok, chat, raporte.',
+    },
+    {
+      type: 'accounting',
+      icon: Calculator,
+      title: 'Vetem Kontabilitet',
+      desc: 'Fatura, DATEV, XRechnung/ZUGFeRD, raporte TVSH.',
+    },
+    {
+      type: 'both',
+      icon: Building2,
+      title: 'Te dyja - Paketa e Plote',
+      desc: 'Logjistike + Kontabilitet ne nje platforme te vetme me cmim te reduktuar.',
+    },
+  ];
+
   return (
     <div className="mb-8">
       <h2 className="text-center text-lg font-bold text-slate-800 mb-1">Zgjidhni llojin e biznesit</h2>
       <p className="text-center text-sm text-slate-500 mb-5">Mund ta ndryshoni planin me vone nga cilesimet</p>
-      <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-        <button
-          type="button"
-          onClick={() => onChange('logistics')}
-          className={`text-left p-5 rounded-2xl border-2 transition-all ${
-            businessType === 'logistics'
-              ? 'border-teal-500 bg-teal-50/50 shadow-md'
-              : 'border-slate-200 bg-white hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className={`p-2.5 rounded-xl ${businessType === 'logistics' ? 'bg-teal-100' : 'bg-slate-100'}`}>
-              <Truck className={`h-5 w-5 ${businessType === 'logistics' ? 'text-teal-600' : 'text-slate-500'}`} />
-            </div>
-            <h3 className="font-bold text-slate-800">Logjistike & Transport</h3>
-            {businessType === 'logistics' && (
-              <span className="ml-auto inline-flex w-5 h-5 rounded-full bg-teal-500 items-center justify-center">
-                <Check className="w-3 h-3 text-white" />
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-slate-500">Platforma e plote: depo, shofere, fletedergesa, stok, chat, kontabilitet.</p>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onChange('accounting')}
-          className={`text-left p-5 rounded-2xl border-2 transition-all ${
-            businessType === 'accounting'
-              ? 'border-teal-500 bg-teal-50/50 shadow-md'
-              : 'border-slate-200 bg-white hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className={`p-2.5 rounded-xl ${businessType === 'accounting' ? 'bg-teal-100' : 'bg-slate-100'}`}>
-              <Calculator className={`h-5 w-5 ${businessType === 'accounting' ? 'text-teal-600' : 'text-slate-500'}`} />
-            </div>
-            <h3 className="font-bold text-slate-800">Vetem Kontabilitet</h3>
-            {businessType === 'accounting' && (
-              <span className="ml-auto inline-flex w-5 h-5 rounded-full bg-teal-500 items-center justify-center">
-                <Check className="w-3 h-3 text-white" />
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-slate-500">Fatura, kontabilitet, DATEV, XRechnung/ZUGFeRD, raporte TVSH - per SME gjermane.</p>
-        </button>
+      <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        {options.map(({ type, icon: Icon, title, desc }) => {
+          const isActive = businessType === type;
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onChange(type)}
+              className={`text-left p-5 rounded-2xl border-2 transition-all ${
+                isActive
+                  ? 'border-teal-500 bg-teal-50/50 shadow-md'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2.5 rounded-xl ${isActive ? 'bg-teal-100' : 'bg-slate-100'}`}>
+                  <Icon className={`h-5 w-5 ${isActive ? 'text-teal-600' : 'text-slate-500'}`} />
+                </div>
+                <h3 className="font-bold text-slate-800 text-sm">{title}</h3>
+                {isActive && (
+                  <span className="ml-auto inline-flex w-5 h-5 rounded-full bg-teal-500 items-center justify-center flex-shrink-0">
+                    <Check className="w-3 h-3 text-white" />
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-slate-500">{desc}</p>
+              {type === 'both' && isActive && (
+                <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  <p className="text-xs text-emerald-700 font-medium">Cmimi i kontabilitetit me ulje deri ne 50%</p>
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -786,6 +802,7 @@ function StepPlan({
   selectedPlan,
   setSelectedPlan,
   businessType,
+  accountingAddonPlan,
   t,
 }: {
   plans: SubscriptionPlan[];
@@ -793,6 +810,7 @@ function StepPlan({
   selectedPlan: string;
   setSelectedPlan: (v: string) => void;
   businessType: BusinessType;
+  accountingAddonPlan: SubscriptionPlan | null | undefined;
   t: (key: string) => string;
 }) {
   if (plansLoading) {
@@ -803,11 +821,19 @@ function StepPlan({
     );
   }
 
+  const selected = plans.find((p) => p.name === selectedPlan);
+  const addonPrice = accountingAddonPlan?.price_addon_monthly ?? 0;
+  const showPackageTotal = businessType === 'both' && selected && Number(selected.price_monthly) > 0;
+
   return (
     <div>
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-slate-800">{t('auth.choosePlan')}</h2>
-        <p className="mt-2 text-slate-500">{t('auth.changePlanAnytime')}</p>
+        <p className="mt-2 text-slate-500">
+          {businessType === 'both'
+            ? 'Zgjidhni planin e logjistikes - Kontabiliteti perfshihet automatikisht'
+            : t('auth.changePlanAnytime')}
+        </p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
@@ -815,7 +841,6 @@ function StepPlan({
           const IconComp = planIcons[plan.name] || Star;
           const isSelected = selectedPlan === plan.name;
           const isPopular = plan.name === 'standard' || plan.name === 'acc_standard';
-          void businessType;
 
           return (
             <button
@@ -872,6 +897,27 @@ function StepPlan({
           );
         })}
       </div>
+
+      {showPackageTotal && addonPrice > 0 && (
+        <div className="mt-6 bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-2xl p-5">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-teal-800 mb-1">Paketa e Plote: Logjistike + Kontabilitet</h3>
+              <div className="flex items-center gap-3 text-sm text-teal-700">
+                <span>{selected.display_name}: {selected.price_monthly}&euro;</span>
+                <span className="text-teal-400">+</span>
+                <span>Kontabilitet: {addonPrice}&euro;</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-teal-600 font-medium">Totali mujor</p>
+              <p className="text-2xl font-extrabold text-teal-900">
+                {(Number(selected.price_monthly) + addonPrice).toFixed(2)}&euro;
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

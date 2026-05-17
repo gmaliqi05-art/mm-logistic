@@ -284,6 +284,8 @@ export interface SubscriptionPlan {
   is_active: boolean;
   sort_order: number;
   product_type: ProductType;
+  is_addon: boolean;
+  price_addon_monthly: number | null;
   created_at: string;
   updated_at: string;
 }

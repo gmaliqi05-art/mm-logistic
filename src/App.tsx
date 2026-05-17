@@ -58,6 +58,7 @@ const SuperAdminUserManual = lazy(() => import('./pages/super-admin/UserManual')
 const SuperAdminTestNotifications = lazy(() => import('./pages/super-admin/TestNotifications'));
 const SuperAdminPushNotifications = lazy(() => import('./pages/super-admin/PushNotifications'));
 const SuperAdminPlatformBranding = lazy(() => import('./pages/super-admin/PlatformBranding'));
+const SuperAdminLegalPages = lazy(() => import('./pages/super-admin/LegalPages'));
 const SuperAdminEmailTemplates = lazyWithRetry(() => import('./pages/super-admin/EmailTemplates'));
 const SuperAdminEmailTemplateEditor = lazyWithRetry(() => import('./pages/super-admin/EmailTemplateEditor'));
 const SuperAdminEmailCampaigns = lazyWithRetry(() => import('./pages/super-admin/EmailCampaigns'));
@@ -212,6 +213,7 @@ function AppRoutes() {
           <Route path="branding" element={<SuperAdminPlatformBranding />} />
           <Route path="chat" element={<SuperAdminChat />} />
           <Route path="static-pages" element={<SuperAdminStaticPages />} />
+          <Route path="legal-pages" element={<SuperAdminLegalPages />} />
           <Route path="footer-settings" element={<SuperAdminFooterSettings />} />
           <Route path="footer-links" element={<SuperAdminFooterLinks />} />
           <Route path="qr-codes" element={<SuperAdminQRCodes />} />

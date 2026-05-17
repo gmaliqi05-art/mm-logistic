@@ -41,6 +41,7 @@ interface RegisterPayload {
   adminPassword: string;
   planName: string;
   businessType?: "logistics" | "accounting";
+  accountingEnabled?: boolean;
 }
 
 Deno.serve(async (req: Request) => {
@@ -75,6 +76,7 @@ Deno.serve(async (req: Request) => {
       planName,
     } = payload;
     const businessType = payload.businessType === "accounting" ? "accounting" : "logistics";
+    const accountingEnabled = payload.accountingEnabled === true;
     const primaryRole = businessType === "accounting" ? "accountant" : "company_admin";
 
     if (!companyName || !adminEmail || !adminPassword || !planName) {
@@ -163,7 +165,8 @@ Deno.serve(async (req: Request) => {
         commercial_register: commercialRegister || null,
         legal_form: legalForm || null,
         registration_court: registrationCourt || null,
-        business_type: businessType,
+        business_type: accountingEnabled ? "both" : businessType,
+        accounting_enabled: accountingEnabled || businessType === "accounting",
         created_by: userId,
       })
       .select("id")
