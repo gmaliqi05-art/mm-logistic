@@ -180,7 +180,7 @@ export default function DeliveryReviewPanel({ role, typeFilter, hideChrome, empt
     setLoading(true);
     let q = supabase
       .from('delivery_notes')
-      .select('*')
+      .select('*, items:delivery_note_items(intended_action)')
       .eq('company_id', profile.company_id)
       .eq('status', targetStatus)
       .order('delivered_at', { ascending: false, nullsFirst: false })
@@ -230,6 +230,17 @@ export default function DeliveryReviewPanel({ role, typeFilter, hideChrome, empt
     : 'from-orange-500 to-amber-600';
   const badgeCls = role === 'company_admin' ? 'bg-sky-100 text-sky-800' : 'bg-orange-100 text-orange-800';
 
+  function getRoutingTag(n: ReviewNote): 'sorting' | 'stock' | 'mixed' | null {
+    const items = (n as any).items as Array<{ intended_action: string | null }> | undefined;
+    if (!items || items.length === 0) return null;
+    const hasSorting = items.some((i) => i.intended_action === 'sorting');
+    const hasRepair = items.some((i) => i.intended_action === 'repair');
+    const hasStock = items.some((i) => !i.intended_action || i.intended_action === 'stock');
+    if (hasSorting && !hasStock && !hasRepair) return 'sorting';
+    if (hasSorting || hasRepair) return 'mixed';
+    return 'stock';
+  }
+
   const listInner = (
     <div className={hideChrome ? 'space-y-2' : 'p-3 space-y-2'}>
       {notes.map((n) => (
@@ -257,6 +268,12 @@ export default function DeliveryReviewPanel({ role, typeFilter, hideChrome, empt
                     <Sparkles className="w-2.5 h-2.5" /> {Math.round(n.ai_confidence * 100)}%
                   </span>
                 )}
+                {role === 'depot_worker' && (() => {
+                  const tag = getRoutingTag(n);
+                  if (tag === 'sorting') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800">SORTIM</span>;
+                  if (tag === 'mixed') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">SORTIM + STOK</span>;
+                  return null;
+                })()}
               </div>
               {n.partner_name && (
                 <p className="text-sm font-medium text-gray-800 mt-1 flex items-center gap-1.5">
@@ -350,6 +367,7 @@ function ReviewModal({
     onConfirm: () => void;
   }>(null);
   const [showInvoicePrompt, setShowInvoicePrompt] = useState(false);
+  const [showSortingRedirect, setShowSortingRedirect] = useState(false);
   const persistingRef = useRef(false);
   const [ownCompany, setOwnCompany] = useState<{ name: string; vat: string }>({ name: '', vat: '' });
 
@@ -379,6 +397,14 @@ function ReviewModal({
     const pickFromConsignor = note.type === 'pickup' || note.flow_role === 'receiver' || (note as any).our_role === 'consignee';
     const fromAi = pickFromConsignor ? e.consignor_name : e.consignee_name;
     return ((note.counterparty_name || note.partner_name || fromAi || '') as string).trim();
+  }
+
+  function hasSortingItems(): boolean {
+    return rows.some((r) => r.intended_action === 'sorting');
+  }
+
+  function allSortingItems(): boolean {
+    return rows.length > 0 && rows.every((r) => r.intended_action === 'sorting');
   }
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -780,7 +806,18 @@ function ReviewModal({
       if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
         if (!getAiPartnerName()) throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne stok.');
       }
-      await persistItems();
+
+      const autoRouted = rows.map((r) => {
+        if (r.condition === 'damaged' && r.intended_action !== 'repair') {
+          return { ...r, intended_action: 'repair' as const };
+        }
+        if (r.condition === 'sorting' && r.intended_action !== 'sorting') {
+          return { ...r, intended_action: 'sorting' as const };
+        }
+        return r;
+      });
+      setRows(autoRouted);
+      await persistItems(autoRouted);
       const prevAi = (note.ai_extracted_json as any) || null;
       const sanitizedAi = prevAi
         ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
@@ -1200,8 +1237,10 @@ function ReviewModal({
         }
       }
 
-      if (isOutgoing && !note.acc_invoice_id) {
+      if (isOutgoing && !note.acc_invoice_id && role === 'company_admin') {
         setShowInvoicePrompt(true);
+      } else if (hasSortingItems()) {
+        setShowSortingRedirect(true);
       } else {
         await onDone();
       }
@@ -1305,6 +1344,22 @@ function ReviewModal({
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+            </div>
+          )}
+
+          {role === 'depot_worker' && hasSortingItems() && (
+            <div className={`rounded-xl p-3 flex items-center gap-3 border ${allSortingItems() ? 'bg-teal-50 border-teal-200' : 'bg-amber-50 border-amber-200'}`}>
+              <Layers className={`w-5 h-5 flex-shrink-0 ${allSortingItems() ? 'text-teal-600' : 'text-amber-600'}`} />
+              <div>
+                <p className={`text-sm font-bold ${allSortingItems() ? 'text-teal-900' : 'text-amber-900'}`}>
+                  {allSortingItems() ? 'Kjo porosi eshte per SORTIM' : 'Kjo porosi perfshin artikuj per SORTIM dhe STOK'}
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  {allSortingItems()
+                    ? 'Pas konfirmimit, artikujt do te dergohen direkt ne sortire.'
+                    : 'Artikujt do te ndahen: disa per stok, disa per sortim, disa per reparim.'}
+                </p>
+              </div>
             </div>
           )}
 
@@ -1627,10 +1682,18 @@ function ReviewModal({
             <button
               onClick={() => handleCompleteToStock(false)}
               disabled={!!saving}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 ${
+                role === 'depot_worker' && hasSortingItems()
+                  ? 'bg-teal-600 hover:bg-teal-700'
+                  : 'bg-emerald-600 hover:bg-emerald-700'
+              }`}
             >
               {saving === 'complete' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              Regjistro ne stok
+              {role === 'depot_worker' && allSortingItems()
+                ? 'Konfirmo dhe Dergo per Sortim'
+                : role === 'depot_worker' && hasSortingItems()
+                  ? 'Konfirmo (Stok + Sortim)'
+                  : 'Regjistro ne stok'}
             </button>
           )}
         </div>
@@ -1735,6 +1798,34 @@ function ReviewModal({
                 className="px-4 py-2 text-sm font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700"
               >
                 Po, krijo fature
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSortingRedirect && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setShowSortingRedirect(false); onDone(); }}>
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-teal-50 border-b border-teal-100 px-5 py-4 flex items-start gap-3">
+              <CheckCircle2 className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-gray-900">U konfirmua me sukses</h4>
+                <p className="text-sm text-gray-600 mt-1">Artikujt per sortim jane derguar ne sortire. Deshironi te shkoni direkt te faqja e sortimit?</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4">
+              <button
+                onClick={() => { setShowSortingRedirect(false); onDone(); }}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100"
+              >
+                Mbyll
+              </button>
+              <button
+                onClick={() => { setShowSortingRedirect(false); navigate('/depot/sorting'); }}
+                className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700"
+              >
+                Shko te Sortimi
               </button>
             </div>
           </div>
