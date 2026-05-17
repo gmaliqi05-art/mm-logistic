@@ -49,8 +49,8 @@ export type NoteRow = DeliveryNote & {
 const statusStyles: Record<string, { cls: string; dot: string; labelKey: string }> = {
   sent: { cls: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500', labelKey: 'driver.home.statusSent' },
   in_transit: { cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500', labelKey: 'driver.home.statusInTransit' },
-  pending_company_review: { cls: 'bg-sky-100 text-sky-700', dot: 'bg-sky-500', labelKey: 'driver.home.statusReview' },
-  pending_stock_confirmation: { cls: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500', labelKey: 'driver.home.statusStock' },
+  pending_company_review: { cls: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', labelKey: 'driver.home.statusDelivered' },
+  pending_stock_confirmation: { cls: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', labelKey: 'driver.home.statusDelivered' },
   delivered: { cls: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', labelKey: 'driver.home.statusCompleted' },
   completed: { cls: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', labelKey: 'driver.home.statusCompleted' },
   confirmed: { cls: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', labelKey: 'driver.home.statusCompleted' },
@@ -1165,7 +1165,6 @@ export function TaskDetailSheet({
       const extraNotes: string[] = [];
       if (ex.invoice_date) extraNotes.push(`Data: ${ex.invoice_date}`);
       if (ex.invoice_number) extraNotes.push(`Nr. dok: ${ex.invoice_number}`);
-      if (ex.total && ex.total > 0) extraNotes.push(`Totali: ${ex.total.toFixed(2)} ${(ex as any).currency || ''}`.trim());
       if (ex.line_items && ex.line_items.length > 0) {
         const lines = ex.line_items.slice(0, 8).map((li) => {
           const qty = li.quantity ? `${li.quantity}${li.unit ? ' ' + li.unit : ''} x ` : '';

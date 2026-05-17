@@ -16,6 +16,7 @@ interface DeliveryRow {
   partner_id: string | null;
   partner_name: string | null;
   acc_invoice_id: string | null;
+  ai_extracted_json: any;
 }
 
 export default function FinancialSummary() {
@@ -34,7 +35,7 @@ export default function FinancialSummary() {
     setLoading(true);
     const { data } = await supabase
       .from('delivery_notes')
-      .select('id, note_number, created_at, status, type, partner_id, partner_name, acc_invoice_id')
+      .select('id, note_number, created_at, status, type, partner_id, partner_name, acc_invoice_id, ai_extracted_json')
       .eq('company_id', profile.company_id)
       .order('created_at', { ascending: false })
       .limit(50);
@@ -46,7 +47,18 @@ export default function FinancialSummary() {
     const outgoing = deliveries.filter((d) => d.type !== 'pickup');
     const incoming = deliveries.filter((d) => d.type === 'pickup');
     const unsynced = deliveries.filter((d) => !d.acc_invoice_id).length;
-    return { countOut: outgoing.length, countIn: incoming.length, unsynced, total: deliveries.length };
+    let extractedTotal = 0;
+    let extractedVat = 0;
+    let scannedCount = 0;
+    for (const d of deliveries) {
+      const ex = d.ai_extracted_json;
+      if (ex && ex.total != null) {
+        extractedTotal += Number(ex.total) || 0;
+        extractedVat += Number(ex.vat_amount) || 0;
+        scannedCount++;
+      }
+    }
+    return { countOut: outgoing.length, countIn: incoming.length, unsynced, total: deliveries.length, extractedTotal, extractedVat, scannedCount };
   }, [deliveries]);
 
   async function syncOne(row: DeliveryRow) {
@@ -200,6 +212,31 @@ export default function FinancialSummary() {
         <Metric icon={BarChart3} label="Pa sinkronizuar" value={String(totals.unsynced)} color="slate" />
       </div>
 
+      {totals.scannedCount > 0 && (
+        <div className="bg-gradient-to-r from-slate-50 to-sky-50 border border-slate-200 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-teal-600" />
+            <h3 className="text-sm font-bold text-slate-800">Te dhenat financiare nga skanimet AI</h3>
+            <span className="text-[10px] font-medium bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">{totals.scannedCount} dokumente</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-slate-500">Totali i nxjerre</p>
+              <p className="text-xl font-bold text-slate-900">{totals.extractedTotal.toFixed(2)} EUR</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">TVSH e nxjerre</p>
+              <p className="text-xl font-bold text-slate-900">{totals.extractedVat.toFixed(2)} EUR</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Pa sinkronizuar ne kontabilitet</p>
+              <p className="text-xl font-bold text-amber-700">{totals.unsynced}</p>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-3">Keto vlera jane nxjerre automatikisht nga AI gjate skanimit te dokumenteve. Verifikoni perpara sinkronizimit.</p>
+        </div>
+      )}
+
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>
       )}
@@ -222,7 +259,8 @@ export default function FinancialSummary() {
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Numri</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Data</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Drejtimi</th>
-                  <th className="text-right font-semibold text-slate-700 px-4 py-3">Partneri</th>
+                  <th className="text-left font-semibold text-slate-700 px-4 py-3">Partneri</th>
+                  <th className="text-right font-semibold text-slate-700 px-4 py-3">Totali AI</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Statusi</th>
                   <th className="text-right font-semibold text-slate-700 px-4 py-3">Veprime</th>
                 </tr>
@@ -231,6 +269,7 @@ export default function FinancialSummary() {
                 {deliveries.map((d) => {
                   const synced = Boolean(d.acc_invoice_id);
                   const isIncoming = d.type === 'pickup';
+                  const aiTotal = d.ai_extracted_json?.total;
                   return (
                     <tr key={d.id} className="hover:bg-slate-50">
                       <td className="px-4 py-3 font-medium text-slate-800">{d.note_number ?? '-'}</td>
@@ -242,8 +281,11 @@ export default function FinancialSummary() {
                           {isIncoming ? 'Hyrese' : 'Dalese'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium text-slate-900">
+                      <td className="px-4 py-3 font-medium text-slate-900">
                         {d.partner_name ?? '-'}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-medium text-slate-800">
+                        {aiTotal != null ? `${Number(aiTotal).toFixed(2)}` : <span className="text-slate-300">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         {synced ? (

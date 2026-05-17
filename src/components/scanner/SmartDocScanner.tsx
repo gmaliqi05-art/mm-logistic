@@ -260,24 +260,30 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                 <Sparkles className={`w-5 h-5 mt-0.5 flex-shrink-0 ${disallowed ? 'text-amber-600' : 'text-teal-600'}`} />
                 <div className="flex-1">
                   <p className={`text-sm font-semibold ${disallowed ? 'text-amber-900' : 'text-teal-900'}`}>
-                    {t('common.scanner.identified')}: {t(`common.scanner.kinds.${result.routing?.suggested_kind || 'unknown'}`)}
+                    {role === 'driver'
+                      ? t('common.scanner.documentReady')
+                      : <>{t('common.scanner.identified')}: {t(`common.scanner.kinds.${result.routing?.suggested_kind || 'unknown'}`)}</>}
                   </p>
-                  {result.routing?.matched_contact_name && (
+                  {role !== 'driver' && result.routing?.matched_contact_name && (
                     <p className={`text-xs mt-0.5 ${disallowed ? 'text-amber-800' : 'text-teal-800'}`}>
                       {t('common.scanner.matchedContact')}: <strong>{result.routing.matched_contact_name}</strong>
                     </p>
                   )}
-                  <p className={`text-xs mt-1 ${disallowed ? 'text-amber-700' : 'text-teal-700'}`}>{result.routing?.match_reason}</p>
+                  {role !== 'driver' && (
+                    <p className={`text-xs mt-1 ${disallowed ? 'text-amber-700' : 'text-teal-700'}`}>{result.routing?.match_reason}</p>
+                  )}
                   {disallowed && (
                     <p className="text-xs text-amber-800 mt-2 font-medium">{t('common.scanner.notAllowed')}</p>
                   )}
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full bg-white font-bold ${disallowed ? 'text-amber-700' : 'text-teal-700'}`}>
-                  {Math.round((result.routing?.confidence || result.extracted.confidence) * 100)}%
-                </span>
+                {role !== 'driver' && (
+                  <span className={`text-xs px-2 py-1 rounded-full bg-white font-bold ${disallowed ? 'text-amber-700' : 'text-teal-700'}`}>
+                    {Math.round((result.routing?.confidence || result.extracted.confidence) * 100)}%
+                  </span>
+                )}
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-6">
+              <div className={role === 'driver' ? '' : 'grid sm:grid-cols-2 gap-6'}>
                 <div>
                   <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.document')}</p>
                   <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
@@ -293,29 +299,31 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.keyData')}</p>
-                  <dl className="space-y-2 text-sm">
-                    {(result.extracted.consignor_name || result.extracted.supplier_name) && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.supplier')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignor_name || result.extracted.supplier_name}</dd></div>
-                    )}
-                    {(result.extracted.consignee_name || result.extracted.customer_name) && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.customer')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignee_name || result.extracted.customer_name}</dd></div>
-                    )}
-                    {(result.extracted.consignor_vat || result.extracted.supplier_vat) && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.vatNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.consignor_vat || result.extracted.supplier_vat}</dd></div>
-                    )}
-                    {result.extracted.invoice_number && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.docNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.invoice_number}</dd></div>
-                    )}
-                    {result.extracted.invoice_date && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.date')}</dt><dd className="text-slate-800">{result.extracted.invoice_date}</dd></div>
-                    )}
-                    {result.extracted.total > 0 && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.total')}</dt><dd className="font-bold text-slate-900">{result.extracted.total.toFixed(2)}</dd></div>
-                    )}
-                  </dl>
-                </div>
+                {role !== 'driver' && (
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.keyData')}</p>
+                    <dl className="space-y-2 text-sm">
+                      {(result.extracted.consignor_name || result.extracted.supplier_name) && (
+                        <div><dt className="text-xs text-slate-500">{t('common.scanner.supplier')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignor_name || result.extracted.supplier_name}</dd></div>
+                      )}
+                      {(result.extracted.consignee_name || result.extracted.customer_name) && (
+                        <div><dt className="text-xs text-slate-500">{t('common.scanner.customer')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignee_name || result.extracted.customer_name}</dd></div>
+                      )}
+                      {(result.extracted.consignor_vat || result.extracted.supplier_vat) && (
+                        <div><dt className="text-xs text-slate-500">{t('common.scanner.vatNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.consignor_vat || result.extracted.supplier_vat}</dd></div>
+                      )}
+                      {result.extracted.invoice_number && (
+                        <div><dt className="text-xs text-slate-500">{t('common.scanner.docNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.invoice_number}</dd></div>
+                      )}
+                      {result.extracted.invoice_date && (
+                        <div><dt className="text-xs text-slate-500">{t('common.scanner.date')}</dt><dd className="text-slate-800">{result.extracted.invoice_date}</dd></div>
+                      )}
+                      {result.extracted.total > 0 && (
+                        <div><dt className="text-xs text-slate-500">{t('common.scanner.total')}</dt><dd className="font-bold text-slate-900">{result.extracted.total.toFixed(2)}</dd></div>
+                      )}
+                    </dl>
+                  </div>
+                )}
               </div>
 
               {result.extracted.line_items && result.extracted.line_items.length > 0 && (
@@ -329,7 +337,9 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                         <tr>
                           <th className="px-3 py-2">{t('common.scanner.description')}</th>
                           <th className="px-3 py-2 text-right">{t('common.scanner.quantity')}</th>
-                          <th className="px-3 py-2 text-right">{t('common.scanner.unitPrice')}</th>
+                          {role !== 'driver' && (
+                            <th className="px-3 py-2 text-right">{t('common.scanner.unitPrice')}</th>
+                          )}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -337,7 +347,9 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                           <tr key={i}>
                             <td className="px-3 py-2 text-slate-800">{it.description}</td>
                             <td className="px-3 py-2 text-right text-slate-700">{it.quantity} {it.unit || ''}</td>
-                            <td className="px-3 py-2 text-right text-slate-700">{it.unit_price?.toFixed(2) || '-'}</td>
+                            {role !== 'driver' && (
+                              <td className="px-3 py-2 text-right text-slate-700">{it.unit_price?.toFixed(2) || '-'}</td>
+                            )}
                           </tr>
                         ))}
                       </tbody>

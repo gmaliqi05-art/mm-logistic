@@ -1349,10 +1349,61 @@ function ReviewModal({
               />
               <DataRow label="Nr. dokumenti" value={ex.invoice_number || note.reference_number || '-'} />
               <DataRow label="Data" value={ex.invoice_date || '-'} />
-              <DataRow
-                label="Totali"
-                value={ex.total != null ? `${Number(ex.total).toFixed(2)} ${ex.currency || ''}` : '-'}
-              />
+
+              {(ex.total != null || ex.subtotal != null || ex.vat_amount != null) && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1.5">
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Permbledhje Financiare</p>
+                  {ex.subtotal != null && ex.subtotal > 0 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">Nentotali</span>
+                      <span className="font-medium text-slate-800">{Number(ex.subtotal).toFixed(2)} {ex.currency || 'EUR'}</span>
+                    </div>
+                  )}
+                  {ex.vat_amount != null && ex.vat_amount > 0 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">TVSH</span>
+                      <span className="font-medium text-slate-800">{Number(ex.vat_amount).toFixed(2)} {ex.currency || 'EUR'}</span>
+                    </div>
+                  )}
+                  {ex.total != null && (
+                    <div className="flex items-center justify-between text-sm pt-1.5 border-t border-slate-200">
+                      <span className="font-semibold text-slate-700">Totali</span>
+                      <span className="font-bold text-slate-900">{Number(ex.total).toFixed(2)} {ex.currency || 'EUR'}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {ex.line_items && ex.line_items.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                    Artikujt e skanuar ({ex.line_items.length})
+                  </p>
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead className="bg-slate-100 text-left">
+                        <tr>
+                          <th className="px-2.5 py-1.5 font-semibold text-slate-600">Pershkrim</th>
+                          <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Sasi</th>
+                          <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Cmim/nj</th>
+                          <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {ex.line_items.map((li: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-slate-50">
+                            <td className="px-2.5 py-1.5 text-slate-800">{li.description}</td>
+                            <td className="px-2.5 py-1.5 text-right text-slate-700">{li.quantity} {li.unit || ''}</td>
+                            <td className="px-2.5 py-1.5 text-right text-slate-700">{li.unit_price != null ? Number(li.unit_price).toFixed(2) : '-'}</td>
+                            <td className="px-2.5 py-1.5 text-right font-medium text-slate-800">{li.line_total != null ? Number(li.line_total).toFixed(2) : '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {note.notes && (
                 <div>
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Shenime</p>
