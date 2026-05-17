@@ -21,6 +21,7 @@ import {
   Wrench,
   X,
   FileText,
+  Save,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -327,6 +328,8 @@ function ReviewModal({
   const [loading, setLoading] = useState(true);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState<'approve' | 'complete' | 'reject' | null>(null);
+  const [itemsDirty, setItemsDirty] = useState(false);
+  const [savingItems, setSavingItems] = useState(false);
   const [reason, setReason] = useState('');
   const [showRejectReason, setShowRejectReason] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -568,6 +571,7 @@ function ReviewModal({
 
   function updateRow(key: string, patch: Partial<RowState>) {
     setRows((prev) => prev.map((r) => (r._key === key ? { ...r, ...patch } : r)));
+    setItemsDirty(true);
   }
 
   function addSplit(groupKey: string) {
@@ -694,6 +698,17 @@ function ReviewModal({
       }
     } finally {
       persistingRef.current = false;
+    }
+  }
+
+  async function saveItemChanges() {
+    setSavingItems(true);
+    try {
+      await persistItems();
+      setItemsDirty(false);
+      setDeletedIds([]);
+    } finally {
+      setSavingItems(false);
     }
   }
 
@@ -1452,13 +1467,25 @@ function ReviewModal({
               <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
                 Artikujt
               </p>
-              <button
-                type="button"
-                onClick={addNewItem}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-sky-700 bg-sky-50 border border-sky-100 rounded-lg hover:bg-sky-100 transition-colors"
-              >
-                <Plus className="w-3 h-3" /> Shto artikull
-              </button>
+              <div className="flex items-center gap-2">
+                {itemsDirty && (
+                  <button
+                    type="button"
+                    onClick={saveItemChanges}
+                    disabled={savingItems}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                  >
+                    {savingItems ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Ruaj ndryshimet
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={addNewItem}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-sky-700 bg-sky-50 border border-sky-100 rounded-lg hover:bg-sky-100 transition-colors"
+                >
+                  <Plus className="w-3 h-3" /> Shto artikull
+                </button>
+              </div>
             </div>
             {loading ? (
               <div className="text-center py-6"><Loader2 className="w-5 h-5 animate-spin text-teal-600 inline" /></div>

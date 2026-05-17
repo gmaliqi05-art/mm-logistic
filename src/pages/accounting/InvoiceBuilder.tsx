@@ -239,7 +239,7 @@ export default function InvoiceBuilder() {
   async function prefillFromDeliveryNote(dnId: string) {
     const { data: dn } = await supabase
       .from('delivery_notes')
-      .select('id, note_number, partner_id, partner_name, type, delivered_at, notes, acc_invoice_id')
+      .select('id, note_number, reference_number, partner_id, partner_name, type, delivered_at, notes, acc_invoice_id, ai_extracted_json')
       .eq('id', dnId)
       .maybeSingle();
     if (!dn) return;
@@ -268,7 +268,10 @@ export default function InvoiceBuilder() {
       }));
       setItems(rows);
     }
-    setNotes((prev) => prev || `Fature ne baze te fletedergeses #${dn.note_number ?? ''}`);
+    // Use document number from scanned paper (AI extracted or reference_number), fallback to note_number
+    const ext = (dn.ai_extracted_json as any) || {};
+    const docNum = ext.document_number || ext.invoice_number || (dn.reference_number as string) || (dn.note_number as string) || '';
+    setNotes((prev) => prev || `Sipas fletedergeses Nr. ${docNum}`);
   }
 
   async function searchDeliveryNotes(query: string) {
@@ -1025,32 +1028,13 @@ export default function InvoiceBuilder() {
               </div>
             </div>
             <div className="space-y-2">
-              {/* Column headers - row 1 */}
-              <div className="grid grid-cols-12 gap-2 px-3 pt-1">
-                <span className="col-span-12 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Pershkrimi i artikullit</span>
-              </div>
-              {/* Column headers - row 2 */}
-              <div className="grid grid-cols-12 gap-2 px-3 -mb-1">
-                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Kodi</span>
-                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Sasia</span>
-                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Njesia</span>
-                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Cmimi neto</span>
-                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium">TVSH %</span>
-              </div>
-              {/* Column headers - row 3 */}
-              <div className="grid grid-cols-12 gap-2 px-3 -mb-1">
-                <span className="col-span-4 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Kategoria TVSH</span>
-                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Zbritje</span>
-                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium text-right">Totali</span>
-                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium text-right">Veprime</span>
-              </div>
-
               {items.map((it) => {
                 const lineTotal = Math.max(0, it.quantity * it.unit_price - it.discount_amount);
                 return (
-                  <div key={it.id} className="rounded-lg border border-slate-200 p-3 bg-slate-50/50">
+                  <div key={it.id} className="rounded-lg border border-slate-200 p-3 bg-slate-50/50 space-y-2">
                     <div className="grid grid-cols-12 gap-2">
                       <div className="col-span-12">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Pershkrimi</span>
                         <ProductAutocomplete
                           value={it.description}
                           catalog={catalog}
@@ -1059,30 +1043,60 @@ export default function InvoiceBuilder() {
                           inputCls={inputCls}
                         />
                       </div>
-                      <input placeholder="Kodi" value={it.product_code} onChange={(e) => updateItem(it.id, { product_code: e.target.value })} className={`${inputCls} col-span-3`} />
-                      <input type="number" step="0.001" placeholder="Sasia" value={it.quantity} onChange={(e) => updateItem(it.id, { quantity: Number(e.target.value) })} className={`${inputCls} col-span-2`} />
-                      <select value={it.unit_code} onChange={(e) => updateItem(it.id, { unit_code: e.target.value })} className={`${selectCls} col-span-2`}>
-                        {UN_ECE_UNITS.map((u) => <option key={u.code} value={u.code}>{u.code}</option>)}
-                      </select>
-                      <input type="number" step="0.01" placeholder="Cmimi" value={it.unit_price} onChange={(e) => updateItem(it.id, { unit_price: Number(e.target.value) })} className={`${inputCls} col-span-3`} />
-                      <select value={it.vat_rate} onChange={(e) => updateItem(it.id, { vat_rate: Number(e.target.value) })} className={`${selectCls} col-span-2`}>
-                        {availableVatRates.map((r) => <option key={r} value={r}>{r}%</option>)}
-                      </select>
-
-                      <select value={it.vat_category} onChange={(e) => updateItem(it.id, { vat_category: e.target.value })} className={`${selectCls} col-span-4`}>
-                        {VAT_CATEGORIES.map((c) => <option key={c.code} value={c.code}>{c.code} · {c.label}</option>)}
-                      </select>
-                      <input type="number" step="0.01" placeholder="Zbritje (shume)" value={it.discount_amount} onChange={(e) => updateItem(it.id, { discount_amount: Number(e.target.value) })} className={`${inputCls} col-span-3`} />
-                      <div className="col-span-3 flex items-center justify-end text-sm font-bold text-slate-800">
-                        {lineTotal.toFixed(2)} {currency}
+                    </div>
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-3">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Kodi</span>
+                        <input value={it.product_code} onChange={(e) => updateItem(it.id, { product_code: e.target.value })} className={inputCls} />
                       </div>
-                      <div className="col-span-2 flex items-center justify-end gap-1">
-                        <button onClick={() => duplicateItem(it.id)} title="Dyfisho" className="p-1.5 rounded hover:bg-slate-200 text-slate-500">
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => removeItem(it.id)} title="Fshij" className="p-1.5 rounded hover:bg-red-100 text-red-500 disabled:opacity-30" disabled={items.length === 1}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                      <div className="col-span-2">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Sasia</span>
+                        <input type="number" step="0.001" value={it.quantity} onChange={(e) => updateItem(it.id, { quantity: Number(e.target.value) })} className={inputCls} />
+                      </div>
+                      <div className="col-span-2">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Njesia</span>
+                        <select value={it.unit_code} onChange={(e) => updateItem(it.id, { unit_code: e.target.value })} className={selectCls}>
+                          {UN_ECE_UNITS.map((u) => <option key={u.code} value={u.code}>{u.code}</option>)}
+                        </select>
+                      </div>
+                      <div className="col-span-3">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Cmimi neto</span>
+                        <input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(it.id, { unit_price: Number(e.target.value) })} className={inputCls} />
+                      </div>
+                      <div className="col-span-2">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">TVSH %</span>
+                        <select value={it.vat_rate} onChange={(e) => updateItem(it.id, { vat_rate: Number(e.target.value) })} className={selectCls}>
+                          {availableVatRates.map((r) => <option key={r} value={r}>{r}%</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-12 gap-2">
+                      <div className="col-span-4">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Kategoria TVSH</span>
+                        <select value={it.vat_category} onChange={(e) => updateItem(it.id, { vat_category: e.target.value })} className={selectCls}>
+                          {VAT_CATEGORIES.map((c) => <option key={c.code} value={c.code}>{c.code} · {c.label}</option>)}
+                        </select>
+                      </div>
+                      <div className="col-span-3">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Zbritje</span>
+                        <input type="number" step="0.01" value={it.discount_amount} onChange={(e) => updateItem(it.id, { discount_amount: Number(e.target.value) })} className={inputCls} />
+                      </div>
+                      <div className="col-span-3">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5 text-right">Totali</span>
+                        <div className="flex items-center justify-end h-[34px] text-sm font-bold text-slate-800">
+                          {lineTotal.toFixed(2)} {currency}
+                        </div>
+                      </div>
+                      <div className="col-span-2 flex flex-col items-end">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Veprime</span>
+                        <div className="flex items-center gap-1 h-[34px]">
+                          <button onClick={() => duplicateItem(it.id)} title="Dyfisho" className="p-1.5 rounded hover:bg-slate-200 text-slate-500">
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => removeItem(it.id)} title="Fshij" className="p-1.5 rounded hover:bg-red-100 text-red-500 disabled:opacity-30" disabled={items.length === 1}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
