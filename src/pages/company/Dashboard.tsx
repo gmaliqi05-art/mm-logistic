@@ -22,12 +22,10 @@ import {
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
-import FinanceSnapshot from '../../components/accounting/FinanceSnapshot';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote } from '../../types';
@@ -77,7 +75,6 @@ type RangeKey = '7d' | '30d' | '90d';
 
 export default function CompanyDashboard() {
   const { profile } = useAuth();
-  const { accountingEnabled } = useSubscription();
   const [liveDriverCount, setLiveDriverCount] = useState(0);
   const { t } = useTranslation();
   const reviewCounts = usePendingReviewCounts(profile?.company_id);
@@ -372,8 +369,6 @@ export default function CompanyDashboard() {
         <QuickActionTile to="/company/chat" icon={MessageCircle} label={t('nav.chat')} color="cyan" />
         <QuickActionTile to="/company/reports" icon={BarChart3} label={t('nav.reports')} color="gray" />
       </div>
-
-      {accountingEnabled && <FinanceSnapshot companyId={profile?.company_id ?? null} />}
 
       <ReviewCTA counts={reviewCounts} t={t} />
 

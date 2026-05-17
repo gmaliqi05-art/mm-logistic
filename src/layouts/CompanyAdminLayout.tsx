@@ -26,9 +26,7 @@ import {
   MapPin,
   Wrench,
   ShieldCheck,
-  ScanLine,
   Key,
-  Route,
   Layers,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -38,7 +36,6 @@ import { useTranslation } from '../i18n';
 import SupportChatWidget from '../components/support/SupportChatWidget';
 import NotificationDropdown from '../components/NotificationDropdown';
 import SubscriptionBanner from '../components/subscription/SubscriptionBanner';
-import PlanBadge from '../components/subscription/PlanBadge';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { usePendingReviewCounts } from '../hooks/usePendingReviewCounts';
 
@@ -52,7 +49,6 @@ const allNavItems = [
   { to: '/company/partner-flows', icon: Building2, labelKey: 'nav.partnerFlows', end: false, premium: false, bottomNav: false },
   { to: '/company/pallet-accounts', icon: Package, labelKey: 'nav.palletAccounts', end: false, premium: false, bottomNav: false },
   { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap', end: false, premium: false, bottomNav: false },
-  { to: '/company/route-planner', icon: Route, labelKey: 'nav.routePlanner', end: false, premium: false, bottomNav: false },
   { to: '/company/fleet-reports', icon: BarChart3, labelKey: 'nav.fleetReports', end: false, premium: false, bottomNav: false },
   { to: '/company/stock', icon: Package, labelKey: 'nav.stock', end: false, premium: false, bottomNav: true },
   { to: '/company/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, premium: false, bottomNav: true },
@@ -61,10 +57,8 @@ const allNavItems = [
   { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports', end: false, premium: false, bottomNav: false },
   { to: '/company/worker-repair-stats', icon: BarChart3, labelKey: 'nav.workerRepairStats', end: false, premium: false, bottomNav: false },
   { to: '/company/drivers', icon: Truck, labelKey: 'nav.drivers', end: false, premium: false, bottomNav: false },
-  { to: '/company/vehicles', icon: Truck, labelKey: 'nav.fleet', end: false, premium: false, bottomNav: false },
-  { to: '/company/trailers', icon: Truck, labelKey: 'nav.trailers', end: false, premium: false, bottomNav: false },
+  { to: '/company/automjetet', icon: Truck, labelKey: 'nav.automjetet', end: false, premium: false, bottomNav: false },
   { to: '/company/compliance', icon: ShieldCheck, labelKey: 'nav.compliance', end: false, premium: false, bottomNav: false },
-  { to: '/company/fleet-scans', icon: ScanLine, labelKey: 'nav.fleetScans', end: false, premium: false, bottomNav: false },
   { to: '/company/categories', icon: Tags, labelKey: 'nav.categories', end: false, premium: false, bottomNav: false },
   { to: '/company/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, premium: false, bottomNav: false },
   { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, premium: false, bottomNav: false },
@@ -72,7 +66,7 @@ const allNavItems = [
   { to: '/company/audit-report', icon: FileCheck2, labelKey: 'nav.auditReport', end: false, premium: false, bottomNav: false },
   { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', end: false, premium: true, bottomNav: false },
   { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', end: false, premium: true, bottomNav: false },
-  { to: '/company/financial-summary', icon: BarChart3, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
+  { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
   { to: '/logistics', icon: Truck, labelKey: 'nav.logistics', end: false, premium: false, bottomNav: false },
   { to: '/company/settings', icon: Settings, labelKey: 'nav.settings', end: false, premium: false, bottomNav: false },
   { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', end: false, premium: false, bottomNav: false },
@@ -125,17 +119,15 @@ export default function CompanyAdminLayout() {
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col bg-teal-900 text-white fixed inset-y-0 left-0 z-40">
-        <div className="flex items-center gap-3 h-16 px-4 border-b border-teal-800">
-          {companyLogo && (
-            <img src={companyLogo} alt={companyName} className="w-8 h-8 rounded object-cover flex-shrink-0" />
-          )}
-          <h1 className="text-lg font-bold whitespace-nowrap truncate">{companyName}</h1>
-        </div>
-
         <div className="px-4 py-4 border-b border-teal-800">
-          <p className="text-sm font-semibold truncate">{profile?.full_name ?? ''}</p>
-          <p className="text-xs text-teal-300 truncate mb-2">{t(`roles.${profile?.role ?? ''}`)}</p>
-          <PlanBadge />
+          <p className="text-[11px] uppercase tracking-wider text-teal-400 font-semibold mb-2">{t(`roles.${profile?.role ?? ''}`)}</p>
+          <div className="flex items-center gap-3 mb-1">
+            {companyLogo && (
+              <img src={companyLogo} alt={companyName} className="w-9 h-9 rounded object-cover flex-shrink-0" />
+            )}
+            <h1 className="text-lg font-bold whitespace-nowrap truncate">{companyName}</h1>
+          </div>
+          <p className="text-xs text-teal-300 truncate mt-1">{profile?.full_name ?? ''}</p>
         </div>
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
