@@ -114,9 +114,9 @@ export function extractDimensions(text: string): string[] {
 
 function extractQualityClass(text: string): 'a' | 'b' | 'c' | null {
   const d = (text || '').toLowerCase();
-  if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b|a[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*a)/i.test(d)) return 'a';
-  if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b|b[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*b)/i.test(d)) return 'b';
-  if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b|c[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*c)/i.test(d)) return 'c';
+  if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b|a[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*a|\ba\s*[-–]\s*palet)/i.test(d)) return 'a';
+  if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b|b[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*b|\bb\s*[-–]\s*palet)/i.test(d)) return 'b';
+  if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b|c[- ]?qualit(a|ae|ä)t|qualit(a|ae|ä)t\s*c|\bc\s*[-–]\s*palet)/i.test(d)) return 'c';
   return null;
 }
 

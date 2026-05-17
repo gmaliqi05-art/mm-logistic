@@ -107,7 +107,7 @@ export default function DepotReports() {
       const companyId = profile!.company_id!;
       const since = isoDays(days);
 
-      const [flowRes, flowLookup, repRes, sortRes, damRes] = await Promise.all([
+      const [flowRes, flowLookup, prodLookup, repRes, sortRes, damRes] = await Promise.all([
         supabase
           .from('v_depot_daily_flow')
           .select('flow_date, movement_type, category_id, category_product_id, quantity')
@@ -116,6 +116,7 @@ export default function DepotReports() {
           .gte('flow_date', since.substring(0, 10))
           .order('flow_date', { ascending: false }),
         supabase.from('product_categories').select('id, name').eq('company_id', companyId),
+        supabase.from('category_products').select('id, name').eq('company_id', companyId),
         supabase
           .from('v_depot_repair_productivity')
           .select('repair_date, category_name, product_name, total_in, total_repaired, total_scrapped')
@@ -129,6 +130,7 @@ export default function DepotReports() {
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .gte('batch_date', since.substring(0, 10))
+          .eq('status', 'completed')
           .order('batch_date', { ascending: false }),
         supabase
           .from('v_depot_stock_value')
@@ -145,9 +147,12 @@ export default function DepotReports() {
 
       const catMap = new Map<string, string>();
       (flowLookup.data ?? []).forEach((c: { id: string; name: string }) => catMap.set(c.id, c.name));
+      const prodMap = new Map<string, string>();
+      (prodLookup.data ?? []).forEach((p: { id: string; name: string }) => prodMap.set(p.id, p.name));
       const flowEnriched = (flowRes.data ?? []).map((r: FlowRow) => ({
         ...r,
         category_name: r.category_id ? catMap.get(r.category_id) ?? '' : '',
+        product_name: r.category_product_id ? prodMap.get(r.category_product_id) ?? '' : '',
       }));
 
       setFlow(flowEnriched);
@@ -278,11 +283,12 @@ export default function DepotReports() {
                 ))}
               </div>
               <Table
-                headers={['Data', 'Lloji', 'Kategoria', 'Sasi']}
+                headers={['Data', 'Lloji', 'Kategoria', 'Produkti', 'Sasi']}
                 rows={flow.slice(0, 60).map((r) => [
                   fmtDate(r.flow_date),
                   r.movement_type,
                   r.category_name || '—',
+                  r.product_name || '—',
                   r.quantity,
                 ])}
                 empty="Asnje levizje"

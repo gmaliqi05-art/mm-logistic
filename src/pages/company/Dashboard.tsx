@@ -15,6 +15,7 @@ import {
   Users,
   Plus,
   MessageCircle,
+  Layers,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -359,10 +360,11 @@ export default function CompanyDashboard() {
       </div>
 
       {/* Quick Actions - Mobile prominent */}
-      <div className="grid grid-cols-4 gap-2 lg:hidden">
+      <div className="grid grid-cols-5 gap-2 lg:hidden">
         <QuickActionTile to="/company/delivery-notes" icon={Plus} label={t('company.deliveryNotes.createNote')} color="teal" />
-        <QuickActionTile to="/company/stock" icon={Package} label={t('nav.stock')} color="emerald" />
-        <QuickActionTile to="/company/chat" icon={MessageCircle} label={t('nav.chat')} color="cyan" />
+        <QuickActionTile to="/company/sorting-reports" icon={Layers} label={t('nav.sortingReports')} color="emerald" />
+        <QuickActionTile to="/company/stock" icon={Package} label={t('nav.stock')} color="cyan" />
+        <QuickActionTile to="/company/chat" icon={MessageCircle} label={t('nav.chat')} color="slate" />
         <QuickActionTile to="/company/reports" icon={BarChart3} label={t('nav.reports')} color="gray" />
       </div>
 
@@ -636,6 +638,7 @@ export default function CompanyDashboard() {
             <h3 className="font-semibold text-gray-900 text-sm mb-3">{t('company.dashboard.quickActions')}</h3>
             <div className="space-y-1.5">
               <QuickAction to="/company/delivery-notes" icon={FileText} label={t('company.deliveryNotes.createNote')} color="teal" />
+              <QuickAction to="/company/sorting-reports" icon={Layers} label={t('nav.sortingReports')} color="emerald" />
               <QuickAction to="/company/reports" icon={BarChart3} label={t('company.dashboard.viewReports')} color="gray" />
             </div>
           </div>
