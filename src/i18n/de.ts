@@ -33,6 +33,7 @@ export const de: typeof sq = {
     yes: 'Ja',
     no: 'Nein',
     noData: 'Keine Daten vorhanden',
+    markAllRead: 'Alle als gelesen markieren',
     tryAgain: 'Erneut versuchen',
     createdBy: 'Erstellt von',
     information: 'Information',

@@ -31,6 +31,7 @@ export const sq = {
     yes: 'Po',
     no: 'Jo',
     noData: 'Nuk ka te dhena',
+    markAllRead: 'Lexo te gjitha',
     tryAgain: 'Provo Perseri',
     createdBy: 'Krijuar nga',
     information: 'Informacion',

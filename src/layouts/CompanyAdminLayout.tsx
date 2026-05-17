@@ -119,15 +119,14 @@ export default function CompanyAdminLayout() {
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex print:!hidden w-64 flex-col bg-teal-900 text-white fixed inset-y-0 left-0 z-40">
-        <div className="px-4 py-4 border-b border-teal-800">
+        <div className="px-4 py-3 border-b border-teal-800">
           <p className="text-[11px] uppercase tracking-wider text-teal-400 font-semibold mb-2">{t(`roles.${profile?.role ?? ''}`)}</p>
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3">
             {companyLogo && (
               <img src={companyLogo} alt={companyName} className="w-9 h-9 rounded object-cover flex-shrink-0" />
             )}
             <h1 className="text-lg font-bold whitespace-nowrap truncate">{companyName}</h1>
           </div>
-          <p className="text-xs text-teal-300 truncate mt-1">{profile?.full_name ?? ''}</p>
         </div>
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
@@ -190,11 +189,7 @@ export default function CompanyAdminLayout() {
           </button>
         </nav>
 
-        <div className="px-2 pb-2">
-          <LanguageSwitcher variant="minimal" />
-        </div>
-
-        <div className="p-4 border-t border-teal-800">
+        <div className="px-2 py-2 border-t border-teal-800/50">
           <button
             onClick={signOut}
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-teal-200 hover:bg-teal-800 hover:text-white transition-colors"
