@@ -592,30 +592,39 @@ export default function CompanyReports() {
           {partnerRows.length === 0 ? (
             <EmptyState icon={Users} label="Pa levizje me partneret ne kete periudhe." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
-                  <tr>
-                    <th className="text-left px-3 py-2">Partneri</th>
-                    <th className="text-right px-3 py-2">Hyrje</th>
-                    <th className="text-right px-3 py-2">Dalje</th>
-                    <th className="text-right px-3 py-2">Balanca</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {partnerRows.map(p => (
-                    <tr key={p.partner_contact_id} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 font-medium text-gray-900">{p.partner_name}</td>
-                      <td className="px-3 py-2 text-right text-emerald-600">{p.in_qty}</td>
-                      <td className="px-3 py-2 text-right text-rose-600">{p.out_qty}</td>
-                      <td className={`px-3 py-2 text-right font-bold ${p.balance >= 0 ? 'text-gray-900' : 'text-rose-600'}`}>
-                        {p.balance > 0 ? '+' : ''}{p.balance}
-                      </td>
+            <>
+              <div className="px-3 py-2 flex items-center gap-4 text-xs border-b border-gray-100 bg-gray-50/50">
+                <span className="text-gray-500 font-medium">{partnerRows.length} partnere aktive</span>
+                <span className="text-emerald-600 font-medium">Hyrje: {partnerRows.reduce((s, p) => s + p.in_qty, 0).toLocaleString()}</span>
+                <span className="text-rose-600 font-medium">Dalje: {partnerRows.reduce((s, p) => s + p.out_qty, 0).toLocaleString()}</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
+                    <tr>
+                      <th className="text-left px-3 py-2">Partneri</th>
+                      <th className="text-right px-3 py-2">Hyrje</th>
+                      <th className="text-right px-3 py-2">Dalje</th>
+                      <th className="text-right px-3 py-2">Balanca</th>
+                      <th className="text-right px-3 py-2">Totali</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {partnerRows.map(p => (
+                      <tr key={p.partner_contact_id} className="hover:bg-gray-50 cursor-pointer" onClick={() => window.location.href = `/company/partner/${p.partner_contact_id}`}>
+                        <td className="px-3 py-2 font-medium text-teal-700 hover:text-teal-900">{p.partner_name}</td>
+                        <td className="px-3 py-2 text-right text-emerald-600 font-medium">{p.in_qty.toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right text-rose-600 font-medium">{p.out_qty.toLocaleString()}</td>
+                        <td className={`px-3 py-2 text-right font-bold ${p.balance >= 0 ? 'text-gray-900' : 'text-rose-600'}`}>
+                          {p.balance > 0 ? '+' : ''}{p.balance.toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2 text-right text-gray-500">{(p.in_qty + p.out_qty).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
       )}

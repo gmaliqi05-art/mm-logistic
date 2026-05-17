@@ -102,7 +102,8 @@ export default function CompanyFleetReports() {
         .eq('company_id', profile.company_id)
         .gte('recorded_at', from)
         .lt('recorded_at', to)
-        .order('recorded_at', { ascending: true });
+        .order('recorded_at', { ascending: true })
+        .limit(50000);
       if (cancelled) return;
 
       const byDriver = new Map<string, LocPoint[]>();

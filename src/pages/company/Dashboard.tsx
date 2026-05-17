@@ -46,6 +46,15 @@ interface DayBucket {
   total: number;
 }
 
+interface ProductStockRow {
+  category: string;
+  product: string;
+  total: number;
+  good: number;
+  damaged: number;
+  repaired: number;
+}
+
 interface Stats {
   depots: number;
   drivers: number;
@@ -56,8 +65,11 @@ interface Stats {
   stockGood: number;
   stockDamaged: number;
   stockRepaired: number;
+  pendingRepairs: number;
+  activeSorting: number;
   statusCounts: Record<string, number>;
   stockByDepot: { name: string; total: number; depotId: string }[];
+  stockByProduct: ProductStockRow[];
   driverStats: DriverRow[];
   recentMovements: { id: string; noteNumber: string; partner: string; date: string }[];
   dayBuckets: DayBucket[];
@@ -65,8 +77,8 @@ interface Stats {
 
 const emptyStats: Stats = {
   depots: 0, drivers: 0, stock: 0, activeDeliveries: 0, deliveredToday: 0, pendingPickups: 0,
-  stockGood: 0, stockDamaged: 0, stockRepaired: 0,
-  statusCounts: {}, stockByDepot: [], driverStats: [], recentMovements: [], dayBuckets: [],
+  stockGood: 0, stockDamaged: 0, stockRepaired: 0, pendingRepairs: 0, activeSorting: 0,
+  statusCounts: {}, stockByDepot: [], stockByProduct: [], driverStats: [], recentMovements: [], dayBuckets: [],
 };
 
 type RangeKey = '7d' | '30d' | '90d';
@@ -196,7 +208,7 @@ export default function CompanyDashboard() {
         depotsRes, driversRes, stockRes, activeRes,
         recentRes, deliveredTodayRes, pendingPickupsRes,
         depotListRes, notesForDrivers, movementsRes,
-        rangeNotesRes,
+        rangeNotesRes, repairsRes, sortingRes, stockProductRes,
       ] = await Promise.all([
         supabase.from('depots').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true),
         supabase.from('profiles').select('id, full_name').eq('company_id', companyId).eq('role', 'driver').eq('is_active', true),
@@ -210,19 +222,40 @@ export default function CompanyDashboard() {
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'delivered').gte('delivered_at', todayIso),
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('type', 'pickup').in('status', ['draft', 'sent', 'in_transit']),
         supabase.from('depots').select('id, name').eq('company_id', companyId).eq('is_active', true),
-        supabase.from('delivery_notes').select('assigned_driver_id, status, delivered_at, scheduled_delivery_at, scheduled_pickup_at').eq('company_id', companyId),
+        supabase.from('delivery_notes').select('assigned_driver_id, status, delivered_at, scheduled_delivery_at, scheduled_pickup_at').eq('company_id', companyId).gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()).limit(5000),
         supabase.from('delivery_notes')
           .select('id, note_number, status, partner_name, confirmed_at, delivered_at, created_at')
           .eq('company_id', companyId).eq('status', 'confirmed')
           .order('confirmed_at', { ascending: false }).limit(5),
         supabase.from('delivery_notes').select('status, created_at, delivered_at').eq('company_id', companyId).neq('status', 'draft').gte('created_at', fromIso),
+        supabase.from('depot_repairs').select('id', { count: 'exact', head: true }).eq('company_id', companyId).is('completed_at', null),
+        supabase.from('pallet_sorting_batches').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'in_progress'),
+        supabase.from('stock').select('quantity, condition, category_id, category_product_id, product_categories(name), category_products(name)').eq('company_id', companyId),
       ]);
 
       const stocks = stockRes.data ?? [];
       const totalStock = stocks.reduce((s, i) => s + (i.quantity || 0), 0);
       const stockDamaged = stocks.filter(s => s.condition === 'damaged').reduce((s, i) => s + i.quantity, 0);
       const stockRepaired = stocks.filter(s => s.condition === 'repaired').reduce((s, i) => s + i.quantity, 0);
-      const stockGood = totalStock - stockDamaged - stockRepaired;
+      const stockGood = stocks.filter(s => !['damaged', 'repaired'].includes(s.condition ?? '')).reduce((s, i) => s + (i.quantity || 0), 0);
+
+      const pendingRepairs = repairsRes.count ?? 0;
+      const activeSorting = sortingRes.count ?? 0;
+
+      const productMap = new Map<string, ProductStockRow>();
+      for (const row of (stockProductRes.data ?? []) as Array<any>) {
+        const catName = row.product_categories?.name ?? '—';
+        const prodName = row.category_products?.name ?? '—';
+        const key = `${row.category_id}:${row.category_product_id}`;
+        const cur = productMap.get(key) ?? { category: catName, product: prodName, total: 0, good: 0, damaged: 0, repaired: 0 };
+        const qty = row.quantity || 0;
+        cur.total += qty;
+        if (row.condition === 'damaged') cur.damaged += qty;
+        else if (row.condition === 'repaired') cur.repaired += qty;
+        else cur.good += qty;
+        productMap.set(key, cur);
+      }
+      const stockByProduct = Array.from(productMap.values()).sort((a, b) => b.total - a.total).slice(0, 12);
 
       const depotsList = depotListRes.data ?? [];
       const depotStockMap: Record<string, number> = {};
@@ -288,8 +321,8 @@ export default function CompanyDashboard() {
         activeDeliveries: activeRes.count ?? 0,
         deliveredToday: deliveredTodayRes.count ?? 0,
         pendingPickups: pendingPickupsRes.count ?? 0,
-        stockGood, stockDamaged, stockRepaired,
-        statusCounts, stockByDepot, driverStats, recentMovements, dayBuckets,
+        stockGood, stockDamaged, stockRepaired, pendingRepairs, activeSorting,
+        statusCounts, stockByDepot, stockByProduct, driverStats, recentMovements, dayBuckets,
       });
       setRecentNotes(recentRes.data ?? []);
     } catch (err: unknown) {
@@ -383,6 +416,39 @@ export default function CompanyDashboard() {
           badge={stats.deliveredToday > 0 ? `+${stats.deliveredToday} ${t('common.today').toLowerCase()}` : undefined}
         />
       </div>
+
+      {/* Secondary stats: repairs & sorting */}
+      {(stats.pendingRepairs > 0 || stats.activeSorting > 0 || stats.pendingPickups > 0) && (
+        <div className="grid grid-cols-3 gap-3">
+          <Link to="/company/repair-reports" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-orange-200 transition-colors">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-orange-50"><Wrench className="w-4 h-4 text-orange-600" /></div>
+              <div>
+                <p className="text-[10px] text-gray-500 font-medium uppercase">{t('nav.repairs')}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.pendingRepairs}</p>
+              </div>
+            </div>
+          </Link>
+          <Link to="/company/sorting-reports" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-teal-200 transition-colors">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-teal-50"><Layers className="w-4 h-4 text-teal-600" /></div>
+              <div>
+                <p className="text-[10px] text-gray-500 font-medium uppercase">{t('nav.sorting')}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.activeSorting}</p>
+              </div>
+            </div>
+          </Link>
+          <Link to="/company/delivery-notes" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-sky-200 transition-colors">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-sky-50"><Package className="w-4 h-4 text-sky-600" /></div>
+              <div>
+                <p className="text-[10px] text-gray-500 font-medium uppercase">{t('review.tabs.pickups')}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.pendingPickups}</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+      )}
 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -632,6 +698,33 @@ export default function CompanyDashboard() {
               <ConditionRow label={t('company.stock.repaired')} value={stats.stockRepaired} total={stats.stock} color="bg-amber-500" icon={Wrench} />
             </div>
           </div>
+
+          {/* Stock by Product */}
+          {stats.stockByProduct.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-teal-600" />
+                  <h3 className="font-semibold text-gray-900 text-sm">{t('company.repairReports.byProduct')}</h3>
+                </div>
+                <Link to="/company/stock" className="text-[10px] text-teal-600 hover:text-teal-700 font-medium">{t('common.all')}</Link>
+              </div>
+              <div className="space-y-2">
+                {stats.stockByProduct.slice(0, 8).map((row, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-800 truncate">{row.product}</p>
+                      <p className="text-[10px] text-gray-400 truncate">{row.category}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className="text-xs font-bold text-gray-900 tabular-nums">{row.total.toLocaleString()}</span>
+                      {row.damaged > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-red-50 text-red-600 font-medium">{row.damaged}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Desktop Quick Actions */}
           <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-100 p-4">
