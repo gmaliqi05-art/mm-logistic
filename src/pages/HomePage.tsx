@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Shield,
   ChevronUp,
+  ChevronDown,
   Check,
   Boxes,
   Receipt,
@@ -35,7 +36,6 @@ import {
   CheckCircle2,
   Apple,
   Award,
-  Target,
   Heart,
   type LucideIcon,
 } from 'lucide-react';
@@ -128,9 +128,41 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string; hover: string; g
   rose: { bg: 'bg-rose-50', text: 'text-rose-600', hover: 'hover:border-rose-300', gradient: 'from-rose-500 to-red-500' },
 };
 
+function AccordionSection({ id, title, icon: Icon, isOpen, onToggle, children }: {
+  id: string;
+  title: string;
+  icon: LucideIcon;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-slate-200 last:border-b-0">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-4 px-4 sm:px-6 lg:px-8 py-5 hover:bg-slate-50 transition-colors text-left"
+      >
+        <div className="p-2.5 rounded-xl bg-teal-50 text-teal-600 flex-shrink-0">
+          <Icon className="h-5 w-5" />
+        </div>
+        <span className="flex-1 text-lg font-bold text-slate-900">{title}</span>
+        <div className={`p-1.5 rounded-lg transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+          <ChevronDown className="h-5 w-5 text-slate-400" />
+        </div>
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-400 ease-in-out ${isOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [logisticsPlans, setLogisticsPlans] = useState<PricingPlan[]>([]);
   const [accountingPlans, setAccountingPlans] = useState<PricingPlan[]>([]);
@@ -142,6 +174,10 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { settings: platformSettings } = usePlatformSettings();
+
+  const toggleSection = useCallback((id: string) => {
+    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
 
   const handleSecretClick = useCallback(() => {
     const now = Date.now();
@@ -362,298 +398,346 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ NEWS BANNER ============ */}
-      {heroBanner && (
-        <section className="bg-white border-b border-slate-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-semibold">
-              <Sparkles className="h-3.5 w-3.5" />{t('home.v3.banner.news')}
-            </span>
-            <div className="flex-1">
-              <span className="font-semibold text-slate-800">{heroBanner.title}</span>
-              {heroBanner.subtitle && <span className="text-slate-500 ml-2">{heroBanner.subtitle}</span>}
-            </div>
-            {heroBanner.link_url && heroBanner.link_text && (
-              <a href={heroBanner.link_url} className="inline-flex items-center gap-1 text-sm font-semibold text-teal-600 hover:text-teal-700">
-                {heroBanner.link_text}<ArrowRight className="h-4 w-4" />
-              </a>
-            )}
-          </div>
-        </section>
-      )}
+      {/* ============ ACCORDION SECTIONS ============ */}
+      <div className="bg-white border-b border-slate-200 rounded-b-xl max-w-7xl mx-auto mt-4 mb-8 shadow-sm border border-slate-200 rounded-2xl overflow-hidden">
 
-      {/* ============ TRUST STANDARDS BAND ============ */}
-      <section className="py-12 bg-slate-50 border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs uppercase tracking-widest text-slate-500 font-semibold mb-8">{t('home.v3.trust.label')}</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {STANDARDS.map((s) => {
-              const Ic = s.icon;
-              return (
-                <div key={s.key} className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white border border-slate-200 shadow-sm">
-                  <Ic className="h-5 w-5 text-teal-600 flex-shrink-0" />
-                  <span className="text-sm font-semibold text-slate-700">{t(`home.v3.trust.${s.key}`)}</span>
+        {/* News Banner */}
+        {heroBanner && (
+          <AccordionSection
+            id="news"
+            title={heroBanner.title}
+            icon={Sparkles}
+            isOpen={!!openSections['news']}
+            onToggle={() => toggleSection('news')}
+          >
+            <div className="px-4 sm:px-6 lg:px-8 pb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-teal-50 border border-teal-100">
+                <div className="flex-1">
+                  <span className="font-semibold text-slate-800">{heroBanner.title}</span>
+                  {heroBanner.subtitle && <span className="text-slate-500 ml-2">{heroBanner.subtitle}</span>}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ============ PLATFORM AT-A-GLANCE ============ */}
-      <section className="py-16 bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <p className="text-sm font-semibold uppercase tracking-wider text-teal-600">{t('home.v3.stats.badge')}</p>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">{t('home.v3.stats.title')}</h2>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { value: '6', label: t('home.v3.stats.modules'), icon: Boxes, suffix: '' },
-              { value: '5', label: t('home.v3.stats.roles'), icon: Users, suffix: '' },
-              { value: '4', label: t('home.v3.stats.languages'), icon: Globe2, suffix: '' },
-              { value: '99.9', label: t('home.v3.stats.uptime'), icon: Zap, suffix: '%' },
-            ].map((s) => {
-              const Ic = s.icon;
-              return (
-                <div key={s.label} className="text-center">
-                  <div className="inline-flex p-3 rounded-2xl bg-teal-50 text-teal-600 mb-3"><Ic className="h-6 w-6" /></div>
-                  <div className="text-3xl lg:text-4xl font-extrabold text-slate-900">{s.value}{s.suffix}</div>
-                  <div className="mt-1 text-sm text-slate-500 font-medium">{s.label}</div>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-center mt-10 text-xs text-slate-400">{t('home.v3.stats.footnote')}</p>
-        </div>
-      </section>
-
-      {/* ============ FEATURE SHOWCASE 1: Logistics (image LEFT) ============ */}
-      <section className="py-20 lg:py-28 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-tr from-teal-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
-              <img src={IMAGES.warehouse} alt={t('home.v3.showcase1.alt')} loading="lazy" className="relative rounded-3xl shadow-2xl w-full h-[400px] lg:h-[500px] object-cover" />
-              <div className="absolute -bottom-6 -right-6 hidden md:block bg-white rounded-2xl shadow-xl p-4 w-56 border border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-teal-100 text-teal-700"><Truck className="h-5 w-5" /></div>
-                  <div>
-                    <div className="text-xs text-slate-500">{t('home.v3.showcase1.badge')}</div>
-                    <div className="text-sm font-semibold text-slate-900">CMR 3-pale</div>
-                  </div>
-                </div>
+                {heroBanner.link_url && heroBanner.link_text && (
+                  <a href={heroBanner.link_url} className="inline-flex items-center gap-1 text-sm font-semibold text-teal-600 hover:text-teal-700">
+                    {heroBanner.link_text}<ArrowRight className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             </div>
-            <div>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 text-sm font-medium"><Truck className="h-4 w-4" />{t('home.v3.showcase1.tag')}</span>
-              <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">{t('home.v3.showcase1.title')}</h2>
-              <p className="mt-4 text-lg text-slate-600 leading-relaxed">{t('home.v3.showcase1.body')}</p>
-              <ul className="mt-6 space-y-3">
-                {['b1', 'b2', 'b3', 'b4'].map((b) => (
-                  <li key={b} className="flex items-start gap-3">
-                    <div className="mt-0.5 p-1 rounded-full bg-teal-100 text-teal-700 flex-shrink-0"><Check className="h-3.5 w-3.5" /></div>
-                    <span className="text-slate-700">{t(`home.v3.showcase1.${b}`)}</span>
-                  </li>
-                ))}
-              </ul>
+          </AccordionSection>
+        )}
+
+        {/* Trust Standards */}
+        <AccordionSection
+          id="trust"
+          title={t('home.v3.trust.label')}
+          icon={Award}
+          isOpen={!!openSections['trust']}
+          onToggle={() => toggleSection('trust')}
+        >
+          <div className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {STANDARDS.map((s) => {
+                const Ic = s.icon;
+                return (
+                  <div key={s.key} className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <Ic className="h-5 w-5 text-teal-600 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-slate-700">{t(`home.v3.trust.${s.key}`)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </AccordionSection>
 
-      {/* ============ FEATURE SHOWCASE 2: Accounting (image RIGHT) ============ */}
-      <section className="py-20 lg:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="order-2 lg:order-1">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 text-sm font-medium"><Calculator className="h-4 w-4" />{t('home.v3.showcase2.tag')}</span>
-              <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">{t('home.v3.showcase2.title')}</h2>
-              <p className="mt-4 text-lg text-slate-600 leading-relaxed">{t('home.v3.showcase2.body')}</p>
-              <ul className="mt-6 space-y-3">
-                {['b1', 'b2', 'b3', 'b4'].map((b) => (
-                  <li key={b} className="flex items-start gap-3">
-                    <div className="mt-0.5 p-1 rounded-full bg-sky-100 text-sky-700 flex-shrink-0"><Check className="h-3.5 w-3.5" /></div>
-                    <span className="text-slate-700">{t(`home.v3.showcase2.${b}`)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="relative order-1 lg:order-2">
-              <div className="absolute -inset-4 bg-gradient-to-bl from-sky-500/20 to-blue-500/20 rounded-3xl blur-2xl" />
-              <img src={IMAGES.office} alt={t('home.v3.showcase2.alt')} loading="lazy" className="relative rounded-3xl shadow-2xl w-full h-[400px] lg:h-[500px] object-cover" />
-              <div className="absolute -bottom-6 -left-6 hidden md:block bg-white rounded-2xl shadow-xl p-4 w-56 border border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-sky-100 text-sky-700"><Receipt className="h-5 w-5" /></div>
-                  <div>
-                    <div className="text-xs text-slate-500">{t('home.v3.showcase2.badge')}</div>
-                    <div className="text-sm font-semibold text-slate-900">DATEV Export</div>
+        {/* Platform Stats */}
+        <AccordionSection
+          id="stats"
+          title={t('home.v3.stats.title')}
+          icon={Zap}
+          isOpen={!!openSections['stats']}
+          onToggle={() => toggleSection('stats')}
+        >
+          <div className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { value: '6', label: t('home.v3.stats.modules'), icon: Boxes, suffix: '' },
+                { value: '5', label: t('home.v3.stats.roles'), icon: Users, suffix: '' },
+                { value: '4', label: t('home.v3.stats.languages'), icon: Globe2, suffix: '' },
+                { value: '99.9', label: t('home.v3.stats.uptime'), icon: Zap, suffix: '%' },
+              ].map((s) => {
+                const Ic = s.icon;
+                return (
+                  <div key={s.label} className="text-center">
+                    <div className="inline-flex p-3 rounded-2xl bg-teal-50 text-teal-600 mb-3"><Ic className="h-6 w-6" /></div>
+                    <div className="text-3xl lg:text-4xl font-extrabold text-slate-900">{s.value}{s.suffix}</div>
+                    <div className="mt-1 text-sm text-slate-500 font-medium">{s.label}</div>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          </div>
+        </AccordionSection>
+
+        {/* Logistics Feature */}
+        <AccordionSection
+          id="showcase1"
+          title={t('home.v3.showcase1.title')}
+          icon={Truck}
+          isOpen={!!openSections['showcase1']}
+          onToggle={() => toggleSection('showcase1')}
+        >
+          <div className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-teal-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
+                <img src={IMAGES.warehouse} alt={t('home.v3.showcase1.alt')} loading="lazy" className="relative rounded-3xl shadow-2xl w-full h-[300px] lg:h-[400px] object-cover" />
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ FEATURE SHOWCASE 3: Fleet/Drivers ============ */}
-      <section className="py-20 lg:py-28 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-tr from-orange-500/20 to-amber-500/20 rounded-3xl blur-2xl" />
-              <img src={IMAGES.truck} alt={t('home.v3.showcase3.alt')} loading="lazy" className="relative rounded-3xl shadow-2xl w-full h-[400px] lg:h-[500px] object-cover" />
-              <div className="absolute -bottom-6 -right-6 hidden md:block bg-white rounded-2xl shadow-xl p-4 w-56 border border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-orange-100 text-orange-700"><MapPin className="h-5 w-5" /></div>
-                  <div>
-                    <div className="text-xs text-slate-500">{t('home.v3.showcase3.badge')}</div>
-                    <div className="text-sm font-semibold text-slate-900">GPS Live</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 text-sm font-medium"><MapPin className="h-4 w-4" />{t('home.v3.showcase3.tag')}</span>
-              <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">{t('home.v3.showcase3.title')}</h2>
-              <p className="mt-4 text-lg text-slate-600 leading-relaxed">{t('home.v3.showcase3.body')}</p>
-              <ul className="mt-6 space-y-3">
-                {['b1', 'b2', 'b3', 'b4'].map((b) => (
-                  <li key={b} className="flex items-start gap-3">
-                    <div className="mt-0.5 p-1 rounded-full bg-orange-100 text-orange-700 flex-shrink-0"><Check className="h-3.5 w-3.5" /></div>
-                    <span className="text-slate-700">{t(`home.v3.showcase3.${b}`)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============ MODULES GRID ============ */}
-      <section id="modules" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 text-sm font-medium"><Boxes className="h-4 w-4" />{t('home.v3.modules.badge')}</span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">
-              {t('home.v3.modules.title')} <span className="text-teal-600">{t('home.v3.modules.titleHighlight')}</span>
-            </h2>
-            <p className="mt-4 text-lg text-slate-600">{t('home.v3.modules.subtitle')}</p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {CORE_MODULES.map((m) => {
-              const Icon = m.icon;
-              const c = COLOR_CLASSES[m.color];
-              return (
-                <div key={m.key} className={`group relative rounded-2xl bg-white border border-slate-200 p-6 ${c.hover} hover:shadow-xl transition-all duration-300`}>
-                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${c.gradient} text-white shadow-lg`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-bold text-slate-900">{t(m.titleKey)}</h3>
-                  <p className="mt-2 text-sm text-slate-600 leading-relaxed">{t(m.descKey)}</p>
-                  <ul className="mt-4 space-y-2">
-                    {m.features.map((fk) => (
-                      <li key={fk} className="flex items-start gap-2 text-sm text-slate-700">
-                        <Check className={`h-4 w-4 ${c.text} mt-0.5 flex-shrink-0`} /><span>{t(fk)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ============ ROLES TABS ============ */}
-      <section id="roles" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-sm font-medium"><Layers className="h-4 w-4" />{t('home.v3.roles.badge')}</span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">
-              {t('home.v3.roles.title')} <span className="text-emerald-600">{t('home.v3.roles.titleHighlight')}</span>
-            </h2>
-            <p className="mt-4 text-lg text-slate-600">{t('home.v3.roles.subtitle')}</p>
-          </div>
-
-          <div className="mt-10 flex flex-wrap justify-center gap-2 sm:gap-3">
-            {ROLE_TABS.map((r) => {
-              const Ic = r.icon;
-              const active = activeRoleTab === r.key;
-              return (
-                <button key={r.key} onClick={() => setActiveRoleTab(r.key as typeof activeRoleTab)}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${active ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}>
-                  <Ic className="h-4 w-4" />{t(r.titleKey)}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-12 rounded-3xl border border-slate-200 bg-white p-8 lg:p-12 shadow-lg">
-            <div className="grid lg:grid-cols-2 gap-10 items-center">
               <div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">{t(`home.v3.roles.${activeRoleTab}.headline`)}</h3>
-                <p className="mt-3 text-slate-600 leading-relaxed">{t(`home.v3.roles.${activeRoleTab}.body`)}</p>
+                <p className="text-lg text-slate-600 leading-relaxed">{t('home.v3.showcase1.body')}</p>
                 <ul className="mt-6 space-y-3">
-                  {['b1', 'b2', 'b3', 'b4', 'b5'].map((b) => (
+                  {['b1', 'b2', 'b3', 'b4'].map((b) => (
                     <li key={b} className="flex items-start gap-3">
                       <div className="mt-0.5 p-1 rounded-full bg-teal-100 text-teal-700 flex-shrink-0"><Check className="h-3.5 w-3.5" /></div>
-                      <span className="text-slate-700">{t(`home.v3.roles.${activeRoleTab}.${b}`)}</span>
+                      <span className="text-slate-700">{t(`home.v3.showcase1.${b}`)}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('home.v3.roles.dashboardPreview')}</div>
-                <div className="mt-4 space-y-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm border border-slate-100">
-                      <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-teal-400 to-emerald-500 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-slate-800 truncate">{t(`home.v3.roles.${activeRoleTab}.task${i}`)}</div>
-                        <div className="text-xs text-slate-500 truncate">{t(`home.v3.roles.${activeRoleTab}.task${i}Sub`)}</div>
-                      </div>
-                      <div className="text-xs font-medium text-teal-600">→</div>
-                    </div>
+            </div>
+          </div>
+        </AccordionSection>
+
+        {/* Accounting Feature */}
+        <AccordionSection
+          id="showcase2"
+          title={t('home.v3.showcase2.title')}
+          icon={Calculator}
+          isOpen={!!openSections['showcase2']}
+          onToggle={() => toggleSection('showcase2')}
+        >
+          <div className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <p className="text-lg text-slate-600 leading-relaxed">{t('home.v3.showcase2.body')}</p>
+                <ul className="mt-6 space-y-3">
+                  {['b1', 'b2', 'b3', 'b4'].map((b) => (
+                    <li key={b} className="flex items-start gap-3">
+                      <div className="mt-0.5 p-1 rounded-full bg-sky-100 text-sky-700 flex-shrink-0"><Check className="h-3.5 w-3.5" /></div>
+                      <span className="text-slate-700">{t(`home.v3.showcase2.${b}`)}</span>
+                    </li>
                   ))}
+                </ul>
+              </div>
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-bl from-sky-500/20 to-blue-500/20 rounded-3xl blur-2xl" />
+                <img src={IMAGES.office} alt={t('home.v3.showcase2.alt')} loading="lazy" className="relative rounded-3xl shadow-2xl w-full h-[300px] lg:h-[400px] object-cover" />
+              </div>
+            </div>
+          </div>
+        </AccordionSection>
+
+        {/* Fleet/Drivers Feature */}
+        <AccordionSection
+          id="showcase3"
+          title={t('home.v3.showcase3.title')}
+          icon={MapPin}
+          isOpen={!!openSections['showcase3']}
+          onToggle={() => toggleSection('showcase3')}
+        >
+          <div className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-orange-500/20 to-amber-500/20 rounded-3xl blur-2xl" />
+                <img src={IMAGES.truck} alt={t('home.v3.showcase3.alt')} loading="lazy" className="relative rounded-3xl shadow-2xl w-full h-[300px] lg:h-[400px] object-cover" />
+              </div>
+              <div>
+                <p className="text-lg text-slate-600 leading-relaxed">{t('home.v3.showcase3.body')}</p>
+                <ul className="mt-6 space-y-3">
+                  {['b1', 'b2', 'b3', 'b4'].map((b) => (
+                    <li key={b} className="flex items-start gap-3">
+                      <div className="mt-0.5 p-1 rounded-full bg-orange-100 text-orange-700 flex-shrink-0"><Check className="h-3.5 w-3.5" /></div>
+                      <span className="text-slate-700">{t(`home.v3.showcase3.${b}`)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </AccordionSection>
+
+        {/* Modules Grid */}
+        <AccordionSection
+          id="modules"
+          title={t('home.v3.modules.title')}
+          icon={Boxes}
+          isOpen={!!openSections['modules']}
+          onToggle={() => toggleSection('modules')}
+        >
+          <div id="modules" className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {CORE_MODULES.map((m) => {
+                const Icon = m.icon;
+                const c = COLOR_CLASSES[m.color];
+                return (
+                  <div key={m.key} className={`group relative rounded-2xl bg-white border border-slate-200 p-6 ${c.hover} hover:shadow-xl transition-all duration-300`}>
+                    <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${c.gradient} text-white shadow-lg`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-slate-900">{t(m.titleKey)}</h3>
+                    <p className="mt-2 text-sm text-slate-600 leading-relaxed">{t(m.descKey)}</p>
+                    <ul className="mt-4 space-y-2">
+                      {m.features.map((fk) => (
+                        <li key={fk} className="flex items-start gap-2 text-sm text-slate-700">
+                          <Check className={`h-4 w-4 ${c.text} mt-0.5 flex-shrink-0`} /><span>{t(fk)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </AccordionSection>
+
+        {/* Roles */}
+        <AccordionSection
+          id="roles"
+          title={t('home.v3.roles.title')}
+          icon={Layers}
+          isOpen={!!openSections['roles']}
+          onToggle={() => toggleSection('roles')}
+        >
+          <div id="roles" className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8">
+              {ROLE_TABS.map((r) => {
+                const Ic = r.icon;
+                const active = activeRoleTab === r.key;
+                return (
+                  <button key={r.key} onClick={() => setActiveRoleTab(r.key as typeof activeRoleTab)}
+                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${active ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}>
+                    <Ic className="h-4 w-4" />{t(r.titleKey)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 lg:p-10">
+              <div className="grid lg:grid-cols-2 gap-10 items-center">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900">{t(`home.v3.roles.${activeRoleTab}.headline`)}</h3>
+                  <p className="mt-3 text-slate-600 leading-relaxed">{t(`home.v3.roles.${activeRoleTab}.body`)}</p>
+                  <ul className="mt-6 space-y-3">
+                    {['b1', 'b2', 'b3', 'b4', 'b5'].map((b) => (
+                      <li key={b} className="flex items-start gap-3">
+                        <div className="mt-0.5 p-1 rounded-full bg-teal-100 text-teal-700 flex-shrink-0"><Check className="h-3.5 w-3.5" /></div>
+                        <span className="text-slate-700">{t(`home.v3.roles.${activeRoleTab}.${b}`)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-6">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('home.v3.roles.dashboardPreview')}</div>
+                  <div className="mt-4 space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 border border-slate-100">
+                        <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-teal-400 to-emerald-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-slate-800 truncate">{t(`home.v3.roles.${activeRoleTab}.task${i}`)}</div>
+                          <div className="text-xs text-slate-500 truncate">{t(`home.v3.roles.${activeRoleTab}.task${i}Sub`)}</div>
+                        </div>
+                        <div className="text-xs font-medium text-teal-600">→</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </AccordionSection>
 
-      {/* ============ WORKFLOW ============ */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 text-sm font-medium"><Workflow className="h-4 w-4" />{t('home.v3.workflow.badge')}</span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">{t('home.v3.workflow.title')}</h2>
-            <p className="mt-4 text-lg text-slate-600">{t('home.v3.workflow.subtitle')}</p>
+        {/* Workflow */}
+        <AccordionSection
+          id="workflow"
+          title={t('home.v3.workflow.title')}
+          icon={Workflow}
+          isOpen={!!openSections['workflow']}
+          onToggle={() => toggleSection('workflow')}
+        >
+          <div className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-5">
+              {[
+                { n: '01', icon: ClipboardCheck, key: 'step1' },
+                { n: '02', icon: Truck, key: 'step2' },
+                { n: '03', icon: ScanLine, key: 'step3' },
+                { n: '04', icon: Bell, key: 'step4' },
+                { n: '05', icon: Receipt, key: 'step5' },
+              ].map((s) => {
+                const Ic = s.icon;
+                return (
+                  <div key={s.key} className="relative rounded-2xl bg-slate-50 border border-slate-200 p-6">
+                    <div className="text-xs font-bold text-teal-600">{s.n}</div>
+                    <div className="mt-3 inline-flex p-2.5 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white"><Ic className="h-5 w-5" /></div>
+                    <h3 className="mt-3 font-bold text-slate-900">{t(`home.v3.workflow.${s.key}.title`)}</h3>
+                    <p className="mt-1.5 text-sm text-slate-600">{t(`home.v3.workflow.${s.key}.desc`)}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+        </AccordionSection>
 
-          <div className="mt-14 grid md:grid-cols-3 lg:grid-cols-5 gap-5">
-            {[
-              { n: '01', icon: ClipboardCheck, key: 'step1' },
-              { n: '02', icon: Truck, key: 'step2' },
-              { n: '03', icon: ScanLine, key: 'step3' },
-              { n: '04', icon: Bell, key: 'step4' },
-              { n: '05', icon: Receipt, key: 'step5' },
-            ].map((s) => {
-              const Ic = s.icon;
-              return (
-                <div key={s.key} className="relative rounded-2xl bg-white border border-slate-200 p-6 hover:shadow-lg transition">
-                  <div className="text-xs font-bold text-teal-600">{s.n}</div>
-                  <div className="mt-3 inline-flex p-2.5 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white"><Ic className="h-5 w-5" /></div>
-                  <h3 className="mt-3 font-bold text-slate-900">{t(`home.v3.workflow.${s.key}.title`)}</h3>
-                  <p className="mt-1.5 text-sm text-slate-600">{t(`home.v3.workflow.${s.key}.desc`)}</p>
+        {/* Security & Compliance */}
+        <AccordionSection
+          id="security"
+          title={t('home.v3.security.title')}
+          icon={Shield}
+          isOpen={!!openSections['security']}
+          onToggle={() => toggleSection('security')}
+        >
+          <div id="security" className="px-4 sm:px-6 lg:px-8 pb-8">
+            <div className="grid lg:grid-cols-2 gap-10 items-start">
+              <div>
+                <p className="text-lg text-slate-600 leading-relaxed mb-6">{t('home.v3.security.subtitle')}</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {TRUST_BADGES.map((b) => {
+                    const Ic = b.icon;
+                    return (
+                      <div key={b.key} className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                        <div className="p-2 rounded-lg bg-white shadow-sm flex-shrink-0"><Ic className="h-5 w-5 text-rose-600" /></div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900">{t(`home.v3.security.${b.key}.title`)}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">{t(`home.v3.security.${b.key}.desc`)}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+              <div className="rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white">
+                <div className="space-y-5">
+                  {[
+                    { icon: Lock, key: 'compliance1' },
+                    { icon: Database, key: 'compliance2' },
+                    { icon: Globe2, key: 'compliance3' },
+                    { icon: GitBranch, key: 'compliance4' },
+                  ].map((c) => {
+                    const Ic = c.icon;
+                    return (
+                      <div key={c.key} className="flex items-start gap-4">
+                        <div className="p-2.5 rounded-xl bg-white/10 flex-shrink-0"><Ic className="h-5 w-5 text-teal-300" /></div>
+                        <div className="min-w-0">
+                          <div className="font-semibold">{t(`home.v3.security.${c.key}.title`)}</div>
+                          <div className="text-sm text-slate-400 mt-0.5">{t(`home.v3.security.${c.key}.desc`)}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </AccordionSection>
+      </div>
 
       {/* ============ MOBILE APP — iOS + ANDROID (HIGHLIGHT) ============ */}
       <section id="mobile-app" className="py-24 lg:py-32 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-900 text-white relative overflow-hidden">
@@ -872,31 +956,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ FINAL CTA with background image ============ */}
-      <section className="py-24 lg:py-32 relative overflow-hidden text-white">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-900" />
-        <div className="absolute inset-0 bg-cover bg-center opacity-25" style={{ backgroundImage: `url(${IMAGES.ctaBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-slate-900/40" />
-        
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-sm font-medium backdrop-blur-sm">
-            <Target className="h-4 w-4 text-teal-300" />
-            {t('home.v3.cta.badge')}
-          </div>
-          <h2 className="mt-6 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">{t('home.v3.cta.title')}</h2>
-          <p className="mt-6 text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto">{t('home.v3.cta.subtitle')}</p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/register" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-semibold shadow-lg shadow-teal-500/30 transition-all hover:scale-[1.02]">
+      {/* ============ FINAL CTA ============ */}
+      <section className="py-16 bg-gradient-to-r from-teal-600 to-emerald-600 text-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{t('home.v3.cta.title')}</h2>
+          <p className="mt-4 text-lg text-teal-100 max-w-2xl mx-auto">{t('home.v3.cta.subtitle')}</p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/register" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white text-teal-700 font-semibold shadow-lg hover:bg-teal-50 transition-all hover:scale-[1.02]">
               {t('home.v3.cta.primary')}<ArrowRight className="h-5 w-5" />
             </Link>
-            <Link to="/login" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-white/20 hover:bg-white/10 text-white font-semibold transition-all backdrop-blur-sm">
+            <Link to="/login" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-white/40 hover:bg-white/10 text-white font-semibold transition-all">
               {t('home.v3.cta.secondary')}
             </Link>
-          </div>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
-            <div className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-teal-300" />{t('home.v3.cta.perk1')}</div>
-            <div className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-teal-300" />{t('home.v3.cta.perk2')}</div>
-            <div className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-teal-300" />{t('home.v3.cta.perk3')}</div>
           </div>
         </div>
       </section>
@@ -955,6 +1026,13 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Mar Group Credit */}
+      <div className="bg-slate-950 border-t border-slate-800 py-4 text-center">
+        <p className="text-xs text-slate-500">
+          Sajti i krijuar nga <span className="text-slate-400 font-medium">Mar Group</span>
+        </p>
+      </div>
 
       {showScrollTop && (
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 p-3 rounded-full bg-teal-600 text-white shadow-lg hover:bg-teal-700 transition-all z-50" aria-label="Scroll to top">
