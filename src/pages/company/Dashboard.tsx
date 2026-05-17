@@ -219,9 +219,9 @@ export default function CompanyDashboard() {
 
       const stocks = stockRes.data ?? [];
       const totalStock = stocks.reduce((s, i) => s + (i.quantity || 0), 0);
-      const stockGood = stocks.filter(s => s.condition === 'good').reduce((s, i) => s + i.quantity, 0);
       const stockDamaged = stocks.filter(s => s.condition === 'damaged').reduce((s, i) => s + i.quantity, 0);
       const stockRepaired = stocks.filter(s => s.condition === 'repaired').reduce((s, i) => s + i.quantity, 0);
+      const stockGood = totalStock - stockDamaged - stockRepaired;
 
       const depotsList = depotListRes.data ?? [];
       const depotStockMap: Record<string, number> = {};
@@ -597,18 +597,16 @@ export default function CompanyDashboard() {
           </div>
 
           {/* Stock by Depot */}
+          {/* Unified Stock Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center gap-2 mb-3">
               <Package className="w-4 h-4 text-teal-600" />
-              <h3 className="font-semibold text-gray-900 text-sm">{t('company.reports.stockByDepot')}</h3>
+              <h3 className="font-semibold text-gray-900 text-sm">{t('company.dashboard.totalStock')}</h3>
+              <span className="ml-auto text-sm font-bold text-gray-900">{stats.stock.toLocaleString()}</span>
             </div>
-            {stats.stockByDepot.length === 0 ? (
-              <div className="text-center py-4">
-                <Warehouse className="w-7 h-7 text-gray-200 mx-auto mb-1" />
-                <p className="text-xs text-gray-400">{t('common.noData')}</p>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
+
+            {stats.stockByDepot.length > 0 && (
+              <div className="space-y-2.5 mb-4 pb-4 border-b border-gray-100">
                 {stats.stockByDepot.slice(0, 5).map(depot => {
                   const pct = (depot.total / maxStockDepot) * 100;
                   return (
@@ -625,11 +623,7 @@ export default function CompanyDashboard() {
                 })}
               </div>
             )}
-          </div>
 
-          {/* Stock Condition */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <h3 className="font-semibold text-gray-900 text-sm mb-3">{t('company.dashboard.totalStock')}</h3>
             <div className="space-y-2.5">
               <ConditionRow label={t('company.stock.good')} value={stats.stockGood} total={stats.stock} color="bg-green-500" icon={CheckCircle2} />
               <ConditionRow label={t('company.stock.damaged')} value={stats.stockDamaged} total={stats.stock} color="bg-red-500" icon={AlertTriangle} />

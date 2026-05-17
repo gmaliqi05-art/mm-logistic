@@ -201,10 +201,17 @@ function buildXRechnung(
   return { xml, errors };
 }
 
-async function buildZugferdPdf(xml: string, sourcePdf?: Uint8Array | null): Promise<Uint8Array> {
+interface InvoicePdfData {
+  invoice: Record<string, unknown>;
+  items: Array<Record<string, unknown>>;
+  seller: Record<string, unknown>;
+  buyer: Record<string, unknown>;
+}
+
+async function buildZugferdPdf(xml: string, invoiceData: InvoicePdfData, sourcePdf?: Uint8Array | null): Promise<Uint8Array> {
   const pdfDoc = sourcePdf
     ? await PDFDocument.load(sourcePdf)
-    : await createPlaceholderPdf();
+    : await createInvoicePdf(invoiceData);
 
   const xmlBytes = new TextEncoder().encode(xml);
   await pdfDoc.attach(xmlBytes, "zugferd-invoice.xml", {
@@ -215,7 +222,6 @@ async function buildZugferdPdf(xml: string, sourcePdf?: Uint8Array | null): Prom
     afRelationship: "Alternative" as unknown as never,
   });
 
-  // Mark PDF/A-3 indicator in metadata
   pdfDoc.setTitle("ZUGFeRD Invoice");
   pdfDoc.setSubject("ZUGFeRD 2.1 / Factur-X compliant invoice");
   pdfDoc.setKeywords(["ZUGFeRD", "PDF/A-3", "XRechnung", "EN 16931"]);
@@ -224,11 +230,104 @@ async function buildZugferdPdf(xml: string, sourcePdf?: Uint8Array | null): Prom
   return await pdfDoc.save();
 }
 
-async function createPlaceholderPdf(): Promise<PDFDocument> {
+function truncText(text: string, maxLen: number): string {
+  return text.length > maxLen ? text.substring(0, maxLen - 2) + ".." : text;
+}
+
+async function createInvoicePdf(data: InvoicePdfData): Promise<PDFDocument> {
+  const { invoice, items, seller, buyer } = data;
   const doc = await PDFDocument.create();
   const page = doc.addPage([595.28, 841.89]);
-  page.drawText("ZUGFeRD Invoice", { x: 50, y: 780, size: 20 });
-  page.drawText("Structured invoice data is embedded as XML.", { x: 50, y: 750, size: 12 });
+  const { height } = page.getSize();
+  let y = height - 50;
+
+  const sellerName = String(seller.name ?? "");
+  const buyerName = String(buyer.name ?? "");
+  const invNumber = String(invoice.invoice_number ?? "");
+  const invDate = String(invoice.invoice_date ?? "");
+  const dueDate = String(invoice.due_date ?? "");
+  const currency = String(invoice.currency ?? "EUR");
+  const subtotal = Number(invoice.subtotal ?? 0);
+  const vatAmount = Number(invoice.vat_amount ?? 0);
+  const total = Number(invoice.total ?? 0);
+
+  // Header - seller name
+  page.drawText(sellerName, { x: 50, y, size: 18 });
+  y -= 18;
+  const sellerAddr = [seller.address, seller.postal_code, seller.city, seller.country].filter(Boolean).join(", ");
+  page.drawText(truncText(String(sellerAddr), 80), { x: 50, y, size: 9 });
+  y -= 12;
+  if (seller.vat_number) {
+    page.drawText(`VAT: ${seller.vat_number}`, { x: 50, y, size: 9 });
+    y -= 12;
+  }
+  if (seller.email) {
+    page.drawText(String(seller.email), { x: 50, y, size: 9 });
+    y -= 12;
+  }
+
+  // Invoice number on the right side
+  page.drawText("Rechnung / Invoice", { x: 380, y: height - 50, size: 14 });
+  page.drawText(`Nr: ${invNumber}`, { x: 380, y: height - 68, size: 10 });
+  page.drawText(`Datum: ${invDate}`, { x: 380, y: height - 82, size: 10 });
+  if (dueDate) page.drawText(`Fallig: ${dueDate}`, { x: 380, y: height - 96, size: 10 });
+
+  // Buyer section
+  y -= 20;
+  page.drawText("An / To:", { x: 50, y, size: 9 });
+  y -= 14;
+  page.drawText(truncText(buyerName, 60), { x: 50, y, size: 11 });
+  y -= 14;
+  const buyerAddr = [buyer.address, buyer.postal_code, buyer.city, buyer.country].filter(Boolean).join(", ");
+  page.drawText(truncText(String(buyerAddr), 80), { x: 50, y, size: 9 });
+  y -= 12;
+  if (buyer.vat_number) {
+    page.drawText(`VAT: ${buyer.vat_number}`, { x: 50, y, size: 9 });
+    y -= 12;
+  }
+
+  // Line items header
+  y -= 25;
+  page.drawText("Pos", { x: 50, y, size: 9 });
+  page.drawText("Beschreibung", { x: 80, y, size: 9 });
+  page.drawText("Menge", { x: 320, y, size: 9 });
+  page.drawText("Preis", { x: 380, y, size: 9 });
+  page.drawText("Betrag", { x: 460, y, size: 9 });
+  y -= 4;
+  page.drawLine({ start: { x: 50, y }, end: { x: 545, y }, thickness: 0.5 });
+  y -= 14;
+
+  // Line items
+  for (let i = 0; i < items.length && y > 100; i++) {
+    const it = items[i];
+    const qty = Number(it.quantity ?? 1);
+    const unitPrice = Number(it.unit_price ?? 0);
+    const lineTotal = Number(it.line_total ?? qty * unitPrice);
+    const desc = truncText(String(it.description ?? it.product_name ?? `Item ${i + 1}`), 40);
+
+    page.drawText(String(i + 1), { x: 50, y, size: 9 });
+    page.drawText(desc, { x: 80, y, size: 9 });
+    page.drawText(qty.toString(), { x: 320, y, size: 9 });
+    page.drawText(money(unitPrice), { x: 380, y, size: 9 });
+    page.drawText(money(lineTotal), { x: 460, y, size: 9 });
+    y -= 16;
+  }
+
+  // Totals
+  y -= 10;
+  page.drawLine({ start: { x: 350, y: y + 6 }, end: { x: 545, y: y + 6 }, thickness: 0.5 });
+  page.drawText("Netto:", { x: 380, y, size: 10 });
+  page.drawText(`${money(subtotal)} ${currency}`, { x: 460, y, size: 10 });
+  y -= 16;
+  page.drawText("MwSt:", { x: 380, y, size: 10 });
+  page.drawText(`${money(vatAmount)} ${currency}`, { x: 460, y, size: 10 });
+  y -= 16;
+  page.drawText("Gesamt:", { x: 380, y, size: 11 });
+  page.drawText(`${money(total)} ${currency}`, { x: 460, y, size: 11 });
+
+  // Footer
+  page.drawText("ZUGFeRD 2.1 / EN 16931 konform - Strukturierte Rechnungsdaten als XML eingebettet", { x: 50, y: 30, size: 7 });
+
   return doc;
 }
 
@@ -300,7 +399,7 @@ Deno.serve(async (req: Request) => {
 
     let pdfPath: string | null = null;
     if (format === "zugferd") {
-      const pdfBytes = await buildZugferdPdf(xml, null);
+      const pdfBytes = await buildZugferdPdf(xml, { invoice, items: items ?? [], seller, buyer }, null);
       pdfPath = `${companyId}/einvoice/${invoice_id}.pdf`;
       const { error: pdfUploadErr } = await supabase.storage
         .from("acc-documents")
