@@ -10,9 +10,6 @@ import {
   CheckCircle2,
   Send,
   MapPin,
-  ArrowUpRight,
-  ArrowDownRight,
-  RefreshCw,
   Wrench,
   BarChart3,
   Users,
@@ -61,7 +58,7 @@ interface Stats {
   statusCounts: Record<string, number>;
   stockByDepot: { name: string; total: number; depotId: string }[];
   driverStats: DriverRow[];
-  recentMovements: { type: string; quantity: number; depot: string; category: string; product: string; created_at: string }[];
+  recentMovements: { id: string; noteNumber: string; partner: string; date: string }[];
   dayBuckets: DayBucket[];
 }
 
@@ -213,9 +210,10 @@ export default function CompanyDashboard() {
         supabase.from('delivery_notes').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('type', 'pickup').in('status', ['draft', 'sent', 'in_transit']),
         supabase.from('depots').select('id, name').eq('company_id', companyId).eq('is_active', true),
         supabase.from('delivery_notes').select('assigned_driver_id, status, delivered_at, scheduled_delivery_at, scheduled_pickup_at').eq('company_id', companyId),
-        supabase.from('stock_movements')
-          .select('movement_type, quantity, depot:depots(name), category:product_categories(name), product:category_products(name), created_at')
-          .eq('company_id', companyId).order('created_at', { ascending: false }).limit(5),
+        supabase.from('delivery_notes')
+          .select('id, note_number, status, partner_name, confirmed_at, delivered_at, created_at')
+          .eq('company_id', companyId).eq('status', 'confirmed')
+          .order('confirmed_at', { ascending: false }).limit(5),
         supabase.from('delivery_notes').select('status, created_at, delivered_at').eq('company_id', companyId).neq('status', 'draft').gte('created_at', fromIso),
       ]);
 
@@ -276,12 +274,10 @@ export default function CompanyDashboard() {
       const dayBuckets = Object.values(bucketMap);
 
       const recentMovements = (movementsRes.data ?? []).map((m: any) => ({
-        type: m.movement_type,
-        quantity: m.quantity,
-        depot: m.depot?.name || '-',
-        category: m.category?.name || '-',
-        product: m.product?.name || '',
-        created_at: m.created_at,
+        id: m.id,
+        noteNumber: m.note_number || '-',
+        partner: m.partner_name || '-',
+        date: m.confirmed_at || m.delivered_at || m.created_at,
       }));
 
       setStats({
@@ -565,6 +561,41 @@ export default function CompanyDashboard() {
 
         {/* Right column */}
         <div className="space-y-5">
+          {/* Driver Activity */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-teal-600" />
+                <h3 className="font-semibold text-gray-900 text-sm">{t('company.reports.driverActivity')}</h3>
+              </div>
+              <Link to="/company/drivers" className="text-[10px] text-teal-600 hover:text-teal-700 font-medium">{t('company.dashboard.manageDrivers')}</Link>
+            </div>
+            {stats.driverStats.length === 0 ? (
+              <div className="text-center py-3">
+                <Truck className="w-7 h-7 text-gray-200 mx-auto mb-1" />
+                <p className="text-xs text-gray-400">{t('company.drivers.noDrivers')}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {stats.driverStats.slice(0, 5).map((driver, idx) => (
+                  <div key={driver.name} className="flex items-center gap-2.5">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${idx === 0 ? 'bg-teal-500' : idx === 1 ? 'bg-emerald-500' : 'bg-gray-400'}`}>
+                      {driver.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-900 truncate">{driver.name}</p>
+                      <div className="flex items-center gap-2 text-[10px]">
+                        {driver.assigned > 0 && <span className="text-amber-600">{driver.assigned} aktive</span>}
+                        <span className="text-green-600">{driver.deliveredToday} ok</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-gray-700">{driver.assigned + driver.deliveredToday + driver.confirmed}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Stock by Depot */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -606,48 +637,11 @@ export default function CompanyDashboard() {
             </div>
           </div>
 
-          {/* Driver Activity */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-teal-600" />
-                <h3 className="font-semibold text-gray-900 text-sm">{t('company.reports.driverActivity')}</h3>
-              </div>
-              <Link to="/company/drivers" className="text-[10px] text-teal-600 hover:text-teal-700 font-medium">{t('company.dashboard.manageDrivers')}</Link>
-            </div>
-            {stats.driverStats.length === 0 ? (
-              <div className="text-center py-3">
-                <Truck className="w-7 h-7 text-gray-200 mx-auto mb-1" />
-                <p className="text-xs text-gray-400">{t('company.drivers.noDrivers')}</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {stats.driverStats.slice(0, 5).map((driver, idx) => (
-                  <div key={driver.name} className="flex items-center gap-2.5">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${idx === 0 ? 'bg-teal-500' : idx === 1 ? 'bg-emerald-500' : 'bg-gray-400'}`}>
-                      {driver.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900 truncate">{driver.name}</p>
-                      <div className="flex items-center gap-2 text-[10px]">
-                        {driver.assigned > 0 && <span className="text-amber-600">{driver.assigned} aktive</span>}
-                        <span className="text-green-600">{driver.deliveredToday} ok</span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-gray-700">{driver.assigned + driver.deliveredToday + driver.confirmed}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Desktop Quick Actions */}
           <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <h3 className="font-semibold text-gray-900 text-sm mb-3">{t('company.dashboard.quickActions')}</h3>
             <div className="space-y-1.5">
               <QuickAction to="/company/delivery-notes" icon={FileText} label={t('company.deliveryNotes.createNote')} color="teal" />
-              <QuickAction to="/company/depots" icon={Warehouse} label={t('company.depots.addDepot')} color="emerald" />
-              <QuickAction to="/company/drivers" icon={Truck} label={t('company.drivers.addDriver')} color="cyan" />
               <QuickAction to="/company/reports" icon={BarChart3} label={t('company.dashboard.viewReports')} color="gray" />
             </div>
           </div>
@@ -658,26 +652,27 @@ export default function CompanyDashboard() {
       {stats.recentMovements.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-4 py-3.5 border-b border-gray-100 flex items-center gap-2">
-            <RefreshCw className="w-4 h-4 text-teal-600" />
-            <h2 className="font-semibold text-gray-900 text-sm">{t('depot.dashboard.recentMovements')}</h2>
+            <CheckCircle2 className="w-4 h-4 text-teal-600" />
+            <h2 className="font-semibold text-gray-900 text-sm">{t('company.dashboard.completedOrders')}</h2>
           </div>
           <div className="divide-y divide-gray-50">
-            {stats.recentMovements.map((m, i) => (
-              <div key={i} className="px-4 py-3 flex items-center gap-3">
-                <div className={`p-1.5 rounded-lg ${m.type === 'entry' ? 'bg-green-100' : m.type === 'exit' ? 'bg-red-100' : 'bg-amber-100'}`}>
-                  {m.type === 'entry' ? <ArrowDownRight className="w-3.5 h-3.5 text-green-600" /> : m.type === 'exit' ? <ArrowUpRight className="w-3.5 h-3.5 text-red-600" /> : <Wrench className="w-3.5 h-3.5 text-amber-600" />}
+            {stats.recentMovements.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setQuickNoteId(m.id)}
+                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
+              >
+                <div className="p-1.5 rounded-lg bg-teal-100">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{m.product || m.category}</p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {m.product ? `${m.category} · ` : ''}{m.depot}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{m.noteNumber}</p>
+                  <p className="text-xs text-gray-500 truncate">{m.partner}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-bold text-gray-900">{m.quantity}</p>
-                  <p className="text-[10px] text-gray-400">{new Date(m.created_at).toLocaleDateString()}</p>
+                  <p className="text-[10px] text-gray-400">{new Date(m.date).toLocaleDateString()}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

@@ -868,6 +868,7 @@ export const fr: typeof sq = {
       manageDrivers: 'G\u00e9rer les chauffeurs',
       viewStock: 'Voir le stock',
       viewReports: 'Voir les rapports',
+      completedOrders: 'Commandes termin\u00e9es',
     },
     depots: {
       title: 'D\u00e9p\u00f4ts / Personnel',

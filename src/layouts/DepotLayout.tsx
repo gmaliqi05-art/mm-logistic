@@ -158,7 +158,7 @@ export default function DepotLayout() {
 
         <footer className="hidden lg:block border-t border-gray-200 bg-white px-6 py-3 text-center">
           <p className="text-gray-400 text-xs">
-            {t('common.createdBy')} <span className="text-gray-500 font-medium">MM Logistic</span>
+            {t('common.createdBy')} <span className="text-gray-500 font-medium">MarGroup</span>
           </p>
         </footer>
       </div>

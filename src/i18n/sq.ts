@@ -866,6 +866,7 @@ export const sq = {
       manageDrivers: 'Menaxho Shoferet',
       viewStock: 'Shiko Stokun',
       viewReports: 'Shiko Raportet',
+      completedOrders: 'Porosite e Perfunduara',
     },
     depots: {
       title: 'Depo/Puntor',

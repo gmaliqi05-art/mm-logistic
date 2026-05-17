@@ -871,6 +871,7 @@ export const en: typeof sq = {
       manageDrivers: 'Manage Drivers',
       viewStock: 'View Stock',
       viewReports: 'View Reports',
+      completedOrders: 'Completed Orders',
     },
     depots: {
       title: 'Depots / Staff',
