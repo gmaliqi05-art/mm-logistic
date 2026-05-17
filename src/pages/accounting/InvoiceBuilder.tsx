@@ -166,6 +166,8 @@ export default function InvoiceBuilder() {
   const [deliveryNoteSearch, setDeliveryNoteSearch] = useState('');
   const [deliveryNoteResults, setDeliveryNoteResults] = useState<Array<{ id: string; note_number: string; partner_name: string | null; type: string; delivered_at: string | null; partner_id: string | null }>>([]);
   const [deliveryNoteSearchOpen, setDeliveryNoteSearchOpen] = useState(false);
+  const [deliveryNotePartner, setDeliveryNotePartner] = useState<string>('');
+  const [deliveryNoteDate, setDeliveryNoteDate] = useState<string>('');
   const [editingContact, setEditingContact] = useState(false);
   const [newContactForm, setNewContactForm] = useState<Partial<Contact> & { name: string }>({ name: '' });
   const [savingContact, setSavingContact] = useState(false);
@@ -243,6 +245,8 @@ export default function InvoiceBuilder() {
     if (!dn) return;
     setDeliveryNoteId(dn.id as string);
     setDeliveryNoteNumber((dn.note_number as string) || '');
+    setDeliveryNotePartner((dn.partner_name as string) || '');
+    setDeliveryNoteDate(dn.delivered_at ? String(dn.delivered_at).slice(0, 10) : '');
     if (dn.partner_id) setContactId(dn.partner_id as string);
     if (dn.delivered_at) setDeliveryDate(String(dn.delivered_at).slice(0, 10));
 
@@ -375,6 +379,21 @@ export default function InvoiceBuilder() {
       setPaymentTermsDays(i.payment_terms_days ?? 14);
       setNotes(i.notes ?? '');
       setBuyerVatOverride(i.buyer_vat_number ?? '');
+      // Load linked delivery note info
+      const dnId = (inv as any).delivery_note_id;
+      if (dnId) {
+        setDeliveryNoteId(dnId);
+        const { data: dn } = await supabase
+          .from('delivery_notes')
+          .select('note_number, partner_name, delivered_at')
+          .eq('id', dnId)
+          .maybeSingle();
+        if (dn) {
+          setDeliveryNoteNumber((dn.note_number as string) || '');
+          setDeliveryNotePartner((dn.partner_name as string) || '');
+          setDeliveryNoteDate(dn.delivered_at ? String(dn.delivered_at).slice(0, 10) : '');
+        }
+      }
     }
     if (its && its.length) {
       type It = { id: string; description: string; product_code: string; quantity: number;
@@ -778,8 +797,17 @@ export default function InvoiceBuilder() {
               )}
             </div>
             {deliveryNoteId ? (
-              <div className="rounded-lg bg-teal-50 border border-teal-200 p-3 text-sm text-teal-900">
-                Fletedergesa <span className="font-bold">#{deliveryNoteNumber || '-'}</span> eshte e lidhur me kete fature.
+              <div className="rounded-lg bg-teal-50 border border-teal-200 p-3 space-y-1">
+                <div className="flex items-center gap-2 text-sm text-teal-900">
+                  <FileText className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                  <span>Fletedergesa <span className="font-bold text-teal-800">#{deliveryNoteNumber || '-'}</span></span>
+                </div>
+                {(deliveryNotePartner || deliveryNoteDate) && (
+                  <div className="flex items-center gap-3 text-xs text-teal-700 pl-6">
+                    {deliveryNotePartner && <span>Partneri: <span className="font-semibold">{deliveryNotePartner}</span></span>}
+                    {deliveryNoteDate && <span>Data: <span className="font-semibold">{deliveryNoteDate}</span></span>}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="relative">
@@ -997,6 +1025,26 @@ export default function InvoiceBuilder() {
               </div>
             </div>
             <div className="space-y-2">
+              {/* Column headers - row 1 */}
+              <div className="grid grid-cols-12 gap-2 px-3 pt-1">
+                <span className="col-span-12 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Pershkrimi i artikullit</span>
+              </div>
+              {/* Column headers - row 2 */}
+              <div className="grid grid-cols-12 gap-2 px-3 -mb-1">
+                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Kodi</span>
+                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Sasia</span>
+                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Njesia</span>
+                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Cmimi neto</span>
+                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium">TVSH %</span>
+              </div>
+              {/* Column headers - row 3 */}
+              <div className="grid grid-cols-12 gap-2 px-3 -mb-1">
+                <span className="col-span-4 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Kategoria TVSH</span>
+                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium">Zbritje</span>
+                <span className="col-span-3 text-[10px] uppercase tracking-wider text-slate-400 font-medium text-right">Totali</span>
+                <span className="col-span-2 text-[10px] uppercase tracking-wider text-slate-400 font-medium text-right">Veprime</span>
+              </div>
+
               {items.map((it) => {
                 const lineTotal = Math.max(0, it.quantity * it.unit_price - it.discount_amount);
                 return (
@@ -1056,7 +1104,14 @@ export default function InvoiceBuilder() {
                 <input value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} className={inputCls} />
               </Field>
               <Field label="Shenime" full>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${inputCls} resize-none`} />
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${inputCls} resize-none`} placeholder="Shenime shtese per klientin..." />
+                {deliveryNoteId && deliveryNoteNumber && (
+                  <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    Referenca: Fletedergesa Nr. <span className="font-semibold">{deliveryNoteNumber}</span>
+                    {deliveryNoteDate && <span> ({deliveryNoteDate})</span>}
+                  </p>
+                )}
               </Field>
             </div>
           </section>
@@ -1188,11 +1243,12 @@ function ProductAutocomplete({ value, onChange, onSelect, catalog, inputCls }: {
   const suggestions = useMemo(() => {
     if (!catalog.length) return [] as CatalogItem[];
     const q = value.trim().toLowerCase();
-    if (!q) return catalog.slice(0, 8);
+    if (!q) return catalog.slice(0, 20);
+    const terms = q.split(/\s+/);
     return catalog.filter((p) => {
       const hay = `${p.name} ${p.description ?? ''} ${p.sku ?? ''}`.toLowerCase();
-      return hay.includes(q);
-    }).slice(0, 8);
+      return terms.every((t) => hay.includes(t));
+    }).slice(0, 20);
   }, [catalog, value]);
 
   useEffect(() => {
