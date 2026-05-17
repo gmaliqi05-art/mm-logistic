@@ -189,6 +189,7 @@ export const fr: typeof sq = {
     partners: 'Partenaires',
     partnerFlows: 'Flux partenaires',
     reports: 'Rapports',
+    sortingReports: 'Rapports de tri',
     repairReports: 'Rapports de r\u00e9paration',
     workerRepairStats: 'Statistiques employés',
     auditLog: 'Journal d\'audit',

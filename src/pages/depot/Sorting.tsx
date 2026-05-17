@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Wrench,
   Minus,
+  Send,
 } from 'lucide-react';
 import PalletScanner from '../../components/scanner/PalletScanner';
 import { supabase } from '../../lib/supabase';
@@ -34,6 +35,7 @@ interface BatchWithItems extends PalletSortingBatch {
   items: PalletSortingItem[];
   source_delivery_note_id?: string | null;
   reference_number_snapshot?: string | null;
+  report_sent_at?: string | null;
 }
 
 interface ItemInput {
@@ -308,6 +310,66 @@ export default function DepotSorting() {
     }
   }
 
+  async function handleSendReport(batch: BatchWithItems) {
+    try {
+      setSubmitting(true);
+      setError(null);
+      const { error: updErr } = await supabase
+        .from('pallet_sorting_batches')
+        .update({ report_sent_at: new Date().toISOString() })
+        .eq('id', batch.id);
+      if (updErr) throw updErr;
+
+      const cat = categories.find((c) => c.id === batch.category_id);
+      const itemsSummary = batch.items
+        .filter((i) => i.quantity > 0)
+        .map((i) => {
+          const prod = products.find((p) => p.id === i.category_product_id);
+          return `${prod?.name || '-'}: ${i.quantity}`;
+        })
+        .join(', ');
+
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('company_id', profile!.company_id!)
+        .eq('role', 'company_admin')
+        .eq('is_active', true);
+
+      if (admins && admins.length > 0) {
+        const rows = admins.map((a) => ({
+          user_id: a.id,
+          type: 'delivery',
+          title: 'Raport sortimi',
+          message: `${cat?.name || 'Kategori'} (${batch.reference_number_snapshot || '-'}): ${itemsSummary}`,
+          data: JSON.stringify({
+            url: '/company/sorting-reports',
+            batch_id: batch.id,
+            category: cat?.name,
+            total_received: batch.total_received,
+            items: batch.items.filter((i) => i.quantity > 0).map((i) => ({
+              product_name: products.find((p) => p.id === i.category_product_id)?.name || '-',
+              quantity: i.quantity,
+              condition: i.condition,
+            })),
+          }),
+          reference_id: batch.id,
+          is_read: false,
+          push_sent: false,
+        }));
+        await supabase.from('notifications').insert(rows);
+      }
+
+      setSuccess('Raporti u dergua me sukses');
+      setTimeout(() => setSuccess(null), 3000);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || 'Gabim gjate dergimit te raportit');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   function normalizeMatch(s: string) {
     return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
   }
@@ -493,6 +555,20 @@ export default function DepotSorting() {
                         {new Date(b.completed_at || b.updated_at).toLocaleDateString()}
                       </p>
                     </div>
+                    {b.status === 'completed' && !b.report_sent_at && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSendReport(b); }}
+                        disabled={submitting}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-50"
+                      >
+                        <Send className="w-3 h-3" /> Dergo raportin
+                      </button>
+                    )}
+                    {b.status === 'completed' && b.report_sent_at && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-teal-50 text-teal-700">
+                        Raporti u dergua
+                      </span>
+                    )}
                     <span
                       className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
                         b.status === 'completed'

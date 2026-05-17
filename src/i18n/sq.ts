@@ -187,6 +187,7 @@ export const sq = {
     partners: 'Partneret',
     partnerFlows: 'Rrjedhat me partneret',
     reports: 'Raportet',
+    sortingReports: 'Raportet e Sortimit',
     repairReports: 'Raportet e Reparatures',
     workerRepairStats: 'Statistikat e Puntoreve',
     auditLog: 'Regjistri',

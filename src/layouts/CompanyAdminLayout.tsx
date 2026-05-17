@@ -29,6 +29,7 @@ import {
   ScanLine,
   Key,
   Route,
+  Layers,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -56,6 +57,7 @@ const allNavItems = [
   { to: '/company/stock', icon: Package, labelKey: 'nav.stock', end: false, premium: false, bottomNav: true },
   { to: '/company/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, premium: false, bottomNav: true },
   { to: '/company/depots', icon: Warehouse, labelKey: 'nav.depots', end: false, premium: false, bottomNav: false },
+  { to: '/company/sorting-reports', icon: Layers, labelKey: 'nav.sortingReports', end: false, premium: false, bottomNav: false },
   { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports', end: false, premium: false, bottomNav: false },
   { to: '/company/worker-repair-stats', icon: BarChart3, labelKey: 'nav.workerRepairStats', end: false, premium: false, bottomNav: false },
   { to: '/company/drivers', icon: Truck, labelKey: 'nav.drivers', end: false, premium: false, bottomNav: false },

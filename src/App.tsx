@@ -124,6 +124,7 @@ const DriverNavigation = lazy(() => import('./pages/driver/Navigation'));
 const DriverTrailers = lazy(() => import('./pages/driver/Trailers'));
 const CompanyRoutePlanner = lazy(() => import('./pages/company/RoutePlanner'));
 const CompanyFleetReports = lazy(() => import('./pages/company/FleetReports'));
+const CompanySortingReports = lazy(() => import('./pages/company/SortingReports'));
 const LogisticsLiveMap = lazy(() => import('./pages/logistics/LiveMap'));
 const CompanyPalletAccounts = lazy(() => import('./pages/company/PalletAccounts'));
 const CompanyPalletAccountDetail = lazy(() => import('./pages/company/PalletAccountDetail'));
@@ -260,6 +261,7 @@ function AppRoutes() {
           <Route path="fleet-reports" element={<CompanyFleetReports />} />
           <Route path="reports" element={<CompanyReports />} />
           <Route path="sorting" element={<DepotSorting />} />
+          <Route path="sorting-reports" element={<CompanySortingReports />} />
           <Route path="repair-reports" element={<CompanyRepairReports />} />
           <Route path="worker-repair-stats" element={<CompanyWorkerRepairStats />} />
           <Route path="chat" element={<CompanyChat />} />

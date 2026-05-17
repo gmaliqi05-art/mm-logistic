@@ -381,6 +381,22 @@ function ReviewModal({
     return ((note.counterparty_name || note.partner_name || fromAi || '') as string).trim();
   }
 
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!itemsDirty || loading || persistingRef.current) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      if (persistingRef.current) return;
+      try {
+        await persistItems();
+        setItemsDirty(false);
+      } catch { /* silent */ }
+    }, 1500);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [rows, deletedIds, itemsDirty, loading]);
+
   async function handleUploadDocument(file: File) {
     if (!file) return;
     setUploading(true);
@@ -2265,7 +2281,13 @@ function SplitRow({
             <button
               key={opt.value}
               type="button"
-              onClick={() => onUpdate(row._key, { condition: opt.value })}
+              onClick={() => {
+                const actionForCondition: Record<string, 'stock' | 'sorting' | 'repair'> = {
+                  good: 'stock', damaged: 'repair', sorting: 'sorting',
+                  ready_a: 'sorting', ready_b: 'sorting', ready_c: 'sorting',
+                };
+                onUpdate(row._key, { condition: opt.value, intended_action: actionForCondition[opt.value] || 'stock' });
+              }}
               className={`px-2 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
                 active ? `${opt.tone} text-white border-transparent` : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
               }`}
