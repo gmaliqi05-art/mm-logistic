@@ -16,6 +16,7 @@ import {
   Truck,
   Calendar,
   Clock,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -47,6 +48,7 @@ const allNavItems: Array<{
   { to: '/depot/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
   { to: '/depot/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/depot/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
+  { to: '/depot/settings', icon: Settings, labelKey: 'nav.settings', end: false, bottomNav: false },
 ];
 
 function filterByCategory(cat: WorkerCategory | null | undefined) {

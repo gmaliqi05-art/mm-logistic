@@ -447,8 +447,23 @@ export default function DepotRepairWorkers() {
           title,
           message,
           type: 'document',
+          data: { url: '/company/repair-reports' },
         }));
         await supabase.from('notifications').insert(rows);
+      }
+
+      const workerIds = workersPayload
+        .map((w) => w.worker_id)
+        .filter((id) => id && id !== profile!.id);
+      if (workerIds.length > 0) {
+        const workerNotifs = workerIds.map((wid) => ({
+          user_id: wid,
+          title: 'Raporti u dergua ne stok',
+          message: `Punet tuaja te sotme u konfirmuan dhe u regjistruan ne stok.`,
+          type: 'stock' as const,
+          data: { url: '/depot/repairs', event: 'repair_confirmed' },
+        }));
+        await supabase.from('notifications').insert(workerNotifs);
       }
 
       setSuccess(t('depot.repairWorkers.reportedOk'));

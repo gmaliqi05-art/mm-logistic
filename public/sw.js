@@ -148,6 +148,16 @@ self.addEventListener('push', (event) => {
         { action: 'open', title: 'Shiko Fletedergesen' },
         { action: 'close', title: 'Mbyll' }
       ];
+    } else if (data.type === 'stock') {
+      options.actions = [
+        { action: 'open', title: 'Shiko Stokun' },
+        { action: 'close', title: 'Mbyll' }
+      ];
+    } else if (data.type === 'assignment') {
+      options.actions = [
+        { action: 'open', title: 'Shiko Detyren' },
+        { action: 'close', title: 'Mbyll' }
+      ];
     }
 
     event.waitUntil(
