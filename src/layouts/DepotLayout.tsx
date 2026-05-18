@@ -23,6 +23,7 @@ import { useTranslation } from '../i18n';
 import { useCompanyBranding } from '../hooks/useCompanyBranding';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import DeletionBanner from '../components/DeletionBanner';
 
 type WorkerCategory = 'depoist' | 'reparature';
 
@@ -159,6 +160,7 @@ export default function DepotLayout() {
           </div>
         </header>
 
+        <DeletionBanner />
         <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
           <Outlet />
         </main>

@@ -26,6 +26,7 @@ import RegisterPage from './pages/RegisterPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings'));
+const AccountDeletion = lazy(() => import('./pages/AccountDeletion'));
 import InstallPromptBanner from './components/InstallPromptBanner';
 import PushAutoSubscribe from './components/PushAutoSubscribe';
 import PushEnableBanner from './components/PushEnableBanner';
@@ -213,6 +214,11 @@ function AppRoutes() {
         <Route path="/settings/security" element={
           <ProtectedRoute>
             <SecuritySettings />
+          </ProtectedRoute>
+        } />
+        <Route path="/settings/account" element={
+          <ProtectedRoute>
+            <AccountDeletion />
           </ProtectedRoute>
         } />
 

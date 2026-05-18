@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, User, Bell } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
@@ -74,6 +74,19 @@ export default function DepotSettings() {
         <div className="px-5 py-4">
           <PushNotificationSettings />
         </div>
+      </div>
+
+      <div className="pt-4 border-t border-gray-200">
+        <a
+          href="/settings/account"
+          className="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+          Fshi llogarine
+        </a>
+        <p className="text-xs text-gray-400 mt-1 ml-6">
+          Fshini llogarine tuaj dhe te dhenat personale
+        </p>
       </div>
     </div>
   );

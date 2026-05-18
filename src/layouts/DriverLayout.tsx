@@ -23,6 +23,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import DriverTrackingIndicator from '../components/DriverTrackingBanner';
 import DriverShiftEndModal from '../components/DriverShiftEndModal';
 import { DriverTrackingProvider } from '../contexts/DriverTrackingContext';
+import DeletionBanner from '../components/DeletionBanner';
 
 const navItems = [
   { to: '/driver', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, bottomNav: true },
@@ -145,6 +146,7 @@ export default function DriverLayout() {
         </header>
 
         <DriverShiftEndModal />
+        <DeletionBanner />
         <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
           <Outlet />
         </main>

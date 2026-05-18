@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Upload, Save, Loader2, Image as ImageIcon, Radio, FileText, Bell, Plug, ShieldCheck } from 'lucide-react';
+import { Building2, Upload, Save, Loader2, Image as ImageIcon, Radio, FileText, Bell, Plug, ShieldCheck, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -502,6 +502,20 @@ export default function CompanySettings() {
               </button>
             </div>
           )}
+
+          {/* Account deletion link */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <a
+              href="/settings/account"
+              className="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Fshi llogarine
+            </a>
+            <p className="text-xs text-gray-400 mt-1 ml-6">
+              Fshini llogarine tuaj dhe te gjitha te dhenat e lidhura perfundimisht
+            </p>
+          </div>
         </div>
       </div>
     </div>

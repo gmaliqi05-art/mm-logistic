@@ -40,6 +40,7 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import SubscriptionBanner from '../components/subscription/SubscriptionBanner';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { usePendingReviewCounts } from '../hooks/usePendingReviewCounts';
+import DeletionBanner from '../components/DeletionBanner';
 
 const allNavItems = [
   { to: '/company', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, premium: false, bottomNav: true },
@@ -239,6 +240,7 @@ export default function CompanyAdminLayout() {
           </div>
         </header>
 
+        <DeletionBanner />
         <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto print:p-0">
           <Outlet />
         </main>
