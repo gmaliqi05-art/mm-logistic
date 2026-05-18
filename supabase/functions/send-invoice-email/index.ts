@@ -143,13 +143,31 @@ Deno.serve(async (req: Request) => {
       company_name: company?.name || "",
     };
 
+    // Load company email settings for template and CC preferences
+    const { data: emailSettings } = await supabase
+      .from("company_email_settings")
+      .select("invoice_template_code, default_locale, cc_admin_on_invoice, cc_email")
+      .eq("company_id", invoice.company_id)
+      .maybeSingle();
+
+    const templateCode = emailSettings?.invoice_template_code || "invoice_issued";
+    const effectiveLocale = locale ?? emailSettings?.default_locale ?? "sq";
+
+    const allRecipients = [...recipients];
+    if (emailSettings?.cc_admin_on_invoice && emailSettings?.cc_email) {
+      const ccEmail = emailSettings.cc_email.trim();
+      if (ccEmail && !allRecipients.includes(ccEmail)) {
+        allRecipients.push(ccEmail);
+      }
+    }
+
     // Send email via send-email function
     const sendUrl = `${supabaseUrl}/functions/v1/send-email`;
     const emailPayload: Record<string, unknown> = {
-      template_code: "invoice_issued",
-      to: recipients,
+      template_code: templateCode,
+      to: allRecipients,
       company_id: invoice.company_id,
-      locale: locale ?? "sq",
+      locale: effectiveLocale,
       data: templateData,
     };
 

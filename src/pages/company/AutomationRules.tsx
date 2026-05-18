@@ -9,9 +9,15 @@ interface Settings {
   reminder_day_0: boolean;
   reminder_day_7: boolean;
   reminder_day_14: boolean;
+  reminder_day_30: boolean;
   default_locale: string;
   invoice_template_code: string;
   reminder_template_code: string;
+  final_reminder_template_code: string;
+  send_time_start: string;
+  send_time_end: string;
+  cc_admin_on_invoice: boolean;
+  cc_email: string;
 }
 
 const DEFAULTS: Settings = {
@@ -20,9 +26,15 @@ const DEFAULTS: Settings = {
   reminder_day_0: true,
   reminder_day_7: true,
   reminder_day_14: true,
+  reminder_day_30: false,
   default_locale: 'sq',
   invoice_template_code: 'invoice_issued',
   reminder_template_code: 'invoice_overdue',
+  final_reminder_template_code: 'invoice_final_reminder',
+  send_time_start: '09:00',
+  send_time_end: '17:00',
+  cc_admin_on_invoice: false,
+  cc_email: '',
 };
 
 interface TemplateOption {
@@ -53,6 +65,7 @@ export default function AutomationRules() {
       supabase.from('email_templates')
         .select('code, name')
         .or(`company_id.is.null,company_id.eq.${companyId}`)
+        .in('audience', ['company', 'all'])
         .eq('is_active', true)
         .order('name'),
     ]);
@@ -66,9 +79,15 @@ export default function AutomationRules() {
         reminder_day_0: d.reminder_day_0 ?? true,
         reminder_day_7: d.reminder_day_7 ?? true,
         reminder_day_14: d.reminder_day_14 ?? true,
+        reminder_day_30: d.reminder_day_30 ?? false,
         default_locale: d.default_locale ?? 'sq',
         invoice_template_code: d.invoice_template_code ?? 'invoice_issued',
         reminder_template_code: d.reminder_template_code ?? 'invoice_overdue',
+        final_reminder_template_code: d.final_reminder_template_code ?? 'invoice_final_reminder',
+        send_time_start: d.send_time_start ?? '09:00',
+        send_time_end: d.send_time_end ?? '17:00',
+        cc_admin_on_invoice: d.cc_admin_on_invoice ?? false,
+        cc_email: d.cc_email ?? '',
       });
     }
 
@@ -236,22 +255,125 @@ export default function AutomationRules() {
                 />
                 <span className="text-sm text-gray-700">14 dite pas afatit (+14 dite vonese)</span>
               </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.reminder_day_30}
+                  onChange={(e) => setSettings(s => ({ ...s, reminder_day_30: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                />
+                <span className="text-sm text-gray-700">30 dite pas afatit - Rikujtim i fundit (+30 dite vonese)</span>
+              </label>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Template per rikujtim</label>
-              <select
-                value={settings.reminder_template_code}
-                onChange={(e) => setSettings(s => ({ ...s, reminder_template_code: e.target.value }))}
-                className="w-full sm:w-64 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-              >
-                {templates.map(t => (
-                  <option key={t.code} value={t.code}>{t.name} ({t.code})</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Template per rikujtim (dita 0-14)</label>
+                <select
+                  value={settings.reminder_template_code}
+                  onChange={(e) => setSettings(s => ({ ...s, reminder_template_code: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  {templates.map(t => (
+                    <option key={t.code} value={t.code}>{t.name} ({t.code})</option>
+                  ))}
+                </select>
+              </div>
+              {settings.reminder_day_30 && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Template per rikujtim te fundit (dita 30)</label>
+                  <select
+                    value={settings.final_reminder_template_code}
+                    onChange={(e) => setSettings(s => ({ ...s, final_reminder_template_code: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  >
+                    {templates.map(t => (
+                      <option key={t.code} value={t.code}>{t.name} ({t.code})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         )}
+      </div>
+
+      {/* Send Time Window */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5 text-blue-700" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-gray-900">Ora e dergimit</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Email-et automatike dergohen vetem brenda ketij orari
+            </p>
+          </div>
+        </div>
+
+        <div className="ml-14 grid grid-cols-2 gap-4 max-w-sm">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Nga ora</label>
+            <input
+              type="time"
+              value={settings.send_time_start}
+              onChange={(e) => setSettings(s => ({ ...s, send_time_start: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Deri ne ora</label>
+            <input
+              type="time"
+              value={settings.send_time_end}
+              onChange={(e) => setSettings(s => ({ ...s, send_time_end: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* CC Admin */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Mail className="w-5 h-5 text-slate-700" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-gray-900">Kopje per administratorin</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Merrni nje kopje (CC) te cdo email-i qe dergohet automatikisht
+            </p>
+          </div>
+        </div>
+
+        <div className="ml-14 space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.cc_admin_on_invoice}
+              onChange={(e) => setSettings(s => ({ ...s, cc_admin_on_invoice: e.target.checked }))}
+              className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Dergo kopje te email-it tek unë
+            </span>
+          </label>
+
+          {settings.cc_admin_on_invoice && (
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Adresa CC</label>
+              <input
+                type="email"
+                value={settings.cc_email}
+                onChange={(e) => setSettings(s => ({ ...s, cc_email: e.target.value }))}
+                className="w-full sm:w-80 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="p.sh. admin@kompania-juaj.com"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Visual timeline */}
@@ -298,7 +420,15 @@ export default function AutomationRules() {
               <TimelineStep
                 icon={<Bell className="w-3.5 h-3.5" />}
                 title="+14 dite pas afatit"
-                description="Rikujtim i fundit: Fatura eshte 14 dite ne vonese"
+                description="Rikujtim i trete: Fatura eshte 14 dite ne vonese"
+                active
+              />
+            )}
+            {settings.auto_reminder_enabled && settings.reminder_day_30 && (
+              <TimelineStep
+                icon={<AlertTriangle className="w-3.5 h-3.5" />}
+                title="+30 dite pas afatit"
+                description="Rikujtim i fundit: Paralajmerim para veprimit ligjor"
                 active
               />
             )}

@@ -101,6 +101,9 @@ const CompanyFinancialSummary = lazy(() => import('./pages/company/FinancialSumm
 const CompanyAccountingUpgrade = lazy(() => import('./pages/company/AccountingUpgrade'));
 const CompanyEmailTemplatesList = lazy(() => import('./pages/company/EmailTemplatesList'));
 const CompanyEmailTemplateEditor = lazy(() => import('./pages/company/EmailTemplateEditor'));
+const CompanyEmailBranding = lazy(() => import('./pages/company/EmailBranding'));
+const CompanyEmailLog = lazy(() => import('./pages/company/EmailLog'));
+const CompanyManualEmail = lazy(() => import('./pages/company/ManualEmail'));
 const CompanyClientPricesPage = lazy(() => import('./pages/company/ClientPricesPage'));
 const CompanyAutomationRules = lazy(() => import('./pages/company/AutomationRules'));
 const AccountingRoute = lazy(() => import('./components/subscription/AccountingRoute'));
@@ -308,10 +311,14 @@ function AppRoutes() {
           <Route path="email" element={<EmailAutomationLayout />}>
             <Route index element={<CompanyEmailTemplatesList />} />
             <Route path="templates" element={<CompanyEmailTemplatesList />} />
+            <Route path="templates/new" element={<CompanyEmailTemplateEditor />} />
             <Route path="templates/:code" element={<CompanyEmailTemplateEditor />} />
-            <Route path="client-prices" element={<CompanyClientPricesPage />} />
+            <Route path="branding" element={<CompanyEmailBranding />} />
             <Route path="automation" element={<CompanyAutomationRules />} />
+            <Route path="send" element={<CompanyManualEmail />} />
+            <Route path="log" element={<CompanyEmailLog />} />
           </Route>
+          <Route path="client-prices" element={<CompanyClientPricesPage />} />
         </Route>
 
         <Route path="/depot" element={

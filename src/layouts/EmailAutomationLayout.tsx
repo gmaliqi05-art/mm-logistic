@@ -1,10 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Mail, FileText, Tag, Settings2 } from 'lucide-react';
+import { Mail, FileText, Palette, Settings2, Send, Clock } from 'lucide-react';
 
 const tabs = [
   { to: '/company/email/templates', icon: FileText, label: 'Templates' },
-  { to: '/company/email/client-prices', icon: Tag, label: 'Cmime Klientesh' },
+  { to: '/company/email/branding', icon: Palette, label: 'Branding' },
   { to: '/company/email/automation', icon: Settings2, label: 'Automatizime' },
+  { to: '/company/email/send', icon: Send, label: 'Dergo Email' },
+  { to: '/company/email/log', icon: Clock, label: 'Historiku' },
 ];
 
 export default function EmailAutomationLayout() {
@@ -18,7 +20,7 @@ export default function EmailAutomationLayout() {
           Email & Automatizime
         </h1>
         <p className="text-gray-500 mt-1 ml-[52px]">
-          Menaxhoni template-t, cmimet e personalizuara dhe rregullat e automatizimit te email-eve
+          Menaxhoni template-t, branding-un, automatizimin dhe dergimin e email-eve per klientet tuaj
         </p>
       </div>
 

@@ -51,7 +51,10 @@ const EMPTY: TemplateData = {
 const COMMON_VARS = [
   'invoice_number', 'amount', 'total_formatted', 'due_date', 'issue_date',
   'customer_name', 'company_name', 'iban', 'bic', 'bank_name',
-  'days_overdue', 'brand_name', 'app_base_url',
+  'days_overdue', 'brand_name', 'app_base_url', 'payment_link',
+  'company_phone', 'company_address', 'contact_person',
+  'payment_date', 'invoice_url', 'statement_period',
+  'open_count', 'total_outstanding', 'oldest_invoice_date',
 ];
 
 export default function EmailTemplateEditor() {

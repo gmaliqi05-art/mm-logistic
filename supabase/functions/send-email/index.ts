@@ -43,7 +43,7 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
 );
 
-async function loadBrand(): Promise<BrandConfig> {
+async function loadBrand(companyId?: string | null): Promise<BrandConfig> {
   const { data } = await supabase
     .from("platform_settings")
     .select("key, value")
@@ -62,7 +62,7 @@ async function loadBrand(): Promise<BrandConfig> {
       "email_company_registration",
     ]);
   const m = new Map((data ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));
-  return {
+  const platformBrand: BrandConfig = {
     brandName: m.get("email_brand_name") || "MM Logistic",
     logoUrl: m.get("email_brand_logo_url") || "",
     primary: m.get("email_brand_primary_color") || "#0f766e",
@@ -75,6 +75,25 @@ async function loadBrand(): Promise<BrandConfig> {
     companyPhone: m.get("email_company_phone") || "",
     companyWebsite: m.get("email_company_website") || "",
     companyRegistration: m.get("email_company_registration") || "",
+  };
+
+  if (!companyId) return platformBrand;
+
+  const { data: companySettings } = await supabase
+    .from("company_email_settings")
+    .select("brand_name, brand_logo_url, brand_primary_color, brand_secondary_color, reply_to_email, from_name")
+    .eq("company_id", companyId)
+    .maybeSingle();
+
+  if (!companySettings) return platformBrand;
+
+  return {
+    ...platformBrand,
+    brandName: companySettings.brand_name || platformBrand.brandName,
+    logoUrl: companySettings.brand_logo_url || platformBrand.logoUrl,
+    primary: companySettings.brand_primary_color || platformBrand.primary,
+    secondary: companySettings.brand_secondary_color || platformBrand.secondary,
+    replyTo: companySettings.reply_to_email || platformBrand.replyTo,
   };
 }
 
@@ -451,10 +470,9 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const brand = await loadBrand();
-    const locale = (body.locale ?? "sq") as Locale;
-
     const companyId = body.company_id ?? null;
+    const brand = await loadBrand(companyId);
+    const locale = (body.locale ?? "sq") as Locale;
     const rendered = await renderTemplate(body.template_code, locale, body.data ?? {}, brand, undefined, companyId);
     if ("error" in rendered) {
       return new Response(JSON.stringify(rendered), {
