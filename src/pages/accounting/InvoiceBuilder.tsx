@@ -174,11 +174,40 @@ export default function InvoiceBuilder() {
 
   const [layout, setLayout] = useState<Layout>('modern');
   const [primaryColor, setPrimaryColor] = useState('#0f766e');
+  const [clientPrices, setClientPrices] = useState<Map<string, number>>(new Map());
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailCc, setEmailCc] = useState('');
+  const [emailLocale, setEmailLocale] = useState<'sq' | 'de' | 'en'>('sq');
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const dirtyRef = useRef(false);
   const invoiceDbIdRef = useRef<string | null>(isEdit ? invoiceId ?? null : null);
 
   useEffect(() => { bootstrap(); }, [profile?.company_id]);
+
+  useEffect(() => {
+    if (!contactId || !profile?.company_id) {
+      setClientPrices(new Map());
+      return;
+    }
+    supabase
+      .from('acc_client_prices')
+      .select('product_id, product_source, custom_price_net')
+      .eq('company_id', profile.company_id)
+      .eq('contact_id', contactId)
+      .eq('is_active', true)
+      .then(({ data }) => {
+        const map = new Map<string, number>();
+        for (const row of (data ?? []) as any[]) {
+          map.set(`${row.product_source}:${row.product_id}`, Number(row.custom_price_net));
+        }
+        setClientPrices(map);
+      });
+    const contact = contacts.find(c => c.id === contactId);
+    if (contact?.email) setEmailRecipient(contact.email);
+  }, [contactId]);
 
   async function bootstrap() {
     if (!profile?.company_id) return;
@@ -519,12 +548,14 @@ export default function InvoiceBuilder() {
     setItems((prev) => prev.map((it) => {
       if (it.id !== itemId) return it;
       const desc = [product.name, product.description].filter(Boolean).join(' — ');
+      const clientKey = `${product.source}:${product.id}`;
+      const clientPrice = clientPrices.get(clientKey);
       return {
         ...it,
         description: desc || product.name || it.description,
         product_code: product.sku ?? it.product_code,
         unit_code: mapUnitToUnece(product.unit),
-        unit_price: product.price_net || it.unit_price,
+        unit_price: clientPrice ?? (product.price_net || it.unit_price),
         vat_rate: product.vat_rate ?? it.vat_rate,
         quantity: it.quantity > 0 ? it.quantity : 1,
       };
@@ -687,7 +718,7 @@ export default function InvoiceBuilder() {
       return;
     }
     setFinalized(true);
-    setShowPreview(true);
+    setShowEmailDialog(true);
   }
 
   function printPreview() {
@@ -1162,6 +1193,133 @@ export default function InvoiceBuilder() {
           </button>
         </div>
       </div>
+
+      {/* Email Send Dialog */}
+      {showEmailDialog && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 print:hidden">
+          <div className="fixed inset-0 bg-black/50" onClick={() => { if (!emailSending) setShowEmailDialog(false); }} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-5 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Send className="w-5 h-5 text-teal-600" />
+                Dergo faturen me Email
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">Fatura do te dergohet si PDF me email</p>
+            </div>
+            <div className="p-5 space-y-4">
+              {emailSent ? (
+                <div className="text-center py-6">
+                  <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+                  <p className="text-lg font-semibold text-gray-900">Email u dergua me sukses!</p>
+                  <p className="text-sm text-gray-500 mt-1">Fatura PDF u dergua te {emailRecipient}</p>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email i klientit *</label>
+                    <input
+                      type="email"
+                      value={emailRecipient}
+                      onChange={(e) => setEmailRecipient(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      placeholder="email@shembull.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CC (opsionale)</label>
+                    <input
+                      type="text"
+                      value={emailCc}
+                      onChange={(e) => setEmailCc(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      placeholder="email1@x.com, email2@x.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gjuha e email-it</label>
+                    <select
+                      value={emailLocale}
+                      onChange={(e) => setEmailLocale(e.target.value as 'sq' | 'de' | 'en')}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="sq">Shqip</option>
+                      <option value="de">Gjermanisht</option>
+                      <option value="en">Anglisht</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-gray-100">
+              {emailSent ? (
+                <>
+                  <button
+                    onClick={() => { setShowEmailDialog(false); setShowPreview(true); }}
+                    className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Shiko faturen
+                  </button>
+                  <button
+                    onClick={() => navigate(listPath)}
+                    className="px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700"
+                  >
+                    Shko te lista
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => { setShowEmailDialog(false); setShowPreview(true); }}
+                    className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Kalo (mos dergo)
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!emailRecipient.trim()) return;
+                      setEmailSending(true);
+                      try {
+                        const recipients = [emailRecipient.trim()];
+                        if (emailCc.trim()) {
+                          recipients.push(...emailCc.split(',').map(e => e.trim()).filter(Boolean));
+                        }
+                        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invoice-email`;
+                        const resp = await fetch(apiUrl, {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            invoice_id: invoiceDbIdRef.current,
+                            recipients,
+                            locale: emailLocale,
+                          }),
+                        });
+                        if (resp.ok) {
+                          setEmailSent(true);
+                        } else {
+                          const err = await resp.json().catch(() => ({}));
+                          setError(err.error || 'Dergimi i email-it deshtoi');
+                        }
+                      } catch (e: any) {
+                        setError(e.message || 'Gabim gjate dergimit');
+                      } finally {
+                        setEmailSending(false);
+                      }
+                    }}
+                    disabled={emailSending || !emailRecipient.trim()}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {emailSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    Dergo me PDF
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showPreview && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex flex-col print:static print:bg-white print:backdrop-blur-0">

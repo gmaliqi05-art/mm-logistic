@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, CreditCard as Edit2, X, AlertTriangle, Loader2, Search, Users, ToggleLeft, ToggleRight, Mail, Phone, MapPin, Globe, CreditCard, Calendar } from 'lucide-react';
+import { Plus, CreditCard as Edit2, X, AlertTriangle, Loader2, Search, Users, ToggleLeft, ToggleRight, Mail, Phone, MapPin, Globe, CreditCard, Calendar, Tag } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { AccContact, AccContactType } from '../../types/accounting';
+import ClientPricesModal from '../../components/accounting/ClientPricesModal';
 
 interface ContactForm {
   name: string;
@@ -73,6 +74,8 @@ export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [showActive, setShowActive] = useState(true);
+  const [pricesContactId, setPricesContactId] = useState<string | null>(null);
+  const [pricesContactName, setPricesContactName] = useState('');
 
   useEffect(() => {
     if (profile?.company_id) fetchContacts();
@@ -376,6 +379,13 @@ export default function Contacts() {
                   </div>
                   <div className="flex items-center gap-1">
                     <button
+                      onClick={() => { setPricesContactId(contact.id); setPricesContactName(contact.name); }}
+                      title="Cmime te personalizuara"
+                      className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                    >
+                      <Tag className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => openEdit(contact)}
                       className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                     >
@@ -658,6 +668,15 @@ export default function Contacts() {
             </div>
           </div>
         </div>
+      )}
+
+      {pricesContactId && profile?.company_id && (
+        <ClientPricesModal
+          contactId={pricesContactId}
+          contactName={pricesContactName}
+          companyId={profile.company_id}
+          onClose={() => setPricesContactId(null)}
+        />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, X, AlertTriangle, Loader2, CreditCard as Edit2, Printer, ChevronDown, Trash2, FileText, FileCode2, Eye, Truck, PackageCheck, PackageOpen, PackageX } from 'lucide-react';
+import { Plus, Search, X, AlertTriangle, Loader2, CreditCard as Edit2, Printer, ChevronDown, Trash2, FileText, FileCode2, Eye, Truck, PackageCheck, PackageOpen, PackageX, Mail, Send, Bell } from 'lucide-react';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -147,6 +147,12 @@ export default function Invoices() {
   const [bankAccounts, setBankAccounts] = useState<AccBankAccount[]>([]);
   const [contactSearch, setContactSearch] = useState('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
+
+  const [emailInvoice, setEmailInvoice] = useState<AccInvoice | null>(null);
+  const [emailTo, setEmailTo] = useState('');
+  const [emailLocale, setEmailLocale] = useState<'sq' | 'de' | 'en'>('sq');
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<AccInvoice | null>(null);
@@ -941,6 +947,19 @@ export default function Invoices() {
                           >
                             <Printer className="w-4 h-4" />
                           </button>
+                          {invoice.status !== 'draft' && invoice.status !== 'cancelled' && (
+                            <button
+                              onClick={() => {
+                                setEmailInvoice(invoice);
+                                setEmailTo(invoice.contact?.email || '');
+                                setEmailSent(false);
+                              }}
+                              className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                              title="Dergo me email"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1028,6 +1047,18 @@ export default function Invoices() {
                   >
                     <Printer className="w-4 h-4" />
                   </button>
+                  {invoice.status !== 'draft' && invoice.status !== 'cancelled' && (
+                    <button
+                      onClick={() => {
+                        setEmailInvoice(invoice);
+                        setEmailTo(invoice.contact?.email || '');
+                        setEmailSent(false);
+                      }}
+                      className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -1444,6 +1475,120 @@ export default function Invoices() {
 
       {statusDropdownId && (
         <div className="fixed inset-0 z-10" onClick={() => setStatusDropdownId(null)} />
+      )}
+
+      {/* Email Send Modal */}
+      {emailInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50" onClick={() => { if (!emailSending) setEmailInvoice(null); }} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-5 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Send className="w-5 h-5 text-teal-600" />
+                Dergo faturen me Email
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {emailInvoice.invoice_number} - {formatCurrency(emailInvoice.total, emailInvoice.currency)}
+              </p>
+            </div>
+            <div className="p-5 space-y-4">
+              {emailSent ? (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Mail className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <p className="text-lg font-semibold text-gray-900">Email u dergua!</p>
+                  <p className="text-sm text-gray-500 mt-1">Fatura PDF u dergua te {emailTo}</p>
+                  {emailInvoice.sent_at && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      Dergimi i pare: {new Date(emailInvoice.sent_at).toLocaleString('de-DE')}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email i klientit *</label>
+                    <input
+                      type="email"
+                      value={emailTo}
+                      onChange={(e) => setEmailTo(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      placeholder="email@shembull.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gjuha e email-it</label>
+                    <select
+                      value={emailLocale}
+                      onChange={(e) => setEmailLocale(e.target.value as 'sq' | 'de' | 'en')}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="sq">Shqip</option>
+                      <option value="de">Gjermanisht</option>
+                      <option value="en">Anglisht</option>
+                    </select>
+                  </div>
+                  {emailInvoice.sent_at && (
+                    <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                      <Bell className="w-4 h-4 flex-shrink-0" />
+                      Kjo fature eshte derguar me pare me {new Date(emailInvoice.sent_at).toLocaleDateString('de-DE')}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-gray-100">
+              <button
+                onClick={() => setEmailInvoice(null)}
+                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                {emailSent ? 'Mbyll' : 'Anulo'}
+              </button>
+              {!emailSent && (
+                <button
+                  onClick={async () => {
+                    if (!emailTo.trim() || !emailInvoice) return;
+                    setEmailSending(true);
+                    try {
+                      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invoice-email`;
+                      const resp = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          invoice_id: emailInvoice.id,
+                          recipients: [emailTo.trim()],
+                          locale: emailLocale,
+                        }),
+                      });
+                      if (resp.ok) {
+                        setEmailSent(true);
+                        await fetchInvoices();
+                      } else {
+                        const err = await resp.json().catch(() => ({}));
+                        setError(err.error || 'Dergimi i email-it deshtoi');
+                        setEmailInvoice(null);
+                      }
+                    } catch (e: any) {
+                      setError(e.message || 'Gabim gjate dergimit');
+                      setEmailInvoice(null);
+                    } finally {
+                      setEmailSending(false);
+                    }
+                  }}
+                  disabled={emailSending || !emailTo.trim()}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                >
+                  {emailSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Dergo me PDF
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
