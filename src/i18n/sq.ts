@@ -206,6 +206,7 @@ export const sq = {
     hrEmployees: 'Punonjesit',
     hrReports: 'Raportet HR',
     hrSettings: 'Cilesimet HR',
+    workHours: 'Oret e Punes',
     branding: 'Logo & Branding',
     receiving: 'Pranim/Dergese',
     sorting: 'Sortiren',

@@ -208,6 +208,7 @@ export const fr: typeof sq = {
     hrEmployees: 'Employés',
     hrReports: 'Rapports RH',
     hrSettings: 'Paramètres RH',
+    workHours: 'Heures de travail',
     branding: 'Logo & Image de Marque',
     receiving: 'R\u00e9ception/Exp\u00e9dition',
     sorting: 'Tri',

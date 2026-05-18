@@ -33,6 +33,7 @@ const navItems = [
   { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
   { to: '/driver/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
   { to: '/driver/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
+  { to: '/driver/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
   { to: '/driver/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/driver/settings', icon: SettingsIcon, labelKey: 'nav.settings', end: false, bottomNav: true },
 ];

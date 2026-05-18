@@ -14,17 +14,26 @@ interface EmployeeLeaveRow {
   color: string;
 }
 
+interface WorkHoursSummary {
+  user_name: string;
+  total_hours: number;
+  overtime_hours: number;
+  days_worked: number;
+}
+
 export default function HRReports() {
   const { profile } = useAuth();
   const { t, language } = useTranslation();
   const [rows, setRows] = useState<EmployeeLeaveRow[]>([]);
+  const [workRows, setWorkRows] = useState<WorkHoursSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [reportType, setReportType] = useState<'leave' | 'attendance'>('leave');
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [reportType, setReportType] = useState<'leave' | 'hours'>('leave');
 
   useEffect(() => {
     if (profile?.company_id) fetchReport();
-  }, [profile?.company_id, year, reportType]);
+  }, [profile?.company_id, year, month, reportType]);
 
   async function fetchReport() {
     setLoading(true);
@@ -54,21 +63,45 @@ export default function HRReports() {
         });
         setRows(mapped.sort((a, b) => a.user_name.localeCompare(b.user_name)));
       }
+    } else {
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+      const { data } = await supabase
+        .from('work_hours_log')
+        .select('total_hours, overtime_hours, user:profiles!work_hours_log_user_id_fkey(full_name)')
+        .eq('company_id', profile!.company_id)
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      if (data) {
+        const grouped: Record<string, WorkHoursSummary> = {};
+        (data as any[]).forEach(d => {
+          const name = d.user?.full_name || '-';
+          if (!grouped[name]) grouped[name] = { user_name: name, total_hours: 0, overtime_hours: 0, days_worked: 0 };
+          grouped[name].total_hours += d.total_hours || 0;
+          grouped[name].overtime_hours += d.overtime_hours || 0;
+          grouped[name].days_worked += 1;
+        });
+        setWorkRows(Object.values(grouped).sort((a, b) => a.user_name.localeCompare(b.user_name)));
+      }
     }
     setLoading(false);
   }
 
   function exportCSV() {
-    const headers = ['Employee', 'Leave Type', 'Allocated', 'Used', 'Pending', 'Remaining'];
-    const csvRows = [headers.join(',')];
-    rows.forEach(r => {
-      csvRows.push([r.user_name, r.leave_type_name, r.allocated, r.used, r.pending, r.remaining].join(','));
-    });
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    let csvContent = '';
+    if (reportType === 'leave') {
+      const headers = ['Employee', 'Leave Type', 'Allocated', 'Used', 'Pending', 'Remaining'];
+      csvContent = [headers.join(','), ...rows.map(r => [r.user_name, r.leave_type_name, r.allocated, r.used, r.pending, r.remaining].join(','))].join('\n');
+    } else {
+      const headers = ['Employee', 'Days Worked', 'Total Hours', 'Overtime Hours'];
+      csvContent = [headers.join(','), ...workRows.map(r => [r.user_name, r.days_worked, r.total_hours.toFixed(1), r.overtime_hours.toFixed(1)].join(','))].join('\n');
+    }
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `hr-report-${year}.csv`;
+    a.download = `hr-report-${reportType}-${year}-${month}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -101,6 +134,19 @@ export default function HRReports() {
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
+        {reportType === 'hours' && (
+          <select
+            value={month}
+            onChange={(e) => setMonth(Number(e.target.value))}
+            className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+          >
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {new Date(2026, i).toLocaleDateString(undefined, { month: 'long' })}
+              </option>
+            ))}
+          </select>
+        )}
         <div className="flex gap-2">
           <button
             type="button"
@@ -113,12 +159,12 @@ export default function HRReports() {
           </button>
           <button
             type="button"
-            onClick={() => setReportType('attendance')}
+            onClick={() => setReportType('hours')}
             className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              reportType === 'attendance' ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              reportType === 'hours' ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {t('hr.reports.attendanceReport')}
+            {t('hr.reports.overtimeReport')}
           </button>
         </div>
       </div>
@@ -129,52 +175,99 @@ export default function HRReports() {
           <div className="flex items-center justify-center p-12">
             <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
           </div>
-        ) : rows.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
-            <BarChart3 className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-            <p>{t('common.noData')}</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Employee</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">{t('hr.leave.leaveType')}</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.allocated')}</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.used')}</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.pending')}</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.remaining')}</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
-                    <td className="px-4 py-3 font-medium text-gray-900">{r.user_name}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
-                        <span className="text-gray-700">{r.leave_type_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-700">{r.allocated}</td>
-                    <td className="px-4 py-3 text-right text-gray-700">{r.used}</td>
-                    <td className="px-4 py-3 text-right text-amber-600 font-medium">{r.pending}</td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-900">{r.remaining}</td>
-                    <td className="px-4 py-3">
-                      <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${Math.min(((r.used + r.pending) / Math.max(r.allocated, 1)) * 100, 100)}%`, backgroundColor: r.color }}
-                        />
-                      </div>
-                    </td>
+        ) : reportType === 'leave' ? (
+          rows.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              <BarChart3 className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p>{t('common.noData')}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Employee</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">{t('hr.leave.leaveType')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.allocated')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.used')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.pending')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.leave.remaining')}</th>
+                    <th className="px-4 py-3"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((r, i) => (
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
+                      <td className="px-4 py-3 font-medium text-gray-900">{r.user_name}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
+                          <span className="text-gray-700">{r.leave_type_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-700">{r.allocated}</td>
+                      <td className="px-4 py-3 text-right text-gray-700">{r.used}</td>
+                      <td className="px-4 py-3 text-right text-amber-600 font-medium">{r.pending}</td>
+                      <td className="px-4 py-3 text-right font-bold text-gray-900">{r.remaining}</td>
+                      <td className="px-4 py-3">
+                        <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${Math.min(((r.used + r.pending) / Math.max(r.allocated, 1)) * 100, 100)}%`, backgroundColor: r.color }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : (
+          workRows.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              <BarChart3 className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <p>{t('common.noData')}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">Employee</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.attendance.present')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.attendance.totalHours')}</th>
+                    <th className="text-right px-4 py-3 font-medium text-gray-600">{t('hr.attendance.overtime')}</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workRows.map((r, i) => (
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
+                      <td className="px-4 py-3 font-medium text-gray-900">{r.user_name}</td>
+                      <td className="px-4 py-3 text-right text-gray-700">{r.days_worked} days</td>
+                      <td className="px-4 py-3 text-right font-medium text-gray-900">{r.total_hours.toFixed(1)}h</td>
+                      <td className="px-4 py-3 text-right">
+                        {r.overtime_hours > 0 ? (
+                          <span className="text-teal-700 font-bold">+{r.overtime_hours.toFixed(1)}h</span>
+                        ) : (
+                          <span className="text-gray-400">0h</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-teal-500"
+                            style={{ width: `${Math.min((r.overtime_hours / Math.max(r.total_hours, 1)) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
     </div>

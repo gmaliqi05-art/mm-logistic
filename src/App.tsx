@@ -159,9 +159,11 @@ const AccInvoiceBuilder = lazy(() => import('./pages/accounting/InvoiceBuilder')
 
 const HRMyLeave = lazy(() => import('./pages/hr/MyLeave'));
 const HRMyAttendance = lazy(() => import('./pages/hr/MyAttendance'));
+const HRMyWorkHours = lazy(() => import('./pages/hr/MyWorkHours'));
 const HRDashboard = lazy(() => import('./pages/company/HR/HRDashboard'));
 const HRLeaveRequests = lazy(() => import('./pages/company/HR/LeaveRequests'));
 const HRAttendance = lazy(() => import('./pages/company/HR/HRAttendance'));
+const HRWorkHours = lazy(() => import('./pages/company/HR/HRWorkHours'));
 const HRReports = lazy(() => import('./pages/company/HR/HRReports'));
 const HRSettings = lazy(() => import('./pages/company/HR/HRSettings'));
 
@@ -288,6 +290,7 @@ function AppRoutes() {
           <Route path="hr" element={<HRDashboard />} />
           <Route path="hr/requests" element={<HRLeaveRequests />} />
           <Route path="hr/attendance" element={<HRAttendance />} />
+          <Route path="hr/work-hours" element={<HRWorkHours />} />
           <Route path="hr/reports" element={<HRReports />} />
           <Route path="hr/settings" element={<HRSettings />} />
           <Route path="hr/leave" element={<HRMyLeave />} />
@@ -316,6 +319,7 @@ function AppRoutes() {
           <Route path="reports" element={<DepotReports />} />
           <Route path="leave" element={<HRMyLeave />} />
           <Route path="attendance" element={<HRMyAttendance />} />
+          <Route path="work-hours" element={<HRMyWorkHours />} />
           <Route path="chat" element={<DepotChat />} />
         </Route>
 
@@ -335,6 +339,7 @@ function AppRoutes() {
           <Route path="chat" element={<DriverChat />} />
           <Route path="leave" element={<HRMyLeave />} />
           <Route path="attendance" element={<HRMyAttendance />} />
+          <Route path="work-hours" element={<HRMyWorkHours />} />
           <Route path="settings" element={<DriverSettings />} />
         </Route>
 

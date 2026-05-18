@@ -19,12 +19,15 @@ interface LeaveType {
 interface Props {
   onClose: () => void;
   onSuccess: () => void;
+  adminMode?: boolean;
 }
 
-export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
+export default function LeaveRequestModal({ onClose, onSuccess, adminMode = false }: Props) {
   const { profile } = useAuth();
   const { t, language } = useTranslation();
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; full_name: string }[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -34,9 +37,22 @@ export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [autoApprove, setAutoApprove] = useState(true);
+
   useEffect(() => {
     fetchLeaveTypes();
+    if (adminMode) fetchEmployees();
   }, []);
+
+  async function fetchEmployees() {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('company_id', profile!.company_id)
+      .eq('is_active', true)
+      .order('full_name');
+    if (data) setEmployees(data);
+  }
 
   async function fetchLeaveTypes() {
     const { data } = await supabase
@@ -58,7 +74,13 @@ export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
     const cur = new Date(s);
     while (cur <= e) {
       const dow = cur.getDay();
-      if (dow !== 0 && dow !== 6) days++;
+      if (dow === 0) {
+        // Sunday = rest day, not counted
+      } else if (dow === 6) {
+        days += 0.5; // Saturday = half work day
+      } else {
+        days += 1; // Mon-Fri = full work day
+      }
       cur.setDate(cur.getDate() + 1);
     }
     if (halfDayStart && days > 0) days -= 0.5;
@@ -74,6 +96,10 @@ export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
       setError(t('common.requiredFields') || 'Please fill all required fields');
       return;
     }
+    if (adminMode && !selectedEmployee) {
+      setError('Please select an employee');
+      return;
+    }
     if (totalDays <= 0) {
       setError('Invalid date range');
       return;
@@ -82,9 +108,12 @@ export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
     setSaving(true);
     setError('');
 
+    const targetUserId = adminMode ? selectedEmployee : profile!.id;
+    const status = adminMode && autoApprove ? 'approved' : 'pending';
+
     const { error: err } = await supabase.from('leave_requests').insert({
       company_id: profile!.company_id,
-      user_id: profile!.id,
+      user_id: targetUserId,
       leave_type_id: selectedType,
       start_date: startDate,
       end_date: endDate,
@@ -92,6 +121,8 @@ export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
       half_day_start: halfDayStart,
       half_day_end: halfDayEnd,
       reason: reason.trim() || null,
+      status,
+      ...(status === 'approved' ? { approver_id: profile!.id, approved_at: new Date().toISOString() } : {}),
     });
 
     if (err) {
@@ -125,6 +156,23 @@ export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+          )}
+
+          {adminMode && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Employee</label>
+              <select
+                value={selectedEmployee}
+                onChange={(e) => setSelectedEmployee(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+              >
+                <option value="">-- Select employee --</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.full_name}</option>
+                ))}
+              </select>
+            </div>
           )}
 
           <div>
@@ -203,6 +251,18 @@ export default function LeaveRequestModal({ onClose, onSuccess }: Props) {
               className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
             />
           </div>
+
+          {adminMode && (
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoApprove}
+                onChange={(e) => setAutoApprove(e.target.checked)}
+                className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+              />
+              {t('hr.leave.approve')} ({t('hr.leave.approved').toLowerCase()})
+            </label>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, Clock, Loader2, Search, Filter } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Loader2, Search, Filter, Plus } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
+import LeaveRequestModal from '../../../components/hr/LeaveRequestModal';
 
 interface LeaveRequest {
   id: string;
@@ -27,6 +28,7 @@ export default function LeaveRequests() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{ id: string; name: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     if (profile?.company_id) fetchRequests();
@@ -89,9 +91,19 @@ export default function LeaveRequests() {
 
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('nav.hrRequests')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('hr.subtitle')}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('nav.hrRequests')}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t('hr.subtitle')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreateModal(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors shadow-sm"
+        >
+          <Plus className="w-4 h-4" />
+          {t('hr.leave.requestLeave')}
+        </button>
       </div>
 
       {/* Filters */}
@@ -236,6 +248,14 @@ export default function LeaveRequests() {
             </div>
           </div>
         </div>
+      )}
+
+      {showCreateModal && (
+        <LeaveRequestModal
+          adminMode
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => { setShowCreateModal(false); fetchRequests(); }}
+        />
       )}
     </div>
   );
