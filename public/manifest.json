@@ -12,25 +12,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/mm-logistic-logo.png?v=3",
+      "src": "/pwa-icon-192.png?v=4",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/mm-logistic-logo.png?v=3",
+      "src": "/pwa-icon-512.png?v=4",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/mm-logistic-logo.png?v=3",
+      "src": "/pwa-icon-192-maskable.png?v=4",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/mm-logistic-logo.png?v=3",
+      "src": "/pwa-icon-512-maskable.png?v=4",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -38,7 +38,7 @@
   ],
   "screenshots": [
     {
-      "src": "/mm-logistic-social.png?v=3",
+      "src": "/mm-logistic-social.png?v=4",
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide"

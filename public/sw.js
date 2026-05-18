@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'mm-logistic-v5';
+const CACHE_VERSION = 'mm-logistic-v6';
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
@@ -124,8 +124,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
       body: body || '',
-      icon: icon || '/mm-logistic-logo.png?v=3',
-      badge: badge || '/mm-logistic-logo.png?v=3',
+      icon: icon || '/pwa-icon-192.png?v=4',
+      badge: badge || '/pwa-icon-192.png?v=4',
       tag: tag || 'default',
       data: actionData || {},
       vibrate: [200, 100, 200],
