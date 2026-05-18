@@ -29,6 +29,7 @@ import {
   Key,
   Layers,
   Users,
+  Mail,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -43,6 +44,7 @@ import { usePendingReviewCounts } from '../hooks/usePendingReviewCounts';
 const allNavItems = [
   { to: '/company', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, premium: false, bottomNav: true },
   { to: '/company/invoices', icon: FileCheck2, labelKey: 'nav.invoices', end: false, premium: false, bottomNav: false },
+  { to: '/company/email', icon: Mail, labelKey: 'nav.emailAutomation', end: false, premium: false, bottomNav: false },
   { to: '/company/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, premium: false, bottomNav: true },
   { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', end: false, premium: false, bottomNav: false, badgeKey: 'review' as const },
   { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, premium: false, bottomNav: false },

@@ -181,6 +181,8 @@ export default function InvoiceBuilder() {
   const [emailLocale, setEmailLocale] = useState<'sq' | 'de' | 'en'>('sq');
   const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [autoSendEnabled, setAutoSendEnabled] = useState(false);
+  const [defaultEmailLocale, setDefaultEmailLocale] = useState<'sq' | 'de' | 'en'>('sq');
 
   const dirtyRef = useRef(false);
   const invoiceDbIdRef = useRef<string | null>(isEdit ? invoiceId ?? null : null);
@@ -212,7 +214,7 @@ export default function InvoiceBuilder() {
   async function bootstrap() {
     if (!profile?.company_id) return;
     setLoading(true);
-    const [{ data: co }, { data: cs }, { data: bs }, { data: countryRows }, { data: rates }, { data: accProds }, { data: catProds }] = await Promise.all([
+    const [{ data: co }, { data: cs }, { data: bs }, { data: countryRows }, { data: rates }, { data: accProds }, { data: catProds }, { data: emailSettings }] = await Promise.all([
       supabase.from('companies').select('*').eq('id', profile.company_id).maybeSingle(),
       supabase.from('acc_contacts').select('id, name, address, postal_code, city, country, vat_number, tax_number, email, phone, iban, bic, bank_name, payment_days, contact_type')
         .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
@@ -224,6 +226,8 @@ export default function InvoiceBuilder() {
         .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
       supabase.from('category_products').select('id, name, description, sku, unit, price_net, vat_rate, is_active')
         .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
+      supabase.from('company_email_settings').select('auto_send_on_finalize, default_locale')
+        .eq('company_id', profile.company_id).maybeSingle(),
     ]);
 
     const merged: CatalogItem[] = [];
@@ -253,6 +257,12 @@ export default function InvoiceBuilder() {
 
     const defaultBank = ((bs as BankAccount[]) ?? []).find((b) => b.is_default) ?? ((bs as BankAccount[]) ?? [])[0];
     if (defaultBank) setBankId(defaultBank.id);
+
+    if (emailSettings) {
+      setAutoSendEnabled(!!(emailSettings as any).auto_send_on_finalize);
+      const loc = (emailSettings as any).default_locale;
+      if (loc === 'sq' || loc === 'de' || loc === 'en') setDefaultEmailLocale(loc);
+    }
 
     if (isEdit && invoiceId) {
       await loadExisting(invoiceId);
@@ -718,7 +728,42 @@ export default function InvoiceBuilder() {
       return;
     }
     setFinalized(true);
-    setShowEmailDialog(true);
+
+    const selectedContact = contacts.find(c => c.id === contactId);
+    if (autoSendEnabled && selectedContact?.email) {
+      setEmailSending(true);
+      try {
+        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invoice-email`;
+        const resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            invoice_id: id,
+            recipients: [selectedContact.email],
+            locale: defaultEmailLocale,
+          }),
+        });
+        if (resp.ok) {
+          setEmailSent(true);
+          setEmailRecipient(selectedContact.email);
+          setShowEmailDialog(true);
+        } else {
+          setShowEmailDialog(true);
+          setEmailRecipient(selectedContact.email ?? '');
+        }
+      } catch {
+        setShowEmailDialog(true);
+        setEmailRecipient(selectedContact.email ?? '');
+      } finally {
+        setEmailSending(false);
+      }
+    } else {
+      setEmailRecipient(selectedContact?.email ?? '');
+      setShowEmailDialog(true);
+    }
   }
 
   function printPreview() {

@@ -197,6 +197,7 @@ export const sq = {
     dataExport: 'Eksporto',
     financialSummary: 'Levizjet Financiare',
     automjetet: 'Automjetet',
+    emailAutomation: 'Email & Automatizime',
     settings: 'Cilesimet',
     hr: 'Burimet Njerezore',
     hrLeave: 'Pushimet e Mia',

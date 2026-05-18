@@ -32,6 +32,7 @@ import PushEnableBanner from './components/PushEnableBanner';
 
 const SuperAdminLayout = lazy(() => import('./layouts/SuperAdminLayout'));
 const CompanyAdminLayout = lazy(() => import('./layouts/CompanyAdminLayout'));
+const EmailAutomationLayout = lazy(() => import('./layouts/EmailAutomationLayout'));
 const DepotLayout = lazy(() => import('./layouts/DepotLayout'));
 const DriverLayout = lazy(() => import('./layouts/DriverLayout'));
 const AccountingLayout = lazy(() => import('./layouts/AccountingLayout'));
@@ -98,6 +99,10 @@ const CompanyCompliance = lazy(() => import('./pages/company/Compliance'));
 const CompanyFleetScans = lazy(() => import('./pages/company/FleetScans'));
 const CompanyFinancialSummary = lazy(() => import('./pages/company/FinancialSummary'));
 const CompanyAccountingUpgrade = lazy(() => import('./pages/company/AccountingUpgrade'));
+const CompanyEmailTemplatesList = lazy(() => import('./pages/company/EmailTemplatesList'));
+const CompanyEmailTemplateEditor = lazy(() => import('./pages/company/EmailTemplateEditor'));
+const CompanyClientPricesPage = lazy(() => import('./pages/company/ClientPricesPage'));
+const CompanyAutomationRules = lazy(() => import('./pages/company/AutomationRules'));
 const AccountingRoute = lazy(() => import('./components/subscription/AccountingRoute'));
 
 const DepotDashboard = lazy(() => import('./pages/depot/Dashboard'));
@@ -300,6 +305,13 @@ function AppRoutes() {
           <Route path="invoices/new" element={<AccInvoiceBuilder />} />
           <Route path="invoices/:id/edit" element={<AccInvoiceBuilder />} />
           <Route path="invoices/:id/print" element={<AccInvoicePrint />} />
+          <Route path="email" element={<EmailAutomationLayout />}>
+            <Route index element={<CompanyEmailTemplatesList />} />
+            <Route path="templates" element={<CompanyEmailTemplatesList />} />
+            <Route path="templates/:code" element={<CompanyEmailTemplateEditor />} />
+            <Route path="client-prices" element={<CompanyClientPricesPage />} />
+            <Route path="automation" element={<CompanyAutomationRules />} />
+          </Route>
         </Route>
 
         <Route path="/depot" element={

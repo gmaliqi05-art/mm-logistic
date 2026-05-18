@@ -199,6 +199,7 @@ export const en: typeof sq = {
     dataExport: 'Export',
     financialSummary: 'Financial Movements',
     automjetet: 'Vehicles',
+    emailAutomation: 'Email & Automation',
     settings: 'Settings',
     hr: 'Human Resources',
     hrLeave: 'My Leave',

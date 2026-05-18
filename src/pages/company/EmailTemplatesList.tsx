@@ -1,0 +1,323 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Loader2, FileText, Copy, ToggleLeft, ToggleRight, Send, Eye, AlertTriangle, Search, Globe } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+
+interface TemplateRow {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  category: string;
+  is_system: boolean;
+  is_active: boolean;
+  company_id: string | null;
+  updated_at: string;
+  subject_sq: string;
+  subject_de: string;
+  subject_en: string;
+}
+
+const CATEGORY_BADGES: Record<string, { cls: string; label: string }> = {
+  transactional: { cls: 'bg-teal-50 text-teal-700 border-teal-200', label: 'Transaksionale' },
+  marketing: { cls: 'bg-amber-50 text-amber-700 border-amber-200', label: 'Marketing' },
+  system: { cls: 'bg-slate-50 text-slate-600 border-slate-200', label: 'Sistem' },
+};
+
+export default function EmailTemplatesList() {
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'company' | 'global'>('all');
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile?.company_id) fetchTemplates();
+  }, [profile?.company_id]);
+
+  async function fetchTemplates() {
+    setLoading(true);
+    const { data, error: err } = await supabase
+      .from('email_templates')
+      .select('id, code, name, description, category, is_system, is_active, company_id, updated_at, subject_sq, subject_de, subject_en')
+      .or(`company_id.is.null,company_id.eq.${profile!.company_id}`)
+      .order('category')
+      .order('name');
+
+    if (err) {
+      setError(err.message);
+    } else {
+      setTemplates((data ?? []) as TemplateRow[]);
+    }
+    setLoading(false);
+  }
+
+  async function handleToggleActive(tpl: TemplateRow) {
+    if (!tpl.company_id) return;
+    await supabase
+      .from('email_templates')
+      .update({ is_active: !tpl.is_active, updated_at: new Date().toISOString() })
+      .eq('id', tpl.id);
+    await fetchTemplates();
+  }
+
+  async function handleDuplicate(tpl: TemplateRow) {
+    const { data: fullTpl } = await supabase
+      .from('email_templates')
+      .select('*')
+      .eq('id', tpl.id)
+      .maybeSingle();
+
+    if (!fullTpl) return;
+
+    const newCode = tpl.company_id
+      ? `${tpl.code}_copy`
+      : `${tpl.code}_custom`;
+
+    const { id: _id, created_at: _ca, updated_at: _ua, ...rest } = fullTpl as any;
+
+    await supabase.from('email_templates').insert({
+      ...rest,
+      code: newCode,
+      name: `${tpl.name} (kopje)`,
+      company_id: profile!.company_id,
+      is_system: false,
+      is_active: true,
+    });
+
+    await fetchTemplates();
+    navigate(`/company/email/templates/${newCode}`);
+  }
+
+  async function handleTestSend(tpl: TemplateRow) {
+    if (!testEmail.trim()) return;
+    setTestSending(true);
+    setTestResult(null);
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`;
+      const resp = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          template_code: tpl.code,
+          to: [testEmail.trim()],
+          company_id: profile!.company_id,
+          locale: 'sq',
+          test: true,
+          data: {
+            invoice_number: 'INV-2026-TEST',
+            amount: '1.250,00 EUR',
+            total_formatted: '1.250,00 EUR',
+            due_date: '15.06.2026',
+            customer_name: 'Test Klient',
+            company_name: 'Kompania Juaj',
+            iban: 'DE89 3704 0044 0532 0130 00',
+          },
+        }),
+      });
+      if (resp.ok) {
+        setTestResult('success');
+      } else {
+        const err = await resp.json().catch(() => ({}));
+        setTestResult(err.error || 'Deshtoi');
+      }
+    } catch {
+      setTestResult('Gabim rrjeti');
+    } finally {
+      setTestSending(false);
+    }
+  }
+
+  const filtered = templates.filter((t) => {
+    if (filter === 'company' && !t.company_id) return false;
+    if (filter === 'global' && t.company_id) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return `${t.name} ${t.code} ${t.description}`.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" />
+          {error}
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:w-64 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Kerko template..."
+            />
+          </div>
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as any)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="all">Te gjitha</option>
+            <option value="company">Te kompanise</option>
+            <option value="global">Globale</option>
+          </select>
+        </div>
+        <button
+          onClick={() => navigate('/company/email/templates/new')}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Krijo Template
+        </button>
+      </div>
+
+      <div className="grid gap-3">
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <FileText className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+            <p className="text-sm">Nuk u gjeten template</p>
+          </div>
+        ) : (
+          filtered.map((tpl) => {
+            const badge = CATEGORY_BADGES[tpl.category] ?? CATEGORY_BADGES.system;
+            const isOwn = !!tpl.company_id;
+
+            return (
+              <div
+                key={tpl.id}
+                className={`bg-white rounded-xl border p-4 transition-all hover:shadow-sm ${
+                  !tpl.is_active ? 'opacity-60 border-gray-200' : 'border-gray-200'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm font-semibold text-gray-900">{tpl.name}</h3>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border ${badge.cls}`}>
+                        {badge.label}
+                      </span>
+                      {isOwn ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                          Kompania juaj
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200">
+                          <Globe className="w-3 h-3" /> Globale
+                        </span>
+                      )}
+                      {!tpl.is_active && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-red-50 text-red-600 border border-red-200">
+                          Joaktive
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                      {tpl.description || tpl.subject_sq || tpl.code}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-1 font-mono">{tpl.code}</p>
+                  </div>
+
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {isOwn && (
+                      <button
+                        onClick={() => navigate(`/company/email/templates/${tpl.code}`)}
+                        className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                        title="Edito"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDuplicate(tpl)}
+                      className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                      title={isOwn ? 'Dupliko' : 'Personalizo per kompanine'}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTestingId(testingId === tpl.id ? null : tpl.id);
+                        setTestResult(null);
+                        setTestEmail(profile?.email || '');
+                      }}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Dergo test"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                    {isOwn && (
+                      <button
+                        onClick={() => handleToggleActive(tpl)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          tpl.is_active
+                            ? 'text-teal-500 hover:text-red-600 hover:bg-red-50'
+                            : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50'
+                        }`}
+                        title={tpl.is_active ? 'Deaktivizo' : 'Aktivizo'}
+                      >
+                        {tpl.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Test send panel */}
+                {testingId === tpl.id && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={testEmail}
+                        onChange={(e) => setTestEmail(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        placeholder="Email per test..."
+                      />
+                      <button
+                        onClick={() => handleTestSend(tpl)}
+                        disabled={testSending || !testEmail.trim()}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {testSending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                        Dergo Test
+                      </button>
+                    </div>
+                    {testResult && (
+                      <p className={`text-xs mt-2 ${testResult === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {testResult === 'success' ? 'Email i testit u dergua me sukses!' : testResult}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}

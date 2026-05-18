@@ -381,12 +381,32 @@ async function renderTemplate(
   data: Record<string, unknown>,
   brand: BrandConfig,
   unsubscribeUrl?: string,
+  companyId?: string | null,
 ): Promise<RenderedEmail | { error: string }> {
-  const { data: tpl } = await supabase
-    .from("email_templates")
-    .select("*")
-    .eq("code", templateCode)
-    .maybeSingle();
+  let tpl: any = null;
+
+  // Try company-specific template first
+  if (companyId) {
+    const { data: companyTpl } = await supabase
+      .from("email_templates")
+      .select("*")
+      .eq("code", templateCode)
+      .eq("company_id", companyId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (companyTpl) tpl = companyTpl;
+  }
+
+  // Fallback to global template
+  if (!tpl) {
+    const { data: globalTpl } = await supabase
+      .from("email_templates")
+      .select("*")
+      .eq("code", templateCode)
+      .is("company_id", null)
+      .maybeSingle();
+    tpl = globalTpl;
+  }
 
   if (!tpl) return { error: `Template not found: ${templateCode}` };
   const t = tpl as TemplateRow;
@@ -434,7 +454,8 @@ Deno.serve(async (req: Request) => {
     const brand = await loadBrand();
     const locale = (body.locale ?? "sq") as Locale;
 
-    const rendered = await renderTemplate(body.template_code, locale, body.data ?? {}, brand, undefined);
+    const companyId = body.company_id ?? null;
+    const rendered = await renderTemplate(body.template_code, locale, body.data ?? {}, brand, undefined, companyId);
     if ("error" in rendered) {
       return new Response(JSON.stringify(rendered), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -457,7 +478,7 @@ Deno.serve(async (req: Request) => {
 
     const unsubscribeUrl = body.test ? undefined : await ensureUnsubscribeUrl(body.user_id ?? null, brand);
     const finalRendered = unsubscribeUrl
-      ? await renderTemplate(body.template_code, locale, body.data ?? {}, brand, unsubscribeUrl)
+      ? await renderTemplate(body.template_code, locale, body.data ?? {}, brand, unsubscribeUrl, companyId)
       : rendered;
     const finalHtml = "error" in finalRendered ? rendered.html : finalRendered.html;
     const finalSubject = "error" in finalRendered ? rendered.subject : finalRendered.subject;

@@ -54,6 +54,16 @@ Deno.serve(async (req: Request) => {
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
 
+    // Load company email settings for all companies
+    const { data: allSettings } = await supabase
+      .from("company_email_settings")
+      .select("company_id, auto_reminder_enabled, reminder_day_0, reminder_day_7, reminder_day_14, reminder_template_code, default_locale");
+
+    const settingsMap = new Map<string, any>();
+    for (const s of (allSettings || []) as any[]) {
+      settingsMap.set(s.company_id, s);
+    }
+
     // Find invoices that are sent/overdue with a due_date set
     const { data: invoices, error: fetchErr } = await supabase
       .from("acc_invoices")
@@ -97,25 +107,28 @@ Deno.serve(async (req: Request) => {
 
       if (!contact?.email) continue;
 
+      // Check company automation settings
+      const companySettings = settingsMap.get(invoice.company_id);
+      if (companySettings && companySettings.auto_reminder_enabled === false) continue;
+
       const daysOverdue = daysBetween(invoice.due_date, now);
 
       // Determine which reminder level to send
       // Level 0: on due date (0 days overdue)
       // Level 1: 7 days past due
       // Level 2: 14 days past due
+      // Check which reminder days are enabled for this company
+      const day0Enabled = companySettings?.reminder_day_0 !== false;
+      const day7Enabled = companySettings?.reminder_day_7 !== false;
+      const day14Enabled = companySettings?.reminder_day_14 !== false;
+
       let levelToSend: number | null = null;
 
-      if (daysOverdue >= 14 && !reminderSet.has(`${invoice.id}:2`)) {
+      if (daysOverdue >= 14 && day14Enabled && !reminderSet.has(`${invoice.id}:2`)) {
         levelToSend = 2;
-      } else if (
-        daysOverdue >= 7 &&
-        !reminderSet.has(`${invoice.id}:1`)
-      ) {
+      } else if (daysOverdue >= 7 && day7Enabled && !reminderSet.has(`${invoice.id}:1`)) {
         levelToSend = 1;
-      } else if (
-        daysOverdue >= 0 &&
-        !reminderSet.has(`${invoice.id}:0`)
-      ) {
+      } else if (daysOverdue >= 0 && day0Enabled && !reminderSet.has(`${invoice.id}:0`)) {
         levelToSend = 0;
       }
 
@@ -151,7 +164,7 @@ Deno.serve(async (req: Request) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            template_code: "invoice_overdue",
+            template_code: companySettings?.reminder_template_code || "invoice_overdue",
             to: [contact.email],
             company_id: invoice.company_id,
             locale: "sq",
