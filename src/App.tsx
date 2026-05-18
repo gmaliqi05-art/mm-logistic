@@ -157,6 +157,14 @@ const AccImports = lazy(() => import('./pages/accounting/Imports'));
 const AccChartOfAccounts = lazy(() => import('./pages/accounting/ChartOfAccounts'));
 const AccInvoiceBuilder = lazy(() => import('./pages/accounting/InvoiceBuilder'));
 
+const HRMyLeave = lazy(() => import('./pages/hr/MyLeave'));
+const HRMyAttendance = lazy(() => import('./pages/hr/MyAttendance'));
+const HRDashboard = lazy(() => import('./pages/company/HR/HRDashboard'));
+const HRLeaveRequests = lazy(() => import('./pages/company/HR/LeaveRequests'));
+const HRAttendance = lazy(() => import('./pages/company/HR/HRAttendance'));
+const HRReports = lazy(() => import('./pages/company/HR/HRReports'));
+const HRSettings = lazy(() => import('./pages/company/HR/HRSettings'));
+
 const LogisticsDashboard = lazy(() => import('./pages/logistics/Dashboard'));
 const LogisticsDispatch = lazy(() => import('./pages/logistics/Dispatch'));
 const LogisticsActive = lazy(() => import('./pages/logistics/Active'));
@@ -277,6 +285,12 @@ function AppRoutes() {
           <Route path="settings" element={<CompanySettings />} />
           <Route path="settings/api-webhooks" element={<CompanyApiWebhooks />} />
           <Route path="financial-summary" element={<CompanyFinancialSummary />} />
+          <Route path="hr" element={<HRDashboard />} />
+          <Route path="hr/requests" element={<HRLeaveRequests />} />
+          <Route path="hr/attendance" element={<HRAttendance />} />
+          <Route path="hr/reports" element={<HRReports />} />
+          <Route path="hr/settings" element={<HRSettings />} />
+          <Route path="hr/leave" element={<HRMyLeave />} />
           <Route path="accounting-upgrade" element={<CompanyAccountingUpgrade />} />
           <Route path="invoices" element={<AccInvoices />} />
           <Route path="invoices/new" element={<AccInvoiceBuilder />} />
@@ -300,6 +314,8 @@ function AppRoutes() {
           <Route path="repair-workers/:workerId" element={<WorkerRepairEntry />} />
           <Route path="documents" element={<DepotDocuments />} />
           <Route path="reports" element={<DepotReports />} />
+          <Route path="leave" element={<HRMyLeave />} />
+          <Route path="attendance" element={<HRMyAttendance />} />
           <Route path="chat" element={<DepotChat />} />
         </Route>
 
@@ -317,6 +333,8 @@ function AppRoutes() {
           <Route path="documents" element={<DriverDocuments />} />
           <Route path="my-documents" element={<DriverMyDocuments />} />
           <Route path="chat" element={<DriverChat />} />
+          <Route path="leave" element={<HRMyLeave />} />
+          <Route path="attendance" element={<HRMyAttendance />} />
           <Route path="settings" element={<DriverSettings />} />
         </Route>
 

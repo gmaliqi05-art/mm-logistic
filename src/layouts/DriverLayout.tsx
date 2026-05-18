@@ -12,6 +12,8 @@ import {
   Navigation,
   Settings as SettingsIcon,
   Truck,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -29,6 +31,8 @@ const navItems = [
   { to: '/driver/navigation', icon: Navigation, labelKey: 'nav.navigation', end: false, bottomNav: false },
   { to: '/driver/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, bottomNav: false },
   { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
+  { to: '/driver/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
+  { to: '/driver/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
   { to: '/driver/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/driver/settings', icon: SettingsIcon, labelKey: 'nav.settings', end: false, bottomNav: true },
 ];

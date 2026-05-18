@@ -14,6 +14,8 @@ import {
   FileText,
   BarChart3,
   Truck,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -40,6 +42,8 @@ const allNavItems: Array<{
   { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false },
   { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false },
   { to: '/depot/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, bottomNav: false },
+  { to: '/depot/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
+  { to: '/depot/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
   { to: '/depot/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/depot/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
 ];

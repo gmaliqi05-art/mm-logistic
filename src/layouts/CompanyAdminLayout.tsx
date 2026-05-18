@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Key,
   Layers,
+  Users,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -67,6 +68,7 @@ const allNavItems = [
   { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', end: false, premium: true, bottomNav: false },
   { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', end: false, premium: true, bottomNav: false },
   { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
+  { to: '/company/hr', icon: Users, labelKey: 'nav.hr', end: true, premium: false, bottomNav: false },
   { to: '/logistics', icon: Truck, labelKey: 'nav.logistics', end: false, premium: false, bottomNav: false },
   { to: '/company/settings', icon: Settings, labelKey: 'nav.settings', end: false, premium: false, bottomNav: false },
   { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', end: false, premium: false, bottomNav: false },
