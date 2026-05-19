@@ -218,6 +218,24 @@ Deno.serve(async (req: Request) => {
         const sendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`;
         const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
+        // Notify the driver directly about their own expiring documents
+        if (item.entity === "driver") {
+          await supabase.from("notifications").insert({
+            user_id: item.entityId,
+            title,
+            message: `${typeLabel} - data ${item.expiryDate}.`,
+            type: "compliance",
+            data: {
+              entity: item.entity,
+              entity_id: item.entityId,
+              compliance_type: item.type,
+              days_remaining: days,
+              expiry_date: item.expiryDate,
+            },
+          });
+          notificationsCreated++;
+        }
+
         for (const admin of admins) {
           await supabase.from("notifications").insert({
             user_id: admin.id,
