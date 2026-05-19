@@ -43,33 +43,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    // Guard against a stuck auth bootstrap (common on installed PWAs with
-    // a stale service worker / frozen network). After 8s we release the
-    // loading state so the UI can continue to render.
-    const safety = window.setTimeout(() => {
-      if (!cancelled) setLoading(false);
-    }, 8000);
 
     const bootstrap = async () => {
       try {
-        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => {
-          window.setTimeout(() => resolve({ data: { session: null } }), 7000);
-        });
-        const result = await Promise.race([
-          supabase.auth.getSession(),
-          timeoutPromise,
-        ]);
+        // Restore session from local storage first (instant, no network).
+        // This prevents a flash to login when reopening a PWA from background.
+        const stored = window.localStorage.getItem('mm-logistic-auth');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            const localSession: Session | null = parsed?.currentSession ?? parsed ?? null;
+            if (localSession?.user && localSession?.access_token) {
+              if (!cancelled) {
+                setSession(localSession);
+                await fetchProfile(localSession.user.id);
+                setLoading(false);
+              }
+            }
+          } catch (_) {
+            // malformed storage, fall through to network
+          }
+        }
+
+        // Now validate/refresh with the server (non-blocking for UI)
+        const { data } = await supabase.auth.getSession();
         if (cancelled) return;
-        const s = (result as { data: { session: Session | null } }).data.session;
+        const s = data.session;
         setSession(s);
         if (s?.user) {
           await fetchProfile(s.user.id);
+        } else if (!s) {
+          setProfile(null);
         }
       } catch (err) {
         logger.warn('auth bootstrap failed', { error: err });
       } finally {
         if (!cancelled) {
-          window.clearTimeout(safety);
           setLoading(false);
         }
       }
@@ -77,7 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void bootstrap();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setProfile(null);
+        return;
+      }
       setSession(s);
       if (s?.user) {
         (async () => {
@@ -94,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
-      window.clearTimeout(safety);
       subscription.unsubscribe();
     };
   }, []);
