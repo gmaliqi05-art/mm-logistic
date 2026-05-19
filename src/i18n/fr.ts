@@ -857,6 +857,17 @@ export const fr: typeof sq = {
         rights: 'Tous droits reserves.',
       },
     },
+    minimal: {
+      title: 'Gérez votre entreprise, logistique, entrepôt et comptabilité sur une seule plateforme',
+      subtitle: 'Système intégré pour la gestion des livraisons, palettes, flottes, factures et rapports. Conçu pour le marché européen.',
+      register: 'Commencer',
+      login: 'Se connecter',
+      footerDesc: 'Plateforme professionnelle pour la logistique, l\'entreposage et la comptabilité.',
+      footerPlatform: 'Plateforme',
+      footerFeatures: 'Fonctionnalités',
+      footerPricing: 'Plans & Tarifs',
+      footerApp: 'Télécharger l\'app',
+    },
   },
   company: {
     dashboard: {

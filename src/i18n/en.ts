@@ -860,6 +860,17 @@ export const en: typeof sq = {
         rights: 'All rights reserved.',
       },
     },
+    minimal: {
+      title: 'Manage your company, logistics, depot and accounting in one platform',
+      subtitle: 'Integrated system for managing deliveries, pallets, fleets, invoices and reports. Built for the European market.',
+      register: 'Get started',
+      login: 'Sign in',
+      footerDesc: 'Professional platform for logistics, warehousing and accounting.',
+      footerPlatform: 'Platform',
+      footerFeatures: 'Features',
+      footerPricing: 'Plans & Pricing',
+      footerApp: 'Download App',
+    },
   },
   company: {
     dashboard: {

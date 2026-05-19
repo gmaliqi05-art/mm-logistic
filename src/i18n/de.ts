@@ -857,6 +857,17 @@ export const de: typeof sq = {
         rights: 'Alle Rechte vorbehalten.',
       },
     },
+    minimal: {
+      title: 'Verwalten Sie Unternehmen, Logistik, Lager und Buchhaltung auf einer Plattform',
+      subtitle: 'Integriertes System zur Verwaltung von Lieferungen, Paletten, Flotten, Rechnungen und Berichten. Entwickelt für den europäischen Markt.',
+      register: 'Jetzt starten',
+      login: 'Anmelden',
+      footerDesc: 'Professionelle Plattform für Logistik, Lagerhaltung und Buchhaltung.',
+      footerPlatform: 'Plattform',
+      footerFeatures: 'Funktionen',
+      footerPricing: 'Pläne & Preise',
+      footerApp: 'App herunterladen',
+    },
   },
   company: {
     dashboard: {

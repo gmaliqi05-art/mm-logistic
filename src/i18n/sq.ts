@@ -855,6 +855,17 @@ export const sq = {
         rights: 'Te gjitha te drejtat e rezervuara.',
       },
     },
+    minimal: {
+      title: 'Menagjo kompanine, logjistiken, depon dhe kontabilitetin ne nje platforme',
+      subtitle: 'Sistem i integruar per menaxhimin e dergesave, paletave, flotave, faturave dhe raporteve. I ndertuar per tregun europian.',
+      register: 'Regjistrohu',
+      login: 'Hyr ne llogari',
+      footerDesc: 'Platforma profesionale per logjistike, depo dhe kontabilitet.',
+      footerPlatform: 'Platforma',
+      footerFeatures: 'Karakteristikat',
+      footerPricing: 'Planet & Cmimet',
+      footerApp: 'Shkarko App',
+    },
   },
   company: {
     dashboard: {
