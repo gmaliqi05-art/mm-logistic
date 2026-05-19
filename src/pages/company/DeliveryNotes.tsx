@@ -1532,9 +1532,9 @@ export default function CompanyDeliveryNotes() {
                   <button
                     onClick={() => {
                       if ((selectedNote as any).acc_invoice_id) {
-                        window.location.href = `/accounting/invoices/${(selectedNote as any).acc_invoice_id}/edit`;
+                        window.location.href = `/company/invoices/${(selectedNote as any).acc_invoice_id}/print`;
                       } else {
-                        window.location.href = `/accounting/invoices/new?delivery_note_id=${selectedNote.id}`;
+                        window.location.href = `/company/invoices/new?delivery_note_id=${selectedNote.id}`;
                       }
                     }}
                     className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${

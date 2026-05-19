@@ -877,7 +877,7 @@ function ReviewModal({
 
   async function handleCreateInvoice() {
     if (note.acc_invoice_id) {
-      navigate(`/accounting/invoices/${note.acc_invoice_id}/edit`);
+      navigate(`/company/invoices/${note.acc_invoice_id}/print`);
       return;
     }
     setError(null);
@@ -910,9 +910,9 @@ function ReviewModal({
       if (err) throw err;
       const invoiceId = typeof data === 'string' ? data : (data as any)?.id;
       if (invoiceId) {
-        navigate(`/accounting/invoices/${invoiceId}/edit`);
+        navigate(`/company/invoices/${invoiceId}/print`);
       } else {
-        navigate(`/accounting/invoices/new?delivery_note_id=${note.id}`);
+        navigate(`/company/invoices/new?delivery_note_id=${note.id}`);
       }
     } catch (e: any) {
       setError(e.message || 'Krijimi i fatures deshtoi');

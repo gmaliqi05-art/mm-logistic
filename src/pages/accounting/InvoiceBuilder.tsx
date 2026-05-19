@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Trash2, Save, Send, Printer, Loader2, CheckCircle2,
-  AlertCircle, Copy, ShieldCheck, Languages, Palette, Building2, Eye, X,
+  AlertCircle, Copy, ShieldCheck, Languages, Building2, Eye, X,
   FileText, Truck, Pencil, UserPlus,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -14,8 +14,16 @@ import {
   type EuCountry, type EuVatRate,
 } from '../../utils/euCompliance';
 
-type Layout = 'modern' | 'classic' | 'minimal';
 type Lang = 'en' | 'de' | 'fr' | 'sq';
+
+function detectLanguageFromCountry(country?: string | null): Lang {
+  if (!country) return 'en';
+  const c = country.toUpperCase().trim();
+  if (['DE', 'AT', 'CH'].includes(c)) return 'de';
+  if (['FR', 'BE', 'LU'].includes(c)) return 'fr';
+  if (['AL', 'XK', 'MK'].includes(c)) return 'sq';
+  return 'en';
+}
 
 interface Item {
   id: string;
@@ -172,8 +180,7 @@ export default function InvoiceBuilder() {
   const [newContactForm, setNewContactForm] = useState<Partial<Contact> & { name: string }>({ name: '' });
   const [savingContact, setSavingContact] = useState(false);
 
-  const [layout, setLayout] = useState<Layout>('modern');
-  const [primaryColor, setPrimaryColor] = useState('#0f766e');
+  const [languageAutoSet, setLanguageAutoSet] = useState(false);
   const [clientPrices, setClientPrices] = useState<Map<string, number>>(new Map());
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState('');
@@ -257,6 +264,12 @@ export default function InvoiceBuilder() {
 
     const defaultBank = ((bs as BankAccount[]) ?? []).find((b) => b.is_default) ?? ((bs as BankAccount[]) ?? [])[0];
     if (defaultBank) setBankId(defaultBank.id);
+
+    if (!languageAutoSet && !isEdit && co) {
+      const detectedLang = detectLanguageFromCountry((co as Company).country);
+      setLanguage(detectedLang);
+      setLanguageAutoSet(true);
+    }
 
     if (emailSettings) {
       setAutoSendEnabled(!!(emailSettings as any).auto_send_on_finalize);
@@ -507,7 +520,7 @@ export default function InvoiceBuilder() {
   }, [items, regime.regime]);
 
   const preview: InvoicePreviewData = useMemo(() => ({
-    layout, primaryColor, logoUrl: company?.logo_url ?? null, language,
+    logoUrl: company?.logo_url ?? null, language,
     seller: {
       name: company?.name ?? '',
       address: company?.address ?? '',
@@ -546,7 +559,7 @@ export default function InvoiceBuilder() {
       line_total: Math.max(0, it.quantity * it.unit_price - it.discount_amount),
     })),
     totals,
-  }), [layout, primaryColor, company, bank, contact, buyerVat, invoiceNumber, invoiceDate, dueDate,
+  }), [company, bank, contact, buyerVat, invoiceNumber, invoiceDate, dueDate,
       deliveryDate, currency, notes, paymentReference, invoiceType, regime, language, items, totals]);
 
   function updateItem(id: string, patch: Partial<Item>) {
@@ -1205,27 +1218,6 @@ export default function InvoiceBuilder() {
             </div>
           </section>
 
-          <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-              <Palette className="w-4 h-4 text-teal-600" /> Modeli
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              {(['modern', 'classic', 'minimal'] as Layout[]).map((l) => (
-                <button key={l} onClick={() => setLayout(l)}
-                  className={`p-3 rounded-lg border-2 text-xs font-semibold capitalize transition-all ${
-                    layout === l ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
-                  }`}>
-                  {l}
-                </button>
-              ))}
-            </div>
-            <Field label="Ngjyra primare">
-              <div className="flex items-center gap-2">
-                <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-10 h-10 rounded border border-slate-200" />
-                <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className={inputCls} />
-              </div>
-            </Field>
-          </section>
         </div>
 
         {/* Totals summary (visible in form) */}

@@ -1,70 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, Loader2, FileCode2, FileText, Download, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { logger } from '../../utils/logger';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import type {
-  AccContact,
-  AccBankAccount,
-  AccCurrency,
-} from '../../types/accounting';
-import { formatCurrency, formatNumber } from '../../types/accounting';
-
-interface Company {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  postal_code: string;
-  country: string;
-  vat_number: string;
-  tax_number: string;
-  phone: string;
-  email: string;
-  logo_url: string;
-}
-
-interface InvoiceItemWithProduct {
-  id: string;
-  description: string;
-  quantity: number;
-  unit: string;
-  unit_price: number;
-  vat_rate: number;
-  line_discount: number;
-  line_total: number;
-  product?: {
-    name: string;
-    image_url: string;
-    sku: string;
-  } | null;
-}
-
-interface InvoiceWithRelations {
-  id: string;
-  invoice_number: string;
-  invoice_type: string;
-  invoice_date: string;
-  due_date: string | null;
-  currency: AccCurrency;
-  subtotal: number;
-  vat_amount: number;
-  total: number;
-  discount: number;
-  notes: string;
-  items: InvoiceItemWithProduct[];
-  contact?: AccContact | null;
-  bank_account?: AccBankAccount | null;
-}
+import InvoiceTemplate, { type InvoicePreviewData } from '../../components/accounting/InvoiceTemplate';
+import { buildVatBreakdown } from '../../utils/euCompliance';
 
 export default function InvoicePrint() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
 
-  const [invoice, setInvoice] = useState<InvoiceWithRelations | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [previewData, setPreviewData] = useState<InvoicePreviewData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -90,53 +38,105 @@ export default function InvoicePrint() {
       if (invoiceRes.error) throw invoiceRes.error;
       if (companyRes.error) throw companyRes.error;
 
-      setInvoice(invoiceRes.data as InvoiceWithRelations | null);
-      setCompany(companyRes.data as Company | null);
+      const inv = invoiceRes.data as any;
+      const co = companyRes.data as any;
+
+      if (!inv || !co) return;
+
+      const lang = (inv.language_code || detectLanguage(co.country)) as 'en' | 'de' | 'fr' | 'sq';
+      const bank = inv.bank_account;
+      const contact = inv.contact;
+      const items = (inv.items || []) as any[];
+
+      const vatBreakdown = buildVatBreakdown(
+        items.map((it: any) => ({
+          net: Number(it.line_total ?? 0),
+          vat_rate: Number(it.vat_rate ?? 0),
+          vat_category: 'S',
+        }))
+      );
+
+      const data: InvoicePreviewData = {
+        language: lang,
+        logoUrl: co.logo_url || null,
+        seller: {
+          name: co.name || '',
+          address: co.address || '',
+          postal_code: co.postal_code || '',
+          city: co.city || '',
+          country: co.country || '',
+          vat_number: co.vat_number || '',
+          tax_number: co.tax_number || '',
+          email: co.email || '',
+          phone: co.phone || '',
+          iban: bank?.iban || '',
+          bic: bank?.bic || '',
+          bank_name: bank?.bank_name || '',
+        },
+        buyer: {
+          name: contact?.name || '',
+          address: contact?.address || '',
+          postal_code: contact?.postal_code || '',
+          city: contact?.city || '',
+          country: contact?.country || '',
+          vat_number: contact?.vat_number || '',
+        },
+        invoice: {
+          number: inv.invoice_number || '',
+          date: formatDate(inv.invoice_date, lang),
+          due_date: inv.due_date ? formatDate(inv.due_date, lang) : undefined,
+          delivery_date: inv.delivery_date ? formatDate(inv.delivery_date, lang) : undefined,
+          currency: inv.currency || 'EUR',
+          notes: inv.notes || '',
+          payment_reference: inv.payment_reference || '',
+          legal_text: co.invoice_footer_text || '',
+          type: (inv.invoice_type as 'invoice' | 'credit_note' | 'proforma') || 'invoice',
+        },
+        items: items.map((it: any) => ({
+          description: it.description || '',
+          product_code: it.product?.sku || '',
+          quantity: Number(it.quantity ?? 0),
+          unit_code: it.unit || 'pcs',
+          unit_price: Number(it.unit_price ?? 0),
+          vat_rate: Number(it.vat_rate ?? 0),
+          discount_amount: Number(it.line_discount ?? 0),
+          line_total: Number(it.line_total ?? 0),
+        })),
+        totals: {
+          subtotal: Number(inv.subtotal ?? 0),
+          discount: Number(inv.discount ?? 0),
+          vat_total: Number(inv.vat_amount ?? 0),
+          total: Number(inv.total ?? 0),
+          vat_breakdown: vatBreakdown,
+        },
+      };
+
+      setPreviewData(data);
     } catch (err: any) {
-      console.error('Error loading invoice:', err.message);
+      logger.error('Error loading invoice for print', { error: err });
     } finally {
       setLoading(false);
     }
   }
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
-  const vatGroups = useMemo(() => {
-    if (!invoice?.items) return {};
-    const groups: Record<number, number> = {};
-    for (const item of invoice.items) {
-      const vatAmount = (item.line_total * item.vat_rate) / 100;
-      if (item.vat_rate > 0) {
-        groups[item.vat_rate] = (groups[item.vat_rate] || 0) + vatAmount;
-      }
-    }
-    return groups;
-  }, [invoice?.items]);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
+        <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
       </div>
     );
   }
 
-  if (!invoice) {
+  if (!previewData) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4">
-        <p className="text-gray-500 text-lg">Rechnung nicht gefunden</p>
+        <p className="text-gray-500 text-lg">Fatura nuk u gjet</p>
         <button
-          onClick={() => navigate('/accounting/invoices')}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Zurück zu Rechnungen
+          Kthehu
         </button>
       </div>
     );
@@ -148,7 +148,7 @@ export default function InvoicePrint() {
         @media print {
           body { margin: 0; padding: 0; background: white; }
           .no-print { display: none !important; }
-          .print-page { box-shadow: none !important; margin: 0 !important; padding: 20mm !important; }
+          .print-wrapper { box-shadow: none !important; margin: 0 !important; }
           @page { size: A4; margin: 0; }
         }
       `}</style>
@@ -160,203 +160,44 @@ export default function InvoicePrint() {
             className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Zurück
+            Kthehu
           </button>
           <div className="flex items-center gap-2">
             <EInvoiceButtons invoiceId={id ?? ''} />
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors"
             >
               <Printer className="w-4 h-4" />
-              Drucken
+              Printo
             </button>
           </div>
         </div>
       </div>
 
-      <div className="print-page max-w-[210mm] min-h-[297mm] mx-auto bg-white shadow-lg my-8 p-[20mm] text-[11px] leading-[1.5] text-gray-900 font-sans">
-        <div className="flex items-start justify-between mb-8">
-          <div className="flex-1">
-            {company?.logo_url && (
-              <img
-                src={company.logo_url}
-                alt={company.name}
-                style={{ height: '60px' }}
-                className="object-contain mb-2"
-              />
-            )}
-          </div>
-          {company && (
-            <div className="text-right text-[10px] text-gray-600 leading-[1.6]">
-              <p className="font-semibold text-gray-900 text-[12px]">{company.name}</p>
-              {company.address && <p>{company.address}</p>}
-              {(company.postal_code || company.city) && (
-                <p>
-                  {company.postal_code} {company.city}
-                </p>
-              )}
-              {company.country && <p>{company.country}</p>}
-              {company.phone && <p>Tel: {company.phone}</p>}
-              {company.email && <p>{company.email}</p>}
-              {company.vat_number && <p>USt-IdNr.: {company.vat_number}</p>}
-              {company.tax_number && <p>Steuernummer: {company.tax_number}</p>}
-            </div>
-          )}
-        </div>
-
-        <div className="text-[7px] text-gray-400 border-b border-gray-300 pb-0.5 mb-1 max-w-[85mm]">
-          {company
-            ? `${company.name} · ${company.address || ''} · ${company.postal_code || ''} ${company.city || ''}`
-            : ''}
-        </div>
-
-        <div className="min-h-[27.5mm] mb-8 max-w-[85mm]">
-          {invoice.contact && (
-            <div className="text-[11px] leading-[1.6]">
-              <p className="font-medium">{invoice.contact.name}</p>
-              {invoice.contact.address && <p>{invoice.contact.address}</p>}
-              {(invoice.contact.postal_code || invoice.contact.city) && (
-                <p>
-                  {invoice.contact.postal_code} {invoice.contact.city}
-                </p>
-              )}
-              {invoice.contact.country && <p>{invoice.contact.country}</p>}
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end mb-6">
-          <div className="text-right text-[11px] leading-[1.8]">
-            <p>
-              <span className="text-gray-500">Rechnungsnummer:</span>{' '}
-              <span className="font-semibold">{invoice.invoice_number}</span>
-            </p>
-            <p>
-              <span className="text-gray-500">Rechnungsdatum:</span>{' '}
-              {formatDate(invoice.invoice_date)}
-            </p>
-            {invoice.due_date && (
-              <p>
-                <span className="text-gray-500">Fälligkeitsdatum:</span>{' '}
-                {formatDate(invoice.due_date)}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <h2 className="text-[14px] font-bold mb-4">
-          {invoice.invoice_type === 'credit_note'
-            ? 'Gutschrift'
-            : invoice.invoice_type === 'proforma'
-              ? 'Proformarechnung'
-              : 'Rechnung'}{' '}
-          {invoice.invoice_number}
-        </h2>
-
-        <table className="w-full mb-6 border-collapse">
-          <thead>
-            <tr className="border-b-2 border-gray-900">
-              <th className="text-left py-2 pr-2 text-[10px] font-semibold text-gray-600 w-[30px]">
-                Pos.
-              </th>
-              <th className="text-left py-2 pr-2 text-[10px] font-semibold text-gray-600 w-[30px]" />
-              <th className="text-left py-2 pr-2 text-[10px] font-semibold text-gray-600">
-                Beschreibung
-              </th>
-              <th className="text-right py-2 pr-2 text-[10px] font-semibold text-gray-600 w-[50px]">
-                Menge
-              </th>
-              <th className="text-left py-2 pr-2 text-[10px] font-semibold text-gray-600 w-[40px]">
-                Einheit
-              </th>
-              <th className="text-right py-2 pr-2 text-[10px] font-semibold text-gray-600 w-[70px]">
-                Einzelpreis
-              </th>
-              <th className="text-right py-2 pr-2 text-[10px] font-semibold text-gray-600 w-[45px]">
-                MwSt.
-              </th>
-              <th className="text-right py-2 text-[10px] font-semibold text-gray-600 w-[75px]">
-                Gesamt
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items?.map((item, idx) => (
-              <tr key={item.id} className="border-b border-gray-200">
-                <td className="py-2 pr-2 text-gray-500 align-top">{idx + 1}</td>
-                <td className="py-2 pr-2 align-top">
-                  {item.product?.image_url && (
-                    <img
-                      src={item.product.image_url}
-                      alt=""
-                      className="w-[30px] h-[30px] object-cover rounded"
-                    />
-                  )}
-                </td>
-                <td className="py-2 pr-2 align-top">
-                  <p className="font-medium">{item.description}</p>
-                  {item.product?.sku && (
-                    <p className="text-[9px] text-gray-400">Art.-Nr.: {item.product.sku}</p>
-                  )}
-                </td>
-                <td className="py-2 pr-2 text-right align-top">
-                  {formatNumber(item.quantity)}
-                </td>
-                <td className="py-2 pr-2 align-top">{item.unit}</td>
-                <td className="py-2 pr-2 text-right align-top">
-                  {formatCurrency(item.unit_price, invoice.currency)}
-                </td>
-                <td className="py-2 pr-2 text-right align-top">{item.vat_rate}%</td>
-                <td className="py-2 text-right align-top font-medium">
-                  {formatCurrency(item.line_total, invoice.currency)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <div className="flex justify-end mb-8">
-          <div className="w-[250px]">
-            <div className="flex justify-between py-1 text-[11px]">
-              <span className="text-gray-600">Nettobetrag:</span>
-              <span>{formatCurrency(invoice.subtotal, invoice.currency)}</span>
-            </div>
-            {Object.entries(vatGroups).map(([rate, amount]) => (
-              <div key={rate} className="flex justify-between py-1 text-[11px]">
-                <span className="text-gray-600">MwSt. {rate}%:</span>
-                <span>{formatCurrency(amount, invoice.currency)}</span>
-              </div>
-            ))}
-            <div className="flex justify-between py-2 border-t-2 border-gray-900 mt-1 text-[12px] font-bold">
-              <span>Gesamtbetrag:</span>
-              <span>{formatCurrency(invoice.total, invoice.currency)}</span>
-            </div>
-          </div>
-        </div>
-
-        {invoice.notes && (
-          <div className="mb-8">
-            <p className="text-[10px] font-semibold text-gray-600 mb-1">Hinweise:</p>
-            <p className="text-[11px] text-gray-700 whitespace-pre-wrap">{invoice.notes}</p>
-          </div>
-        )}
-
-        {invoice.bank_account && (
-          <div className="border-t border-gray-300 pt-4 mt-auto">
-            <p className="text-[10px] font-semibold text-gray-600 mb-1">Bankverbindung:</p>
-            <div className="text-[10px] text-gray-600 leading-[1.6]">
-              {invoice.bank_account.bank_name && (
-                <p>Bank: {invoice.bank_account.bank_name}</p>
-              )}
-              {invoice.bank_account.iban && <p>IBAN: {invoice.bank_account.iban}</p>}
-              {invoice.bank_account.bic && <p>BIC: {invoice.bank_account.bic}</p>}
-            </div>
-          </div>
-        )}
+      <div className="print-wrapper max-w-[210mm] mx-auto bg-white shadow-lg my-8">
+        <InvoiceTemplate data={previewData} />
       </div>
     </>
   );
+}
+
+function detectLanguage(country?: string | null): 'en' | 'de' | 'fr' | 'sq' {
+  if (!country) return 'en';
+  const c = country.toUpperCase().trim();
+  if (['DE', 'AT', 'CH'].includes(c)) return 'de';
+  if (['FR', 'BE', 'LU'].includes(c)) return 'fr';
+  if (['AL', 'XK', 'MK'].includes(c)) return 'sq';
+  return 'en';
+}
+
+function formatDate(dateStr: string, lang: string) {
+  try {
+    const locale = lang === 'de' ? 'de-DE' : lang === 'fr' ? 'fr-FR' : lang === 'sq' ? 'sq-AL' : 'en-GB';
+    return new Date(dateStr).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
 }
 
 function EInvoiceButtons({ invoiceId }: { invoiceId: string }) {
@@ -402,18 +243,18 @@ function EInvoiceButtons({ invoiceId }: { invoiceId: string }) {
       <button
         onClick={() => handleGenerate('xrechnung')}
         disabled={busy !== null}
-        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
       >
         {busy === 'xrechnung' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileCode2 className="w-4 h-4" />}
-        XRechnung XML
+        XRechnung
       </button>
       <button
         onClick={() => handleGenerate('zugferd')}
         disabled={busy !== null}
-        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
       >
         {busy === 'zugferd' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-        ZUGFeRD PDF
+        ZUGFeRD
       </button>
       {error && (
         <span className="inline-flex items-center gap-1 text-xs text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded">
@@ -435,7 +276,7 @@ function EInvoiceButtons({ invoiceId }: { invoiceId: string }) {
           href={(result.pdf_url || result.xml_url) as string}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900"
+          className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
         >
           <Download className="w-3 h-3" /> Download
         </a>

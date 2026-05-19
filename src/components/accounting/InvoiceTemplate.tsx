@@ -1,10 +1,8 @@
 import type { VatBreakdownRow } from '../../utils/euCompliance';
 
 export interface InvoicePreviewData {
-  layout: 'modern' | 'classic' | 'minimal';
-  primaryColor: string;
-  logoUrl?: string | null;
   language: 'en' | 'de' | 'fr' | 'sq';
+  logoUrl?: string | null;
 
   seller: {
     name: string;
@@ -65,43 +63,43 @@ export interface InvoicePreviewData {
 const I18N: Record<string, Record<string, string>> = {
   en: {
     invoice: 'Invoice', credit_note: 'Credit Note', proforma: 'Pro Forma Invoice',
-    number: 'Invoice No.', date: 'Issue date', due: 'Due date', delivery: 'Delivery date',
+    number: 'Invoice No.', date: 'Date', due: 'Due date', delivery: 'Delivery date',
     from: 'From', to: 'Bill to', vat: 'VAT ID', tax: 'Tax No.',
-    desc: 'Description', code: 'Code', qty: 'Qty', unit: 'Unit', price: 'Unit price',
-    discount: 'Discount', vatCol: 'VAT %', total: 'Total',
-    subtotal: 'Subtotal', vatAmount: 'VAT', grandTotal: 'TOTAL DUE',
-    paymentTerms: 'Payment terms', ref: 'Payment reference', iban: 'IBAN', bic: 'BIC', bank: 'Bank',
-    thanks: 'Thank you for your business.',
+    pos: 'Pos.', desc: 'Description', qty: 'Qty', unit: 'Unit', price: 'Unit price',
+    vatCol: 'VAT', total: 'Amount',
+    subtotal: 'Net total', discount: 'Discount', vatAmount: 'VAT', grandTotal: 'Total',
+    bankInfo: 'Bank details', ref: 'Payment reference', iban: 'IBAN', bic: 'BIC', bank: 'Bank',
+    notes: 'Notes', thanks: 'Thank you for your business.',
   },
   de: {
     invoice: 'Rechnung', credit_note: 'Gutschrift', proforma: 'Proforma-Rechnung',
-    number: 'Rechnungsnr.', date: 'Rechnungsdatum', due: 'Faellig am', delivery: 'Lieferdatum',
+    number: 'Rechnungsnr.', date: 'Rechnungsdatum', due: 'Fälligkeitsdatum', delivery: 'Lieferdatum',
     from: 'Von', to: 'An', vat: 'USt-IdNr.', tax: 'Steuernummer',
-    desc: 'Beschreibung', code: 'Code', qty: 'Menge', unit: 'Einheit', price: 'Einzelpreis',
-    discount: 'Rabatt', vatCol: 'MwSt %', total: 'Gesamt',
-    subtotal: 'Zwischensumme', vatAmount: 'MwSt', grandTotal: 'GESAMTBETRAG',
-    paymentTerms: 'Zahlungsziel', ref: 'Verwendungszweck', iban: 'IBAN', bic: 'BIC', bank: 'Bank',
-    thanks: 'Vielen Dank fuer Ihr Vertrauen.',
+    pos: 'Pos.', desc: 'Beschreibung', qty: 'Menge', unit: 'Einheit', price: 'Einzelpreis',
+    vatCol: 'MwSt.', total: 'Gesamt',
+    subtotal: 'Nettobetrag', discount: 'Rabatt', vatAmount: 'MwSt.', grandTotal: 'Gesamtbetrag',
+    bankInfo: 'Bankverbindung', ref: 'Verwendungszweck', iban: 'IBAN', bic: 'BIC', bank: 'Bank',
+    notes: 'Hinweise', thanks: 'Vielen Dank für Ihr Vertrauen.',
   },
   fr: {
     invoice: 'Facture', credit_note: 'Avoir', proforma: 'Facture pro forma',
-    number: 'No de facture', date: 'Date d\'emission', due: 'Echeance', delivery: 'Date de livraison',
-    from: 'De', to: 'Facture a', vat: 'No TVA', tax: 'No fiscal',
-    desc: 'Description', code: 'Code', qty: 'Qte', unit: 'Unite', price: 'Prix unitaire',
-    discount: 'Remise', vatCol: 'TVA %', total: 'Total',
-    subtotal: 'Sous-total', vatAmount: 'TVA', grandTotal: 'TOTAL A PAYER',
-    paymentTerms: 'Conditions de paiement', ref: 'Reference de paiement', iban: 'IBAN', bic: 'BIC', bank: 'Banque',
-    thanks: 'Merci de votre confiance.',
+    number: 'N° de facture', date: "Date d'émission", due: 'Échéance', delivery: 'Date de livraison',
+    from: 'De', to: 'Facturer à', vat: 'N° TVA', tax: 'N° fiscal',
+    pos: 'Pos.', desc: 'Description', qty: 'Qté', unit: 'Unité', price: 'Prix unitaire',
+    vatCol: 'TVA', total: 'Total',
+    subtotal: 'Sous-total HT', discount: 'Remise', vatAmount: 'TVA', grandTotal: 'Total TTC',
+    bankInfo: 'Coordonnées bancaires', ref: 'Référence de paiement', iban: 'IBAN', bic: 'BIC', bank: 'Banque',
+    notes: 'Remarques', thanks: 'Merci de votre confiance.',
   },
   sq: {
-    invoice: 'Fatura', credit_note: 'Notes krediti', proforma: 'Fatura proforma',
-    number: 'Nr. i fatures', date: 'Data e leshimit', due: 'Afati i pageses', delivery: 'Data e dergimit',
-    from: 'Nga', to: 'Per', vat: 'Nr. TVSH', tax: 'Nr. tatimor',
-    desc: 'Pershkrimi', code: 'Kodi', qty: 'Sasia', unit: 'Njesia', price: 'Cmimi',
-    discount: 'Zbritje', vatCol: 'TVSH %', total: 'Totali',
-    subtotal: 'Nentotali', vatAmount: 'TVSH', grandTotal: 'PER TU PAGUAR',
-    paymentTerms: 'Afati i pageses', ref: 'Referenca', iban: 'IBAN', bic: 'BIC', bank: 'Banka',
-    thanks: 'Ju falenderojme.',
+    invoice: 'Faturë', credit_note: 'Notë krediti', proforma: 'Faturë proforma',
+    number: 'Nr. i faturës', date: 'Data e lëshimit', due: 'Afati i pagesës', delivery: 'Data e dërgesës',
+    from: 'Nga', to: 'Për', vat: 'Nr. TVSH', tax: 'Nr. tatimor',
+    pos: 'Nr.', desc: 'Përshkrimi', qty: 'Sasia', unit: 'Njësia', price: 'Çmimi',
+    vatCol: 'TVSH', total: 'Totali',
+    subtotal: 'Nëntotali', discount: 'Zbritje', vatAmount: 'TVSH', grandTotal: 'Totali për pagesë',
+    bankInfo: 'Të dhënat bankare', ref: 'Referenca', iban: 'IBAN', bic: 'BIC', bank: 'Banka',
+    notes: 'Shënime', thanks: 'Ju falënderojmë për besimin tuaj.',
   },
 };
 
@@ -114,162 +112,180 @@ function formatMoney(value: number, currency: string) {
   }
 }
 
+function formatQty(value: number) {
+  return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
+}
+
 export default function InvoiceTemplate({ data }: { data: InvoicePreviewData }) {
   const t = I18N[data.language] ?? I18N.en;
   const title = t[data.invoice.type] ?? t.invoice;
 
-  const headerBg = data.layout === 'modern' ? data.primaryColor : 'transparent';
-  const headerText = data.layout === 'modern' ? '#ffffff' : data.primaryColor;
-  const borderCol = data.primaryColor;
+  const sellerLine = [data.seller.address, `${data.seller.postal_code ?? ''} ${data.seller.city ?? ''}`.trim(), data.seller.country]
+    .filter((s) => (s ?? '').trim())
+    .join(' · ');
 
   return (
     <div
-      className="bg-white text-slate-900 text-[10px] leading-[1.5]"
-      style={{ width: '210mm', minHeight: '297mm', padding: '15mm', fontFamily: 'Inter, system-ui, sans-serif' }}
+      className="bg-white text-gray-900"
+      style={{ width: '210mm', minHeight: '297mm', padding: '20mm', fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif", fontSize: '10px', lineHeight: '1.6' }}
     >
-      {/* Header */}
-      <div
-        className="flex items-start justify-between pb-4 mb-4"
-        style={{
-          background: headerBg,
-          color: headerText,
-          borderBottom: data.layout === 'classic' ? `2px solid ${borderCol}` : 'none',
-          padding: data.layout === 'modern' ? '14px 18px' : '0 0 10px 0',
-          borderRadius: data.layout === 'modern' ? '6px' : 0,
-          margin: data.layout === 'modern' ? '-5mm -5mm 6mm -5mm' : '0 0 8mm 0',
-        }}
-      >
-        <div className="flex items-center gap-3">
+      {/* Sender line (small, above buyer address - DIN 5008 style) */}
+      <div className="text-[7.5px] text-gray-400 border-b border-gray-300 pb-0.5 mb-1 max-w-[85mm]">
+        {data.seller.name}{sellerLine ? ` · ${sellerLine}` : ''}
+      </div>
+
+      {/* Buyer address block (DIN 5008 position) */}
+      <div className="min-h-[27.5mm] mb-6 max-w-[85mm]">
+        <div className="text-[11px] leading-[1.6]">
+          <p className="font-semibold">{data.buyer.name || '—'}</p>
+          {data.buyer.address && <p>{data.buyer.address}</p>}
+          {(data.buyer.postal_code || data.buyer.city) && (
+            <p>{[data.buyer.postal_code, data.buyer.city].filter(Boolean).join(' ')}</p>
+          )}
+          {data.buyer.country && <p>{data.buyer.country}</p>}
+          {data.buyer.vat_number && <p className="text-gray-500 text-[9.5px]">{t.vat}: {data.buyer.vat_number}</p>}
+        </div>
+      </div>
+
+      {/* Header: Logo + Company info (right aligned) + Invoice metadata */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
           {data.logoUrl && (
-            <img src={data.logoUrl} alt="" className="h-12 w-auto object-contain bg-white/10 rounded p-1" />
+            <img src={data.logoUrl} alt="" className="h-14 w-auto object-contain mb-3" />
           )}
-          <div>
-            <div className="text-[18px] font-bold leading-tight">{data.seller.name}</div>
-            <div className="opacity-80 text-[9px]">
-              {[data.seller.address, data.seller.postal_code, data.seller.city, data.seller.country].filter(Boolean).join(', ')}
-            </div>
+          <div className="text-[10px] text-gray-600 leading-[1.6]">
+            <p className="font-semibold text-gray-900 text-[12px]">{data.seller.name}</p>
+            {data.seller.address && <p>{data.seller.address}</p>}
+            {(data.seller.postal_code || data.seller.city) && (
+              <p>{[data.seller.postal_code, data.seller.city].filter(Boolean).join(' ')}</p>
+            )}
+            {data.seller.country && <p>{data.seller.country}</p>}
+            {data.seller.phone && <p>Tel: {data.seller.phone}</p>}
+            {data.seller.email && <p>{data.seller.email}</p>}
+            {data.seller.vat_number && <p>{t.vat}: {data.seller.vat_number}</p>}
+            {data.seller.tax_number && <p>{t.tax}: {data.seller.tax_number}</p>}
           </div>
         </div>
+
         <div className="text-right">
-          <div className="text-[22px] font-extrabold uppercase tracking-wider">{title}</div>
-          <div className="text-[10px] opacity-90 mt-1">
-            <span className="font-semibold">{t.number}:</span> {data.invoice.number || '—'}
+          <div className="text-[11px] leading-[1.8]">
+            <p>
+              <span className="text-gray-500">{t.number}:</span>{' '}
+              <span className="font-bold">{data.invoice.number || '—'}</span>
+            </p>
+            <p>
+              <span className="text-gray-500">{t.date}:</span>{' '}
+              {data.invoice.date}
+            </p>
+            {data.invoice.due_date && (
+              <p>
+                <span className="text-gray-500">{t.due}:</span>{' '}
+                {data.invoice.due_date}
+              </p>
+            )}
+            {data.invoice.delivery_date && (
+              <p>
+                <span className="text-gray-500">{t.delivery}:</span>{' '}
+                {data.invoice.delivery_date}
+              </p>
+            )}
           </div>
-          <div className="text-[10px] opacity-90">
-            <span className="font-semibold">{t.date}:</span> {data.invoice.date}
-          </div>
-          {data.invoice.due_date && (
-            <div className="text-[10px] opacity-90">
-              <span className="font-semibold">{t.due}:</span> {data.invoice.due_date}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Parties */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div>
-          <div className="text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1">{t.from}</div>
-          <div className="font-semibold">{data.seller.name}</div>
-          <div className="whitespace-pre-line text-slate-600">
-            {[data.seller.address, `${data.seller.postal_code ?? ''} ${data.seller.city ?? ''}`, data.seller.country].filter((s) => (s ?? '').toString().trim()).join('\n')}
-          </div>
-          {data.seller.vat_number && <div className="text-slate-600">{t.vat}: {data.seller.vat_number}</div>}
-          {data.seller.tax_number && <div className="text-slate-600">{t.tax}: {data.seller.tax_number}</div>}
-          {data.seller.email && <div className="text-slate-600">{data.seller.email}</div>}
-        </div>
-        <div>
-          <div className="text-[9px] font-semibold uppercase tracking-widest text-slate-500 mb-1">{t.to}</div>
-          <div className="font-semibold">{data.buyer.name || '—'}</div>
-          <div className="whitespace-pre-line text-slate-600">
-            {[data.buyer.address, `${data.buyer.postal_code ?? ''} ${data.buyer.city ?? ''}`, data.buyer.country].filter((s) => (s ?? '').toString().trim()).join('\n')}
-          </div>
-          {data.buyer.vat_number && <div className="text-slate-600">{t.vat}: {data.buyer.vat_number}</div>}
-        </div>
-      </div>
+      {/* Title */}
+      <h1 className="text-[15px] font-bold mb-4 border-b-2 border-gray-900 pb-2">
+        {title} {data.invoice.number}
+      </h1>
 
-      {/* Items */}
-      <table className="w-full border-collapse mb-3 text-[9.5px]">
+      {/* Items table */}
+      <table className="w-full border-collapse mb-4 text-[10px]">
         <thead>
-          <tr style={{ background: data.primaryColor, color: 'white' }}>
-            <th className="text-left font-semibold py-2 px-2">{t.desc}</th>
-            <th className="text-right font-semibold py-2 px-2 w-14">{t.qty}</th>
-            <th className="text-left font-semibold py-2 px-2 w-14">{t.unit}</th>
-            <th className="text-right font-semibold py-2 px-2 w-20">{t.price}</th>
-            <th className="text-right font-semibold py-2 px-2 w-14">{t.vatCol}</th>
-            <th className="text-right font-semibold py-2 px-2 w-24">{t.total}</th>
+          <tr className="border-b-2 border-gray-900">
+            <th className="text-left font-semibold py-2 pr-2 text-gray-600 w-[30px]">{t.pos}</th>
+            <th className="text-left font-semibold py-2 pr-2 text-gray-600">{t.desc}</th>
+            <th className="text-right font-semibold py-2 pr-2 text-gray-600 w-[50px]">{t.qty}</th>
+            <th className="text-left font-semibold py-2 pr-2 text-gray-600 w-[40px]">{t.unit}</th>
+            <th className="text-right font-semibold py-2 pr-2 text-gray-600 w-[75px]">{t.price}</th>
+            <th className="text-right font-semibold py-2 pr-2 text-gray-600 w-[45px]">{t.vatCol}</th>
+            <th className="text-right font-semibold py-2 text-gray-600 w-[80px]">{t.total}</th>
           </tr>
         </thead>
         <tbody>
           {data.items.map((it, i) => (
-            <tr key={i} className="border-b border-slate-100">
-              <td className="py-2 px-2">
-                <div className="font-medium">{it.description || '—'}</div>
-                {it.product_code && <div className="text-slate-500 text-[8.5px]">{it.product_code}</div>}
+            <tr key={i} className="border-b border-gray-200">
+              <td className="py-2 pr-2 text-gray-500 align-top">{i + 1}</td>
+              <td className="py-2 pr-2 align-top">
+                <span className="font-medium">{it.description || '—'}</span>
+                {it.product_code && <span className="block text-[8.5px] text-gray-400">{it.product_code}</span>}
               </td>
-              <td className="py-2 px-2 text-right tabular-nums">{it.quantity}</td>
-              <td className="py-2 px-2 text-slate-600">{it.unit_code}</td>
-              <td className="py-2 px-2 text-right tabular-nums">{formatMoney(it.unit_price, data.invoice.currency)}</td>
-              <td className="py-2 px-2 text-right tabular-nums">{it.vat_rate.toFixed(1)}%</td>
-              <td className="py-2 px-2 text-right tabular-nums font-semibold">{formatMoney(it.line_total, data.invoice.currency)}</td>
+              <td className="py-2 pr-2 text-right tabular-nums align-top">{formatQty(it.quantity)}</td>
+              <td className="py-2 pr-2 text-gray-600 align-top">{it.unit_code}</td>
+              <td className="py-2 pr-2 text-right tabular-nums align-top">{formatMoney(it.unit_price, data.invoice.currency)}</td>
+              <td className="py-2 pr-2 text-right tabular-nums align-top">{it.vat_rate}%</td>
+              <td className="py-2 text-right tabular-nums font-medium align-top">{formatMoney(it.line_total, data.invoice.currency)}</td>
             </tr>
           ))}
           {data.items.length === 0 && (
-            <tr>
-              <td colSpan={6} className="text-center text-slate-400 py-6">—</td>
-            </tr>
+            <tr><td colSpan={7} className="text-center text-gray-400 py-6">—</td></tr>
           )}
         </tbody>
       </table>
 
       {/* Totals */}
-      <div className="flex justify-end">
-        <div className="w-72 text-[10px]">
-          <div className="flex justify-between py-1 border-b border-slate-100">
-            <span className="text-slate-600">{t.subtotal}</span>
+      <div className="flex justify-end mb-8">
+        <div className="w-[250px] text-[11px]">
+          <div className="flex justify-between py-1">
+            <span className="text-gray-600">{t.subtotal}:</span>
             <span className="tabular-nums">{formatMoney(data.totals.subtotal, data.invoice.currency)}</span>
           </div>
           {data.totals.discount > 0 && (
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-600">{t.discount}</span>
+            <div className="flex justify-between py-1">
+              <span className="text-gray-600">{t.discount}:</span>
               <span className="tabular-nums">- {formatMoney(data.totals.discount, data.invoice.currency)}</span>
             </div>
           )}
           {data.totals.vat_breakdown.map((b, i) => (
-            <div key={i} className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-600">{t.vatAmount} {b.rate.toFixed(1)}% ({b.category})</span>
+            <div key={i} className="flex justify-between py-1">
+              <span className="text-gray-600">{t.vatAmount} {b.rate}%:</span>
               <span className="tabular-nums">{formatMoney(b.vat, data.invoice.currency)}</span>
             </div>
           ))}
-          <div
-            className="flex justify-between py-2 mt-1 font-extrabold text-[12px]"
-            style={{ color: data.primaryColor, borderTop: `2px solid ${data.primaryColor}` }}
-          >
-            <span>{t.grandTotal}</span>
+          <div className="flex justify-between py-2 border-t-2 border-gray-900 mt-1 font-bold text-[12px]">
+            <span>{t.grandTotal}:</span>
             <span className="tabular-nums">{formatMoney(data.totals.total, data.invoice.currency)}</span>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-8 pt-4 border-t border-slate-200 grid grid-cols-2 gap-6 text-[9.5px]">
-        <div>
-          {data.seller.iban && (
-            <>
-              <div className="font-semibold text-slate-700 mb-1">{t.iban} / {t.bic}</div>
-              <div>{t.bank}: {data.seller.bank_name ?? '—'}</div>
-              <div>{t.iban}: {data.seller.iban}</div>
-              {data.seller.bic && <div>{t.bic}: {data.seller.bic}</div>}
-              {data.invoice.payment_reference && <div>{t.ref}: {data.invoice.payment_reference}</div>}
-            </>
-          )}
+      {/* Notes */}
+      {data.invoice.notes && (
+        <div className="mb-6">
+          <p className="text-[9.5px] font-semibold text-gray-600 mb-1">{t.notes}:</p>
+          <p className="text-[10px] text-gray-700 whitespace-pre-wrap">{data.invoice.notes}</p>
         </div>
-        <div className="text-slate-600">
-          {data.invoice.legal_text && (
-            <div className="mb-2 italic">{data.invoice.legal_text}</div>
-          )}
-          {data.invoice.notes && <div className="whitespace-pre-line">{data.invoice.notes}</div>}
-          <div className="mt-3 text-slate-400">{t.thanks}</div>
+      )}
+
+      {/* Bank info + Legal text */}
+      <div className="border-t border-gray-300 pt-4 mt-auto">
+        <div className="grid grid-cols-2 gap-6 text-[9.5px]">
+          <div>
+            {data.seller.iban && (
+              <>
+                <p className="font-semibold text-gray-700 mb-1">{t.bankInfo}</p>
+                {data.seller.bank_name && <p>{t.bank}: {data.seller.bank_name}</p>}
+                <p>{t.iban}: {data.seller.iban}</p>
+                {data.seller.bic && <p>{t.bic}: {data.seller.bic}</p>}
+                {data.invoice.payment_reference && <p>{t.ref}: {data.invoice.payment_reference}</p>}
+              </>
+            )}
+          </div>
+          <div className="text-gray-600">
+            {data.invoice.legal_text && (
+              <p className="mb-2 italic text-[9px]">{data.invoice.legal_text}</p>
+            )}
+            <p className="mt-2 text-gray-400">{t.thanks}</p>
+          </div>
         </div>
       </div>
     </div>
