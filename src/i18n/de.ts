@@ -831,6 +831,15 @@ export const de: typeof sq = {
         titleHighlight: 'mit Ihnen waechst',
         subtitle: 'Starten Sie kostenlos. Skalieren nach Bedarf. Jederzeit kuendbar.',
       },
+      pricing: {
+        title: 'Pläne & Preise',
+        subtitle: 'Wählen Sie den Plan, der zu Ihrem Unternehmen passt. Jederzeit kündbar.',
+        tab_logistics: 'Logistik',
+        tab_accounting: 'Buchhaltung',
+        empty: 'Derzeit keine aktiven Pläne verfügbar.',
+        popular: 'Am beliebtesten',
+        free: 'Kostenlos',
+      },
       cta: {
         badge: 'Schliessen Sie sich an',
         title: 'Verwalten Sie Ihr Geschaeft heute',

@@ -831,6 +831,15 @@ export const fr: typeof sq = {
         titleHighlight: 'grandit avec vous',
         subtitle: 'Commencez gratuitement. Ajustez selon besoins. Annulez a tout moment.',
       },
+      pricing: {
+        title: 'Plans & Tarifs',
+        subtitle: 'Choisissez le plan adapté à votre entreprise. Annulez à tout moment.',
+        tab_logistics: 'Logistique',
+        tab_accounting: 'Comptabilité',
+        empty: 'Aucun plan actif disponible pour le moment.',
+        popular: 'Le plus populaire',
+        free: 'Gratuit',
+      },
       cta: {
         badge: 'Rejoignez-nous',
         title: 'Commencez a gerer votre entreprise aujourd\'hui',

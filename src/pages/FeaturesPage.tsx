@@ -166,7 +166,7 @@ export default function FeaturesPage() {
         <div className="max-w-7xl mx-auto flex items-center gap-4">
           <Link to="/" className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            {t('home.minimal.login')}
+            {t('common.back')}
           </Link>
           <span className="text-sm font-semibold text-slate-900">{t('home.minimal.footerFeatures')}</span>
         </div>
@@ -363,10 +363,10 @@ export default function FeaturesPage() {
             </div>
             <div className="space-y-4">
               {[
-                { icon: Award, key: 'gobd' },
-                { icon: Layers, key: 'multiTenant' },
-                { icon: Globe2, key: 'euHosted' },
-                { icon: GitBranch, key: 'versioned' },
+                { icon: Award, key: 'compliance1' },
+                { icon: Layers, key: 'compliance2' },
+                { icon: Globe2, key: 'compliance3' },
+                { icon: GitBranch, key: 'compliance4' },
               ].map((s) => (
                 <div key={s.key} className="flex items-center gap-3 p-4 rounded-xl bg-white border border-slate-200">
                   <div className="p-2 rounded-lg bg-emerald-50">
@@ -390,18 +390,18 @@ export default function FeaturesPage() {
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-sm font-medium">
               iOS &bull; Android &bull; PWA
             </span>
-            <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold">{t('home.v3.mobile.title')}</h2>
-            <p className="mt-4 text-slate-400 leading-relaxed">{t('home.v3.mobile.subtitle')}</p>
+            <h2 className="mt-6 text-2xl sm:text-3xl font-extrabold">{t('home.v3.mobileApp.title1')} {t('home.v3.mobileApp.title2')}</h2>
+            <p className="mt-4 text-slate-400 leading-relaxed">{t('home.v3.mobileApp.subtitle')}</p>
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { icon: Zap, key: 'offline' },
-                { icon: ScanLine, key: 'camera' },
-                { icon: Bell, key: 'push' },
-                { icon: MapPin, key: 'gps' },
+                { icon: Zap, key: 'f1' },
+                { icon: ScanLine, key: 'f2' },
+                { icon: Bell, key: 'f3' },
+                { icon: MapPin, key: 'f4' },
               ].map((f) => (
                 <div key={f.key} className="p-4 rounded-xl bg-white/5 border border-white/10">
                   <f.icon className="h-5 w-5 text-teal-400 mx-auto" />
-                  <div className="mt-2 text-xs text-slate-300">{t(`home.v3.mobile.${f.key}`)}</div>
+                  <div className="mt-2 text-xs text-slate-300">{t(`home.v3.mobileApp.${f.key}`)}</div>
                 </div>
               ))}
             </div>

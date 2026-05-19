@@ -829,6 +829,15 @@ export const sq = {
         titleHighlight: 'rritjen tende',
         subtitle: 'Fillo me provimin falas. Rrit sipas nevojave. Anulo ne cdo kohe.',
       },
+      pricing: {
+        title: 'Planet & Cmimet',
+        subtitle: 'Zgjedh planin qe i pershtatet biznesit tend. Anulo ne cdo kohe.',
+        tab_logistics: 'Logjistike',
+        tab_accounting: 'Kontabilitet',
+        empty: 'Nuk ka plane aktive per momentin.',
+        popular: 'Me i populluari',
+        free: 'Falas',
+      },
       cta: {
         badge: 'Bashkohu me ne',
         title: 'Fillo te menaxhosh biznesin tend sot',

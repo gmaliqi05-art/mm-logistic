@@ -834,6 +834,15 @@ export const en: typeof sq = {
         titleHighlight: 'grows with you',
         subtitle: 'Start with a free trial. Scale as you need. Cancel anytime.',
       },
+      pricing: {
+        title: 'Plans & Pricing',
+        subtitle: 'Choose the plan that fits your business. Cancel anytime.',
+        tab_logistics: 'Logistics',
+        tab_accounting: 'Accounting',
+        empty: 'No active plans available at the moment.',
+        popular: 'Most popular',
+        free: 'Free',
+      },
       cta: {
         badge: 'Join us',
         title: 'Start managing your business today',
