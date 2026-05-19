@@ -1202,20 +1202,6 @@ function ReviewModal({
         throw new Error(verify.stock_post_error || 'Stoku nuk u regjistrua. Kontrolloni artikujt dhe depon.');
       }
 
-      const receivers = [note.assigned_driver_id].filter(Boolean) as string[];
-      if (receivers.length > 0) {
-        await notifyUsers({
-          userIds: receivers,
-          type: 'delivery',
-          titleKey: 'notifications.templates.deliveryRegisteredInStock.title',
-          messageKey: 'notifications.templates.deliveryRegisteredInStock.body',
-          params: { number: note.note_number },
-          referenceId: note.id,
-          fallbackTitle: 'Dergesa u regjistrua ne stok',
-          fallbackMessage: `${note.note_number} u mbyll dhe u regjistrua ne stok.`,
-        });
-      }
-
       if (role === 'depot_worker' && note.company_id) {
         const { data: admins } = await supabase
           .from('profiles')
