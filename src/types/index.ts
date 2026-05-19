@@ -286,11 +286,12 @@ export interface SubscriptionPlan {
   product_type: ProductType;
   is_addon: boolean;
   price_addon_monthly: number | null;
+  stripe_price_id: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'cancelled';
+export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'cancelled' | 'past_due';
 
 export interface CompanySubscription {
   id: string;
@@ -303,6 +304,7 @@ export interface CompanySubscription {
   current_period_end: string | null;
   stripe_subscription_id: string;
   stripe_customer_id: string;
+  payment_method: string;
   created_at: string;
   updated_at: string;
   plan?: SubscriptionPlan;

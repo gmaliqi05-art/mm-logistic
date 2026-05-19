@@ -5,7 +5,7 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 
 export default function AccountingRoute({ children }: { children: ReactNode }) {
   const { profile, loading: authLoading } = useAuth();
-  const { accountingEnabled, loading: subLoading } = useSubscription();
+  const { accountingEnabled, isExpired, loading: subLoading } = useSubscription();
 
   if (authLoading || subLoading) {
     return (
@@ -24,7 +24,7 @@ export default function AccountingRoute({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  if (!accountingEnabled) {
+  if (!accountingEnabled || isExpired) {
     return <Navigate to="/company/accounting-upgrade" replace />;
   }
 

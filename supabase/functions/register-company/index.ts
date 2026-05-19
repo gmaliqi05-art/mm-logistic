@@ -220,6 +220,7 @@ Deno.serve(async (req: Request) => {
         trial_end: isTrial ? periodEnd.toISOString() : null,
         current_period_start: now.toISOString(),
         current_period_end: periodEnd.toISOString(),
+        payment_method: isTrial ? "free" : "pending",
       });
 
     if (subError) {

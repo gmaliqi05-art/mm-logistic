@@ -178,13 +178,13 @@ export default function RegisterPage() {
     if (!form.companyEmail.trim()) return t('auth.requiredFields');
     if (!form.adminName.trim()) return t('auth.requiredFields');
     if (!form.adminPassword.trim()) return t('auth.requiredFields');
-    if (form.adminPassword.length < 6) return t('auth.passwordError');
+    if (form.adminPassword.length < 8) return t('auth.passwordError');
     if (form.adminPassword !== form.confirmPassword) return t('auth.passwordMismatch');
-    if (!location.country) return 'Ju lutem zgjidhni shtetin.';
+    if (!location.country) return t('auth.selectCountry');
     for (const f of profile.fields) {
       if (!f.required) continue;
       const value = (form[f.key] || '').toString().trim();
-      if (!value) return `Fusha "${f.label}" është e detyrueshme për ${location.country?.name}.`;
+      if (!value) return t('auth.fieldRequired').replace('{field}', f.label).replace('{country}', location.country?.name || '');
     }
     return null;
   }
@@ -205,7 +205,7 @@ export default function RegisterPage() {
     }
 
     if (currentStep === 2) {
-      handleRegister();
+      handlePaidRegister();
       return;
     }
 
@@ -260,6 +260,100 @@ export default function RegisterPage() {
       const message = err instanceof Error ? err.message : 'Gabim gjate regjistrimit';
       setError(message);
       if (currentStep > 1) setCurrentStep((selectedPlan === 'free_trial' || selectedPlan === 'acc_free_trial') ? 1 : 2);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePaidRegister() {
+    setLoading(true);
+    setError('');
+
+    try {
+      // First register the company (creates account with trial status)
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/register-company`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          companyName: form.companyName,
+          companyEmail: form.companyEmail,
+          companyPhone: form.companyPhone,
+          companyAddress: form.companyAddress,
+          country: form.country,
+          city: form.city,
+          postalCode: form.postalCode,
+          website: form.website,
+          vatNumber: form.vatNumber,
+          taxNumber: form.taxNumber,
+          commercialRegister: form.commercialRegister,
+          legalForm: form.legalForm,
+          registrationCourt: form.registrationCourt,
+          adminName: form.adminName,
+          adminEmail: form.companyEmail,
+          adminPassword: form.adminPassword,
+          planName: selectedPlan,
+          businessType: businessType === 'both' ? 'logistics' : businessType,
+          accountingEnabled: businessType === 'both',
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      // Now sign in to get a session token for Stripe checkout
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: form.companyEmail,
+        password: form.adminPassword,
+      });
+
+      if (signInError || !signInData.session) {
+        // Registration succeeded but couldn't initiate payment - go to success
+        setCurrentStep(3);
+        return;
+      }
+
+      // Find the plan to get its ID
+      const selectedPlanObj = plans.find((p) => p.name === selectedPlan);
+      if (!selectedPlanObj?.stripe_price_id) {
+        // Plan has no Stripe price - just complete registration
+        setCurrentStep(3);
+        return;
+      }
+
+      // Create Stripe checkout session
+      const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
+      const checkoutRes = await fetch(checkoutUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${signInData.session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          planId: selectedPlanObj.id,
+          successUrl: `${window.location.origin}/payment-success`,
+          cancelUrl: `${window.location.origin}/payment-cancel`,
+          isUpgrade: false,
+        }),
+      });
+
+      const checkoutData = await checkoutRes.json();
+
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url;
+        return;
+      }
+
+      // If Stripe checkout fails, still complete registration (trial mode)
+      setCurrentStep(3);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Gabim gjate regjistrimit';
+      setError(message);
+      setCurrentStep(2);
     } finally {
       setLoading(false);
     }
@@ -418,7 +512,7 @@ export default function RegisterPage() {
                   <Loader2 className="w-5 h-5 animate-spin" />
                   {t('common.processing')}
                 </>
-              ) : currentStep === 1 && selectedPlan === 'free_trial' ? (
+              ) : currentStep === 1 && (selectedPlan === 'free_trial' || selectedPlan === 'acc_free_trial') ? (
                 <>
                   {t('auth.registerFreeButton')}
                   <Check className="w-5 h-5" />
@@ -936,35 +1030,27 @@ function StepPayment({ currentPlan, t }: { currentPlan?: SubscriptionPlan; t: (k
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
         <div className="space-y-4">
-          <button className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-teal-500 bg-teal-50/50 transition-all">
+          <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-teal-500 bg-teal-50/50">
             <div className="p-2.5 bg-teal-100 rounded-xl">
               <CreditCard className="h-5 w-5 text-teal-600" />
             </div>
             <div className="text-left flex-1">
-              <p className="text-sm font-semibold text-slate-800">{t('auth.debitCredit')}</p>
-              <p className="text-xs text-slate-500">Visa, Mastercard, Amex</p>
+              <p className="text-sm font-semibold text-slate-800">{t('auth.securePayment')}</p>
+              <p className="text-xs text-slate-500">Visa, Mastercard, Amex, SEPA, PayPal</p>
             </div>
             <div className="w-5 h-5 rounded-full border-2 border-teal-500 bg-teal-500 flex items-center justify-center">
               <Check className="w-3 h-3 text-white" />
             </div>
-          </button>
-
-          <button className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-slate-200 hover:border-slate-300 transition-all">
-            <div className="p-2.5 bg-blue-50 rounded-xl">
-              <span className="text-blue-600 font-bold text-sm">PP</span>
-            </div>
-            <div className="text-left flex-1">
-              <p className="text-sm font-semibold text-slate-800">{t('auth.paypal')}</p>
-              <p className="text-xs text-slate-500">{t('auth.paypalDesc')}</p>
-            </div>
-            <div className="w-5 h-5 rounded-full border-2 border-slate-300" />
-          </button>
+          </div>
         </div>
 
-        <div className="mt-8 p-4 rounded-xl bg-amber-50 border border-amber-200">
-          <p className="text-sm text-amber-700">
-            {t('auth.paymentNotice')}
-          </p>
+        <div className="mt-6 p-4 rounded-xl bg-teal-50 border border-teal-200">
+          <div className="flex items-start gap-3">
+            <Shield className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-teal-700">
+              {t('auth.stripeRedirectNotice')}
+            </p>
+          </div>
         </div>
 
         <div className="mt-6 pt-6 border-t border-slate-100">

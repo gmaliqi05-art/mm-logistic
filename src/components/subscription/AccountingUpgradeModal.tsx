@@ -32,6 +32,51 @@ export default function AccountingUpgradeModal({ onClose, onActivated }: Props) 
     setActivating(true);
     setError(null);
     try {
+      // Look for an accounting plan with stripe_price_id
+      const { data: accPlan } = await supabase
+        .from('subscription_plans')
+        .select('id, stripe_price_id')
+        .eq('product_type', 'accounting')
+        .eq('is_active', true)
+        .not('stripe_price_id', 'is', null)
+        .order('price_monthly', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (accPlan?.stripe_price_id) {
+        // Use Stripe checkout for paid accounting addon
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({
+              planId: accPlan.id,
+              successUrl: `${window.location.origin}/payment-success`,
+              cancelUrl: window.location.href,
+              isAddon: true,
+            }),
+          }
+        );
+
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      }
+
+      // Fallback: if no Stripe price configured, activate directly (free trial / manual)
       const { error: upErr } = await supabase
         .from('companies')
         .update({

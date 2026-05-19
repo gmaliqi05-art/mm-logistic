@@ -1,6 +1,9 @@
-import { Crown, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { Crown, Lock, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Feature } from '../../types';
 
 interface UpgradePromptProps {
@@ -10,7 +13,9 @@ interface UpgradePromptProps {
 
 export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) {
   const { planTier } = useSubscription();
+  const { profile } = useAuth();
   const { t } = useTranslation();
+  const [upgrading, setUpgrading] = useState(false);
 
   const featureLabels: Record<Feature, { title: string; description: string; requiredPlan: string }> = {
     documents_signing: {
@@ -69,6 +74,58 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
 
   const currentPlanLabel = planTier === 'free_trial' ? t('subscription.freePlan') : planTier === 'standard' ? t('subscription.standardPlan') : t('subscription.premiumPlan');
 
+  async function handleUpgrade() {
+    if (!profile) return;
+    setUpgrading(true);
+    try {
+      const targetPlanName = info.requiredPlan === t('subscription.premiumPlan') ? 'premium' : 'standard';
+      const { data: plans } = await supabase
+        .from('subscription_plans')
+        .select('id, stripe_price_id')
+        .eq('name', targetPlanName)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!plans?.stripe_price_id) {
+        window.location.href = '/company/settings';
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            planId: plans.id,
+            successUrl: `${window.location.origin}/payment-success`,
+            cancelUrl: window.location.href,
+            isUpgrade: true,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      // Silently fail - user stays on page
+    } finally {
+      setUpgrading(false);
+    }
+  }
+
   if (compact) {
     return (
       <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl">
@@ -81,10 +138,14 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
             {t('subscription.requiredPlan')} {info.requiredPlan}
           </p>
         </div>
-        <div className="flex items-center gap-1 px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg">
-          <Crown className="w-3.5 h-3.5" />
+        <button
+          onClick={handleUpgrade}
+          disabled={upgrading}
+          className="flex items-center gap-1 px-3 py-1.5 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-60"
+        >
+          {upgrading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crown className="w-3.5 h-3.5" />}
           {t('subscription.upgrade')}
-        </div>
+        </button>
       </div>
     );
   }
@@ -112,8 +173,12 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
         </div>
 
         <div className="space-y-3">
-          <button className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/25">
-            <Crown className="w-5 h-5" />
+          <button
+            onClick={handleUpgrade}
+            disabled={upgrading}
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/25 disabled:opacity-60"
+          >
+            {upgrading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Crown className="w-5 h-5" />}
             {t('subscription.upgradeToAccess')} {info.requiredPlan}
           </button>
           <p className="text-xs text-gray-400">
