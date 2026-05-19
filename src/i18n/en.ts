@@ -365,6 +365,11 @@ export const en: typeof sq = {
     cancelMessage: 'Your payment was not completed. Your account has been created with a free trial. You can upgrade anytime from your dashboard.',
     goToLogin: 'Go to Login',
     tryAgain: 'Try Again',
+    pendingTitle: 'Payment Required',
+    pendingSubtitle: 'Your subscription is not yet active',
+    pendingExplanation: 'Your account has been created but your subscription will only be activated after completing the payment. Please complete the payment to access all platform features.',
+    completePayment: 'Complete Payment',
+    checkStatus: 'I already paid - check status',
   },
   home: {
     navHome: 'Home',

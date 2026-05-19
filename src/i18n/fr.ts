@@ -365,6 +365,11 @@ export const fr: typeof sq = {
     cancelMessage: 'Votre paiement n\'a pas ete finalise. Votre compte a ete cree avec un essai gratuit. Vous pouvez passer a la version superieure a tout moment depuis votre tableau de bord.',
     goToLogin: 'Aller a la Connexion',
     tryAgain: 'Reessayer',
+    pendingTitle: 'Paiement Requis',
+    pendingSubtitle: 'Votre abonnement n\'est pas encore actif',
+    pendingExplanation: 'Votre compte a ete cree mais votre abonnement ne sera active qu\'apres la finalisation du paiement. Veuillez completer le paiement pour acceder a toutes les fonctionnalites de la plateforme.',
+    completePayment: 'Completer le Paiement',
+    checkStatus: 'J\'ai deja paye - verifier le statut',
   },
   home: {
     navHome: 'Accueil',

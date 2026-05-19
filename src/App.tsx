@@ -29,6 +29,7 @@ const SecuritySettings = lazy(() => import('./pages/SecuritySettings'));
 const AccountDeletion = lazy(() => import('./pages/AccountDeletion'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('./pages/PaymentCancel'));
+const PaymentPending = lazy(() => import('./pages/PaymentPending'));
 import InstallPromptBanner from './components/InstallPromptBanner';
 import PushAutoSubscribe from './components/PushAutoSubscribe';
 import PushEnableBanner from './components/PushEnableBanner';
@@ -211,6 +212,7 @@ function AppRoutes() {
         <Route path="/sa-access" element={<SuperAdminLoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/payment-pending" element={<PaymentPending />} />
         <Route path="/payment-cancel" element={<PaymentCancel />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/privacy-policy" element={<Navigate to="/legal/privacy" replace />} />

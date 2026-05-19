@@ -1,22 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Building2,
-  Search,
-  Edit2,
-  ToggleLeft,
-  ToggleRight,
-  X,
-  AlertTriangle,
-  Loader2,
-  Filter,
-  Zap,
-  Star,
-  Shield,
-  Clock,
-  Settings,
-  Upload,
-  Image as ImageIcon,
-} from 'lucide-react';
+import { Building2, Search, CreditCard as Edit2, ToggleLeft, ToggleRight, X, AlertTriangle, Loader2, Filter, Zap, Star, Shield, Clock, Settings, Upload, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
 import CompanyFeaturesManager from '../../components/subscription/CompanyFeaturesManager';
@@ -34,6 +17,7 @@ interface CompanyWithSub {
     status: string;
     trial_end: string | null;
     current_period_end: string | null;
+    payment_method: string;
     plan?: { name: string; display_name: string; price_monthly: number };
   };
 }
@@ -52,6 +36,15 @@ export default function SuperAdminCompanies() {
     active: { label: t('common.active'), className: 'bg-green-100 text-green-700' },
     expired: { label: t('superAdmin.companies.allPlans'), className: 'bg-red-100 text-red-700' },
     cancelled: { label: t('common.cancel'), className: 'bg-gray-100 text-gray-700' },
+    pending_payment: { label: 'Pending Payment', className: 'bg-orange-100 text-orange-700' },
+    past_due: { label: 'Past Due', className: 'bg-red-100 text-red-700' },
+  };
+
+  const paymentMethodLabels: Record<string, { label: string; className: string }> = {
+    free: { label: 'Free', className: 'bg-gray-100 text-gray-600' },
+    pending: { label: 'Not Paid', className: 'bg-orange-100 text-orange-700' },
+    stripe: { label: 'Stripe', className: 'bg-green-100 text-green-700' },
+    manual: { label: 'Manual', className: 'bg-blue-100 text-blue-700' },
   };
 
   const [companies, setCompanies] = useState<CompanyWithSub[]>([]);
@@ -83,7 +76,7 @@ export default function SuperAdminCompanies() {
 
       const { data: subsData } = await supabase
         .from('company_subscriptions')
-        .select('company_id, status, trial_end, current_period_end, plan:subscription_plans(name, display_name, price_monthly)');
+        .select('company_id, status, trial_end, current_period_end, payment_method, plan:subscription_plans(name, display_name, price_monthly)');
 
       const subMap = new Map<string, CompanyWithSub['subscription']>();
       (subsData ?? []).forEach((s: Record<string, unknown>) => {
@@ -91,6 +84,7 @@ export default function SuperAdminCompanies() {
           status: s.status as string,
           trial_end: s.trial_end as string | null,
           current_period_end: s.current_period_end as string | null,
+          payment_method: (s.payment_method as string) || 'free',
           plan: s.plan as CompanyWithSub['subscription'] extends undefined ? never : NonNullable<CompanyWithSub['subscription']>['plan'],
         });
       });
@@ -264,6 +258,7 @@ export default function SuperAdminCompanies() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.company')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('superAdmin.companies.allPlans')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t('common.status')}</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Payment</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{t('superAdmin.dashboard.expiringTrials')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{t('superAdmin.plans.monthlyPrice')}</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.edit')}</th>
@@ -313,6 +308,17 @@ export default function SuperAdminCompanies() {
                         ) : (
                           <span className="text-xs text-gray-400">-</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 hidden md:table-cell">
+                        {(() => {
+                          const pm = company.subscription?.payment_method ?? 'free';
+                          const pmCfg = paymentMethodLabels[pm] || paymentMethodLabels.free;
+                          return (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${pmCfg.className}`}>
+                              {pmCfg.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 hidden lg:table-cell">
                         {days !== null ? (

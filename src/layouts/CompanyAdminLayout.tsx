@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Warehouse,
@@ -81,10 +81,14 @@ const bottomNavItems = allNavItems.filter(i => i.bottomNav);
 
 export default function CompanyAdminLayout() {
   const { profile, signOut } = useAuth();
-  const { planTier, accountingEnabled } = useSubscription();
+  const { planTier, accountingEnabled, isPendingPayment } = useSubscription();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+
+  if (isPendingPayment) {
+    return <Navigate to="/payment-pending" replace />;
+  }
   const reviewCounts = usePendingReviewCounts(profile?.company_id);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);

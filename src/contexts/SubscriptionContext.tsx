@@ -12,6 +12,7 @@ interface SubscriptionContextType {
   isExpired: boolean;
   isInvalid: boolean;
   isTrial: boolean;
+  isPendingPayment: boolean;
   daysRemaining: number;
   companyFeatures: CompanyFeature[];
   accountingEnabled: boolean;
@@ -143,9 +144,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     subscription && subscription.status === 'active' && !subscription.current_period_end,
   );
 
+  const isPendingPayment = subscription?.status === 'pending_payment';
+
   const isExpired = (() => {
     if (!subscription) return false;
     if (subscription.status === 'expired' || subscription.status === 'cancelled') return true;
+    if (isPendingPayment) return true;
     if (isInvalid) return true;
     if (isTrial && subscription.trial_end) {
       return new Date(subscription.trial_end) < new Date();
@@ -225,6 +229,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         isExpired,
         isInvalid,
         isTrial,
+        isPendingPayment,
         daysRemaining,
         companyFeatures,
         accountingEnabled,

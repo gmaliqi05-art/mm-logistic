@@ -210,16 +210,18 @@ Deno.serve(async (req: Request) => {
         (isTrial ? planData.trial_days : 30) * 24 * 60 * 60 * 1000
     );
 
+    const isPaidPlan = !isTrial && planData.name !== "free_trial" && planData.name !== "acc_free_trial";
+
     const { error: subError } = await supabaseAdmin
       .from("company_subscriptions")
       .insert({
         company_id: companyData.id,
         plan_id: planData.id,
-        status: isTrial ? "trial" : "active",
+        status: isTrial ? "trial" : (isPaidPlan ? "pending_payment" : "active"),
         trial_start: isTrial ? now.toISOString() : null,
         trial_end: isTrial ? periodEnd.toISOString() : null,
         current_period_start: now.toISOString(),
-        current_period_end: periodEnd.toISOString(),
+        current_period_end: isPaidPlan ? null : periodEnd.toISOString(),
         payment_method: isTrial ? "free" : "pending",
       });
 

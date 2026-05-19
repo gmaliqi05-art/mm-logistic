@@ -291,7 +291,7 @@ export interface SubscriptionPlan {
   updated_at: string;
 }
 
-export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'cancelled' | 'past_due';
+export type SubscriptionStatus = 'trial' | 'active' | 'expired' | 'cancelled' | 'past_due' | 'pending_payment';
 
 export interface CompanySubscription {
   id: string;

@@ -121,16 +121,14 @@ async function handleCheckoutCompleted(
   const periodStart = new Date(stripeSubscription.current_period_start * 1000).toISOString();
   const periodEnd = new Date(stripeSubscription.current_period_end * 1000).toISOString();
 
-  if (isUpgrade) {
-    // Cancel old subscription and create new one
-    await supabase
-      .from("company_subscriptions")
-      .update({ status: "cancelled" })
-      .eq("company_id", companyId)
-      .eq("status", "active");
-  }
+  // Cancel any pending_payment or old active subscription for this company
+  await supabase
+    .from("company_subscriptions")
+    .update({ status: "cancelled" })
+    .eq("company_id", companyId)
+    .in("status", ["pending_payment", ...(isUpgrade ? ["active"] : [])]);
 
-  // Create or update company subscription
+  // Create the new active subscription (payment verified by Stripe)
   await supabase.from("company_subscriptions").insert({
     company_id: companyId,
     plan_id: planId,

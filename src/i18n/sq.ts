@@ -363,6 +363,11 @@ export const sq = {
     cancelMessage: 'Pagesa juaj nuk u perfundua. Llogaria juaj eshte krijuar me prove falas. Mund te beni upgrade kurdo nga paneli juaj.',
     goToLogin: 'Shko te Kyqja',
     tryAgain: 'Provo Perseri',
+    pendingTitle: 'Pagesa e Nevojshme',
+    pendingSubtitle: 'Abonimi juaj nuk eshte ende aktiv',
+    pendingExplanation: 'Llogaria juaj eshte krijuar por abonimi do te aktivizohet vetem pas perfundimit te pageses. Ju lutem perfundoni pagesen per te aksesuar te gjitha funksionet e platformes.',
+    completePayment: 'Perfundo Pagesen',
+    checkStatus: 'Kam paguar tashme - kontrollo statusin',
   },
   home: {
     navHome: 'Home',

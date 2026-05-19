@@ -311,16 +311,16 @@ export default function RegisterPage() {
       });
 
       if (signInError || !signInData.session) {
-        // Registration succeeded but couldn't initiate payment - go to success
-        setCurrentStep(3);
+        // Registration succeeded but couldn't sign in for payment - show pending payment
+        navigate('/payment-pending');
         return;
       }
 
       // Find the plan to get its ID
       const selectedPlanObj = plans.find((p) => p.name === selectedPlan);
       if (!selectedPlanObj?.stripe_price_id) {
-        // Plan has no Stripe price - just complete registration
-        setCurrentStep(3);
+        // Plan has no Stripe price configured - show pending payment page
+        navigate('/payment-pending');
         return;
       }
 
@@ -336,7 +336,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           planId: selectedPlanObj.id,
           successUrl: `${window.location.origin}/payment-success`,
-          cancelUrl: `${window.location.origin}/payment-cancel`,
+          cancelUrl: `${window.location.origin}/payment-pending`,
           isUpgrade: false,
         }),
       });
@@ -348,8 +348,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // If Stripe checkout fails, still complete registration (trial mode)
-      setCurrentStep(3);
+      // If Stripe checkout creation fails, redirect to pending payment page
+      navigate('/payment-pending');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Gabim gjate regjistrimit';
       setError(message);

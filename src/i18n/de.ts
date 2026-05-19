@@ -365,6 +365,11 @@ export const de: typeof sq = {
     cancelMessage: 'Ihre Zahlung wurde nicht abgeschlossen. Ihr Konto wurde mit einer kostenlosen Testversion erstellt. Sie konnen jederzeit von Ihrem Dashboard upgraden.',
     goToLogin: 'Zum Login',
     tryAgain: 'Erneut Versuchen',
+    pendingTitle: 'Zahlung Erforderlich',
+    pendingSubtitle: 'Ihr Abonnement ist noch nicht aktiv',
+    pendingExplanation: 'Ihr Konto wurde erstellt, aber Ihr Abonnement wird erst nach Abschluss der Zahlung aktiviert. Bitte schliessen Sie die Zahlung ab, um auf alle Plattformfunktionen zuzugreifen.',
+    completePayment: 'Zahlung Abschliessen',
+    checkStatus: 'Ich habe bereits bezahlt - Status prufen',
   },
   home: {
     navHome: 'Startseite',
