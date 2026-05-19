@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { logger } from './logger';
 
 export type NotificationType =
   | 'chat'
@@ -48,7 +49,10 @@ export async function notifyUsers({
     reference_id: referenceId ?? null,
     data: { titleKey, messageKey, params: params ?? {} },
   }));
-  await supabase.from('notifications').insert(rows);
+  const { error } = await supabase.from('notifications').insert(rows);
+  if (error) {
+    logger.warn('notifications insert failed', { error: error.message, type, count: ids.length });
+  }
 }
 
 export async function notifyRole(options: {

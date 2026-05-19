@@ -60,7 +60,7 @@ export function useDriverLocationTracking({
     async (lat: number, lng: number, accuracy: number | null, speedKmh: number | null, heading: number | null) => {
       if (!companyId || !driverId) return;
       try {
-        await supabase.from('driver_locations').insert({
+        const { error: insertErr } = await supabase.from('driver_locations').insert({
           company_id: companyId,
           driver_id: driverId,
           delivery_note_id: deliveryNoteId ?? null,
@@ -70,14 +70,23 @@ export function useDriverLocationTracking({
           speed_kmh: speedKmh,
           heading_deg: heading,
         });
+        if (insertErr) {
+          logger.warn('driver_locations insert failed', { error: insertErr.message });
+          setState((s) => ({ ...s, error: insertErr.message }));
+          return;
+        }
         if (deliveryNoteId) {
-          await supabase
+          const { error: updateErr } = await supabase
             .from('delivery_notes')
             .update({ current_lat: lat, current_lng: lng, last_location_at: new Date().toISOString() })
             .eq('id', deliveryNoteId);
+          if (updateErr) {
+            logger.warn('delivery_notes location update failed', { error: updateErr.message });
+          }
         }
       } catch (err) {
         logger.warn('driver location persist failed', { error: err });
+        setState((s) => ({ ...s, error: 'Location sync failed' }));
       }
     },
     [companyId, driverId, deliveryNoteId]

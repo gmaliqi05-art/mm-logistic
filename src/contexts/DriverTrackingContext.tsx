@@ -228,7 +228,8 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
     async (next: boolean) => {
       setAutoTrackingState(next);
       if (profile?.id) {
-        await supabase.from('profiles').update({ auto_tracking_enabled: next }).eq('id', profile.id);
+        const { error } = await supabase.from('profiles').update({ auto_tracking_enabled: next }).eq('id', profile.id);
+        if (error) logger.warn('Failed to update auto_tracking_enabled', { error: error.message });
       }
       if (next && !enabled && isWithinWorkingWindowNow(shiftStartHour, shiftEndHour)) {
         setAutoStartNote(`Tracking u aktivizua sepse jemi brenda orarit te punes (${shiftStartHour}:00 - ${shiftEndHour}:00).`);
@@ -243,7 +244,8 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
       setShiftStartHour(start);
       setShiftEndHour(end);
       if (profile?.id) {
-        await supabase.from('profiles').update({ shift_start_hour: start, shift_end_hour: end }).eq('id', profile.id);
+        const { error } = await supabase.from('profiles').update({ shift_start_hour: start, shift_end_hour: end }).eq('id', profile.id);
+        if (error) logger.warn('Failed to update shift hours', { error: error.message });
       }
     },
     [profile?.id]
@@ -257,12 +259,13 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
       setShiftDialog(null);
       lastShiftEndHandledRef.current = Date.now();
       if (profile?.id) {
-        await supabase
+        const { error: profileErr } = await supabase
           .from('profiles')
           .update({ tracking_last_confirmed_at: new Date().toISOString() })
           .eq('id', profile.id);
+        if (profileErr) logger.warn('Failed to update tracking_last_confirmed_at', { error: profileErr.message });
         if (profile.company_id) {
-          await supabase
+          const { error: promptErr } = await supabase
             .from('tracking_prompts')
             .insert({
               company_id: profile.company_id,
@@ -271,6 +274,7 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
               response: 'still_working',
               responded_at: new Date().toISOString(),
             });
+          if (promptErr) logger.warn('tracking_prompts insert failed (overtime start)', { error: promptErr.message });
         }
       }
     },
@@ -282,7 +286,7 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
     setEnabled(false);
     setShiftDialog(null);
     if (profile?.id && profile.company_id) {
-      await supabase
+      const { error } = await supabase
         .from('tracking_prompts')
         .insert({
           company_id: profile.company_id,
@@ -291,6 +295,7 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
           response: 'finished',
           responded_at: new Date().toISOString(),
         });
+      if (error) logger.warn('tracking_prompts insert failed (overtime stop)', { error: error.message });
     }
   }, [profile?.id, profile?.company_id, activeDelivery?.id, persistOvertime, setEnabled]);
 

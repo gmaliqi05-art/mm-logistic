@@ -7,6 +7,7 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   build: {
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -18,6 +19,8 @@ export default defineConfig({
             '@tiptap/extension-link',
             '@tiptap/extension-placeholder',
           ],
+          'icons': ['lucide-react'],
+          'maps': ['leaflet', 'react-leaflet'],
         },
       },
     },

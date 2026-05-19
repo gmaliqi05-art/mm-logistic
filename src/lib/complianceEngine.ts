@@ -67,7 +67,10 @@ export async function loadCompanyCompliance(
       .eq('id', companyId)
       .maybeSingle();
 
-    if (cErr || !company) return emptyContext;
+    if (cErr || !company) {
+      contextCache.delete(companyId);
+      return emptyContext;
+    }
 
     const raw = company as {
       country?: string | null;

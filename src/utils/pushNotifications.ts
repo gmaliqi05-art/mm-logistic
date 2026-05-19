@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { logger } from './logger';
 
 interface SendPushNotificationParams {
   recipientIds: string[];
@@ -15,7 +16,7 @@ export async function sendPushNotification(params: SendPushNotificationParams): 
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-      console.error('No active session');
+      logger.warn('No active session');
       return false;
     }
 
@@ -33,15 +34,17 @@ export async function sendPushNotification(params: SendPushNotificationParams): 
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Push notification error:', error);
+      const text = await response.text();
+      let error: unknown;
+      try { error = JSON.parse(text); } catch { error = text; }
+      logger.warn('Push notification error', { error });
       return false;
     }
 
     const result = await response.json();
     return result.success;
   } catch (error) {
-    console.error('Error sending push notification:', error);
+    logger.warn('Error sending push notification:', error);
     return false;
   }
 }
@@ -64,13 +67,13 @@ export async function createNotificationAndPush(
     });
 
     if (notifError) {
-      console.error('Error creating notification:', notifError);
+      logger.warn('Error creating notification:', notifError);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    logger.warn('Error creating notification:', error);
     return false;
   }
 }
@@ -95,10 +98,10 @@ export async function notifyMultipleUsers(
     const { error } = await supabase.from('notifications').insert(notifications);
 
     if (error) {
-      console.error('Error creating notifications:', error);
+      logger.warn('Error creating notifications:', error);
       return;
     }
   } catch (error) {
-    console.error('Error notifying users:', error);
+    logger.warn('Error notifying users:', error);
   }
 }

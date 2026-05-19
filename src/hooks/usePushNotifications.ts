@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
 
 async function fetchVapidPublicKey(): Promise<string | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('push_platform_settings')
     .select('vapid_public_key')
     .eq('id', 1)
     .maybeSingle();
+  if (error) {
+    logger.warn('Failed to fetch VAPID public key', { error: error.message });
+    return null;
+  }
   const key = data?.vapid_public_key?.trim();
   return key && key.length > 0 ? key : null;
 }
@@ -97,7 +102,7 @@ export function usePushNotifications() {
 
       const subscriptionJSON = subscription.toJSON();
 
-      await supabase.from('push_subscriptions').upsert(
+      const { error: upsertErr } = await supabase.from('push_subscriptions').upsert(
         {
           user_id: profile.id,
           endpoint: subscription.endpoint,
@@ -111,10 +116,15 @@ export function usePushNotifications() {
         { onConflict: 'endpoint' },
       );
 
+      if (upsertErr) {
+        logger.warn('push_subscriptions upsert failed', { error: upsertErr.message });
+        return false;
+      }
+
       setIsSubscribed(true);
       return true;
     } catch (error) {
-      console.error('Error subscribing to push notifications:', error);
+      logger.warn('Error subscribing to push notifications', { error });
       return false;
     }
   }
@@ -129,17 +139,21 @@ export function usePushNotifications() {
       if (subscription) {
         await subscription.unsubscribe();
 
-        await supabase
+        const { error: deleteErr } = await supabase
           .from('push_subscriptions')
           .delete()
           .eq('user_id', profile.id)
           .eq('endpoint', subscription.endpoint);
+
+        if (deleteErr) {
+          logger.warn('push_subscriptions delete failed', { error: deleteErr.message });
+        }
       }
 
       setIsSubscribed(false);
       return true;
     } catch (error) {
-      console.error('Error unsubscribing from push notifications:', error);
+      logger.warn('Error unsubscribing from push notifications', { error });
       return false;
     }
   }

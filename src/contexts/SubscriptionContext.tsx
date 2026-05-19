@@ -107,28 +107,31 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     const companyId = profile?.company_id;
     if (!companyId) return;
 
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (companyIdRef.current) fetchSubscription(companyIdRef.current);
+      }, 300);
+    };
+
     const channel = supabase
       .channel(`subscription-${companyId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_plans' }, () => {
-        if (companyIdRef.current) fetchSubscription(companyIdRef.current);
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subscription_plans' }, debouncedRefresh)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'company_subscriptions', filter: `company_id=eq.${companyId}` },
-        () => {
-          if (companyIdRef.current) fetchSubscription(companyIdRef.current);
-        },
+        debouncedRefresh,
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'company_features', filter: `company_id=eq.${companyId}` },
-        () => {
-          if (companyIdRef.current) fetchSubscription(companyIdRef.current);
-        },
+        debouncedRefresh,
       )
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [profile?.company_id]);
@@ -193,7 +196,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     details?: Record<string, unknown>,
   ) => {
     if (!profile?.company_id || !canAccess('audit_log')) return;
-    await supabase.from('audit_logs').insert({
+    const { error } = await supabase.from('audit_logs').insert({
       company_id: profile.company_id,
       user_id: profile.id,
       action,
@@ -201,6 +204,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       entity_id: entityId || null,
       details: details || {},
     });
+    if (error) {
+      logger.warn('audit_logs insert failed', { error: error.message, action, entityType });
+    }
   };
 
   const refreshSubscription = async () => {
