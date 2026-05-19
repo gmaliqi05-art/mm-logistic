@@ -370,9 +370,9 @@ export default function LoginPage() {
               </Link>
             </p>
             <div className="flex items-center justify-center gap-3 text-xs text-slate-400">
-              <Link to="/privacy-policy" className="hover:text-teal-600 transition-colors">
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 transition-colors">
                 {t('privacy.title')}
-              </Link>
+              </a>
             </div>
           </div>
 
