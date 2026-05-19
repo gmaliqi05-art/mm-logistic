@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Clock, Power, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Clock, Power, CheckCircle2, AlertTriangle, Infinity } from 'lucide-react';
 import { useDriverTracking } from '../contexts/DriverTrackingContext';
 
 const PRESETS = [1, 2, 3, 4];
+const UNLIMITED_HOURS = 24;
 
 export default function DriverShiftEndModal() {
   const { shiftDialog, dismissShiftDialog, startOvertime, stopOvertime, shiftEndHour } = useDriverTracking();
@@ -67,6 +68,15 @@ export default function DriverShiftEndModal() {
               </button>
             ))}
           </div>
+
+          <button
+            onClick={() => chooseDuration(UNLIMITED_HOURS)}
+            disabled={busy}
+            className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold disabled:opacity-50"
+          >
+            <Infinity className="w-5 h-5" />
+            Pa limit (deri sa ta ndalesh manualisht)
+          </button>
 
           <div className="mt-3 flex items-center gap-2">
             <input

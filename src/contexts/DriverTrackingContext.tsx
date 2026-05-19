@@ -152,6 +152,31 @@ export function DriverTrackingProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, [isDriver, shiftStartHour, shiftEndHour]);
 
+  const mountCheckDoneRef = useRef(false);
+  useEffect(() => {
+    if (!isDriver || mountCheckDoneRef.current) return;
+    if (!enabled || overtimeUntil) return;
+    const outsideWindow = !isWithinWorkingWindowNow(shiftStartHour, shiftEndHour);
+    if (outsideWindow) {
+      mountCheckDoneRef.current = true;
+      lastShiftEndHandledRef.current = Date.now();
+      setEnabled(false);
+      setShiftDialog({ kind: 'ended' });
+      if (profile?.id && profile.company_id) {
+        void supabase
+          .from('tracking_prompts')
+          .insert({
+            company_id: profile.company_id,
+            driver_id: profile.id,
+            delivery_note_id: activeDelivery?.id ?? null,
+          })
+          .then(({ error }) => {
+            if (error) logger.warn('tracking_prompts insert failed (mount check)', { error });
+          });
+      }
+    }
+  }, [isDriver, enabled, overtimeUntil, shiftStartHour, shiftEndHour, profile?.id, profile?.company_id, activeDelivery?.id, setEnabled]);
+
   useEffect(() => {
     const was = prevWithinRef.current;
     prevWithinRef.current = withinWindow;

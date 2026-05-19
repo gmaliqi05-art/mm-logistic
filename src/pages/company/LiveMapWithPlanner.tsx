@@ -45,7 +45,7 @@ export default function LiveMapWithPlanner() {
       </div>
 
       {activeTab === 'map' && (
-        <LiveFleetMap companyId={profile.company_id} height="calc(100vh - 280px)" />
+        <LiveFleetMap companyId={profile.company_id} height="calc(100vh - 320px)" />
       )}
       {activeTab === 'planner' && (
         <CompanyRoutePlanner />
