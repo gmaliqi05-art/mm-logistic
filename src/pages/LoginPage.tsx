@@ -305,6 +305,15 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-teal-600 hover:text-teal-700 font-medium transition-colors"
+                >
+                  {t('auth.forgotPassword')}
+                </Link>
+              </div>
+
               <button
                 ref={submitButtonRef}
                 type="submit"

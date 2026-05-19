@@ -30,6 +30,8 @@ const AccountDeletion = lazy(() => import('./pages/AccountDeletion'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('./pages/PaymentCancel'));
 const PaymentPending = lazy(() => import('./pages/PaymentPending'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 import InstallPromptBanner from './components/InstallPromptBanner';
 import PushAutoSubscribe from './components/PushAutoSubscribe';
 import PushEnableBanner from './components/PushEnableBanner';
@@ -209,6 +211,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/sa-access" element={<SuperAdminLoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
