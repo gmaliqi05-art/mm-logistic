@@ -86,10 +86,21 @@ export default function HomePage() {
             {t('home.minimal.login')}
           </Link>
 
-          <h1 className="mt-8 text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] tracking-tight text-white">
+          {/* Divider line */}
+          <div className="mt-10 flex items-center gap-3 max-w-md mx-auto">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500/60" />
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+            </div>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+          </div>
+
+          <h1 className="mt-10 text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] tracking-tight text-white">
             {t('home.minimal.title')}
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-5 text-base sm:text-lg text-slate-500 max-w-xl mx-auto leading-relaxed">
             {t('home.minimal.subtitle')}
           </p>
 
