@@ -79,25 +79,26 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/50 to-slate-950 pointer-events-none" />
 
         <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-32">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] tracking-tight text-white">
+          <Link
+            to="/login"
+            className="inline-flex items-center justify-center px-6 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white font-semibold transition-all text-sm"
+          >
+            {t('home.minimal.login')}
+          </Link>
+
+          <h1 className="mt-8 text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] tracking-tight text-white">
             {t('home.minimal.title')}
           </h1>
           <p className="mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
             {t('home.minimal.subtitle')}
           </p>
 
-          <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="mt-12">
             <Link
               to="/register"
               className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold shadow-lg shadow-teal-600/20 transition-all hover:scale-[1.02] text-base"
             >
               {t('home.minimal.register')}
-            </Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-xl border border-slate-700 hover:border-slate-500 hover:bg-slate-800/50 text-white font-semibold transition-all text-base"
-            >
-              {t('home.minimal.login')}
             </Link>
           </div>
         </div>
