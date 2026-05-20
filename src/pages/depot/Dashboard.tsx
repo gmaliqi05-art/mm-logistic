@@ -242,10 +242,12 @@ export default function DepotDashboard() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-orange-900">
-                  {pendingRepairs === 1 ? '1 riparim ne pritje' : `${pendingRepairs} riparime ne pritje`}
+                  {pendingRepairs === 1
+                    ? t('company.dashboard.depotPendingRepairsOne')
+                    : t('company.dashboard.depotPendingRepairsMany').replace('{count}', String(pendingRepairs))}
                 </p>
                 <p className="text-xs text-orange-700 mt-0.5">
-                  Klikoni per te hapur listen e riparimeve ne kete depo.
+                  {t('company.dashboard.depotPendingRepairsDescription')}
                 </p>
               </div>
             </div>

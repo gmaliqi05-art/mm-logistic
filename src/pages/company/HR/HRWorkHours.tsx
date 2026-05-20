@@ -101,9 +101,11 @@ export default function HRWorkHours() {
     const userSummary = summary.find((s) => s.userId === newEntry.user_id);
     if (userSummary && userSummary.level !== 'ok') {
       const isHard = userSummary.level === 'hard_over';
-      const msg = isHard
-        ? `Pas ketij regjistrimi ai punonjes do te kete ${userSummary.totalHours}h kete jave, mbi limitin absolut prej ${WEEKLY_LIMIT_HARD}h (EU 2002/15/EC). Vazhdo gjithsesi?`
-        : `Pas ketij regjistrimi ai punonjes do te kete ${userSummary.totalHours}h kete jave, mbi mesataren e lejuar prej ${WEEKLY_LIMIT_SOFT}h (EU 2002/15/EC). Vazhdo gjithsesi?`;
+      const tplKey = isHard ? 'hr.workHours.confirmHardOver' : 'hr.workHours.confirmSoftOver';
+      const limit = isHard ? WEEKLY_LIMIT_HARD : WEEKLY_LIMIT_SOFT;
+      const msg = t(tplKey)
+        .replace('{hours}', String(userSummary.totalHours))
+        .replace('{limit}', String(limit));
       if (!confirm(msg)) return;
     }
 

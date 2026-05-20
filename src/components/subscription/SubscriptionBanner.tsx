@@ -68,7 +68,7 @@ export default function SubscriptionBanner() {
         <div className="flex items-center justify-center gap-3">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
           <div className="text-sm font-medium">
-            Subscription configuration is invalid. Please contact support.
+            {t('subscription.configInvalid')}
           </div>
         </div>
       </div>
