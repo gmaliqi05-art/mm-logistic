@@ -75,6 +75,7 @@ export default function PartnerDetail() {
   const [invoiceSummary, setInvoiceSummary] = useState<{ overdueCount: number; overdueTotal: number; openCount: number; openTotal: number; currency: string }>(
     { overdueCount: 0, overdueTotal: 0, openCount: 0, openTotal: 0, currency: 'EUR' }
   );
+  const [palletBalances, setPalletBalances] = useState<Array<{ pallet_type: string; current_balance: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,6 +131,17 @@ export default function PartnerDetail() {
             else { openCount++; openTotal += amount; }
           }
           setInvoiceSummary({ overdueCount, overdueTotal, openCount, openTotal, currency });
+        }
+
+        // Pallet account balances per pallet_type (EPAL etc.). Positive
+        // balance = partner owes us; negative = we owe them.
+        const { data: paBalances } = await supabase
+          .from('pallet_accounts')
+          .select('pallet_type, current_balance')
+          .eq('company_id', profile!.company_id)
+          .eq('partner_contact_id', id!);
+        if (!cancelled) {
+          setPalletBalances(((paBalances ?? []) as Array<{ pallet_type: string; current_balance: number }>).filter((r) => r.current_balance !== 0));
         }
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Gabim gjate ngarkimit');
@@ -238,6 +250,41 @@ export default function PartnerDetail() {
         <Kpi label="Ruajtje (copa)" value={totals.custody} tone="amber" icon={Warehouse} />
         <Kpi label="Dokumente" value={totals.documents} tone="sky" icon={Package} />
       </div>
+
+      {palletBalances.length > 0 && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Llogaria e paletave</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Sasi pozitive = partneri na detyron; sasi negative = ne i detyrojme.
+              </p>
+            </div>
+            <Link to="/company/pallet-accounts" className="text-xs font-medium text-teal-600 hover:text-teal-700">
+              Llogarite e plota →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+            {palletBalances.map((b) => {
+              const isOwed = b.current_balance > 0;
+              const isDebt = b.current_balance < 0;
+              return (
+                <div
+                  key={b.pallet_type}
+                  className={`rounded-lg p-3 border ${
+                    isDebt ? 'border-red-200 bg-red-50' : isOwed ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'
+                  }`}
+                >
+                  <p className="text-[11px] text-slate-500 uppercase tracking-wide">{b.pallet_type}</p>
+                  <p className={`text-base font-bold mt-0.5 ${isDebt ? 'text-red-900' : isOwed ? 'text-emerald-900' : 'text-slate-900'}`}>
+                    {isOwed ? '+' : ''}{b.current_balance.toLocaleString()}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {(invoiceSummary.openCount > 0 || invoiceSummary.overdueCount > 0) && (
         <section className={`rounded-2xl border p-4 ${
