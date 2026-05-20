@@ -33,6 +33,7 @@ import PartnerQuickRegister from './PartnerQuickRegister';
 import OurRoleSelector, { type OurRole } from '../../components/delivery/OurRoleSelector';
 import { type ThreePartyData } from '../../components/delivery/ThreePartyForm';
 import { useDriverComplianceMap } from '../../hooks/useDriverComplianceMap';
+import { notifyUsers } from '../../utils/notifications';
 
 function emptyThreeParty(): ThreePartyData {
   return {
@@ -463,7 +464,8 @@ export default function CompanyDeliveryNotes() {
 
   async function reassignDriver(note: DeliveryNote, newDriverId: string) {
     const cleaned = newDriverId || null;
-    if (cleaned === (note.assigned_driver_id ?? null)) return;
+    const oldDriverId = note.assigned_driver_id ?? null;
+    if (cleaned === oldDriverId) return;
     try {
       setReassigning(true);
       setError(null);
@@ -475,6 +477,37 @@ export default function CompanyDeliveryNotes() {
         .maybeSingle();
       if (err) throw err;
       if (data) setSelectedNote(data as any);
+
+      // Notify both sides of the reassignment. Skip if the note was never
+      // dispatched (draft) — that's just routine editing, not a hand-off.
+      const isLive = note.status !== 'draft';
+      if (isLive) {
+        if (oldDriverId && oldDriverId !== profile?.id) {
+          await notifyUsers({
+            userIds: [oldDriverId],
+            type: 'delivery',
+            titleKey: 'notifications.templates.deliveryReassignedFrom.title',
+            messageKey: 'notifications.templates.deliveryReassignedFrom.body',
+            params: { number: note.note_number },
+            referenceId: note.id,
+            fallbackTitle: 'Dergesa u kaloi tjeter',
+            fallbackMessage: `Dergesa ${note.note_number} u rikalkulua nga ti tek nje shofer tjeter.`,
+          });
+        }
+        if (cleaned && cleaned !== profile?.id) {
+          await notifyUsers({
+            userIds: [cleaned],
+            type: 'delivery',
+            titleKey: 'notifications.templates.deliveryAssigned.title',
+            messageKey: 'notifications.templates.deliveryAssigned.body',
+            params: { number: note.note_number },
+            referenceId: note.id,
+            fallbackTitle: 'Dergese e re per ty',
+            fallbackMessage: `Te eshte caktuar dergesa ${note.note_number}.`,
+          });
+        }
+      }
+
       await fetchAll();
     } catch (err: any) {
       setError(err.message || t('common.error'));

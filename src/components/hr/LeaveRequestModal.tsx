@@ -3,6 +3,7 @@ import { X, Calendar, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { notifyRole } from '../../utils/notifications';
 
 interface LeaveType {
   id: string;
@@ -129,6 +130,22 @@ export default function LeaveRequestModal({ onClose, onSuccess, adminMode = fals
       setError(err.message);
       setSaving(false);
     } else {
+      // Notify company admins if the request was filed by an employee and is
+      // still pending review (admin-filed auto-approved entries don't need a
+      // notification — the admin is the one who created them).
+      if (status === 'pending' && profile?.company_id) {
+        const dateLabel = `${startDate} - ${endDate}`;
+        await notifyRole({
+          companyId: profile.company_id,
+          role: 'company_admin',
+          type: 'system',
+          titleKey: 'notifications.templates.leaveRequested.title',
+          messageKey: 'notifications.templates.leaveRequested.body',
+          params: { name: profile.full_name || profile.email || '', dates: dateLabel },
+          fallbackTitle: 'Kerkese e re per pushim',
+          fallbackMessage: `${profile.full_name || profile.email || ''} ka kerkuar pushim ${dateLabel}.`,
+        });
+      }
       onSuccess();
     }
   }
