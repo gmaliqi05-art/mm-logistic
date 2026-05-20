@@ -135,11 +135,51 @@ Deno.serve(async (req: Request) => {
       if (levelToSend === null) continue;
 
       // Update status to overdue if not already
-      if (invoice.status !== "overdue" && daysOverdue > 0) {
+      const statusFlipped = invoice.status !== "overdue" && daysOverdue > 0;
+      if (statusFlipped) {
         await supabase
           .from("acc_invoices")
           .update({ status: "overdue" })
           .eq("id", invoice.id);
+
+        // First time an invoice crosses into overdue, post in-app notifications
+        // to every active company_admin so the bell icon reflects it without
+        // having to wait for the customer-facing email side effect. We only
+        // do this on the status flip — not every time the cron re-runs on a
+        // still-overdue invoice — to avoid spamming the bell.
+        try {
+          const { data: admins } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("company_id", invoice.company_id)
+            .eq("role", "company_admin")
+            .eq("is_active", true);
+          const adminIds = (admins || []).map((a: { id: string }) => a.id);
+          if (adminIds.length > 0) {
+            const customerName = contact?.name || "Klient";
+            const amount = formatCurrency(invoice.total, invoice.currency);
+            const rows = adminIds.map((uid: string) => ({
+              user_id: uid,
+              type: "system",
+              title: "Fatura vonohet",
+              message: `Fatura ${invoice.invoice_number || ""} (${amount}) per ${customerName} ka kaluar afatin.`,
+              reference_id: invoice.id,
+              data: {
+                titleKey: "notifications.templates.invoiceOverdue.title",
+                messageKey: "notifications.templates.invoiceOverdue.body",
+                params: {
+                  number: String(invoice.invoice_number || ""),
+                  amount,
+                  customer: String(customerName),
+                  days: String(daysOverdue),
+                },
+              },
+            }));
+            await supabase.from("notifications").insert(rows);
+          }
+        } catch {
+          // Notification insert is best-effort; don't fail the reminder run
+        }
       }
 
       // Send reminder email
