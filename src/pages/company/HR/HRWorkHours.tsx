@@ -3,9 +3,11 @@ import { Clock, Search, Loader2, ChevronLeft, ChevronRight, Download, Plus, Save
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
+import { summarizeWeeklyHours, WEEKLY_LIMIT_HARD, WEEKLY_LIMIT_SOFT } from '../../../utils/weeklyHours';
 
 interface WorkHourRow {
   id: string;
+  user_id: string;
   date: string;
   start_time: string | null;
   end_time: string | null;
@@ -59,7 +61,7 @@ export default function HRWorkHours() {
 
     const { data } = await supabase
       .from('work_hours_log')
-      .select('id, date, start_time, end_time, break_minutes, total_hours, overtime_hours, notes, user:profiles!work_hours_log_user_id_fkey(full_name)')
+      .select('id, user_id, date, start_time, end_time, break_minutes, total_hours, overtime_hours, notes, user:profiles!work_hours_log_user_id_fkey(full_name)')
       .eq('company_id', profile!.company_id)
       .gte('date', startOfMonth)
       .lte('date', endOfMonth)
@@ -82,9 +84,30 @@ export default function HRWorkHours() {
   async function handleAddEntry(e: React.FormEvent) {
     e.preventDefault();
     if (!newEntry.user_id || !newEntry.date || !newEntry.start_time || !newEntry.end_time) return;
-    setSaving(true);
 
     const { total, overtime } = calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes);
+
+    // Soft confirmation when the new entry would push the user past the
+    // EU Working Time Directive thresholds for that ISO week. Hard-blocking
+    // is wrong because legitimate edge cases exist (correcting a wrong
+    // record, exceptional emergency dispatch). Just ask the admin to
+    // confirm so the choice is deliberate.
+    const targetDate = new Date(newEntry.date);
+    const existingRows = records
+      .filter((r) => r.user_id === newEntry.user_id && r.date !== newEntry.date)
+      .map((r) => ({ user_id: r.user_id, date: r.date, total_hours: r.total_hours }));
+    const projected = [...existingRows, { user_id: newEntry.user_id, date: newEntry.date, total_hours: total }];
+    const summary = summarizeWeeklyHours(projected, targetDate);
+    const userSummary = summary.find((s) => s.userId === newEntry.user_id);
+    if (userSummary && userSummary.level !== 'ok') {
+      const isHard = userSummary.level === 'hard_over';
+      const msg = isHard
+        ? `Pas ketij regjistrimi ai punonjes do te kete ${userSummary.totalHours}h kete jave, mbi limitin absolut prej ${WEEKLY_LIMIT_HARD}h (EU 2002/15/EC). Vazhdo gjithsesi?`
+        : `Pas ketij regjistrimi ai punonjes do te kete ${userSummary.totalHours}h kete jave, mbi mesataren e lejuar prej ${WEEKLY_LIMIT_SOFT}h (EU 2002/15/EC). Vazhdo gjithsesi?`;
+      if (!confirm(msg)) return;
+    }
+
+    setSaving(true);
 
     await supabase.from('work_hours_log').upsert({
       user_id: newEntry.user_id,
