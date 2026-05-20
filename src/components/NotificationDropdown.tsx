@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   MessageSquare,
@@ -22,6 +23,7 @@ interface Notification {
   message: string;
   is_read: boolean;
   created_at: string;
+  reference_id: string | null;
   data?: {
     event?: string;
     note_type?: 'delivery' | 'pickup';
@@ -29,6 +31,7 @@ interface Notification {
     titleKey?: string;
     messageKey?: string;
     params?: Record<string, string | number>;
+    action_url?: string;
   } | null;
 }
 
@@ -53,6 +56,7 @@ const typeColors: Record<string, string> = {
 export default function NotificationDropdown() {
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -95,6 +99,48 @@ export default function NotificationDropdown() {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
     );
+  }
+
+  /**
+   * Computes the destination route for a notification. Preference order:
+   *   1. data.action_url written by the trigger / sender (most specific)
+   *   2. reference_id + type derive a sensible page given the user's role
+   *   3. null (no navigation)
+   *
+   * The role check is important because the same delivery_note id renders
+   * on /company/delivery-notes/X for an admin but /driver for a driver.
+   */
+  function notificationDestination(n: Notification): string | null {
+    if (n.data?.action_url) return n.data.action_url;
+    if (!n.reference_id) return null;
+    const role = profile?.role;
+    if (n.type === 'delivery' || n.type === 'delivery_note' || n.type === 'assignment') {
+      if (role === 'driver') return '/driver';
+      if (role === 'depot_worker') return '/depot/delivery-notes';
+      if (role === 'logistics_admin') return '/logistics/active';
+      return '/company/delivery-notes';
+    }
+    if (n.type === 'chat') {
+      if (role === 'driver') return '/driver/chat';
+      if (role === 'depot_worker') return '/depot/chat';
+      return '/company/chat';
+    }
+    if (n.type === 'document') {
+      if (role === 'driver') return '/driver/documents';
+      if (role === 'depot_worker') return '/depot/documents';
+      return '/company/documents';
+    }
+    if (n.type === 'stock') {
+      return role === 'depot_worker' ? '/depot/stock' : '/company/stock';
+    }
+    return null;
+  }
+
+  async function handleNotificationClick(n: Notification) {
+    if (!n.is_read) await handleMarkRead(n.id);
+    const dest = notificationDestination(n);
+    setOpen(false);
+    if (dest) navigate(dest);
   }
 
   async function handleMarkAllRead() {
@@ -206,12 +252,14 @@ export default function NotificationDropdown() {
                 const Icon = typeIcons[notif.type] || Info;
                 const colorClass = typeColors[notif.type] || typeColors.system;
                 const { title, message } = translateNotif(notif);
+                const hasDestination = notificationDestination(notif) != null;
                 return (
                   <div
                     key={notif.id}
+                    onClick={hasDestination ? () => handleNotificationClick(notif) : undefined}
                     className={`flex items-start gap-3 px-4 py-3 border-b border-gray-50 transition-colors ${
                       !notif.is_read ? 'bg-teal-50/40' : 'hover:bg-gray-50'
-                    }`}
+                    } ${hasDestination ? 'cursor-pointer' : ''}`}
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${colorClass}`}>
                       <Icon className="w-4 h-4" />
@@ -229,7 +277,7 @@ export default function NotificationDropdown() {
                     </div>
                     {!notif.is_read && (
                       <button
-                        onClick={() => handleMarkRead(notif.id)}
+                        onClick={(e) => { e.stopPropagation(); handleMarkRead(notif.id); }}
                         className="p-1 text-teal-500 hover:text-teal-700 hover:bg-teal-100 rounded transition-colors flex-shrink-0 mt-0.5"
                         title={t('common.markRead') || 'Lexo'}
                       >
