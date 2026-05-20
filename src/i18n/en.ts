@@ -357,6 +357,10 @@ export const en: typeof sq = {
     stepDone: 'Complete',
     genericError: 'An error occurred. Please try again.',
     sessionLoadError: 'Session did not load completely. Please try again.',
+    statCompaniesLabel: 'Active companies',
+    statUptimeLabel: 'Guaranteed uptime',
+    heroTagline: 'The complete platform for delivery tracking, stock management and real-time team communication.',
+    heroHighlight: 'maximum efficiency',
   },
   payment: {
     verifying: 'Verifying payment...',

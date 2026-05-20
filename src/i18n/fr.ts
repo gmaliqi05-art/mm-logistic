@@ -357,6 +357,10 @@ export const fr: typeof sq = {
     stepDone: 'Termine',
     genericError: 'Une erreur s\'est produite. Veuillez reessayer.',
     sessionLoadError: 'La session n\'a pas ete chargee completement. Veuillez reessayer.',
+    statCompaniesLabel: 'Entreprises actives',
+    statUptimeLabel: 'Disponibilite garantie',
+    heroTagline: 'La plateforme complete pour le suivi des livraisons, la gestion des stocks et la communication d\'equipe en temps reel.',
+    heroHighlight: 'efficacite maximale',
   },
   payment: {
     verifying: 'Verification du paiement...',

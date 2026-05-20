@@ -178,22 +178,21 @@ export default function LoginPage() {
             <h1 className="text-4xl font-extrabold text-white leading-tight">
               {t('auth.loginSubtitle')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
-                efikasitet maksimal
+                {t('auth.heroHighlight')}
               </span>
             </h1>
             <p className="mt-6 text-lg text-slate-300 leading-relaxed">
-              Platforma e plote per gjurmimin e dergesave, menaxhimin e stokut dhe
-              komunikimin midis ekipeve ne kohe reale.
+              {t('auth.heroTagline')}
             </p>
 
             <div className="mt-10 grid grid-cols-2 gap-4">
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
                 <div className="text-2xl font-bold text-white">500+</div>
-                <div className="text-sm text-slate-400 mt-1">Kompani aktive</div>
+                <div className="text-sm text-slate-400 mt-1">{t('auth.statCompaniesLabel')}</div>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
                 <div className="text-2xl font-bold text-white">99.9%</div>
-                <div className="text-sm text-slate-400 mt-1">Uptime garantuar</div>
+                <div className="text-sm text-slate-400 mt-1">{t('auth.statUptimeLabel')}</div>
               </div>
             </div>
           </div>

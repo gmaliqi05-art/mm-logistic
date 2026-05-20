@@ -357,6 +357,10 @@ export const de: typeof sq = {
     stepDone: 'Fertig',
     genericError: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
     sessionLoadError: 'Sitzung wurde nicht vollstaendig geladen. Bitte versuchen Sie es erneut.',
+    statCompaniesLabel: 'Aktive Unternehmen',
+    statUptimeLabel: 'Garantierte Verfuegbarkeit',
+    heroTagline: 'Die komplette Plattform fuer Lieferungsverfolgung, Bestandsverwaltung und Echtzeit-Teamkommunikation.',
+    heroHighlight: 'maximale Effizienz',
   },
   payment: {
     verifying: 'Zahlung wird uberpruft...',
