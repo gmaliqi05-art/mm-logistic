@@ -353,6 +353,8 @@ export const sq = {
     stepPlan: 'Plani',
     stepPayment: 'Pagesa',
     stepDone: 'Perfundo',
+    genericError: 'Ndodhi nje gabim. Provoni perseri.',
+    sessionLoadError: 'Sesioni nuk u ngarkua plotesisht. Provoni perseri.',
   },
   payment: {
     verifying: 'Duke verifikuar pagesen...',

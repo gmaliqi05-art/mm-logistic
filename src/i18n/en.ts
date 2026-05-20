@@ -355,6 +355,8 @@ export const en: typeof sq = {
     stepPlan: 'Plan',
     stepPayment: 'Payment',
     stepDone: 'Complete',
+    genericError: 'An error occurred. Please try again.',
+    sessionLoadError: 'Session did not load completely. Please try again.',
   },
   payment: {
     verifying: 'Verifying payment...',

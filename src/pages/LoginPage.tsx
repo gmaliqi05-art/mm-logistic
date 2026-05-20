@@ -114,7 +114,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     } catch {
-      setError('Ndodhi nje gabim. Provoni perseri.');
+      setError(t('auth.genericError'));
       setLoading(false);
     }
   };
@@ -132,7 +132,7 @@ export default function LoginPage() {
         setLoading(false);
       }
     } catch {
-      setError('Ndodhi nje gabim. Provoni perseri.');
+      setError(t('auth.genericError'));
       setLoading(false);
     }
   };
@@ -142,11 +142,11 @@ export default function LoginPage() {
     const timeout = setTimeout(() => {
       if (loading && !profile) {
         setLoading(false);
-        setError('Sesioni nuk u ngarkua plotesisht. Provoni perseri.');
+        setError(t('auth.sessionLoadError'));
       }
     }, 8000);
     return () => clearTimeout(timeout);
-  }, [loading, profile]);
+  }, [loading, profile, t]);
 
   return (
     <div className="min-h-screen flex">
