@@ -4,9 +4,11 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
 import LeaveRequestModal from '../../../components/hr/LeaveRequestModal';
+import { notifyUsers } from '../../../utils/notifications';
 
 interface LeaveRequest {
   id: string;
+  user_id: string;
   start_date: string;
   end_date: string;
   total_days: number;
@@ -38,7 +40,7 @@ export default function LeaveRequests() {
     setLoading(true);
     let query = supabase
       .from('leave_requests')
-      .select('id, start_date, end_date, total_days, status, reason, rejection_reason, created_at, user:profiles!leave_requests_user_id_fkey(full_name, email), leave_type:leave_types(code, name_en, name_sq, name_de, name_fr, color)')
+      .select('id, user_id, start_date, end_date, total_days, status, reason, rejection_reason, created_at, user:profiles!leave_requests_user_id_fkey(full_name, email), leave_type:leave_types(code, name_en, name_sq, name_de, name_fr, color)')
       .eq('company_id', profile!.company_id)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -54,12 +56,26 @@ export default function LeaveRequests() {
 
   async function handleApprove(id: string) {
     setActionLoading(id);
+    const req = requests.find((r) => r.id === id);
     await supabase.from('leave_requests').update({
       status: 'approved',
       approver_id: profile!.id,
       approved_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq('id', id);
+    if (req?.user_id) {
+      const dateLabel = `${req.start_date} - ${req.end_date}`;
+      await notifyUsers({
+        userIds: [req.user_id],
+        type: 'system',
+        titleKey: 'notifications.templates.leaveApproved.title',
+        messageKey: 'notifications.templates.leaveApproved.body',
+        params: { dates: dateLabel },
+        referenceId: id,
+        fallbackTitle: 'Pushimi u aprovua',
+        fallbackMessage: `Kerkesa jote per pushim (${dateLabel}) u aprovua.`,
+      });
+    }
     await fetchRequests();
     setActionLoading(null);
   }
@@ -67,12 +83,29 @@ export default function LeaveRequests() {
   async function handleReject() {
     if (!rejectModal) return;
     setActionLoading(rejectModal.id);
+    const req = requests.find((r) => r.id === rejectModal.id);
+    const reason = rejectReason.trim();
     await supabase.from('leave_requests').update({
       status: 'rejected',
       approver_id: profile!.id,
-      rejection_reason: rejectReason.trim() || null,
+      rejection_reason: reason || null,
       updated_at: new Date().toISOString(),
     }).eq('id', rejectModal.id);
+    if (req?.user_id) {
+      const dateLabel = `${req.start_date} - ${req.end_date}`;
+      await notifyUsers({
+        userIds: [req.user_id],
+        type: 'system',
+        titleKey: 'notifications.templates.leaveRejected.title',
+        messageKey: 'notifications.templates.leaveRejected.body',
+        params: { dates: dateLabel, reason: reason || '—' },
+        referenceId: rejectModal.id,
+        fallbackTitle: 'Pushimi u refuzua',
+        fallbackMessage: reason
+          ? `Kerkesa jote per pushim (${dateLabel}) u refuzua: ${reason}`
+          : `Kerkesa jote per pushim (${dateLabel}) u refuzua.`,
+      });
+    }
     setRejectModal(null);
     setRejectReason('');
     await fetchRequests();
