@@ -29,6 +29,7 @@ import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote, StockAlert, Stock as StockType } from '../../types';
 import { getTriggeredStockAlerts } from '../../utils/stockAlerts';
 import { countComplianceExpirations, type ExpiryCounts } from '../../utils/complianceExpiry';
+import { extractAuditSummary } from '../../utils/auditLogSummary';
 
 interface DriverRow {
   id: string;
@@ -77,6 +78,7 @@ interface Stats {
   dayBuckets: DayBucket[];
   triggeredAlerts: { id: string; depotName: string; categoryName: string; type: string; threshold: number; current: number }[];
   complianceExpiry: ExpiryCounts;
+  recentActivity: { id: string; action: string; entity_type: string; created_at: string; userName: string; summary: string }[];
 }
 
 const emptyStats: Stats = {
@@ -85,6 +87,7 @@ const emptyStats: Stats = {
   statusCounts: {}, stockByDepot: [], stockByProduct: [], driverStats: [], recentMovements: [], dayBuckets: [],
   triggeredAlerts: [],
   complianceExpiry: { expired: 0, critical: 0, warning: 0, attention: 0 },
+  recentActivity: [],
 };
 
 type RangeKey = '7d' | '30d' | '90d';
@@ -217,6 +220,7 @@ export default function CompanyDashboard() {
         rangeNotesRes, repairsRes, sortingRes, stockProductRes,
         alertsRes, stockForAlertsRes,
         vehInspRes, vehInsRes, vehTaxRes, drvLicRes, drvQualRes, drvMedRes,
+        auditRes,
       ] = await Promise.all([
         supabase.from('depots').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true),
         supabase.from('profiles').select('id, full_name').eq('company_id', companyId).eq('role', 'driver').eq('is_active', true),
@@ -247,6 +251,12 @@ export default function CompanyDashboard() {
         supabase.from('driver_licenses').select('expiry_date').eq('company_id', companyId),
         supabase.from('driver_qualifications').select('expiry_date').eq('company_id', companyId),
         supabase.from('driver_medical').select('expiry_date').eq('company_id', companyId),
+        supabase
+          .from('audit_logs')
+          .select('id, action, entity_type, created_at, details, user:profiles!audit_logs_user_id_fkey(full_name)')
+          .eq('company_id', companyId)
+          .order('created_at', { ascending: false })
+          .limit(8),
       ]);
 
       const stocks = stockRes.data ?? [];
@@ -349,6 +359,27 @@ export default function CompanyDashboard() {
         };
       });
 
+      const auditRows = ((auditRes.data ?? []) as Array<{
+        id: string;
+        action: string;
+        entity_type: string;
+        created_at: string;
+        details: Record<string, unknown> | null;
+        user: { full_name?: string } | { full_name?: string }[] | null;
+      }>);
+      const recentActivity = auditRows.map((row) => {
+        const u = Array.isArray(row.user) ? row.user[0] : row.user;
+        const summary = extractAuditSummary(row.details);
+        return {
+          id: row.id,
+          action: row.action,
+          entity_type: row.entity_type,
+          created_at: row.created_at,
+          userName: u?.full_name ?? '—',
+          summary,
+        };
+      });
+
       const complianceDates: { date: string | null }[] = [
         ...((vehInspRes.data ?? []) as { expiry_date: string | null }[]).map((r) => ({ date: r.expiry_date })),
         ...((vehInsRes.data ?? []) as { end_date: string | null }[]).map((r) => ({ date: r.end_date })),
@@ -370,6 +401,7 @@ export default function CompanyDashboard() {
         statusCounts, stockByDepot, stockByProduct, driverStats, recentMovements, dayBuckets,
         triggeredAlerts,
         complianceExpiry,
+        recentActivity,
       });
       setRecentNotes(recentRes.data ?? []);
     } catch (err: unknown) {
@@ -871,6 +903,50 @@ export default function CompanyDashboard() {
                 </div>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent activity feed — pulls last 8 audit_log rows for the company.
+          Now that the audit_row_changes trigger covers 14 tables the feed is
+          a real cross-system "what happened" view, not just a manual log. */}
+      {stats.recentActivity.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-slate-600" />
+              <h2 className="font-semibold text-gray-900 text-sm">Aktivitet i fundit</h2>
+            </div>
+            <Link to="/company/audit-log" className="text-xs text-teal-600 hover:text-teal-700 font-medium">
+              Shiko te gjitha
+            </Link>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {stats.recentActivity.map((a) => {
+              const actionColor = a.action === 'create'
+                ? 'bg-emerald-100 text-emerald-700'
+                : a.action === 'delete'
+                  ? 'bg-red-100 text-red-700'
+                  : a.action === 'status_change'
+                    ? 'bg-sky-100 text-sky-700'
+                    : 'bg-slate-100 text-slate-700';
+              return (
+                <div key={a.id} className="px-4 py-2.5 flex items-center gap-3">
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase ${actionColor}`}>
+                    {a.action}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 truncate">
+                      <span className="text-gray-500">{a.entity_type}</span>
+                      {a.summary && <> — <span className="font-medium">{a.summary}</span></>}
+                    </p>
+                    <p className="text-[10px] text-gray-400 truncate">
+                      {a.userName} • {new Date(a.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

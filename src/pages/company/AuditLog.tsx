@@ -26,6 +26,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import FeatureGate from '../../components/subscription/FeatureGate';
 import type { AuditLog } from '../../types';
+import { extractAuditSummary } from '../../utils/auditLogSummary';
 
 const PAGE_SIZE = 100;
 
@@ -54,37 +55,6 @@ const entityIcons: Record<string, typeof User> = {
   pallet_sorting_batches: Layers,
   depot_repairs: Wrench,
 };
-
-/**
- * Audit log rows come from two writers:
- *   - Manual logAudit() calls in pages/company/{Depots,Drivers,DeliveryNotes}.tsx
- *     where `details` is hand-shaped like { name, email, note_number, ... }
- *   - The generic audit_row_changes() DB trigger (migration 20260520140000)
- *     where `details` is { after } / { before } / { changed } JSONB.
- *
- * This helper picks a single human label from whichever shape we got.
- */
-function extractSummary(details: unknown): string {
-  if (!details || typeof details !== 'object') return '';
-  const d = details as Record<string, unknown>;
-
-  // Manual-call shape — direct keys
-  const manual = (d.name || d.email || d.note_number || d.license_plate || d.full_name) as string | undefined;
-  if (typeof manual === 'string' && manual) return manual;
-
-  // Trigger shape — pick best human-readable field from the snapshot
-  const snapshot = (d.after ?? d.before ?? d.changed) as Record<string, unknown> | undefined;
-  if (snapshot && typeof snapshot === 'object') {
-    const label = (snapshot.name
-      || snapshot.full_name
-      || snapshot.note_number
-      || snapshot.invoice_number
-      || snapshot.license_plate
-      || snapshot.title) as string | undefined;
-    if (typeof label === 'string' && label) return label;
-  }
-  return '';
-}
 
 function AuditLogContent() {
   const { profile } = useAuth();
@@ -185,7 +155,7 @@ function AuditLogContent() {
     const lines = [header.join(',')];
     for (const log of filtered) {
       const userName = (log.user as { full_name?: string } | undefined)?.full_name ?? '';
-      const summary = extractSummary(log.details).replace(/"/g, '""');
+      const summary = extractAuditSummary(log.details).replace(/"/g, '""');
       lines.push([
         log.created_at,
         `"${userName.replace(/"/g, '""')}"`,
@@ -297,7 +267,7 @@ function AuditLogContent() {
               const ActionIcon = actionIcons[log.action] ?? ClipboardList;
               const EntityIcon = entityIcons[log.entity_type] ?? ClipboardList;
               const entityLabel = entityLabels[log.entity_type] ?? log.entity_type;
-              const detailName = extractSummary(log.details);
+              const detailName = extractAuditSummary(log.details);
 
               return (
                 <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
