@@ -33,6 +33,26 @@ interface PurchaseRow {
   notes: string;
 }
 
+interface TransactionRow {
+  id: string;
+  transaction_date: string | null;
+  description: string;
+  amount: number;
+  currency: string;
+  category_name?: string;
+}
+
+interface AssetRow {
+  id: string;
+  name: string;
+  category: string;
+  acquisition_date: string;
+  acquisition_cost: number;
+  current_book_value: number;
+  status: string;
+  notes: string;
+}
+
 const TABS: { key: Tab; icon: typeof TrendingUp; labelKey: string; color: string }[] = [
   { key: 'sales', icon: TrendingUp, labelKey: 'financial.sales', color: 'emerald' },
   { key: 'purchases', icon: TrendingDown, labelKey: 'financial.purchases', color: 'blue' },
@@ -47,6 +67,8 @@ export default function FinancialSummary() {
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
+  const [transactions, setTransactions] = useState<TransactionRow[]>([]);
+  const [assets, setAssets] = useState<AssetRow[]>([]);
   const [dateRange, setDateRange] = useState<'30' | '90' | '365' | 'all'>('90');
 
   useEffect(() => { loadData(); }, [profile?.company_id, activeTab, dateRange]);
@@ -85,39 +107,57 @@ export default function FinancialSummary() {
         contact_name: d.acc_contacts?.name ?? '',
       })));
     } else if (activeTab === 'expenses') {
+      // Real expenses are tracked as cash-flow transactions of type='expense',
+      // not as a non-existent invoice_type. The old query was filtering
+      // acc_invoices WHERE invoice_type='expense' which the CHECK constraint
+      // does not allow ('invoice'/'credit_note'/'proforma' only), so the tab
+      // had always been empty.
       let q = supabase
-        .from('acc_invoices')
-        .select('id, invoice_number, invoice_date, due_date, status, total, currency, notes, acc_contacts(name)')
+        .from('acc_transactions')
+        .select('id, transaction_date, description, amount, currency, category:acc_expense_categories(name)')
         .eq('company_id', profile.company_id)
-        .eq('invoice_type', 'expense')
-        .order('invoice_date', { ascending: false })
+        .eq('transaction_type', 'expense')
+        .order('transaction_date', { ascending: false })
         .limit(100);
-      if (since) q = q.gte('invoice_date', since);
+      if (since) q = q.gte('transaction_date', since);
       const { data } = await q;
-      setInvoices((data ?? []).map((d: any) => ({
-        ...d,
-        contact_name: d.acc_contacts?.name ?? '',
+      setTransactions((data ?? []).map((d: any) => ({
+        id: d.id,
+        transaction_date: d.transaction_date,
+        description: d.description ?? '',
+        amount: Number(d.amount) || 0,
+        currency: d.currency ?? 'EUR',
+        category_name: d.category?.name ?? '',
       })));
     } else {
+      // Investments live in acc_fixed_assets, not in acc_invoices.
       let q = supabase
-        .from('acc_invoices')
-        .select('id, invoice_number, invoice_date, due_date, status, total, currency, notes, acc_contacts(name)')
+        .from('acc_fixed_assets')
+        .select('id, name, category, acquisition_date, acquisition_cost, current_book_value, status, notes')
         .eq('company_id', profile.company_id)
-        .eq('invoice_type', 'investment')
-        .order('invoice_date', { ascending: false })
+        .order('acquisition_date', { ascending: false })
         .limit(100);
-      if (since) q = q.gte('invoice_date', since);
+      if (since) q = q.gte('acquisition_date', since);
       const { data } = await q;
-      setInvoices((data ?? []).map((d: any) => ({
-        ...d,
-        contact_name: d.acc_contacts?.name ?? '',
-      })));
+      setAssets((data ?? []) as AssetRow[]);
     }
 
     setLoading(false);
   }
 
-  const rows = activeTab === 'purchases'
+  type RowLike = {
+    id: string;
+    number: string;
+    date: string | null;
+    dueDate: string | null;
+    status: string;
+    total: number;
+    currency: string;
+    contact: string;
+    notes: string;
+  };
+
+  const rows: RowLike[] = activeTab === 'purchases'
     ? purchases.map(p => ({
         id: p.id,
         number: p.purchase_number,
@@ -129,17 +169,41 @@ export default function FinancialSummary() {
         contact: p.contact_name ?? '',
         notes: p.notes,
       }))
-    : invoices.map(i => ({
-        id: i.id,
-        number: i.invoice_number,
-        date: i.invoice_date,
-        dueDate: i.due_date,
-        status: i.status,
-        total: i.total,
-        currency: i.currency,
-        contact: i.contact_name ?? '',
-        notes: i.notes,
-      }));
+    : activeTab === 'expenses'
+      ? transactions.map(tx => ({
+          id: tx.id,
+          number: '',                       // transactions don't have a "number"
+          date: tx.transaction_date,
+          dueDate: null,                    // cash flow, no due date
+          status: 'paid',                   // a transaction is by definition the cash move
+          total: tx.amount,
+          currency: tx.currency,
+          contact: tx.category_name ?? '',  // re-use contact column for category label
+          notes: tx.description,
+        }))
+      : activeTab === 'investments'
+        ? assets.map(a => ({
+            id: a.id,
+            number: a.category,
+            date: a.acquisition_date,
+            dueDate: null,
+            status: a.status,                              // 'active' | 'disposed'
+            total: a.current_book_value || a.acquisition_cost,
+            currency: 'EUR',                               // fixed_assets has no currency column
+            contact: a.name,                               // surface asset name in the contact slot
+            notes: a.notes,
+          }))
+        : invoices.map(i => ({
+            id: i.id,
+            number: i.invoice_number,
+            date: i.invoice_date,
+            dueDate: i.due_date,
+            status: i.status,
+            total: i.total,
+            currency: i.currency,
+            contact: i.contact_name ?? '',
+            notes: i.notes,
+          }));
 
   const totalAmount = rows.reduce((sum, r) => sum + (r.total || 0), 0);
   const paidCount = rows.filter(r => r.status === 'paid' || r.status === 'received').length;
