@@ -20,6 +20,16 @@ interface Vehicle {
   status: string;
   depot_id: string | null;
   photo_url: string;
+  // Routing dimensions and hazardous-goods metadata (see migration
+  // 20260520133000_add_vehicle_routing_dimensions.sql). All optional.
+  length_mm?: number | null;
+  width_mm?: number | null;
+  height_mm?: number | null;
+  axle_load_kg?: number | null;
+  adr_class?: string | null;
+  tunnel_category?: string | null;
+  has_tachograph?: boolean;
+  tachograph_type?: string | null;
 }
 
 interface InspectionRow {
@@ -63,6 +73,15 @@ interface VehicleForm {
   haftpflicht_provider: string;
   vollkasko_expiry: string;
   kfz_steuer_due: string;
+  // Routing & ADR (added by migration 20260520133000)
+  length_mm: string;
+  width_mm: string;
+  height_mm: string;
+  axle_load_kg: string;
+  adr_class: string;
+  tunnel_category: string;
+  has_tachograph: boolean;
+  tachograph_type: string;
 }
 
 const emptyForm: VehicleForm = {
@@ -74,6 +93,9 @@ const emptyForm: VehicleForm = {
   hu_tuv_expiry: '', au_expiry: '', sp_expiry: '', tacho_expiry: '',
   haftpflicht_expiry: '', haftpflicht_provider: '',
   vollkasko_expiry: '', kfz_steuer_due: '',
+  length_mm: '', width_mm: '', height_mm: '',
+  axle_load_kg: '', adr_class: 'none', tunnel_category: '',
+  has_tachograph: false, tachograph_type: '',
 };
 
 export default function CompanyVehicles() {
@@ -182,6 +204,14 @@ export default function CompanyVehicles() {
           color: form.color,
           status: form.status,
           notes: form.notes,
+          length_mm: form.length_mm ? Number(form.length_mm) : null,
+          width_mm: form.width_mm ? Number(form.width_mm) : null,
+          height_mm: form.height_mm ? Number(form.height_mm) : null,
+          axle_load_kg: form.axle_load_kg ? Number(form.axle_load_kg) : null,
+          adr_class: form.adr_class || null,
+          tunnel_category: form.tunnel_category || null,
+          has_tachograph: form.has_tachograph,
+          tachograph_type: form.tachograph_type || null,
         })
         .select('id')
         .maybeSingle();
@@ -404,6 +434,68 @@ export default function CompanyVehicles() {
                       {depots.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Dimensionet dhe ADR (per planifikim rrugesh HGV)</h3>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <Field label="Gjatesia (mm)" type="number" value={form.length_mm} onChange={(v) => setForm({ ...form, length_mm: v })} placeholder="13000" />
+                  <Field label="Gjeresia (mm)" type="number" value={form.width_mm} onChange={(v) => setForm({ ...form, width_mm: v })} placeholder="2550" />
+                  <Field label="Lartesia (mm)" type="number" value={form.height_mm} onChange={(v) => setForm({ ...form, height_mm: v })} placeholder="4000" />
+                  {form.vehicle_type === 'truck' && (
+                    <Field label="Ngarkesa max ne nje akse (kg)" type="number" value={form.axle_load_kg} onChange={(v) => setForm({ ...form, axle_load_kg: v })} placeholder="11500" />
+                  )}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Klasa ADR</label>
+                    <select value={form.adr_class} onChange={(e) => setForm({ ...form, adr_class: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                      <option value="none">Pa ADR</option>
+                      <option value="1">1 - Eksplozive</option>
+                      <option value="2">2 - Gazra</option>
+                      <option value="3">3 - Lengje te ndezshme</option>
+                      <option value="4.1">4.1 - Lendet e ngurta te ndezshme</option>
+                      <option value="4.2">4.2 - Substancat vetdjegese</option>
+                      <option value="4.3">4.3 - Lendet qe leshojne gaz me uje</option>
+                      <option value="5.1">5.1 - Oksidues</option>
+                      <option value="5.2">5.2 - Peroksidet organike</option>
+                      <option value="6.1">6.1 - Toksike</option>
+                      <option value="6.2">6.2 - Infektive</option>
+                      <option value="7">7 - Radioaktive</option>
+                      <option value="8">8 - Korrozive</option>
+                      <option value="9">9 - Te tjera</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Kategoria e tunelit</label>
+                    <select value={form.tunnel_category} onChange={(e) => setForm({ ...form, tunnel_category: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                      <option value="">—</option>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                      <option value="D">D</option>
+                      <option value="E">E</option>
+                    </select>
+                  </div>
+                  {form.vehicle_type === 'truck' && (
+                    <>
+                      <div className="flex items-center gap-2 pt-6">
+                        <input id="has_tacho" type="checkbox" checked={form.has_tachograph} onChange={(e) => setForm({ ...form, has_tachograph: e.target.checked })} className="rounded" />
+                        <label htmlFor="has_tacho" className="text-sm text-gray-700">Ka tachograph</label>
+                      </div>
+                      {form.has_tachograph && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1.5">Lloji i tachograph-it</label>
+                          <select value={form.tachograph_type} onChange={(e) => setForm({ ...form, tachograph_type: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                            <option value="">—</option>
+                            <option value="analog">Analog</option>
+                            <option value="digital">Digital</option>
+                            <option value="smart_v1">Smart v1</option>
+                            <option value="smart_v2">Smart v2</option>
+                          </select>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 
