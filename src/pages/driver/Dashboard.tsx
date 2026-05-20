@@ -32,6 +32,7 @@ import { isOwnCompanyName, stripOwnFromPartnerName } from '../../utils/companyNa
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { useDriverComplianceMap } from '../../hooks/useDriverComplianceMap';
 import type { DeliveryNote } from '../../types';
 import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/SmartDocScanner';
 import { notifyUsers } from '../../utils/notifications';
@@ -72,6 +73,8 @@ function getNoteDate(n: NoteRow): Date {
 export default function DriverDashboard() {
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const { warnings: driverComplianceWarnings } = useDriverComplianceMap(profile?.company_id);
+  const myCompliance = profile?.id ? driverComplianceWarnings[profile.id] : undefined;
   const [notes, setNotes] = useState<NoteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -281,6 +284,40 @@ export default function DriverDashboard() {
           </div>
         )}
       </div>
+
+      {myCompliance && (myCompliance.hasExpired || myCompliance.hasCritical) && (
+        <Link
+          to="/driver/my-documents"
+          className={`block rounded-xl border p-3.5 transition-colors ${
+            myCompliance.hasExpired
+              ? 'bg-red-50 border-red-200 hover:border-red-300'
+              : 'bg-amber-50 border-amber-200 hover:border-amber-300'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div className={`p-1.5 rounded-lg flex-shrink-0 ${
+              myCompliance.hasExpired ? 'bg-red-100' : 'bg-amber-100'
+            }`}>
+              <svg className={`w-4 h-4 ${myCompliance.hasExpired ? 'text-red-700' : 'text-amber-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-semibold ${myCompliance.hasExpired ? 'text-red-900' : 'text-amber-900'}`}>
+                {myCompliance.hasExpired ? 'Disa dokumente kane skaduar' : 'Disa dokumente skadojne shpejt'}
+              </p>
+              <ul className={`mt-1 space-y-0.5 text-xs ${myCompliance.hasExpired ? 'text-red-800' : 'text-amber-800'}`}>
+                {myCompliance.items.slice(0, 3).map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+                {myCompliance.items.length > 3 && (
+                  <li className="font-medium">+{myCompliance.items.length - 3} te tjera</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </Link>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-center gap-3">
