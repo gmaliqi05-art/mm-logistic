@@ -1,7 +1,10 @@
 import { matchProduct, type ProductLike, type CategoryLike, type MatchResult } from './productMatcher';
+import type { StockCondition } from '../types';
 
 export type IntendedAction = 'stock' | 'sorting' | 'repair';
-export type StockCondition = 'good' | 'damaged' | 'sorting' | 'ready_a' | 'ready_b' | 'ready_c';
+// Re-export so callers that already imported StockCondition from this module
+// (the old single source of truth) keep working without a code change.
+export type { StockCondition };
 
 export interface ScanLineItem {
   description?: string | null;

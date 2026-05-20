@@ -367,7 +367,50 @@ interface ModalProps {
   editing: boolean;
 }
 
+type VatResult =
+  | { valid: true; name?: string; address?: string; source: 'format' | 'vies' }
+  | { valid: false; reason: string }
+  | null;
+
 export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editing }: ModalProps) {
+  const [vatChecking, setVatChecking] = useState(false);
+  const [vatResult, setVatResult] = useState<VatResult>(null);
+
+  async function checkVat() {
+    const v = form.vat_number.trim();
+    if (v.length < 4) {
+      setVatResult({ valid: false, reason: 'too_short' });
+      return;
+    }
+    setVatChecking(true);
+    setVatResult(null);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke('validate-vat-number', {
+        body: { vat: v },
+      });
+      if (fnErr) throw fnErr;
+      if (data?.valid) {
+        setVatResult({ valid: true, name: data.name, address: data.address, source: data.source ?? 'vies' });
+      } else {
+        setVatResult({ valid: false, reason: data?.reason ?? 'invalid' });
+      }
+    } catch {
+      setVatResult({ valid: false, reason: 'network' });
+    } finally {
+      setVatChecking(false);
+    }
+  }
+
+  function applyVatLookup() {
+    if (vatResult && vatResult.valid) {
+      setForm({
+        ...form,
+        name: !form.name.trim() && vatResult.name ? vatResult.name : form.name,
+        address: !form.address.trim() && vatResult.address ? vatResult.address : form.address,
+      });
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-modal bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4 modal-safe-top">
       <div className="w-full sm:max-w-2xl bg-white sm:rounded-2xl rounded-t-2xl shadow-xl modal-panel flex flex-col">
@@ -408,12 +451,49 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
               </select>
             </Field>
             <Field label="Numri TVSH / VAT">
-              <input
-                value={form.vat_number}
-                onChange={(e) => setForm({ ...form, vat_number: e.target.value })}
-                className="input"
-                placeholder="P.sh. K12345678L"
-              />
+              <div className="flex gap-2">
+                <input
+                  value={form.vat_number}
+                  onChange={(e) => { setForm({ ...form, vat_number: e.target.value }); setVatResult(null); }}
+                  className="input flex-1"
+                  placeholder="P.sh. DE123456789, ATU12345678"
+                />
+                <button
+                  type="button"
+                  onClick={checkVat}
+                  disabled={vatChecking || !form.vat_number.trim()}
+                  className="px-3 py-2 rounded-lg text-sm font-medium bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                >
+                  {vatChecking ? '...' : 'Verifiko'}
+                </button>
+              </div>
+              {vatResult && vatResult.valid && (
+                <div className="mt-2 text-xs rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 p-2 space-y-1">
+                  <div className="font-medium">
+                    {vatResult.source === 'vies' ? '✓ VIES e konfirmoi' : '✓ Format i vlefshem'}
+                  </div>
+                  {vatResult.name && <div>Emri: {vatResult.name}</div>}
+                  {vatResult.address && <div>Adresa: {vatResult.address}</div>}
+                  {(vatResult.name || vatResult.address) && (
+                    <button
+                      type="button"
+                      onClick={applyVatLookup}
+                      className="text-emerald-700 hover:text-emerald-900 underline text-xs"
+                    >
+                      Mbushe formen me keto vlera
+                    </button>
+                  )}
+                </div>
+              )}
+              {vatResult && !vatResult.valid && (
+                <div className="mt-2 text-xs rounded-lg border border-amber-200 bg-amber-50 text-amber-800 p-2">
+                  {vatResult.reason === 'too_short' && 'Numri eshte shume i shkurter.'}
+                  {vatResult.reason === 'invalid_format' && 'Format i pavlefshem per shtetin e zgjedhur.'}
+                  {vatResult.reason === 'unknown_country' && 'Shtet i panjohur. Kontrollo prefiksin.'}
+                  {vatResult.reason === 'invalid' && 'VIES nuk e konfirmoi kete numer VAT.'}
+                  {vatResult.reason === 'network' && 'Nuk u arrit te verifikohej (rrjeti).'}
+                </div>
+              )}
             </Field>
             <Field label="Email">
               <input
