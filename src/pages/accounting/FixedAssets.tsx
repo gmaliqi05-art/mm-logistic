@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Briefcase, Loader2, Trash2, ExternalLink, Sparkles, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { formatCurrency } from '../../types/accounting';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
@@ -34,6 +35,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export default function FixedAssets() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [showScan, setShowScan] = useState(false);
@@ -89,7 +91,7 @@ export default function FixedAssets() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Fshini kete aset?')) return;
+    if (!confirm(t('common.deleteAssetConfirm'))) return;
     await supabase.from('acc_fixed_assets').delete().eq('id', id);
     fetchAssets();
   }

@@ -775,7 +775,7 @@ export default function Invoices() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Kerko nr. fatures, klient..."
+              placeholder={t('accounting.invoices.searchPlaceholder')}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
             />
           </div>
@@ -1233,7 +1233,7 @@ export default function Invoices() {
                         }
                       }}
                       onFocus={() => setShowContactDropdown(true)}
-                      placeholder="Kerko klientin..."
+                      placeholder={t('companyAdmin.manualEmail.searchClient')}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     />
                     {showContactDropdown && filteredContacts.length > 0 && (
@@ -1318,7 +1318,7 @@ export default function Invoices() {
                                 type="text"
                                 value={item.description}
                                 onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                                placeholder="Pershkrimi i artikullit"
+                                placeholder={t('accounting.invoices.itemDescription')}
                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                               />
                             </div>
@@ -1447,7 +1447,7 @@ export default function Invoices() {
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                    placeholder="Shenime shtese per faturen..."
+                    placeholder={t('accounting.invoices.extraNotes')}
                   />
                 </div>
               </div>

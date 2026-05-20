@@ -1055,23 +1055,23 @@ export default function CompanyDeliveryNotes() {
               {openSections.carrier && (
                 <div className="pl-2 border-l-2 border-slate-200 space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Emri i spedicionit</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('threeParty.carrier.name')}</label>
                     <input
                       type="text"
                       value={threePartyData.carrier.name}
                       onChange={(e) => setThreePartyData({ ...threePartyData, carrier: { ...threePartyData.carrier, name: e.target.value } })}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                      placeholder="Emri spedicionit"
+                      placeholder={t('threeParty.carrier.name')}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Targa e mjetit</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('threeParty.vehiclePlate')}</label>
                     <input
                       type="text"
                       value={threePartyData.carrier_vehicle_plate}
                       onChange={(e) => setThreePartyData({ ...threePartyData, carrier_vehicle_plate: e.target.value })}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                      placeholder="Targa e mjetit"
+                      placeholder={t('threeParty.vehiclePlate')}
                     />
                   </div>
                 </div>
@@ -1903,7 +1903,7 @@ function PartnerSearchField({ contacts, form, setForm, onCreated }: PartnerSearc
               value={query}
               onFocus={() => setOpen(true)}
               onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-              placeholder="Kerko kompanine sipas emrit..."
+              placeholder={t('threeParty.searchPartner')}
               className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
             />
           </div>

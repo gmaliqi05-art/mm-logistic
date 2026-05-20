@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, Trash2, Loader2, Tag, Package, Filter, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface Contact {
   id: string;
@@ -32,6 +33,7 @@ interface ClientPrice {
 
 export default function ClientPricesPage() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [prices, setPrices] = useState<ClientPrice[]>([]);
@@ -200,7 +202,7 @@ export default function ClientPricesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="Kerko..."
+              placeholder={t('common.searchPlaceholder')}
             />
           </div>
           <select

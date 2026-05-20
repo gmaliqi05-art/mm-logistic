@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Loader2, FileText, Copy, ToggleLeft, ToggleRight, Send, Eye, AlertTriangle, Search, Globe, Info, Receipt } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface TemplateRow {
   id: string;
@@ -31,6 +32,7 @@ const INVOICE_CODES = [
 
 export default function EmailTemplatesList() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,7 +213,7 @@ export default function EmailTemplatesList() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-64 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="Kerko template..."
+              placeholder={t('common.searchPlaceholder')}
             />
           </div>
           <select
@@ -378,6 +380,7 @@ interface CardProps {
 }
 
 function TemplateCard({ tpl, profile, navigate, onToggle, onDuplicate, testingId, setTestingId, testEmail, setTestEmail, testSending, testResult, onTestSend, setTestResult }: CardProps) {
+  const { t } = useTranslation();
   const isOwn = !!tpl.company_id;
 
   return (
@@ -463,7 +466,7 @@ function TemplateCard({ tpl, profile, navigate, onToggle, onDuplicate, testingId
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="Email per test..."
+              placeholder={t('common.emailForTest')}
             />
             <button
               onClick={() => onTestSend(tpl)}

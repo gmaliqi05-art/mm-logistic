@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, AlertTriangle, Search, CheckCircle2, XCircle, Clock, Filter, Mail, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface Delivery {
   id: string;
@@ -25,6 +26,7 @@ const STATUS_CONFIG: Record<string, { icon: React.ReactNode; cls: string; label:
 
 export default function EmailLog() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export default function EmailLog() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-64 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-              placeholder="Kerko per email ose template..."
+              placeholder={t('common.searchPlaceholder')}
             />
           </div>
           <div className="relative">

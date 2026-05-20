@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Package, TrendingUp, TrendingDown, Search, ArrowRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
 
 interface PalletAccountRow {
@@ -16,6 +17,7 @@ interface PalletAccountRow {
 
 export default function PalletAccounts() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<PalletAccountRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -105,7 +107,7 @@ export default function PalletAccounts() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search partner..."
+            placeholder={t('common.searchPartner')}
             className="flex-1 text-sm outline-none"
           />
         </div>

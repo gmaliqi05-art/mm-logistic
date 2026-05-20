@@ -225,7 +225,7 @@ export default function CompanyOverdueDocuments() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko nga numri, partneri ose adresa..."
+            placeholder={t('companyAdmin.overdue.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
@@ -348,19 +348,19 @@ export default function CompanyOverdueDocuments() {
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Anulo dokumentin</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{t('companyAdmin.overdue.cancelTitle')}</h2>
                 <p className="text-sm text-gray-500 mt-0.5">{cancelFor.note_number}</p>
               </div>
               <button onClick={() => setCancelFor(null)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <label className="block mt-4 text-sm font-medium text-gray-700">Arsyeja (opsionale)</label>
+            <label className="block mt-4 text-sm font-medium text-gray-700">{t('companyAdmin.overdue.cancelReasonLabel')}</label>
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               rows={3}
-              placeholder="P.sh. klienti ka anuluar porosine"
+              placeholder={t('companyAdmin.overdue.cancelReasonPlaceholder')}
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
             />
             <div className="mt-5 flex justify-end gap-2">
@@ -368,7 +368,7 @@ export default function CompanyOverdueDocuments() {
                 onClick={() => setCancelFor(null)}
                 className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
               >
-                Mbyll
+                {t('common.close')}
               </button>
               <button
                 onClick={confirmCancel}
@@ -380,7 +380,7 @@ export default function CompanyOverdueDocuments() {
                 ) : (
                   <XCircle className="w-4 h-4" />
                 )}
-                Konfirmo Anulimin
+                {t('companyAdmin.overdue.confirmCancelBtn')}
               </button>
             </div>
           </div>
