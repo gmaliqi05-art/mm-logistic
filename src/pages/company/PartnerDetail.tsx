@@ -76,6 +76,22 @@ export default function PartnerDetail() {
     { overdueCount: 0, overdueTotal: 0, openCount: 0, openTotal: 0, currency: 'EUR' }
   );
   const [palletBalances, setPalletBalances] = useState<Array<{ pallet_type: string; current_balance: number }>>([]);
+  // Lifetime sales (invoices we issued TO this partner) and purchases (supplier
+  // invoices they sent us) so the admin sees the full business relationship,
+  // not just the open balance.
+  const [lifetime, setLifetime] = useState<{
+    salesPaid: number;
+    salesTotal: number;
+    salesCount: number;
+    purchasesPaid: number;
+    purchasesTotal: number;
+    purchasesCount: number;
+    currency: string;
+  }>({
+    salesPaid: 0, salesTotal: 0, salesCount: 0,
+    purchasesPaid: 0, purchasesTotal: 0, purchasesCount: 0,
+    currency: 'EUR',
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,6 +158,47 @@ export default function PartnerDetail() {
           .eq('partner_contact_id', id!);
         if (!cancelled) {
           setPalletBalances(((paBalances ?? []) as Array<{ pallet_type: string; current_balance: number }>).filter((r) => r.current_balance !== 0));
+        }
+
+        // Lifetime business with this partner — sales we billed (sales side)
+        // and purchases we received (purchase side). Both filter out
+        // cancelled rows; "paid" sums the closed total separately from the
+        // grand total so the admin sees both volume and collection ratio.
+        const [allSalesRes, allPurchasesRes] = await Promise.all([
+          supabase
+            .from('acc_invoices')
+            .select('total, status, currency')
+            .eq('company_id', profile!.company_id)
+            .eq('contact_id', id!)
+            .eq('invoice_type', 'invoice')
+            .neq('status', 'cancelled')
+            .neq('status', 'draft'),
+          supabase
+            .from('acc_purchases')
+            .select('total, status, currency')
+            .eq('company_id', profile!.company_id)
+            .eq('contact_id', id!)
+            .neq('status', 'cancelled')
+            .neq('status', 'draft'),
+        ]);
+        if (!cancelled) {
+          let salesPaid = 0, salesTotal = 0, salesCount = 0;
+          let purchasesPaid = 0, purchasesTotal = 0, purchasesCount = 0;
+          let currency = 'EUR';
+          for (const inv of (allSalesRes.data ?? []) as Array<{ total: number; status: string; currency: string }>) {
+            currency = inv.currency || currency;
+            const amt = Number(inv.total) || 0;
+            salesTotal += amt;
+            salesCount++;
+            if (inv.status === 'paid') salesPaid += amt;
+          }
+          for (const pu of (allPurchasesRes.data ?? []) as Array<{ total: number; status: string; currency: string }>) {
+            const amt = Number(pu.total) || 0;
+            purchasesTotal += amt;
+            purchasesCount++;
+            if (pu.status === 'paid') purchasesPaid += amt;
+          }
+          setLifetime({ salesPaid, salesTotal, salesCount, purchasesPaid, purchasesTotal, purchasesCount, currency });
         }
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Gabim gjate ngarkimit');
@@ -250,6 +307,45 @@ export default function PartnerDetail() {
         <Kpi label="Ruajtje (copa)" value={totals.custody} tone="amber" icon={Warehouse} />
         <Kpi label="Dokumente" value={totals.documents} tone="sky" icon={Package} />
       </div>
+
+      {(lifetime.salesCount > 0 || lifetime.purchasesCount > 0) && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Vellimi i biznesit (gjithe periudha)</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Totali i fatururar dhe blerjeve me kete partner — pa fatura draft ose te anuluara.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs text-emerald-700 uppercase tracking-wide font-semibold">Shitje</p>
+              <p className="text-lg font-bold text-emerald-900 mt-1">
+                {lifetime.salesTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency}
+              </p>
+              <p className="text-xs text-emerald-800 mt-0.5">
+                {lifetime.salesCount} fatura · {lifetime.salesPaid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency} te paguara
+                {lifetime.salesTotal > 0 && (
+                  <> ({((lifetime.salesPaid / lifetime.salesTotal) * 100).toFixed(0)}%)</>
+                )}
+              </p>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <p className="text-xs text-blue-700 uppercase tracking-wide font-semibold">Blerje</p>
+              <p className="text-lg font-bold text-blue-900 mt-1">
+                {lifetime.purchasesTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency}
+              </p>
+              <p className="text-xs text-blue-800 mt-0.5">
+                {lifetime.purchasesCount} blerje · {lifetime.purchasesPaid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency} te paguara
+                {lifetime.purchasesTotal > 0 && (
+                  <> ({((lifetime.purchasesPaid / lifetime.purchasesTotal) * 100).toFixed(0)}%)</>
+                )}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {palletBalances.length > 0 && (
         <section className="rounded-2xl border border-slate-200 bg-white p-4">
