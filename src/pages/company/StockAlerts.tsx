@@ -17,6 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import FeatureGate from '../../components/subscription/FeatureGate';
 import type { StockAlert, Depot, ProductCategory, Stock as StockType } from '../../types';
+import { getTriggeredStockAlerts } from '../../utils/stockAlerts';
 
 interface AlertForm {
   depot_id: string;
@@ -134,20 +135,7 @@ function StockAlertsContent() {
   }
 
   function getTriggeredAlerts() {
-    return alerts.filter((alert) => {
-      if (!alert.is_active) return false;
-      const stock = stocks.find((s) => s.depot_id === alert.depot_id && s.category_id === alert.category_id);
-      const qty = stock?.quantity ?? 0;
-      if (alert.alert_type === 'out_of_stock') return qty === 0;
-      if (alert.alert_type === 'low_stock') return qty > 0 && qty <= alert.threshold;
-      if (alert.alert_type === 'damaged_threshold') {
-        const damaged = stocks.filter(
-          (s) => s.depot_id === alert.depot_id && s.category_id === alert.category_id && s.condition === 'damaged'
-        ).reduce((sum, s) => sum + s.quantity, 0);
-        return damaged >= alert.threshold;
-      }
-      return false;
-    });
+    return getTriggeredStockAlerts(alerts, stocks);
   }
 
   const triggeredAlerts = getTriggeredAlerts();

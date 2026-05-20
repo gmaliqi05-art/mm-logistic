@@ -26,7 +26,9 @@ import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
-import type { DeliveryNote } from '../../types';
+import type { DeliveryNote, StockAlert, Stock as StockType } from '../../types';
+import { getTriggeredStockAlerts } from '../../utils/stockAlerts';
+import { countComplianceExpirations, type ExpiryCounts } from '../../utils/complianceExpiry';
 
 interface DriverRow {
   id: string;
@@ -73,12 +75,16 @@ interface Stats {
   driverStats: DriverRow[];
   recentMovements: { id: string; noteNumber: string; partner: string; date: string }[];
   dayBuckets: DayBucket[];
+  triggeredAlerts: { id: string; depotName: string; categoryName: string; type: string; threshold: number; current: number }[];
+  complianceExpiry: ExpiryCounts;
 }
 
 const emptyStats: Stats = {
   depots: 0, drivers: 0, stock: 0, activeDeliveries: 0, deliveredToday: 0, pendingPickups: 0,
   stockGood: 0, stockDamaged: 0, stockRepaired: 0, pendingRepairs: 0, activeSorting: 0,
   statusCounts: {}, stockByDepot: [], stockByProduct: [], driverStats: [], recentMovements: [], dayBuckets: [],
+  triggeredAlerts: [],
+  complianceExpiry: { expired: 0, critical: 0, warning: 0, attention: 0 },
 };
 
 type RangeKey = '7d' | '30d' | '90d';
@@ -209,6 +215,8 @@ export default function CompanyDashboard() {
         recentRes, deliveredTodayRes, pendingPickupsRes,
         depotListRes, notesForDrivers, movementsRes,
         rangeNotesRes, repairsRes, sortingRes, stockProductRes,
+        alertsRes, stockForAlertsRes,
+        vehInspRes, vehInsRes, vehTaxRes, drvLicRes, drvQualRes, drvMedRes,
       ] = await Promise.all([
         supabase.from('depots').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true),
         supabase.from('profiles').select('id, full_name').eq('company_id', companyId).eq('role', 'driver').eq('is_active', true),
@@ -231,6 +239,14 @@ export default function CompanyDashboard() {
         supabase.from('depot_repairs').select('id', { count: 'exact', head: true }).eq('company_id', companyId).is('completed_at', null),
         supabase.from('pallet_sorting_batches').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'in_progress'),
         supabase.from('stock').select('quantity, condition, category_id, category_product_id, product_categories(name), category_products(name)').eq('company_id', companyId),
+        supabase.from('stock_alerts').select('*, depot:depots(name), category:product_categories(name)').eq('company_id', companyId).eq('is_active', true),
+        supabase.from('stock').select('id, company_id, depot_id, category_id, category_product_id, quantity, condition, updated_at, created_at').eq('company_id', companyId),
+        supabase.from('vehicle_inspections').select('expiry_date').eq('company_id', companyId),
+        supabase.from('vehicle_insurance').select('end_date').eq('company_id', companyId),
+        supabase.from('vehicle_taxes').select('due_date').eq('company_id', companyId).is('paid_at', null),
+        supabase.from('driver_licenses').select('expiry_date').eq('company_id', companyId),
+        supabase.from('driver_qualifications').select('expiry_date').eq('company_id', companyId),
+        supabase.from('driver_medical').select('expiry_date').eq('company_id', companyId),
       ]);
 
       const stocks = stockRes.data ?? [];
@@ -314,6 +330,35 @@ export default function CompanyDashboard() {
         date: m.confirmed_at || m.delivered_at || m.created_at,
       }));
 
+      const activeAlerts = (alertsRes.data ?? []) as (StockAlert & { depot?: { name: string }; category?: { name: string } })[];
+      const stocksForAlerts = (stockForAlertsRes.data ?? []) as StockType[];
+      const triggered = getTriggeredStockAlerts(activeAlerts, stocksForAlerts);
+      const triggeredAlerts = triggered.map((a) => {
+        const rows = stocksForAlerts.filter((s) => s.depot_id === a.depot_id && s.category_id === a.category_id);
+        const totalQty = rows.reduce((sum, s) => sum + (s.quantity ?? 0), 0);
+        const damagedQty = rows.filter((s) => s.condition === 'damaged').reduce((sum, s) => sum + (s.quantity ?? 0), 0);
+        const current = a.alert_type === 'damaged_threshold' ? damagedQty : totalQty;
+        const expanded = a as StockAlert & { depot?: { name: string }; category?: { name: string } };
+        return {
+          id: a.id,
+          depotName: expanded.depot?.name ?? '—',
+          categoryName: expanded.category?.name ?? '—',
+          type: a.alert_type,
+          threshold: a.threshold,
+          current,
+        };
+      });
+
+      const complianceDates: { date: string | null }[] = [
+        ...((vehInspRes.data ?? []) as { expiry_date: string | null }[]).map((r) => ({ date: r.expiry_date })),
+        ...((vehInsRes.data ?? []) as { end_date: string | null }[]).map((r) => ({ date: r.end_date })),
+        ...((vehTaxRes.data ?? []) as { due_date: string | null }[]).map((r) => ({ date: r.due_date })),
+        ...((drvLicRes.data ?? []) as { expiry_date: string | null }[]).map((r) => ({ date: r.expiry_date })),
+        ...((drvQualRes.data ?? []) as { expiry_date: string | null }[]).map((r) => ({ date: r.expiry_date })),
+        ...((drvMedRes.data ?? []) as { expiry_date: string | null }[]).map((r) => ({ date: r.expiry_date })),
+      ];
+      const complianceExpiry = countComplianceExpirations(complianceDates);
+
       setStats({
         depots: depotsRes.count ?? 0,
         drivers: drivers.length,
@@ -323,6 +368,8 @@ export default function CompanyDashboard() {
         pendingPickups: pendingPickupsRes.count ?? 0,
         stockGood, stockDamaged, stockRepaired, pendingRepairs, activeSorting,
         statusCounts, stockByDepot, stockByProduct, driverStats, recentMovements, dayBuckets,
+        triggeredAlerts,
+        complianceExpiry,
       });
       setRecentNotes(recentRes.data ?? []);
     } catch (err: unknown) {
@@ -416,6 +463,67 @@ export default function CompanyDashboard() {
           badge={stats.deliveredToday > 0 ? `+${stats.deliveredToday} ${t('common.today').toLowerCase()}` : undefined}
         />
       </div>
+
+      {/* Compliance expiry banner — surfaces vehicle / driver document expirations */}
+      {stats.complianceExpiry.attention > 0 && (
+        <Link to="/company/compliance" className="block bg-amber-50 border border-amber-200 rounded-xl p-4 hover:border-amber-300 transition-colors">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-amber-100 flex-shrink-0">
+              <ClipboardList className="w-5 h-5 text-amber-700" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-900">
+                {stats.complianceExpiry.attention} {t('company.dashboard.complianceExpiringTitle') || 'dokumente qe kerkojne vemendje'}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-amber-800">
+                {stats.complianceExpiry.expired > 0 && (
+                  <span><strong>{stats.complianceExpiry.expired}</strong> {t('fleet.filter.expired').toLowerCase()}</span>
+                )}
+                {stats.complianceExpiry.critical > 0 && (
+                  <span><strong>{stats.complianceExpiry.critical}</strong> {t('common.daysShort') || '&lt; 7 dite'}</span>
+                )}
+                {stats.complianceExpiry.warning > 0 && (
+                  <span><strong>{stats.complianceExpiry.warning}</strong> {t('common.daysMonth') || '&lt; 30 dite'}</span>
+                )}
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-700 flex-shrink-0 mt-1" />
+          </div>
+        </Link>
+      )}
+
+      {/* Stock alert banner — shown only when at least one configured threshold is currently breached */}
+      {stats.triggeredAlerts.length > 0 && (
+        <Link to="/company/stock-alerts" className="block bg-red-50 border border-red-200 rounded-xl p-4 hover:border-red-300 transition-colors">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-red-100 flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-800">
+                {stats.triggeredAlerts.length} {stats.triggeredAlerts.length === 1 ? t('company.stockAlerts.activeAlert') : t('company.stockAlerts.activeAlerts_plural')}
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-red-700">
+                {stats.triggeredAlerts.slice(0, 3).map((a) => (
+                  <li key={a.id}>
+                    <span className="font-medium">{a.categoryName}</span>
+                    {' @ '}
+                    <span className="font-medium">{a.depotName}</span>
+                    {' — '}
+                    {a.current} / {t('common.threshold').toLowerCase()} {a.threshold}
+                  </li>
+                ))}
+                {stats.triggeredAlerts.length > 3 && (
+                  <li className="text-red-600 font-medium">
+                    +{stats.triggeredAlerts.length - 3} {t('common.more') || 'me shume'}
+                  </li>
+                )}
+              </ul>
+            </div>
+            <ArrowRight className="w-4 h-4 text-red-500 flex-shrink-0 mt-1" />
+          </div>
+        </Link>
+      )}
 
       {/* Secondary stats: repairs & sorting */}
       {(stats.pendingRepairs > 0 || stats.activeSorting > 0 || stats.pendingPickups > 0) && (

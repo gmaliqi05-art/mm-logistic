@@ -1877,6 +1877,8 @@ export const fr: typeof sq = {
     expired: 'Votre abonnement a expir\u00e9. Renouvelez pour continuer \u00e0 utiliser la plateforme.',
     renewNow: 'Renouveler maintenant',
     trialExpiring: 'L\'essai gratuit expire dans {days} jours. Passez \u00e0 un plan payant pour un acc\u00e8s complet.',
+    trialActive: 'Essai gratuit: {days} jours restants',
+    trialEndingToday: 'L\'essai gratuit se termine aujourd\'hui!',
     upgrade: 'Mettre \u00e0 niveau',
     currentPlan: 'Plan actuel',
     requiredPlan: 'Plan requis',

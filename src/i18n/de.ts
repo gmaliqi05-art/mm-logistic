@@ -1877,6 +1877,8 @@ export const de: typeof sq = {
     expired: 'Ihr Abonnement ist abgelaufen. Erneuern Sie es, um die Plattform weiterhin nutzen zu können.',
     renewNow: 'Jetzt erneuern',
     trialExpiring: 'Die kostenlose Testversion läuft in {days} Tagen ab. Wechseln Sie zu einem kostenpflichtigen Plan für vollen Zugang.',
+    trialActive: 'Kostenlose Testversion: {days} Tage verbleibend',
+    trialEndingToday: 'Kostenlose Testversion endet heute!',
     upgrade: 'Upgrade',
     currentPlan: 'Aktueller Plan',
     requiredPlan: 'Erforderlicher Plan',
