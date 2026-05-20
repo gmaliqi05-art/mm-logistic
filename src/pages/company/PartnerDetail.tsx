@@ -106,7 +106,7 @@ export default function PartnerDetail() {
           .eq('partner_contact_id', id!)
           .order('event_date', { ascending: false });
         if (fErr) throw fErr;
-        if (!cancelled) setRows((flows ?? []) as FlowRow[]);
+        if (!cancelled) setRows((flows ?? []) as unknown as FlowRow[]);
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Gabim gjate ngarkimit');
       } finally {

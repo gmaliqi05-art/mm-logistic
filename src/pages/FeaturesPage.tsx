@@ -124,7 +124,7 @@ export default function FeaturesPage() {
       price: Number(plan.price_monthly),
       period: t('home.v2.plans.periodMonth'),
       description: plan.description || '',
-      icon: getPlanIconShared(plan.name),
+      icon: getPlanIconShared(plan),
       features: Array.isArray(plan.features) ? (plan.features as string[]).slice(0, 6) : [],
       popular: plan.id === popularId,
       cta: getPlanCta(plan),
@@ -140,8 +140,8 @@ export default function FeaturesPage() {
         const accounting = all.filter((p) => p.product_type === 'accounting');
         const logPop = pickPopularPlan(logistics);
         const accPop = pickPopularPlan(accounting);
-        setLogisticsPlans(logistics.map((p) => toPricingPlan(p, logPop?.id ?? null)));
-        setAccountingPlans(accounting.map((p) => toPricingPlan(p, accPop?.id ?? null)));
+        setLogisticsPlans(logistics.map((p) => toPricingPlan(p, logPop)));
+        setAccountingPlans(accounting.map((p) => toPricingPlan(p, accPop)));
       } catch {
         // silently fail
       } finally {

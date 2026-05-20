@@ -711,7 +711,7 @@ export default function InvoiceBuilder() {
     const id = await save(false);
     if (!id) return;
     const year = new Date().getFullYear();
-    await supabase.rpc('noop').catch(() => {});
+    try { await supabase.rpc('noop'); } catch { /* placeholder no-op */ }
     const { data: seq } = await supabase
       .from('acc_invoice_sequences')
       .select('*')

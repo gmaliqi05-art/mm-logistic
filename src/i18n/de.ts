@@ -549,7 +549,7 @@ export const de: typeof sq = {
       },
       banner: { news: 'News' },
       stats: {
-        companies: 'Aktive Unternehmen',
+        modules: 'Aktive Module',
         users: 'T\u00e4gliche Nutzer',
         transactions: 'Transaktionen pro Monat',
         uptime: 'Verf\u00fcgbarkeit',

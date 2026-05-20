@@ -224,7 +224,8 @@ export default function DepotDeliveryNotes() {
                         const items = n.items ?? [];
                         const totals = items.reduce(
                           (acc, it) => {
-                            acc[it.intended_action] = (acc[it.intended_action] ?? 0) + (it.quantity ?? 0);
+                            const action = it.intended_action ?? 'stock';
+                            acc[action] = (acc[action] ?? 0) + (it.quantity ?? 0);
                             return acc;
                           },
                           { stock: 0, sorting: 0, repair: 0 } as Record<string, number>,

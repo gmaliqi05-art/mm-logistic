@@ -53,7 +53,7 @@ export default function VehicleDetail() {
     setInspections((i.data || []) as Inspection[]);
     setInsurance((ins.data || []) as Insurance[]);
     setTaxes((t.data || []) as Tax[]);
-    setAssignments((a.data || []).map((x: { driver?: { full_name: string } | { full_name: string }[] } & Assignment) => ({
+    setAssignments(((a.data ?? []) as unknown as Array<{ driver?: { full_name: string } | { full_name: string }[] } & Assignment>).map((x) => ({
       ...x,
       driver: Array.isArray(x.driver) ? x.driver[0] : x.driver,
     })) as Assignment[]);
