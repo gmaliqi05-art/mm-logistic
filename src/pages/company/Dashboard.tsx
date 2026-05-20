@@ -16,10 +16,12 @@ import {
   Plus,
   MessageCircle,
   Layers,
+  Calculator,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
@@ -80,6 +82,8 @@ interface Stats {
   complianceExpiry: ExpiryCounts;
   recentActivity: { id: string; action: string; entity_type: string; created_at: string; userName: string; summary: string }[];
   overdueDeliveriesCount: number;
+  /** Accounting summary, populated only when `accounting_enabled = true` on the company. */
+  accountingSummary: { openInvoiceCount: number; openInvoiceTotal: number; overdueCount: number; overdueTotal: number; unbilledNotesCount: number; currency: string } | null;
 }
 
 const emptyStats: Stats = {
@@ -90,12 +94,14 @@ const emptyStats: Stats = {
   complianceExpiry: { expired: 0, critical: 0, warning: 0, attention: 0 },
   recentActivity: [],
   overdueDeliveriesCount: 0,
+  accountingSummary: null,
 };
 
 type RangeKey = '7d' | '30d' | '90d';
 
 export default function CompanyDashboard() {
   const { profile } = useAuth();
+  const { accountingEnabled } = useSubscription();
   const [liveDriverCount, setLiveDriverCount] = useState(0);
   const { t } = useTranslation();
   const reviewCounts = usePendingReviewCounts(profile?.company_id);
@@ -158,7 +164,8 @@ export default function CompanyDashboard() {
 
   useEffect(() => {
     if (profile?.company_id) fetchData();
-  }, [profile?.company_id, range]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.company_id, range, accountingEnabled]);
 
   useEffect(() => {
     if (!profile?.company_id) return;
@@ -399,6 +406,48 @@ export default function CompanyDashboard() {
       ];
       const complianceExpiry = countComplianceExpirations(complianceDates);
 
+      // Accounting summary — only fetched when the company has the accounting
+      // add-on enabled. Three concurrent counts give the admin a tight
+      // single-row view of accounts-receivable health: open invoices (sent
+      // + due date not passed), overdue, and unbilled deliveries that
+      // already shipped but never got an invoice attached.
+      let accountingSummary: Stats['accountingSummary'] = null;
+      if (accountingEnabled) {
+        const [openInvRes, overdueInvRes, unbilledRes] = await Promise.all([
+          supabase
+            .from('acc_invoices')
+            .select('total, currency')
+            .eq('company_id', companyId)
+            .eq('invoice_type', 'invoice')
+            .in('status', ['sent', 'partial'])
+            .or(`due_date.is.null,due_date.gte.${todayIso}`),
+          supabase
+            .from('acc_invoices')
+            .select('total, currency')
+            .eq('company_id', companyId)
+            .eq('invoice_type', 'invoice')
+            .or(`status.eq.overdue,and(status.eq.sent,due_date.lt.${todayIso})`),
+          supabase
+            .from('delivery_notes')
+            .select('id', { count: 'exact', head: true })
+            .eq('company_id', companyId)
+            .in('status', ['delivered', 'confirmed'])
+            .is('acc_invoice_id', null),
+        ]);
+
+        const openInvoices = (openInvRes.data ?? []) as Array<{ total: number; currency: string }>;
+        const overdueInvoices = (overdueInvRes.data ?? []) as Array<{ total: number; currency: string }>;
+        const currency = openInvoices[0]?.currency ?? overdueInvoices[0]?.currency ?? 'EUR';
+        accountingSummary = {
+          openInvoiceCount: openInvoices.length,
+          openInvoiceTotal: openInvoices.reduce((s, r) => s + (Number(r.total) || 0), 0),
+          overdueCount: overdueInvoices.length,
+          overdueTotal: overdueInvoices.reduce((s, r) => s + (Number(r.total) || 0), 0),
+          unbilledNotesCount: unbilledRes.count ?? 0,
+          currency,
+        };
+      }
+
       setStats({
         depots: depotsRes.count ?? 0,
         drivers: drivers.length,
@@ -412,6 +461,7 @@ export default function CompanyDashboard() {
         complianceExpiry,
         recentActivity,
         overdueDeliveriesCount: overdueRes.count ?? 0,
+        accountingSummary,
       });
       setRecentNotes(recentRes.data ?? []);
     } catch (err: unknown) {
@@ -939,6 +989,65 @@ export default function CompanyDashboard() {
                 </div>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Accounting summary — visible only when the accounting add-on is on.
+          Three numbers an admin needs at a glance: open AR (sent invoices
+          still in their grace period), overdue AR, and unbilled deliveries
+          that already shipped. Links into the accounting module where the
+          full work happens. */}
+      {stats.accountingSummary && (
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
+          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+            <h2 className="font-semibold text-emerald-900 text-sm flex items-center gap-2">
+              <Calculator className="w-4 h-4" />
+              Permbledhje kontabel
+            </h2>
+            <Link to="/accounting" className="text-xs text-emerald-700 hover:text-emerald-900 font-medium">
+              Hap kontabilitetin →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+            <Link
+              to="/accounting/invoices"
+              className="rounded-lg p-3 bg-white border border-slate-200 hover:border-emerald-300 transition-colors block"
+            >
+              <p className="text-[11px] text-slate-500 uppercase tracking-wide font-semibold">Fatura te hapura</p>
+              <p className="text-lg font-bold text-slate-900 mt-1">
+                {stats.accountingSummary.openInvoiceTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {stats.accountingSummary.currency}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5">{stats.accountingSummary.openInvoiceCount} fatura</p>
+            </Link>
+            <Link
+              to="/accounting/invoices"
+              className={`rounded-lg p-3 border block transition-colors ${
+                stats.accountingSummary.overdueCount > 0
+                  ? 'bg-red-50 border-red-200 hover:border-red-300'
+                  : 'bg-white border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>Fatura te vonuara</p>
+              <p className={`text-lg font-bold mt-1 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-900' : 'text-slate-900'}`}>
+                {stats.accountingSummary.overdueTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {stats.accountingSummary.currency}
+              </p>
+              <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{stats.accountingSummary.overdueCount} fatura</p>
+            </Link>
+            <Link
+              to="/accounting"
+              className={`rounded-lg p-3 border block transition-colors ${
+                stats.accountingSummary.unbilledNotesCount > 0
+                  ? 'bg-amber-50 border-amber-200 hover:border-amber-300'
+                  : 'bg-white border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-700' : 'text-slate-500'}`}>Pa fatura</p>
+              <p className={`text-lg font-bold mt-1 ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-900' : 'text-slate-900'}`}>
+                {stats.accountingSummary.unbilledNotesCount}
+              </p>
+              <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-700' : 'text-slate-500'}`}>dergesa te dorezuara pa fature</p>
+            </Link>
           </div>
         </div>
       )}
