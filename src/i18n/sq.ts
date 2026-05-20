@@ -355,6 +355,10 @@ export const sq = {
     stepDone: 'Perfundo',
     genericError: 'Ndodhi nje gabim. Provoni perseri.',
     sessionLoadError: 'Sesioni nuk u ngarkua plotesisht. Provoni perseri.',
+    statCompaniesLabel: 'Kompani aktive',
+    statUptimeLabel: 'Uptime garantuar',
+    heroTagline: 'Platforma e plote per gjurmimin e dergesave, menaxhimin e stokut dhe komunikimin midis ekipeve ne kohe reale.',
+    heroHighlight: 'efikasitet maksimal',
   },
   payment: {
     verifying: 'Duke verifikuar pagesen...',

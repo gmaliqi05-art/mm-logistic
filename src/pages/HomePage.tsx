@@ -163,26 +163,36 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* App Download */}
-            <div>
-              <h4 className="text-white font-semibold text-sm mb-3">{t('home.minimal.footerApp')}</h4>
-              <div className="flex flex-col gap-2">
-                <a
-                  href="#"
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition text-xs text-slate-300 hover:text-white"
-                >
-                  <Apple className="h-4 w-4" />
-                  <span>App Store</span>
-                </a>
-                <a
-                  href="#"
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition text-xs text-slate-300 hover:text-white"
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
-                  <span>Google Play</span>
-                </a>
+            {/* App Download - only shown when enabled by Super Admin and at least one store URL is configured */}
+            {platformSettings.appDownloadEnabled && (platformSettings.appStoreUrl || platformSettings.playStoreUrl) && (
+              <div>
+                <h4 className="text-white font-semibold text-sm mb-3">{t('home.minimal.footerApp')}</h4>
+                <div className="flex flex-col gap-2">
+                  {platformSettings.appStoreUrl && (
+                    <a
+                      href={platformSettings.appStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition text-xs text-slate-300 hover:text-white"
+                    >
+                      <Apple className="h-4 w-4" />
+                      <span>App Store</span>
+                    </a>
+                  )}
+                  {platformSettings.playStoreUrl && (
+                    <a
+                      href={platformSettings.playStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition text-xs text-slate-300 hover:text-white"
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                      <span>Google Play</span>
+                    </a>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">

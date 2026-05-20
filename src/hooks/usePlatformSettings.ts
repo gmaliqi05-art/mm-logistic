@@ -7,6 +7,9 @@ interface PlatformSettings {
   logoIcon: string;
   name: string;
   shortName: string;
+  appStoreUrl: string;
+  playStoreUrl: string;
+  appDownloadEnabled: boolean;
 }
 
 const DEFAULT_LOGO = '/mm-logistic-logo.png';
@@ -26,6 +29,9 @@ export function usePlatformSettings() {
     logoIcon: DEFAULT_LOGO,
     name: 'MM Logistic',
     shortName: 'MML',
+    appStoreUrl: '',
+    playStoreUrl: '',
+    appDownloadEnabled: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -48,6 +54,9 @@ export function usePlatformSettings() {
           'platform_logo_icon',
           'platform_name',
           'platform_short_name',
+          'app_store_url',
+          'play_store_url',
+          'app_download_enabled',
         ]);
 
       if (data) {
@@ -57,6 +66,9 @@ export function usePlatformSettings() {
           logoIcon: DEFAULT_LOGO,
           name: 'MM Logistic',
           shortName: 'MML',
+          appStoreUrl: '',
+          playStoreUrl: '',
+          appDownloadEnabled: false,
         };
 
         data.forEach((setting) => {
@@ -65,6 +77,9 @@ export function usePlatformSettings() {
           if (setting.key === 'platform_logo_icon') newSettings.logoIcon = setting.value || newSettings.logo;
           if (setting.key === 'platform_name') newSettings.name = setting.value || 'MM Logistic';
           if (setting.key === 'platform_short_name') newSettings.shortName = setting.value || 'MML';
+          if (setting.key === 'app_store_url') newSettings.appStoreUrl = setting.value || '';
+          if (setting.key === 'play_store_url') newSettings.playStoreUrl = setting.value || '';
+          if (setting.key === 'app_download_enabled') newSettings.appDownloadEnabled = setting.value === 'true';
         });
 
         setSettings(newSettings);
