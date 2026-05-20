@@ -79,6 +79,7 @@ interface Stats {
   triggeredAlerts: { id: string; depotName: string; categoryName: string; type: string; threshold: number; current: number }[];
   complianceExpiry: ExpiryCounts;
   recentActivity: { id: string; action: string; entity_type: string; created_at: string; userName: string; summary: string }[];
+  overdueDeliveriesCount: number;
 }
 
 const emptyStats: Stats = {
@@ -88,6 +89,7 @@ const emptyStats: Stats = {
   triggeredAlerts: [],
   complianceExpiry: { expired: 0, critical: 0, warning: 0, attention: 0 },
   recentActivity: [],
+  overdueDeliveriesCount: 0,
 };
 
 type RangeKey = '7d' | '30d' | '90d';
@@ -221,6 +223,7 @@ export default function CompanyDashboard() {
         alertsRes, stockForAlertsRes,
         vehInspRes, vehInsRes, vehTaxRes, drvLicRes, drvQualRes, drvMedRes,
         auditRes,
+        overdueRes,
       ] = await Promise.all([
         supabase.from('depots').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true),
         supabase.from('profiles').select('id, full_name').eq('company_id', companyId).eq('role', 'driver').eq('is_active', true),
@@ -257,6 +260,12 @@ export default function CompanyDashboard() {
           .eq('company_id', companyId)
           .order('created_at', { ascending: false })
           .limit(8),
+        supabase
+          .from('delivery_notes')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId)
+          .in('status', ['sent', 'in_transit', 'pending_company_review', 'pending_stock_confirmation', 'delivered'])
+          .or(`and(type.eq.delivery,scheduled_delivery_at.lt.${now.toISOString()}),and(type.eq.pickup,scheduled_pickup_at.lt.${now.toISOString()})`),
       ]);
 
       const stocks = stockRes.data ?? [];
@@ -402,6 +411,7 @@ export default function CompanyDashboard() {
         triggeredAlerts,
         complianceExpiry,
         recentActivity,
+        overdueDeliveriesCount: overdueRes.count ?? 0,
       });
       setRecentNotes(recentRes.data ?? []);
     } catch (err: unknown) {
@@ -495,6 +505,32 @@ export default function CompanyDashboard() {
           badge={stats.deliveredToday > 0 ? `+${stats.deliveredToday} ${t('common.today').toLowerCase()}` : undefined}
         />
       </div>
+
+      {/* Overdue deliveries banner — dispatchable items whose scheduled
+          date is already in the past and are still in flight. Counts the
+          same rows that /company/overdue renders. */}
+      {stats.overdueDeliveriesCount > 0 && (
+        <Link to="/company/overdue" className="block bg-red-50 border border-red-200 rounded-xl p-4 hover:border-red-300 transition-colors">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-100 flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-700" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-red-900">
+                  {stats.overdueDeliveriesCount === 1
+                    ? '1 dergese eshte mbi afat'
+                    : `${stats.overdueDeliveriesCount} dergesa jane mbi afat`}
+                </p>
+                <p className="text-xs text-red-700 mt-0.5">
+                  Klikoni per liste te plote dhe veprime te shpejta.
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-red-700 flex-shrink-0" />
+          </div>
+        </Link>
+      )}
 
       {/* Compliance expiry banner — surfaces vehicle / driver document expirations */}
       {stats.complianceExpiry.attention > 0 && (

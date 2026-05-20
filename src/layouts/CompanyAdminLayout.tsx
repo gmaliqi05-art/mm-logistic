@@ -45,7 +45,7 @@ import DeletionBanner from '../components/DeletionBanner';
 const allNavItems = [
   { to: '/company', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, premium: false, bottomNav: true },
   { to: '/company/invoices', icon: FileCheck2, labelKey: 'nav.invoices', end: false, premium: false, bottomNav: false },
-  { to: '/company/email', icon: Mail, labelKey: 'nav.emailAutomation', end: false, premium: false, bottomNav: false },
+  { to: '/company/email', icon: Mail, labelKey: 'nav.emailAutomation', end: false, premium: true, bottomNav: false },
   { to: '/company/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, premium: false, bottomNav: true },
   { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', end: false, premium: false, bottomNav: false, badgeKey: 'review' as const },
   { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, premium: false, bottomNav: false },
@@ -53,7 +53,7 @@ const allNavItems = [
   { to: '/company/partner-flows', icon: Building2, labelKey: 'nav.partnerFlows', end: false, premium: false, bottomNav: false },
   { to: '/company/pallet-accounts', icon: Package, labelKey: 'nav.palletAccounts', end: false, premium: false, bottomNav: false },
   { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap', end: false, premium: false, bottomNav: false },
-  { to: '/company/fleet-reports', icon: BarChart3, labelKey: 'nav.fleetReports', end: false, premium: false, bottomNav: false },
+  { to: '/company/fleet-reports', icon: BarChart3, labelKey: 'nav.fleetReports', end: false, premium: true, bottomNav: false },
   { to: '/company/stock', icon: Package, labelKey: 'nav.stock', end: false, premium: false, bottomNav: true },
   { to: '/company/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, premium: false, bottomNav: true },
   { to: '/company/depots', icon: Warehouse, labelKey: 'nav.depots', end: false, premium: false, bottomNav: false },
@@ -71,10 +71,10 @@ const allNavItems = [
   { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', end: false, premium: true, bottomNav: false },
   { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', end: false, premium: true, bottomNav: false },
   { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
-  { to: '/company/hr', icon: Users, labelKey: 'nav.hr', end: true, premium: false, bottomNav: false },
+  { to: '/company/hr', icon: Users, labelKey: 'nav.hr', end: true, premium: true, bottomNav: false },
   { to: '/logistics', icon: Truck, labelKey: 'nav.logistics', end: false, premium: false, bottomNav: false },
   { to: '/company/settings', icon: Settings, labelKey: 'nav.settings', end: false, premium: false, bottomNav: false },
-  { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', end: false, premium: false, bottomNav: false },
+  { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', end: false, premium: true, bottomNav: false },
 ];
 
 const bottomNavItems = allNavItems.filter(i => i.bottomNav);

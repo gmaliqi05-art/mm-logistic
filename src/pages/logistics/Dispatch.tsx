@@ -14,6 +14,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { notifyUsers } from '../../utils/notifications';
 
 interface DeliveryNoteRow {
   id: string;
@@ -112,6 +113,23 @@ export default function LogisticsDispatch() {
         })
         .eq('id', assignTarget.id);
       if (dnErr) throw dnErr;
+
+      // Tell the driver they've been dispatched. The dispatch list only shows
+      // currently-unassigned deliveries (see load(): `.is('assigned_driver_id',
+      // null)`) so there's no previous driver to notify. Skip if the actor
+      // is the driver themselves.
+      if (assignDriverId !== profile?.id) {
+        await notifyUsers({
+          userIds: [assignDriverId],
+          type: 'delivery',
+          titleKey: 'notifications.templates.deliveryAssigned.title',
+          messageKey: 'notifications.templates.deliveryAssigned.body',
+          params: { number: assignTarget.note_number ?? '' },
+          referenceId: assignTarget.id,
+          fallbackTitle: 'Dergese e re per ty',
+          fallbackMessage: `Te eshte caktuar dergesa ${assignTarget.note_number ?? ''}.`,
+        });
+      }
 
       setAssignTarget(null);
       setAssignDriverId('');
