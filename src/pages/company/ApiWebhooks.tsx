@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Key, Webhook as WebhookIcon, Plus, Loader2, Copy, Trash2, AlertTriangle, X, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 type Tab = 'keys' | 'webhooks' | 'docs';
 
@@ -35,6 +36,7 @@ const EVENT_OPTIONS = [
 
 export default function ApiWebhooks() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('keys');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export default function ApiWebhooks() {
   }
 
   async function revokeKey(id: string) {
-    if (!confirm('Revoke kete celes? Aplikacionet qe e perdorin do te nderpriten.')) return;
+    if (!confirm(t('common.revokeApiKeyConfirm'))) return;
     await supabase.from('company_api_keys').update({ revoked_at: new Date().toISOString() }).eq('id', id);
     await fetchAll();
   }
@@ -139,7 +141,7 @@ export default function ApiWebhooks() {
   }
 
   async function deleteWebhook(id: string) {
-    if (!confirm('Fshi kete webhook?')) return;
+    if (!confirm(t('common.deleteWebhookConfirm'))) return;
     await supabase.from('webhooks').delete().eq('id', id);
     await fetchAll();
   }
@@ -280,7 +282,7 @@ export default function ApiWebhooks() {
               <input
                 value={hookSecret}
                 onChange={(e) => setHookSecret(e.target.value)}
-                placeholder="Secret (opsional, do te gjenerohet automatikisht)"
+                placeholder={t('common.webhookSecretPlaceholder')}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
               <div className="flex flex-wrap gap-2">

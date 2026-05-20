@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Loader2, Ship, Trash2, CreditCard as Edit2, X, Search, Calculator, FileDown, Package } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { formatCurrency } from '../../types/accounting';
 
 interface ImportRow {
@@ -55,6 +56,7 @@ const emptyItem = (): ImportItem => ({
 
 export default function Imports() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [imports, setImports] = useState<ImportRow[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -228,7 +230,7 @@ export default function Imports() {
         .from('acc_imports')
         .update(payload)
         .eq('id', editing.id);
-      if (error) { alert('Gabim: ' + error.message); return; }
+      if (error) { alert(t('common.error') + ': ' + error.message); return; }
       importId = editing.id;
       await supabase.from('acc_import_items').delete().eq('import_id', importId);
     } else {
@@ -237,7 +239,7 @@ export default function Imports() {
         .insert(payload)
         .select()
         .single();
-      if (error) { alert('Gabim: ' + error.message); return; }
+      if (error) { alert(t('common.error') + ': ' + error.message); return; }
       importId = data.id;
     }
 
@@ -263,7 +265,7 @@ export default function Imports() {
 
     if (itemPayload.length) {
       const { error: itemErr } = await supabase.from('acc_import_items').insert(itemPayload);
-      if (itemErr) { alert('Linjat: ' + itemErr.message); return; }
+      if (itemErr) { alert(t('common.linesPrefix') + ': ' + itemErr.message); return; }
     }
 
     setShowModal(false);
@@ -271,7 +273,7 @@ export default function Imports() {
   }
 
   async function removeImport(id: string) {
-    if (!confirm('Te fshihet ky import?')) return;
+    if (!confirm(t('common.deleteImportConfirm'))) return;
     const { error } = await supabase.from('acc_imports').delete().eq('id', id);
     if (error) { alert('Gabim: ' + error.message); return; }
     load();

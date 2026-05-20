@@ -626,7 +626,7 @@ function StepInfo({
   onCityChange: (city: City | null) => void;
   onPostalCodeLookup: (code: string) => void;
 }) {
-  const adminLabel = businessType === 'accounting' ? 'Informacione Kontabilisti' : t('auth.adminInfo');
+  const adminLabel = businessType === 'accounting' ? t('auth.accountantInfoTitle') : t('auth.adminInfo');
   const showLegalSection = profile.fields.length > 0;
   const legalFields = profile.fields.filter((f) => f.key !== 'legalForm');
   const hasLegalForm = profile.fields.some((f) => f.key === 'legalForm');
@@ -690,54 +690,54 @@ function StepInfo({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Shteti *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('auth.countryLabel')} *</label>
                 <CountrySelect
                   value={location.country}
                   onChange={onCountryChange}
-                  placeholder="Zgjidh shtetin"
+                  placeholder={t('auth.selectCountryPlaceholder')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Qyteti</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('auth.cityLabel')}</label>
                 <CitySelect
                   countryId={location.country?.id ?? null}
                   value={location.city}
                   onChange={onCityChange}
-                  placeholder={location.country ? 'Zgjidh qytetin' : 'Zgjidh shtetin së pari'}
+                  placeholder={location.country ? t('auth.selectCityPlaceholder') : t('auth.selectCountryFirst')}
                 />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Kodi Postar</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('auth.postalCodeLabel')}</label>
                 <input
                   type="text"
                   value={form.postalCode}
                   onChange={(e) => onPostalCodeLookup(e.target.value)}
-                  placeholder={location.country ? 'Shkruaj kodin postar' : 'Zgjidh shtetin së pari'}
+                  placeholder={location.country ? t('auth.enterPostalCode') : t('auth.selectCountryFirst')}
                   disabled={!location.country}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all disabled:bg-slate-100 disabled:text-slate-400"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Adresa</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('auth.addressLabel')}</label>
                 <input
                   type="text"
                   value={form.companyAddress}
                   onChange={(e) => updateForm('companyAddress', e.target.value)}
-                  placeholder="Rruga, numri"
+                  placeholder={t('auth.addressPlaceholder')}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Website</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('auth.websiteLabel')}</label>
               <input
                 type="text"
                 value={form.website}
                 onChange={(e) => updateForm('website', e.target.value)}
-                placeholder="https://www.kompania.de"
+                placeholder={t('auth.websitePlaceholder')}
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
               />
             </div>

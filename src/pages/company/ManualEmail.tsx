@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Loader2, Send, AlertTriangle, CheckCircle2, Search, FileText, User, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface Contact {
   id: string;
@@ -27,6 +28,7 @@ interface TemplateOption {
 
 export default function ManualEmail() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
@@ -231,8 +233,8 @@ export default function ManualEmail() {
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           <div>
-            <p className="text-sm font-medium text-emerald-900">Email u dergua me sukses!</p>
-            <p className="text-xs text-emerald-700 mt-0.5">Destinatari: {recipientEmail}</p>
+            <p className="text-sm font-medium text-emerald-900">{t('companyAdmin.manualEmail.sentSuccess')}</p>
+            <p className="text-xs text-emerald-700 mt-0.5">{t('companyAdmin.manualEmail.recipient')}: {recipientEmail}</p>
           </div>
         </div>
       )}
@@ -245,7 +247,7 @@ export default function ManualEmail() {
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <User className="w-4 h-4 text-blue-700" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Destinatari</h3>
+              <h3 className="text-sm font-semibold text-gray-900">{t('companyAdmin.manualEmail.recipient')}</h3>
             </div>
 
             <div className="space-y-3">
@@ -256,7 +258,7 @@ export default function ManualEmail() {
                   value={contactSearch}
                   onChange={(e) => setContactSearch(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  placeholder="Kerko klient..."
+                  placeholder={t('companyAdmin.manualEmail.searchClient')}
                 />
               </div>
 
@@ -265,7 +267,7 @@ export default function ManualEmail() {
                 onChange={(e) => { setSelectedContactId(e.target.value); setManualEmail(''); }}
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                <option value="">-- Zgjidh klientin --</option>
+                <option value="">{t('companyAdmin.manualEmail.selectClient')}</option>
                 {filteredContacts.map(c => (
                   <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
                 ))}
@@ -273,7 +275,7 @@ export default function ManualEmail() {
 
               <div className="flex items-center gap-3">
                 <div className="h-px bg-gray-200 flex-1" />
-                <span className="text-xs text-gray-400 font-medium">OSE</span>
+                <span className="text-xs text-gray-400 font-medium">{t('companyAdmin.manualEmail.or')}</span>
                 <div className="h-px bg-gray-200 flex-1" />
               </div>
 
@@ -282,7 +284,7 @@ export default function ManualEmail() {
                 value={manualEmail}
                 onChange={(e) => { setManualEmail(e.target.value); setSelectedContactId(''); }}
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="Shkruaj adresen email manualisht..."
+                placeholder={t('companyAdmin.manualEmail.manualEmailPlaceholder')}
               />
             </div>
           </div>
@@ -293,32 +295,32 @@ export default function ManualEmail() {
               <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
                 <FileText className="w-4 h-4 text-teal-700" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Permbajtja</h3>
+              <h3 className="text-sm font-semibold text-gray-900">{t('companyAdmin.manualEmail.content')}</h3>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Template</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('companyAdmin.manualEmail.template')}</label>
                 <select
                   value={selectedTemplate}
                   onChange={(e) => setSelectedTemplate(e.target.value)}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  {templates.map(t => (
-                    <option key={t.code} value={t.code}>{t.name}</option>
+                  {templates.map(tpl => (
+                    <option key={tpl.code} value={tpl.code}>{tpl.name}</option>
                   ))}
                 </select>
               </div>
 
               {contactInvoices.length > 0 && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Fatura (opsionale)</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('companyAdmin.manualEmail.invoice')}</label>
                   <select
                     value={selectedInvoiceId}
                     onChange={(e) => setSelectedInvoiceId(e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
-                    <option value="">-- Pa fature (email i pergjithshem) --</option>
+                    <option value="">{t('companyAdmin.manualEmail.noInvoiceGeneric')}</option>
                     {contactInvoices.map(inv => (
                       <option key={inv.id} value={inv.id}>
                         {inv.invoice_number} - {formatCurrency(inv.total, inv.currency)} ({inv.status})
@@ -329,15 +331,16 @@ export default function ManualEmail() {
               )}
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Gjuha</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('companyAdmin.manualEmail.language')}</label>
                 <select
                   value={locale}
                   onChange={(e) => setLocale(e.target.value)}
                   className="w-full sm:w-48 px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  <option value="sq">Shqip</option>
-                  <option value="de">Gjermanisht</option>
-                  <option value="en">Anglisht</option>
+                  <option value="sq">{t('companyAdmin.manualEmail.langSq')}</option>
+                  <option value="de">{t('companyAdmin.manualEmail.langDe')}</option>
+                  <option value="en">{t('companyAdmin.manualEmail.langEn')}</option>
+                  <option value="fr">{t('companyAdmin.manualEmail.langFr')}</option>
                 </select>
               </div>
             </div>
@@ -345,24 +348,24 @@ export default function ManualEmail() {
 
           {/* Summary & Send */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Permbledhje</h3>
+            <h3 className="text-sm font-semibold text-gray-900">{t('companyAdmin.manualEmail.summary')}</h3>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-gray-500">Destinatari:</span>
+                <span className="text-gray-500">{t('companyAdmin.manualEmail.recipient')}:</span>
                 <p className="font-medium text-gray-900 mt-0.5">{recipientEmail || '-'}</p>
               </div>
               <div>
-                <span className="text-gray-500">Template:</span>
-                <p className="font-medium text-gray-900 mt-0.5">{templates.find(t => t.code === selectedTemplate)?.name || '-'}</p>
+                <span className="text-gray-500">{t('companyAdmin.manualEmail.template')}:</span>
+                <p className="font-medium text-gray-900 mt-0.5">{templates.find(tpl => tpl.code === selectedTemplate)?.name || '-'}</p>
               </div>
               {selectedInvoice && (
                 <>
                   <div>
-                    <span className="text-gray-500">Fatura:</span>
+                    <span className="text-gray-500">{t('companyAdmin.manualEmail.invoice')}:</span>
                     <p className="font-medium text-gray-900 mt-0.5">{selectedInvoice.invoice_number}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Totali:</span>
+                    <span className="text-gray-500">{t('companyAdmin.manualEmail.total')}:</span>
                     <p className="font-medium text-gray-900 mt-0.5">{formatCurrency(selectedInvoice.total, selectedInvoice.currency)}</p>
                   </div>
                 </>
@@ -375,7 +378,7 @@ export default function ManualEmail() {
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
               >
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showPreview ? 'Fshih' : 'Preview'}
+                {showPreview ? t('companyAdmin.manualEmail.hidePreview') : t('companyAdmin.manualEmail.preview')}
               </button>
               <button
                 onClick={handleSend}
@@ -383,7 +386,7 @@ export default function ManualEmail() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm disabled:opacity-50"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Dergo Email
+                {t('companyAdmin.manualEmail.sendEmail')}
               </button>
             </div>
           </div>
@@ -393,13 +396,13 @@ export default function ManualEmail() {
         {showPreview && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-4 max-h-[700px]">
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-600 uppercase">Preview</span>
+              <span className="text-xs font-semibold text-gray-600 uppercase">{t('companyAdmin.manualEmail.preview')}</span>
               <button
                 onClick={fetchPreview}
                 disabled={previewLoading}
                 className="text-xs text-teal-600 hover:text-teal-700 font-medium"
               >
-                {previewLoading ? 'Duke ngarkuar...' : 'Rifresko'}
+                {previewLoading ? t('companyAdmin.manualEmail.loadingPreview') : t('companyAdmin.manualEmail.refresh')}
               </button>
             </div>
             <div className="h-[600px] overflow-auto">
@@ -416,7 +419,7 @@ export default function ManualEmail() {
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-sm text-gray-400">
-                  Kliko "Preview" per te pare email-in
+                  {t('companyAdmin.manualEmail.clickPreview')}
                 </div>
               )}
             </div>

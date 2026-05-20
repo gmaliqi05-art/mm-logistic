@@ -5,6 +5,7 @@ import DriverIdentityPanel from '../../components/fleet/DriverIdentityPanel';
 import DriverCVSummary from '../../components/fleet/DriverCVSummary';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { LICENSE_CATEGORIES, daysUntil } from '../../lib/fleetCompliance';
 import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
@@ -20,6 +21,7 @@ export default function DriverDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const { labelOf } = useFleetComplianceTypes('driver');
   const [driver, setDriver] = useState<DriverProfile | null>(null);
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -67,7 +69,7 @@ export default function DriverDetail() {
   }
 
   async function removeRow(table: string, rid: string) {
-    if (!confirm('Fshi kete regjistrim?')) return;
+    if (!confirm(t('common.deleteRecord'))) return;
     await supabase.from(table).delete().eq('id', rid);
     fetchAll();
   }

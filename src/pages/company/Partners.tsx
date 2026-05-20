@@ -184,7 +184,7 @@ export default function CompanyPartners() {
 
   async function deletePartner(p: Partner) {
     if (!profile?.company_id) return;
-    const ok = window.confirm(`Fshi partnerin "${p.name}"?\n\nKy veprim e largon nga lista, por te dhenat historike ne fatura dhe fletedergesa ruhen.`);
+    const ok = window.confirm(t('companyAdmin.partners.deleteConfirm').replace('{name}', p.name));
     if (!ok) return;
     try {
       setDeletingId(p.id);
@@ -245,7 +245,7 @@ export default function CompanyPartners() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko sipas emrit, VAT, email, qytetit..."
+            placeholder={t('companyAdmin.partners.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
@@ -373,6 +373,7 @@ type VatResult =
   | null;
 
 export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editing }: ModalProps) {
+  const { t } = useTranslation();
   const [vatChecking, setVatChecking] = useState(false);
   const [vatResult, setVatResult] = useState<VatResult>(null);
 
@@ -424,7 +425,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
               Informacioni do perdoret ne fletedergesa, fletmarrje dhe fatura.
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2" aria-label="Mbyll">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2" aria-label={t('companyAdmin.partners.closeLabel')}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -436,7 +437,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="input"
-                placeholder="P.sh. MarGroup Albania"
+                placeholder={t('companyAdmin.partners.namePlaceholder')}
               />
             </Field>
             <Field label="Tipi *">
@@ -456,7 +457,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
                   value={form.vat_number}
                   onChange={(e) => { setForm({ ...form, vat_number: e.target.value }); setVatResult(null); }}
                   className="input flex-1"
-                  placeholder="P.sh. DE123456789, ATU12345678"
+                  placeholder={t('companyAdmin.partners.vatPlaceholder')}
                 />
                 <button
                   type="button"
@@ -563,7 +564,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
           >
-            Mbyll
+            {t('companyAdmin.partners.closeLabel')}
           </button>
           <button
             onClick={onSave}

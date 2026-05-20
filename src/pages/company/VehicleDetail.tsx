@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Truck, Plus, Trash2, Loader2, ShieldCheck, Receipt, ClipboardCheck, Users as UsersIcon, ScanLine, FileText, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
@@ -24,6 +25,7 @@ export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const { labelOf } = useFleetComplianceTypes('vehicle');
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [inspections, setInspections] = useState<Inspection[]>([]);
@@ -129,7 +131,7 @@ export default function VehicleDetail() {
     fetchAll();
   }
   async function removeRow(table: string, rid: string) {
-    if (!confirm('A jeni i sigurt?')) return;
+    if (!confirm(t('common.areYouSure'))) return;
     await supabase.from(table).delete().eq('id', rid);
     fetchAll();
   }
@@ -389,6 +391,7 @@ function ItemList({ items, onDelete }: { items: Array<{ id: string; title: strin
 }
 
 function InspectionAddRow({ initial, onCancel, onSave }: { initial: string; onCancel: () => void; onSave: (type: string, date: string, provider: string) => void }) {
+  const { t } = useTranslation();
   const [type, setType] = useState(initial);
   const [date, setDate] = useState('');
   const [provider, setProvider] = useState('');
@@ -402,14 +405,15 @@ function InspectionAddRow({ initial, onCancel, onSave }: { initial: string; onCa
         <option value="tacho">Tachograph</option>
       </select>
       <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-      <input placeholder="Ofruesi" value={provider} onChange={(e) => setProvider(e.target.value)} className="flex-1 min-w-[120px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-      <button onClick={() => onSave(type, date, provider)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">Ruaj</button>
-      <button onClick={onCancel} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
+      <input placeholder={t('companyAdmin.vehicleDetail.provider')} value={provider} onChange={(e) => setProvider(e.target.value)} className="flex-1 min-w-[120px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <button onClick={() => onSave(type, date, provider)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">{t('companyAdmin.vehicleDetail.save')}</button>
+      <button onClick={onCancel} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('companyAdmin.vehicleDetail.cancel')}</button>
     </div>
   );
 }
 
 function InsuranceAddRow({ initial, onCancel, onSave }: { initial: string; onCancel: () => void; onSave: (type: string, date: string, provider: string) => void }) {
+  const { t } = useTranslation();
   const [type, setType] = useState(initial);
   const [date, setDate] = useState('');
   const [provider, setProvider] = useState('');
@@ -422,22 +426,23 @@ function InsuranceAddRow({ initial, onCancel, onSave }: { initial: string; onCan
         <option value="ladung">Ladungsversicherung</option>
       </select>
       <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-      <input placeholder="Ofruesi" value={provider} onChange={(e) => setProvider(e.target.value)} className="flex-1 min-w-[120px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-      <button onClick={() => onSave(type, date, provider)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">Ruaj</button>
-      <button onClick={onCancel} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
+      <input placeholder={t('companyAdmin.vehicleDetail.provider')} value={provider} onChange={(e) => setProvider(e.target.value)} className="flex-1 min-w-[120px] px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <button onClick={() => onSave(type, date, provider)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">{t('companyAdmin.vehicleDetail.save')}</button>
+      <button onClick={onCancel} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('companyAdmin.vehicleDetail.cancel')}</button>
     </div>
   );
 }
 
 function TaxAddRow({ onCancel, onSave }: { onCancel: () => void; onSave: (date: string, amount: string) => void }) {
+  const { t } = useTranslation();
   const [date, setDate] = useState('');
   const [amount, setAmount] = useState('');
   return (
     <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg">
       <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-      <input type="number" placeholder="Shuma EUR" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-      <button onClick={() => onSave(date, amount)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">Ruaj</button>
-      <button onClick={onCancel} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
+      <input type="number" placeholder={t('companyAdmin.vehicleDetail.amountEur')} value={amount} onChange={(e) => setAmount(e.target.value)} className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+      <button onClick={() => onSave(date, amount)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">{t('companyAdmin.vehicleDetail.save')}</button>
+      <button onClick={onCancel} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('companyAdmin.vehicleDetail.cancel')}</button>
     </div>
   );
 }

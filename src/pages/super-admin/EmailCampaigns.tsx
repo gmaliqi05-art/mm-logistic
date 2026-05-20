@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Megaphone, Plus, Loader2, Clock, CheckCircle2, XCircle, PlayCircle, FileText, Trash2 } from "lucide-react";
+import { useTranslation } from "../../i18n";
 
 interface Campaign {
   id: string;
@@ -26,6 +27,7 @@ const STATUS_BADGE: Record<string, { cls: string; icon: React.ComponentType<{ cl
 };
 
 export default function EmailCampaigns() {
+  const { t } = useTranslation();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -46,7 +48,7 @@ export default function EmailCampaigns() {
   }
 
   async function remove(c: Campaign) {
-    if (!window.confirm(`Fshi fushaten "${c.name}"?`)) return;
+    if (!window.confirm(t('common.deleteCampaignConfirm').replace('{name}', c.name))) return;
     await supabase.from("email_campaigns").delete().eq("id", c.id);
     load();
   }

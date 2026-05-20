@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabase";
 import {
   ArrowLeft, Loader2, PlayCircle, RefreshCw, CheckCircle2, XCircle, Clock, FileText, Send, AlertCircle,
 } from "lucide-react";
+import { useTranslation } from "../../i18n";
 
 interface Campaign {
   id: string;
@@ -52,6 +53,7 @@ const RCPT_STATUS: Record<string, string> = {
 };
 
 export default function EmailCampaignDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
@@ -118,7 +120,7 @@ export default function EmailCampaignDetail() {
 
   async function cancel() {
     if (!campaign) return;
-    if (!window.confirm("Anulloni kete fushate?")) return;
+    if (!window.confirm(t('common.cancelCampaignConfirm'))) return;
     await supabase.from("email_campaigns").update({ status: "cancelled" }).eq("id", campaign.id);
     load();
   }

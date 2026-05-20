@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, FileText, CheckCircle2, XCircle, Clock, RefreshCw, ScanLine, Truck, CircleUser as UserCircle, Download, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 
 interface ScanRow {
@@ -54,6 +55,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export default function FleetScans() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showScanner, setShowScanner] = useState<'vehicle' | 'driver' | null>(null);
@@ -80,7 +82,7 @@ export default function FleetScans() {
   }
 
   async function deleteRow(row: ScanRow) {
-    if (!confirm('Fshije kete skanim? PDF origjinal do te fshihet gjithashtu.')) return;
+    if (!confirm(t('common.deleteFleetScanConfirm'))) return;
     await supabase.storage.from('fleet-scans').remove([row.storage_path]);
     await supabase.from('fleet_scanned_documents').delete().eq('id', row.id);
     load();
