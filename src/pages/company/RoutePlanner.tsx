@@ -36,6 +36,21 @@ interface DriverLite {
   full_name: string;
 }
 
+interface VehicleLite {
+  id: string;
+  license_plate: string;
+  brand: string;
+  model: string;
+  vehicle_type: string;
+  max_weight_kg: number | null;
+  length_mm: number | null;
+  width_mm: number | null;
+  height_mm: number | null;
+  axle_load_kg: number | null;
+  adr_class: string | null;
+  tunnel_category: string | null;
+}
+
 async function geocode(query: string): Promise<Point | null> {
   const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
   const arr = (await r.json()) as Array<{ lat: string; lon: string; display_name: string }>;
@@ -58,15 +73,17 @@ export default function CompanyRoutePlanner() {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [deliveries, setDeliveries] = useState<DeliveryNoteLite[]>([]);
   const [drivers, setDrivers] = useState<DriverLite[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleLite[]>([]);
   const [deliveryId, setDeliveryId] = useState<string>('');
   const [driverId, setDriverId] = useState<string>('');
+  const [vehicleId, setVehicleId] = useState<string>('');
   const [assigning, setAssigning] = useState(false);
   const [assigned, setAssigned] = useState(false);
 
   useEffect(() => {
     if (!profile?.company_id) return;
     void (async () => {
-      const [d1, d2] = await Promise.all([
+      const [d1, d2, d3] = await Promise.all([
         supabase
           .from('delivery_notes')
           .select('id, note_number, delivery_address, pickup_address, assigned_driver_id, status')
@@ -80,9 +97,17 @@ export default function CompanyRoutePlanner() {
           .eq('company_id', profile.company_id)
           .eq('role', 'driver')
           .order('full_name'),
+        supabase
+          .from('vehicles')
+          .select('id, license_plate, brand, model, vehicle_type, max_weight_kg, length_mm, width_mm, height_mm, axle_load_kg, adr_class, tunnel_category')
+          .eq('company_id', profile.company_id)
+          .eq('vehicle_type', 'truck')
+          .eq('status', 'active')
+          .order('license_plate'),
       ]);
       setDeliveries((d1.data ?? []) as DeliveryNoteLite[]);
       setDrivers((d2.data ?? []) as DriverLite[]);
+      setVehicles((d3.data ?? []) as VehicleLite[]);
     })();
   }, [profile?.company_id]);
 
@@ -128,6 +153,7 @@ export default function CompanyRoutePlanner() {
       if (!d) throw new Error('Nuk u gjet adresa e destinacionit.');
       setDest(d);
 
+      const v = vehicleId ? vehicles.find((x) => x.id === vehicleId) ?? null : null;
       const { data, error: fnErr } = await supabase.functions.invoke('plan-truck-route', {
         body: {
           origin: o,
@@ -137,7 +163,20 @@ export default function CompanyRoutePlanner() {
           fuel_price_eur_per_l: fuelPrice,
           prefer: 'cheapest',
           driver_id: driverId || null,
+          vehicle_id: vehicleId || null,
           company_id: profile?.company_id ?? null,
+          // Pass the physical vehicle restrictions so the routing engine
+          // can keep the truck off roads / tunnels it cannot legally use.
+          // Nulls are tolerated by plan-truck-route (no constraint).
+          vehicle: v ? {
+            length_mm: v.length_mm,
+            width_mm: v.width_mm,
+            height_mm: v.height_mm,
+            max_weight_kg: v.max_weight_kg,
+            axle_load_kg: v.axle_load_kg,
+            adr_class: v.adr_class,
+            tunnel_category: v.tunnel_category,
+          } : null,
         },
       });
       if (fnErr) throw fnErr;
@@ -337,6 +376,51 @@ export default function CompanyRoutePlanner() {
             </div>
           </div>
         </div>
+
+        {vehicles.length > 0 && (
+          <div>
+            <label className="text-xs font-semibold text-slate-600 uppercase flex items-center gap-1.5">
+              <Truck className="w-3 h-3" /> Mjeti (per dimensione / ADR)
+            </label>
+            <select
+              value={vehicleId}
+              onChange={(e) => setVehicleId(e.target.value)}
+              className="w-full mt-1 px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
+            >
+              <option value="">— pa kufizime mjeti —</option>
+              {vehicles.map((v) => {
+                const missing = (!v.length_mm && !v.width_mm && !v.height_mm && !v.max_weight_kg) ? ' (pa dimensione)' : '';
+                return (
+                  <option key={v.id} value={v.id}>
+                    {v.license_plate} — {v.brand} {v.model}{missing}
+                  </option>
+                );
+              })}
+            </select>
+            {vehicleId && (() => {
+              const v = vehicles.find((x) => x.id === vehicleId);
+              if (!v) return null;
+              const parts: string[] = [];
+              if (v.length_mm) parts.push(`${(v.length_mm / 1000).toFixed(2)} m gjat.`);
+              if (v.width_mm) parts.push(`${(v.width_mm / 1000).toFixed(2)} m gjer.`);
+              if (v.height_mm) parts.push(`${(v.height_mm / 1000).toFixed(2)} m lart.`);
+              if (v.max_weight_kg) parts.push(`${(v.max_weight_kg / 1000).toFixed(1)} t`);
+              if (v.axle_load_kg) parts.push(`${(v.axle_load_kg / 1000).toFixed(1)} t/akse`);
+              if (v.adr_class && v.adr_class !== 'none') parts.push(`ADR ${v.adr_class}`);
+              if (v.tunnel_category) parts.push(`tunel ${v.tunnel_category}`);
+              if (parts.length === 0) return (
+                <p className="mt-1 text-[11px] text-amber-700">
+                  Ky mjet nuk ka dimensione te plotesuara — kalkulimi do te perdore profilin gjenerik HGV.
+                </p>
+              );
+              return (
+                <p className="mt-1 text-[11px] text-slate-600">
+                  {parts.join(' • ')}
+                </p>
+              );
+            })()}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>
