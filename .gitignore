@@ -11,6 +11,10 @@ dist
 dist-ssr
 *.local
 
+# Vite build cache / temp files
+vite.config.ts.timestamp-*
+vite.config.js.timestamp-*
+
 .vscode/*
 !.vscode/extensions.json
 .idea

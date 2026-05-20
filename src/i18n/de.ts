@@ -355,6 +355,8 @@ export const de: typeof sq = {
     stepPlan: 'Plan',
     stepPayment: 'Zahlung',
     stepDone: 'Fertig',
+    genericError: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
+    sessionLoadError: 'Sitzung wurde nicht vollstaendig geladen. Bitte versuchen Sie es erneut.',
   },
   payment: {
     verifying: 'Zahlung wird uberpruft...',

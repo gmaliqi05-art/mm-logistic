@@ -355,6 +355,8 @@ export const fr: typeof sq = {
     stepPlan: 'Plan',
     stepPayment: 'Paiement',
     stepDone: 'Termine',
+    genericError: 'Une erreur s\'est produite. Veuillez reessayer.',
+    sessionLoadError: 'La session n\'a pas ete chargee completement. Veuillez reessayer.',
   },
   payment: {
     verifying: 'Verification du paiement...',
