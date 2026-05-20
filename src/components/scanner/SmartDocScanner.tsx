@@ -52,6 +52,8 @@ export interface SmartScanResult {
     consignee_address?: string;
     consignee_email?: string;
     consignee_phone?: string;
+    document_number?: string;
+    document_date?: string;
   };
   routing: {
     suggested_kind: DocKind;

@@ -5,7 +5,7 @@ import { useTranslation } from '../i18n';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 export default function ResetPasswordPage() {
-  const { t, locale } = useTranslation();
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { settings } = usePlatformSettings();
@@ -152,7 +152,7 @@ export default function ResetPasswordPage() {
             'Content-Type': 'application/json',
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({ email, locale }),
+          body: JSON.stringify({ email, locale: language }),
         }
       );
     } catch { /* silent */ }

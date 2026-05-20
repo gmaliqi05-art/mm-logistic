@@ -47,7 +47,7 @@ export default function DriverDetail() {
     setLicenses((l.data || []) as License[]);
     setQuals((q.data || []) as Qualification[]);
     setMedicals((m.data || []) as Medical[]);
-    setAssignments((a.data || []).map((x: { vehicle?: { license_plate: string; brand: string; model: string } | { license_plate: string; brand: string; model: string }[] } & Assignment) => ({
+    setAssignments(((a.data ?? []) as unknown as Array<{ vehicle?: { license_plate: string; brand: string; model: string } | { license_plate: string; brand: string; model: string }[] } & Assignment>).map((x) => ({
       ...x,
       vehicle: Array.isArray(x.vehicle) ? x.vehicle[0] : x.vehicle,
     })) as Assignment[]);

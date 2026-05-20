@@ -5,7 +5,7 @@ import { useTranslation } from '../i18n';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 export default function ForgotPasswordPage() {
-  const { t, locale } = useTranslation();
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const { settings } = usePlatformSettings();
   const [email, setEmail] = useState('');
@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
             'Content-Type': 'application/json',
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({ email: email.trim(), locale }),
+          body: JSON.stringify({ email: email.trim(), locale: language }),
         }
       );
 

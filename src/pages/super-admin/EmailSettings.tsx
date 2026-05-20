@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Settings, Save, Loader2, CheckCircle2, AlertCircle, Clock, Mail } from "lucide-react";
 
-const BRAND_KEYS = [
+type BrandKey = {
+  key: string;
+  label: string;
+  placeholder: string;
+  mono?: boolean;
+  multiline?: boolean;
+};
+
+const BRAND_KEYS: readonly BrandKey[] = [
   { key: "email_brand_name", label: "Emri i markes", placeholder: "MM Logistic" },
   { key: "email_from_address", label: "Nga (From)", placeholder: "noreply@domain.com", mono: true },
   { key: "email_reply_to", label: "Reply-To", placeholder: "support@domain.com", mono: true },
@@ -10,7 +18,7 @@ const BRAND_KEYS = [
   { key: "email_support_url", label: "URL e mbeshtetjes", placeholder: "https://domain.com/support", mono: true },
   { key: "email_brand_logo_url", label: "URL e logos", placeholder: "https://domain.com/logo.png", mono: true },
   { key: "email_legal_address", label: "Adresa ligjore (footer)", placeholder: "Rr. Shembull 1, 10000 Prishtine", multiline: true },
-] as const;
+];
 
 const COLOR_KEYS = [
   { key: "email_brand_primary_color", label: "Ngjyra kryesore", default: "#0f766e" },

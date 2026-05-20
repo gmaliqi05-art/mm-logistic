@@ -240,7 +240,7 @@ export function matchProduct(
       candidates.sort((a, b) => countDimTokens(a.name) - countDimTokens(b.name));
       const pick = candidates[0];
       if (!bestProduct || bestProduct.score < 0.7 || bestProduct.p.category_id !== bestCat.c.id) {
-        bestProduct = { p: pick, score: Math.max(bestProduct?.score ?? 0, 0.95), hits: 1, matchedSku: false, dimMatch: false };
+        bestProduct = { p: pick, score: Math.max(bestProduct?.score ?? 0, 0.95), hits: 1, matchedSku: false, dimMatch: false, aliasMatch: false };
       }
     }
   }

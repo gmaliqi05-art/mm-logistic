@@ -100,9 +100,6 @@ export default function ClientPricesPage() {
     });
   }, [prices, filterContact, filterProduct, searchQuery, contacts, catalog]);
 
-  function getContactName(id: string) {
-    return contacts.find(c => c.id === id)?.name ?? '-';
-  }
   function getProduct(productId: string, source: string) {
     return catalog.find(c => c.id === productId && c.source === source);
   }

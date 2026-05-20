@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Activity, Send, Layers, Shield, List, Settings2, Smartphone,
   Loader2, Plus, Save, Trash2, CheckCircle2, XCircle, Users,
-  Megaphone, Clock, AlertCircle, Building2, Globe,
+  Megaphone, Clock, AlertCircle, Globe,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';

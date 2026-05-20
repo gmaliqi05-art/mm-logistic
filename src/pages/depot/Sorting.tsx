@@ -33,7 +33,6 @@ interface CategoryProduct {
 
 interface BatchWithItems extends PalletSortingBatch {
   items: PalletSortingItem[];
-  source_delivery_note_id?: string | null;
   reference_number_snapshot?: string | null;
   report_sent_at?: string | null;
 }

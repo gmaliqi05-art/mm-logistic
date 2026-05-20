@@ -44,7 +44,7 @@ export async function sendPushNotification(params: SendPushNotificationParams): 
     const result = await response.json();
     return result.success;
   } catch (error) {
-    logger.warn('Error sending push notification:', error);
+    logger.warn('Error sending push notification', { error });
     return false;
   }
 }
@@ -54,7 +54,7 @@ export async function createNotificationAndPush(
   type: 'chat' | 'document' | 'delivery' | 'system',
   title: string,
   message: string,
-  url?: string
+  _url?: string
 ): Promise<boolean> {
   try {
     const { error: notifError } = await supabase.from('notifications').insert({
@@ -67,13 +67,13 @@ export async function createNotificationAndPush(
     });
 
     if (notifError) {
-      logger.warn('Error creating notification:', notifError);
+      logger.warn('Error creating notification', { error: notifError.message });
       return false;
     }
 
     return true;
   } catch (error) {
-    logger.warn('Error creating notification:', error);
+    logger.warn('Error creating notification', { error });
     return false;
   }
 }
@@ -83,7 +83,7 @@ export async function notifyMultipleUsers(
   type: 'chat' | 'document' | 'delivery' | 'system',
   title: string,
   message: string,
-  url?: string
+  _url?: string
 ): Promise<void> {
   try {
     const notifications = userIds.map((userId) => ({
@@ -98,10 +98,10 @@ export async function notifyMultipleUsers(
     const { error } = await supabase.from('notifications').insert(notifications);
 
     if (error) {
-      logger.warn('Error creating notifications:', error);
+      logger.warn('Error creating notifications', { error: error.message });
       return;
     }
   } catch (error) {
-    logger.warn('Error notifying users:', error);
+    logger.warn('Error notifying users', { error });
   }
 }

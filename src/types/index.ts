@@ -188,6 +188,7 @@ export interface DeliveryNoteItem {
   quantity: number;
   condition: string;
   notes: string;
+  intended_action?: 'stock' | 'sorting' | 'repair';
   category?: ProductCategory;
 }
 
