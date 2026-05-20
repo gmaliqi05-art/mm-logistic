@@ -30,10 +30,19 @@ import type {
 } from '../../types/accounting';
 
 interface DashboardStats {
+  // Cash-flow basis (when money moved in the bank/cash account)
   monthlyRevenue: number;
   monthlyExpenses: number;
+  // Accrual basis (when invoices / purchases were issued — the German
+  // GoBD default for B2B and what shows the real business volume even
+  // when cash is still in flight)
+  monthlyInvoicedSales: number;
+  monthlyPurchases: number;
+  // Open AR — money customers still owe us
   overdueCount: number;
   overdueTotal: number;
+  openSentCount: number;
+  openSentTotal: number;
 }
 
 interface TransactionRow extends AccTransaction {}
@@ -87,8 +96,12 @@ export default function AccountingDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     monthlyRevenue: 0,
     monthlyExpenses: 0,
+    monthlyInvoicedSales: 0,
+    monthlyPurchases: 0,
     overdueCount: 0,
     overdueTotal: 0,
+    openSentCount: 0,
+    openSentTotal: 0,
   });
   const [recentTransactions, setRecentTransactions] = useState<TransactionRow[]>([]);
   const [recentInvoices, setRecentInvoices] = useState<InvoiceRow[]>([]);
@@ -122,6 +135,9 @@ export default function AccountingDashboard() {
         recentInvRes,
         lowStockRes,
         unbilledNotesRes,
+        invoicedSalesRes,
+        purchasesRes,
+        openSentRes,
       ] = await Promise.all([
         supabase
           .from('acc_transactions')
@@ -175,20 +191,69 @@ export default function AccountingDashboard() {
           .is('acc_invoice_id', null)
           .order('confirmed_at', { ascending: false, nullsFirst: false })
           .limit(8),
+        // Accrual sales: total of invoices ISSUED this month (any status
+        // other than draft / cancelled - those don't represent sold revenue)
+        supabase
+          .from('acc_invoices')
+          .select('total')
+          .eq('company_id', companyId)
+          .eq('invoice_type', 'invoice')
+          .not('status', 'in', '(draft,cancelled)')
+          .gte('invoice_date', monthStart)
+          .lte('invoice_date', monthEnd),
+        // Accrual purchases: total of supplier invoices received this month
+        supabase
+          .from('acc_purchases')
+          .select('total')
+          .eq('company_id', companyId)
+          .neq('status', 'cancelled')
+          .gte('purchase_date', monthStart)
+          .lte('purchase_date', monthEnd),
+        // Open accounts receivable that are NOT overdue yet
+        supabase
+          .from('acc_invoices')
+          .select('id, total')
+          .eq('company_id', companyId)
+          .eq('status', 'sent')
+          .or(`due_date.is.null,due_date.gte.${today}`),
       ]);
 
       const totalRevenue = (incomeRes.data ?? []).reduce((sum, row) => sum + (row.amount || 0), 0);
       const totalExpenses = (expenseRes.data ?? []).reduce((sum, row) => sum + (row.amount || 0), 0);
+      const totalInvoicedSales = (invoicedSalesRes.data ?? []).reduce(
+        (sum, row) => sum + (Number(row.total) || 0),
+        0,
+      );
+      const totalPurchases = (purchasesRes.data ?? []).reduce(
+        (sum, row) => sum + (Number(row.total) || 0),
+        0,
+      );
 
-      const allOverdue = [...(overdueInvoicesRes.data ?? []), ...(sentOverdueRes.data ?? [])];
-      const overdueCount = allOverdue.length;
-      const overdueTotal = allOverdue.reduce((sum, inv) => sum + (inv.total || 0), 0);
+      // Dedup overdue: an invoice can theoretically be in both buckets
+      // (status='overdue' AND old status='sent' with past due_date if the
+      // cron hasn't flipped it yet). Dedupe by id so we never double-count.
+      const overdueMap = new Map<string, number>();
+      for (const inv of [...(overdueInvoicesRes.data ?? []), ...(sentOverdueRes.data ?? [])]) {
+        if (inv.id) overdueMap.set(inv.id, Number(inv.total) || 0);
+      }
+      const overdueCount = overdueMap.size;
+      const overdueTotal = Array.from(overdueMap.values()).reduce((s, v) => s + v, 0);
+
+      const openSentCount = (openSentRes.data ?? []).length;
+      const openSentTotal = (openSentRes.data ?? []).reduce(
+        (s, inv) => s + (Number(inv.total) || 0),
+        0,
+      );
 
       setStats({
         monthlyRevenue: totalRevenue,
         monthlyExpenses: totalExpenses,
+        monthlyInvoicedSales: totalInvoicedSales,
+        monthlyPurchases: totalPurchases,
         overdueCount,
         overdueTotal,
+        openSentCount,
+        openSentTotal,
       });
 
       setRecentTransactions(recentTxRes.data ?? []);
@@ -352,6 +417,49 @@ export default function AccountingDashboard() {
               <AlertTriangle className="w-5 h-5 text-white" />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Accrual-basis volume — what was INVOICED this month, regardless of
+          whether the customer has paid. German GoBD bookkeeping reports
+          revenue at issue date for B2B, so this is the figure that matches
+          the business volume. The cash-basis cards above show actual cash
+          flow. */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-emerald-200 p-5">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Shitje te fatururara (kete muaj)
+          </p>
+          <p className="text-xl lg:text-2xl font-bold text-emerald-700 mt-2">
+            {formatCurrency(stats.monthlyInvoicedSales)}
+          </p>
+          <p className="text-[11px] text-gray-500 mt-1">
+            Vlera e plote e faturave te leshuara (jo cash flow)
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-blue-200 p-5">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Blerje (kete muaj)
+          </p>
+          <p className="text-xl lg:text-2xl font-bold text-blue-700 mt-2">
+            {formatCurrency(stats.monthlyPurchases)}
+          </p>
+          <p className="text-[11px] text-gray-500 mt-1">
+            Vlera e plote e blerjeve te regjistruara
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Fatura te hapura (jo te vonuara)
+          </p>
+          <p className="text-xl lg:text-2xl font-bold text-slate-800 mt-2">
+            {formatCurrency(stats.openSentTotal)}
+          </p>
+          <p className="text-[11px] text-gray-500 mt-1">
+            {stats.openSentCount} fatura te derguara, brenda afatit
+          </p>
         </div>
       </div>
 
