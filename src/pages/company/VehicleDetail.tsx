@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
+import { notifyUsers } from '../../utils/notifications';
 
 interface Vehicle {
   id: string; vehicle_type: string; brand: string; model: string; license_plate: string;
@@ -101,9 +102,29 @@ export default function VehicleDetail() {
   }
   async function addAssignment(driverId: string) {
     if (!driverId) return;
+    const isPrimary = assignments.length === 0;
     await supabase.from('vehicle_assignments').insert({
-      vehicle_id: id, company_id: profile!.company_id, driver_id: driverId, is_primary: assignments.length === 0,
+      vehicle_id: id, company_id: profile!.company_id, driver_id: driverId, is_primary: isPrimary,
     });
+    // Notify the driver they were assigned to this vehicle. Skip if the actor
+    // is assigning themselves (which is unusual but possible).
+    if (driverId !== profile?.id && vehicle) {
+      const plate = vehicle.license_plate || '';
+      const make = `${vehicle.brand || ''} ${vehicle.model || ''}`.trim();
+      const label = plate && make ? `${plate} (${make})` : plate || make || '';
+      await notifyUsers({
+        userIds: [driverId],
+        type: 'assignment',
+        titleKey: 'notifications.templates.vehicleAssigned.title',
+        messageKey: 'notifications.templates.vehicleAssigned.body',
+        params: { vehicle: label, primary: isPrimary ? '1' : '0' },
+        referenceId: id ?? null,
+        fallbackTitle: isPrimary ? 'Mjet kryesor i ri' : 'Mjet i ri caktuar',
+        fallbackMessage: isPrimary
+          ? `Te eshte caktuar si mjet kryesor: ${label}.`
+          : `Te eshte caktuar nje mjet: ${label}.`,
+      });
+    }
     setAddForm(null);
     fetchAll();
   }
