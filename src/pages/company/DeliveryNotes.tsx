@@ -32,6 +32,7 @@ import { createNotificationAndPush } from '../../utils/pushNotifications';
 import PartnerQuickRegister from './PartnerQuickRegister';
 import OurRoleSelector, { type OurRole } from '../../components/delivery/OurRoleSelector';
 import { type ThreePartyData } from '../../components/delivery/ThreePartyForm';
+import { useDriverComplianceMap } from '../../hooks/useDriverComplianceMap';
 
 function emptyThreeParty(): ThreePartyData {
   return {
@@ -148,6 +149,7 @@ export default function CompanyDeliveryNotes() {
   const { profile } = useAuth();
   const { logAudit } = useSubscription();
   const { t } = useTranslation();
+  const { warnings: driverComplianceWarnings } = useDriverComplianceMap(profile?.company_id);
   const [notes, setNotes] = useState<DeliveryNote[]>([]);
   const [drivers, setDrivers] = useState<Profile[]>([]);
   const [depots, setDepots] = useState<Depot[]>([]);
@@ -902,10 +904,32 @@ export default function CompanyDeliveryNotes() {
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                   >
                     <option value="">{t('company.deliveryNotes.selectDriver')}</option>
-                    {drivers.map((d) => (
-                      <option key={d.id} value={d.id}>{d.full_name}</option>
-                    ))}
+                    {drivers.map((d) => {
+                      const w = driverComplianceWarnings[d.id];
+                      const suffix = w ? (w.hasExpired ? ' • ⚠️' : ' • !') : '';
+                      return (
+                        <option key={d.id} value={d.id}>{d.full_name}{suffix}</option>
+                      );
+                    })}
                   </select>
+                  {form.assigned_driver_id && driverComplianceWarnings[form.assigned_driver_id] && (
+                    <div className={`mt-2 text-xs rounded-lg border p-2 ${
+                      driverComplianceWarnings[form.assigned_driver_id].hasExpired
+                        ? 'border-red-200 bg-red-50 text-red-800'
+                        : 'border-amber-200 bg-amber-50 text-amber-800'
+                    }`}>
+                      <div className="font-semibold mb-1">
+                        {driverComplianceWarnings[form.assigned_driver_id].hasExpired
+                          ? 'Shoferi ka dokumente te skaduara'
+                          : 'Dokumentet skadojne shpejt'}
+                      </div>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        {driverComplianceWarnings[form.assigned_driver_id].items.slice(0, 5).map((line, i) => (
+                          <li key={i}>{line}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.depot')}</label>
