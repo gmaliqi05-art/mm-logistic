@@ -151,7 +151,7 @@ export default function InvoiceBuilder() {
   const [company, setCompany] = useState<Company | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [banks, setBanks] = useState<BankAccount[]>([]);
-  const [countries, setCountries] = useState<EuCountry[]>([]);
+  const [, setCountries] = useState<EuCountry[]>([]);
   const [vatRates, setVatRates] = useState<EuVatRate[]>([]);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
 

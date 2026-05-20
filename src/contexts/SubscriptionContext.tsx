@@ -199,7 +199,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     entityId?: string,
     details?: Record<string, unknown>,
   ) => {
-    if (!profile?.company_id || !canAccess('audit_log')) return;
+    // Audit entries are written unconditionally so the history exists for
+    // compliance (and so it is visible to a company if they later upgrade to
+    // a plan that includes the audit log feature). Viewing the log is still
+    // gated by canAccess('audit_log') at the route / menu level.
+    if (!profile?.company_id) return;
     const { error } = await supabase.from('audit_logs').insert({
       company_id: profile.company_id,
       user_id: profile.id,

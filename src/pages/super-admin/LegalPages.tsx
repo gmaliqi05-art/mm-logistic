@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, CreditCard as Edit3, Save, X, Loader2, AlertTriangle, Check, Globe as Globe2, Trash2, ChevronDown, ExternalLink } from 'lucide-react';
+import { FileText, Plus, CreditCard as Edit3, Save, X, Loader2, AlertTriangle, Check, Globe as Globe2, Trash2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useTranslation } from '../../i18n';
-
 interface LegalDocument {
   id: string;
   slug: string;
@@ -41,7 +39,6 @@ const LANGUAGES = [
 ];
 
 export default function LegalPages() {
-  const { t } = useTranslation();
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

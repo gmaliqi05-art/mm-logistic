@@ -23,7 +23,7 @@ interface LegalPageProps {
 
 export default function LegalPage({ documentKey }: LegalPageProps) {
   const { slug } = useParams<{ slug: string }>();
-  const { t, tRaw } = useTranslation();
+  const { tRaw } = useTranslation();
 
   const key = (documentKey ?? slug ?? 'impressum') as LegalDocumentKey;
   const isValid = validKeys.includes(key);

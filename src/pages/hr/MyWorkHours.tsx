@@ -24,7 +24,6 @@ export default function MyWorkHours() {
   const [entries, setEntries] = useState<WorkHourEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [newEntry, setNewEntry] = useState({ date: '', start_time: '', end_time: '', break_minutes: 30, notes: '' });
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);

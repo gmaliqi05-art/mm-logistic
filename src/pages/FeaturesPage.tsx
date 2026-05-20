@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  Package,
   Truck,
   Warehouse,
   ArrowRight,
@@ -30,7 +29,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useTranslation } from '../i18n';
-import { usePlatformSettings } from '../hooks/usePlatformSettings';
 import {
   fetchActivePlans,
   getPlanIcon as getPlanIconShared,
@@ -104,14 +102,11 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string; hover: string }>
 
 export default function FeaturesPage() {
   const { t } = useTranslation();
-  const { settings: platformSettings } = usePlatformSettings();
   const [activeRoleTab, setActiveRoleTab] = useState<'company' | 'accounting' | 'depot' | 'driver'>('company');
   const [pricingTab, setPricingTab] = useState<ProductType>('logistics');
   const [logisticsPlans, setLogisticsPlans] = useState<PricingPlan[]>([]);
   const [accountingPlans, setAccountingPlans] = useState<PricingPlan[]>([]);
   const [pricingLoading, setPricingLoading] = useState(true);
-
-  const platformName = platformSettings.name || 'MM Logistic';
 
   useEffect(() => {
     let cancelled = false;
