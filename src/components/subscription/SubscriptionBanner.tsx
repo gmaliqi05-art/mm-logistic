@@ -96,25 +96,58 @@ export default function SubscriptionBanner() {
     );
   }
 
-  if (isTrial && daysRemaining <= 7 && daysRemaining > 0) {
+  if (isTrial) {
+    // Three urgency tiers across the whole trial window, not just the
+    // last seven days. The audit flagged that customers in days 8-30
+    // got no countdown at all and so had nothing telling them the trial
+    // would end soon.
+    let bg = 'bg-slate-700';
+    let buttonText = 'text-slate-700';
+    let bgHover = 'hover:bg-slate-800';
+    let message: string;
+
+    if (daysRemaining <= 0) {
+      // Last day of trial — strong red urgency
+      bg = 'bg-red-600';
+      buttonText = 'text-red-600';
+      bgHover = 'hover:bg-red-700';
+      message = t('subscription.trialEndingToday');
+    } else if (daysRemaining <= 7) {
+      // Critical window
+      bg = 'bg-amber-500';
+      buttonText = 'text-amber-600';
+      bgHover = 'hover:bg-amber-600';
+      message = t('subscription.trialExpiring').replace('{days}', String(daysRemaining));
+    } else if (daysRemaining <= 14) {
+      // Warning
+      bg = 'bg-amber-400';
+      buttonText = 'text-amber-700';
+      bgHover = 'hover:bg-amber-500';
+      message = t('subscription.trialActive').replace('{days}', String(daysRemaining));
+    } else {
+      // Informational
+      message = t('subscription.trialActive').replace('{days}', String(daysRemaining));
+    }
+
     return (
-      <div className="bg-amber-500 text-white px-4 py-2.5">
-        <div className="flex items-center justify-center gap-3">
+      <div className={`${bg} text-white px-4 py-2.5`}>
+        <div className="flex items-center justify-center gap-3 flex-wrap">
           <Clock className="w-4 h-4 flex-shrink-0" />
           <div className="text-sm font-medium">
-            {t('subscription.trialExpiring').replace('{days}', String(daysRemaining))}
+            {message}
           </div>
           <button
             onClick={handleUpgradeClick}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-amber-600 text-xs font-semibold rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-60"
+            className={`inline-flex items-center gap-1.5 px-3 py-1 bg-white ${buttonText} text-xs font-semibold rounded-lg hover:bg-white/90 transition-colors disabled:opacity-60`}
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crown className="w-3.5 h-3.5" />}
             {t('subscription.upgrade')}
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="p-1 hover:bg-amber-600 rounded-lg transition-colors ml-1"
+            className={`p-1 ${bgHover} rounded-lg transition-colors ml-1`}
+            aria-label="dismiss"
           >
             <X className="w-4 h-4" />
           </button>

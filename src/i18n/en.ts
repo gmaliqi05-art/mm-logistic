@@ -1880,6 +1880,8 @@ export const en: typeof sq = {
     expired: 'Your subscription has expired. Renew to continue using the platform.',
     renewNow: 'Renew Now',
     trialExpiring: 'Free trial expires in {days} days. Switch to a paid plan for full access.',
+    trialActive: 'Free trial: {days} days remaining',
+    trialEndingToday: 'Free trial ends today!',
     upgrade: 'Upgrade',
     currentPlan: 'Current plan',
     requiredPlan: 'Required plan',

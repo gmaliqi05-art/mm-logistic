@@ -1875,6 +1875,8 @@ export const sq = {
     expired: 'Abonimi juaj ka skaduar. Rinovoni per te vazhduar perdorimin e platformes.',
     renewNow: 'Rinovo Tani',
     trialExpiring: 'Prova falas skadon per {days} dite. Kaloni ne nje plan me pagese per akses te plote.',
+    trialActive: 'Prova falas: {days} dite te mbetura',
+    trialEndingToday: 'Prova falas mbaron sot!',
     upgrade: 'Upgrade',
     currentPlan: 'Plani aktual',
     requiredPlan: 'Kerkohet plani',
