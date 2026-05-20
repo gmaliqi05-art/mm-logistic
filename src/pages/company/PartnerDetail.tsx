@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface Partner {
   id: string;
@@ -70,6 +71,8 @@ const TYPE_TONE: Record<Partner['contact_type'], string> = {
 export default function PartnerDetail() {
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
+  const { t } = useTranslation();
+  const tp = (k: string) => t(`companyAdmin.partners.detail.${k}`);
   const [partner, setPartner] = useState<Partner | null>(null);
   const [rows, setRows] = useState<FlowRow[]>([]);
   const [invoiceSummary, setInvoiceSummary] = useState<{ overdueCount: number; overdueTotal: number; openCount: number; openTotal: number; currency: string }>(
@@ -110,7 +113,7 @@ export default function PartnerDetail() {
           .maybeSingle();
         if (pErr) throw pErr;
         if (!p) {
-          setError('Partneri nuk u gjet');
+          setError(tp('notFound'));
           setLoading(false);
           return;
         }
@@ -201,7 +204,7 @@ export default function PartnerDetail() {
           setLifetime({ salesPaid, salesTotal, salesCount, purchasesPaid, purchasesTotal, purchasesCount, currency });
         }
       } catch (err: any) {
-        if (!cancelled) setError(err.message || 'Gabim gjate ngarkimit');
+        if (!cancelled) setError(err.message || tp('loadError'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -260,7 +263,7 @@ export default function PartnerDetail() {
         <Link to="/company/partners" className="inline-flex items-center gap-1 text-sm text-teal-700 hover:text-teal-900">
           <ArrowLeft className="w-4 h-4" /> Kthehu tek partneret
         </Link>
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error ?? 'Partneri nuk u gjet'}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error ?? tp('notFound')}</div>
       </div>
     );
   }
@@ -301,43 +304,43 @@ export default function PartnerDetail() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Kpi label="Hyrje (copa)" value={totals.in} tone="emerald" icon={ArrowDownLeft} />
-        <Kpi label="Dalje (copa)" value={totals.out} tone="rose" icon={ArrowUpRight} />
-        <Kpi label="Transport (copa)" value={totals.carrier} tone="slate" icon={Handshake} />
-        <Kpi label="Ruajtje (copa)" value={totals.custody} tone="amber" icon={Warehouse} />
-        <Kpi label="Dokumente" value={totals.documents} tone="sky" icon={Package} />
+        <Kpi label={tp('kpiIn')} value={totals.in} tone="emerald" icon={ArrowDownLeft} />
+        <Kpi label={tp('kpiOut')} value={totals.out} tone="rose" icon={ArrowUpRight} />
+        <Kpi label={tp('kpiCarrier')} value={totals.carrier} tone="slate" icon={Handshake} />
+        <Kpi label={tp('kpiCustody')} value={totals.custody} tone="amber" icon={Warehouse} />
+        <Kpi label={tp('kpiDocuments')} value={totals.documents} tone="sky" icon={Package} />
       </div>
 
       {(lifetime.salesCount > 0 || lifetime.purchasesCount > 0) && (
         <section className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Vellimi i biznesit (gjithe periudha)</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{tp('businessVolumeTitle')}</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Totali i fatururar dhe blerjeve me kete partner — pa fatura draft ose te anuluara.
+                {tp('businessVolumeSubtitle')}
               </p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-              <p className="text-xs text-emerald-700 uppercase tracking-wide font-semibold">Shitje</p>
+              <p className="text-xs text-emerald-700 uppercase tracking-wide font-semibold">{tp('sales')}</p>
               <p className="text-lg font-bold text-emerald-900 mt-1">
                 {lifetime.salesTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency}
               </p>
               <p className="text-xs text-emerald-800 mt-0.5">
-                {lifetime.salesCount} fatura · {lifetime.salesPaid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency} te paguara
+                {lifetime.salesCount} {tp('invoicesUnit')} · {lifetime.salesPaid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency} {tp('paidLabel')}
                 {lifetime.salesTotal > 0 && (
                   <> ({((lifetime.salesPaid / lifetime.salesTotal) * 100).toFixed(0)}%)</>
                 )}
               </p>
             </div>
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-              <p className="text-xs text-blue-700 uppercase tracking-wide font-semibold">Blerje</p>
+              <p className="text-xs text-blue-700 uppercase tracking-wide font-semibold">{tp('purchases')}</p>
               <p className="text-lg font-bold text-blue-900 mt-1">
                 {lifetime.purchasesTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency}
               </p>
               <p className="text-xs text-blue-800 mt-0.5">
-                {lifetime.purchasesCount} blerje · {lifetime.purchasesPaid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency} te paguara
+                {lifetime.purchasesCount} {tp('purchasesUnit')} · {lifetime.purchasesPaid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {lifetime.currency} {tp('paidLabel')}
                 {lifetime.purchasesTotal > 0 && (
                   <> ({((lifetime.purchasesPaid / lifetime.purchasesTotal) * 100).toFixed(0)}%)</>
                 )}
@@ -351,13 +354,13 @@ export default function PartnerDetail() {
         <section className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Llogaria e paletave</h2>
+              <h2 className="text-sm font-semibold text-slate-900">{tp('palletAccountTitle')}</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Sasi pozitive = partneri na detyron; sasi negative = ne i detyrojme.
+                {tp('palletAccountSubtitle')}
               </p>
             </div>
             <Link to="/company/pallet-accounts" className="text-xs font-medium text-teal-600 hover:text-teal-700">
-              Llogarite e plota →
+              {tp('palletAccountsFullLink')} →
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
@@ -391,33 +394,33 @@ export default function PartnerDetail() {
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
               <h2 className={`text-sm font-semibold ${invoiceSummary.overdueCount > 0 ? 'text-red-900' : 'text-slate-900'}`}>
-                Statusi i faturave
+                {tp('invoiceStatusTitle')}
               </h2>
               <p className={`text-xs mt-0.5 ${invoiceSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>
-                Permbledhje e faturave aktive dhe te vonuara me kete partner
+                {tp('invoiceStatusSubtitle')}
               </p>
             </div>
             <Link
               to="/company/invoices"
               className={`text-xs font-medium ${invoiceSummary.overdueCount > 0 ? 'text-red-700 hover:text-red-900' : 'text-teal-600 hover:text-teal-700'}`}
             >
-              Shiko te gjitha →
+              {tp('viewAll')} →
             </Link>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
             <div className={`rounded-lg p-3 ${invoiceSummary.overdueCount > 0 ? 'bg-white border border-red-200' : 'bg-slate-50'}`}>
-              <p className="text-xs text-slate-500 uppercase tracking-wide">Te hapura</p>
+              <p className="text-xs text-slate-500 uppercase tracking-wide">{tp('openLabel')}</p>
               <p className="text-base font-bold text-slate-900 mt-0.5">
                 {invoiceSummary.openTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {invoiceSummary.currency}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">{invoiceSummary.openCount} fatura</p>
+              <p className="text-xs text-slate-500 mt-0.5">{invoiceSummary.openCount} {tp('invoicesUnit')}</p>
             </div>
             <div className={`rounded-lg p-3 ${invoiceSummary.overdueCount > 0 ? 'bg-red-100 border border-red-300' : 'bg-slate-50'}`}>
-              <p className={`text-xs uppercase tracking-wide ${invoiceSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>Te vonuara</p>
+              <p className={`text-xs uppercase tracking-wide ${invoiceSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{tp('overdueLabel')}</p>
               <p className={`text-base font-bold mt-0.5 ${invoiceSummary.overdueCount > 0 ? 'text-red-900' : 'text-slate-900'}`}>
                 {invoiceSummary.overdueTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {invoiceSummary.currency}
               </p>
-              <p className={`text-xs mt-0.5 ${invoiceSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{invoiceSummary.overdueCount} fatura</p>
+              <p className={`text-xs mt-0.5 ${invoiceSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{invoiceSummary.overdueCount} {tp('invoicesUnit')}</p>
             </div>
           </div>
         </section>
@@ -425,25 +428,25 @@ export default function PartnerDetail() {
 
       <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900">Permbledhje sipas produktit</h2>
-          <p className="text-xs text-slate-500">Totali i levizjeve per cdo produkt me kete partner</p>
+          <h2 className="text-sm font-semibold text-slate-900">{tp('productSummaryTitle')}</h2>
+          <p className="text-xs text-slate-500">{tp('productSummarySubtitle')}</p>
         </div>
         {byProduct.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
             <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-            Asnje levizje per kete partner
+            {tp('noFlowsMsg')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[680px]">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-2 text-left">Kategori</th>
-                  <th className="px-4 py-2 text-left">Produkti</th>
-                  <th className="px-4 py-2 text-right">Hyrje</th>
-                  <th className="px-4 py-2 text-right">Dalje</th>
-                  <th className="px-4 py-2 text-right">Transport</th>
-                  <th className="px-4 py-2 text-right">Ruajtje</th>
+                  <th className="px-4 py-2 text-left">{tp('thCategory')}</th>
+                  <th className="px-4 py-2 text-left">{tp('thProduct')}</th>
+                  <th className="px-4 py-2 text-right">{tp('thIn')}</th>
+                  <th className="px-4 py-2 text-right">{tp('thOut')}</th>
+                  <th className="px-4 py-2 text-right">{tp('thCarrier')}</th>
+                  <th className="px-4 py-2 text-right">{tp('thCustody')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -465,8 +468,8 @@ export default function PartnerDetail() {
 
       <section className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900">Historiku i levizjeve</h2>
-          <p className="text-xs text-slate-500">Cdo rresht i lidhur me nje fletedergese</p>
+          <h2 className="text-sm font-semibold text-slate-900">{tp('movementHistoryTitle')}</h2>
+          <p className="text-xs text-slate-500">{tp('movementHistorySubtitle')}</p>
         </div>
         {rows.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">

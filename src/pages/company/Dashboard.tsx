@@ -569,11 +569,11 @@ export default function CompanyDashboard() {
               <div>
                 <p className="text-sm font-semibold text-red-900">
                   {stats.overdueDeliveriesCount === 1
-                    ? '1 dergese eshte mbi afat'
-                    : `${stats.overdueDeliveriesCount} dergesa jane mbi afat`}
+                    ? t('company.dashboard.overdueDeliveryOne')
+                    : t('company.dashboard.overdueDeliveryMany').replace('{count}', String(stats.overdueDeliveriesCount))}
                 </p>
                 <p className="text-xs text-red-700 mt-0.5">
-                  Klikoni per liste te plote dhe veprime te shpejta.
+                  {t('company.dashboard.overdueDeliveryDescription')}
                 </p>
               </div>
             </div>
@@ -591,17 +591,17 @@ export default function CompanyDashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-amber-900">
-                {stats.complianceExpiry.attention} {t('company.dashboard.complianceExpiringTitle') || 'dokumente qe kerkojne vemendje'}
+                {t('company.dashboard.complianceExpiringTitle').replace('{count}', String(stats.complianceExpiry.attention))}
               </p>
               <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-amber-800">
                 {stats.complianceExpiry.expired > 0 && (
-                  <span><strong>{stats.complianceExpiry.expired}</strong> {t('fleet.filter.expired').toLowerCase()}</span>
+                  <span><strong>{stats.complianceExpiry.expired}</strong> {t('company.dashboard.complianceExpiredShort')}</span>
                 )}
                 {stats.complianceExpiry.critical > 0 && (
-                  <span><strong>{stats.complianceExpiry.critical}</strong> {t('common.daysShort') || '&lt; 7 dite'}</span>
+                  <span><strong>{stats.complianceExpiry.critical}</strong> {t('company.dashboard.complianceUnder7Days')}</span>
                 )}
                 {stats.complianceExpiry.warning > 0 && (
-                  <span><strong>{stats.complianceExpiry.warning}</strong> {t('common.daysMonth') || '&lt; 30 dite'}</span>
+                  <span><strong>{stats.complianceExpiry.warning}</strong> {t('company.dashboard.complianceUnder30Days')}</span>
                 )}
               </div>
             </div>
@@ -628,12 +628,12 @@ export default function CompanyDashboard() {
                     {' @ '}
                     <span className="font-medium">{a.depotName}</span>
                     {' — '}
-                    {a.current} / {t('common.threshold').toLowerCase()} {a.threshold}
+                    {a.current} / {t('company.dashboard.thresholdLower')} {a.threshold}
                   </li>
                 ))}
                 {stats.triggeredAlerts.length > 3 && (
                   <li className="text-red-600 font-medium">
-                    +{stats.triggeredAlerts.length - 3} {t('common.more') || 'me shume'}
+                    +{stats.triggeredAlerts.length - 3} {t('company.dashboard.moreLabel')}
                   </li>
                 )}
               </ul>
@@ -1003,10 +1003,10 @@ export default function CompanyDashboard() {
           <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
             <h2 className="font-semibold text-emerald-900 text-sm flex items-center gap-2">
               <Calculator className="w-4 h-4" />
-              Permbledhje kontabel
+              {t('company.dashboard.accountingSummaryTitle')}
             </h2>
             <Link to="/accounting" className="text-xs text-emerald-700 hover:text-emerald-900 font-medium">
-              Hap kontabilitetin →
+              {t('company.dashboard.openAccounting')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
@@ -1014,11 +1014,11 @@ export default function CompanyDashboard() {
               to="/accounting/invoices"
               className="rounded-lg p-3 bg-white border border-slate-200 hover:border-emerald-300 transition-colors block"
             >
-              <p className="text-[11px] text-slate-500 uppercase tracking-wide font-semibold">Fatura te hapura</p>
+              <p className="text-[11px] text-slate-500 uppercase tracking-wide font-semibold">{t('company.dashboard.openInvoices')}</p>
               <p className="text-lg font-bold text-slate-900 mt-1">
                 {stats.accountingSummary.openInvoiceTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {stats.accountingSummary.currency}
               </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">{stats.accountingSummary.openInvoiceCount} fatura</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">{stats.accountingSummary.openInvoiceCount} {t('company.dashboard.invoicesUnit')}</p>
             </Link>
             <Link
               to="/accounting/invoices"
@@ -1028,11 +1028,11 @@ export default function CompanyDashboard() {
                   : 'bg-white border-slate-200 hover:border-slate-300'
               }`}
             >
-              <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>Fatura te vonuara</p>
+              <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{t('company.dashboard.overdueInvoices')}</p>
               <p className={`text-lg font-bold mt-1 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-900' : 'text-slate-900'}`}>
                 {stats.accountingSummary.overdueTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {stats.accountingSummary.currency}
               </p>
-              <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{stats.accountingSummary.overdueCount} fatura</p>
+              <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{stats.accountingSummary.overdueCount} {t('company.dashboard.invoicesUnit')}</p>
             </Link>
             <Link
               to="/accounting"
@@ -1042,11 +1042,11 @@ export default function CompanyDashboard() {
                   : 'bg-white border-slate-200 hover:border-slate-300'
               }`}
             >
-              <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-700' : 'text-slate-500'}`}>Pa fatura</p>
+              <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-700' : 'text-slate-500'}`}>{t('company.dashboard.unbilledShort')}</p>
               <p className={`text-lg font-bold mt-1 ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-900' : 'text-slate-900'}`}>
                 {stats.accountingSummary.unbilledNotesCount}
               </p>
-              <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-700' : 'text-slate-500'}`}>dergesa te dorezuara pa fature</p>
+              <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.unbilledNotesCount > 0 ? 'text-amber-700' : 'text-slate-500'}`}>{t('company.dashboard.unbilledDescription')}</p>
             </Link>
           </div>
         </div>
@@ -1060,10 +1060,10 @@ export default function CompanyDashboard() {
           <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <ClipboardList className="w-4 h-4 text-slate-600" />
-              <h2 className="font-semibold text-gray-900 text-sm">Aktivitet i fundit</h2>
+              <h2 className="font-semibold text-gray-900 text-sm">{t('company.dashboard.recentActivityTitle')}</h2>
             </div>
             <Link to="/company/audit-log" className="text-xs text-teal-600 hover:text-teal-700 font-medium">
-              Shiko te gjitha
+              {t('company.dashboard.viewAll')}
             </Link>
           </div>
           <div className="divide-y divide-gray-50">

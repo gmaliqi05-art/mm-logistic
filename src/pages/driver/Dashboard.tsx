@@ -304,14 +304,16 @@ export default function DriverDashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold ${myCompliance.hasExpired ? 'text-red-900' : 'text-amber-900'}`}>
-                {myCompliance.hasExpired ? 'Disa dokumente kane skaduar' : 'Disa dokumente skadojne shpejt'}
+                {myCompliance.hasExpired
+                  ? t('company.dashboard.driverComplianceExpired')
+                  : t('company.dashboard.driverComplianceCritical')}
               </p>
               <ul className={`mt-1 space-y-0.5 text-xs ${myCompliance.hasExpired ? 'text-red-800' : 'text-amber-800'}`}>
                 {myCompliance.items.slice(0, 3).map((line, i) => (
                   <li key={i}>{line}</li>
                 ))}
                 {myCompliance.items.length > 3 && (
-                  <li className="font-medium">+{myCompliance.items.length - 3} te tjera</li>
+                  <li className="font-medium">+{myCompliance.items.length - 3} {t('company.dashboard.othersLabel')}</li>
                 )}
               </ul>
             </div>

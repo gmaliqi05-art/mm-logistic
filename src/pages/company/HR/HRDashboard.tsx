@@ -161,8 +161,8 @@ export default function HRDashboard() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900">
                 {weeklyBreaches.length === 1
-                  ? '1 punonjes ka kaluar limitin javor (EU Working Time Directive)'
-                  : `${weeklyBreaches.length} punonjes kane kaluar limitin javor (EU Working Time Directive)`}
+                  ? t('hr.workHours.weeklyOverLimitOne')
+                  : t('hr.workHours.weeklyOverLimitMany').replace('{count}', String(weeklyBreaches.length))}
               </p>
               <ul className="mt-1.5 space-y-0.5 text-xs">
                 {weeklyBreaches.slice(0, 5).map((b) => (
@@ -171,11 +171,13 @@ export default function HRDashboard() {
                     {' — '}
                     <strong>{b.totalHours}h</strong>
                     {' '}
-                    {b.level === 'hard_over' ? '(mbi limitin absolut prej 60h)' : '(mbi mesataren e lejuar prej 48h)'}
+                    {b.level === 'hard_over'
+                      ? t('hr.workHours.aboveAbsolute').replace('{limit}', '60')
+                      : t('hr.workHours.aboveAverage').replace('{limit}', '48')}
                   </li>
                 ))}
                 {weeklyBreaches.length > 5 && (
-                  <li className="font-medium text-gray-700">+{weeklyBreaches.length - 5} te tjere</li>
+                  <li className="font-medium text-gray-700">+{weeklyBreaches.length - 5} {t('hr.workHours.othersLabel')}</li>
                 )}
               </ul>
             </div>
