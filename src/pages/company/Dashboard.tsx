@@ -29,6 +29,7 @@ import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote, StockAlert, Stock as StockType } from '../../types';
 import { getTriggeredStockAlerts } from '../../utils/stockAlerts';
 import { countComplianceExpirations, type ExpiryCounts } from '../../utils/complianceExpiry';
+import { extractAuditSummary } from '../../utils/auditLogSummary';
 
 interface DriverRow {
   id: string;
@@ -368,19 +369,7 @@ export default function CompanyDashboard() {
       }>);
       const recentActivity = auditRows.map((row) => {
         const u = Array.isArray(row.user) ? row.user[0] : row.user;
-        const det = row.details ?? {};
-        const snap = (det.after ?? det.before ?? det.changed) as Record<string, unknown> | undefined;
-        const summary = (
-          (det.name as string | undefined)
-          || (det.note_number as string | undefined)
-          || (det.email as string | undefined)
-          || (snap?.name as string | undefined)
-          || (snap?.full_name as string | undefined)
-          || (snap?.note_number as string | undefined)
-          || (snap?.invoice_number as string | undefined)
-          || (snap?.license_plate as string | undefined)
-          || ''
-        );
+        const summary = extractAuditSummary(row.details);
         return {
           id: row.id,
           action: row.action,
