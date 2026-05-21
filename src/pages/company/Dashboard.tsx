@@ -250,7 +250,7 @@ export default function CompanyDashboard() {
           .eq('company_id', companyId).eq('status', 'confirmed')
           .order('confirmed_at', { ascending: false }).limit(5),
         supabase.from('delivery_notes').select('status, created_at, delivered_at').eq('company_id', companyId).neq('status', 'draft').gte('created_at', fromIso),
-        supabase.from('depot_repairs').select('id', { count: 'exact', head: true }).eq('company_id', companyId).is('completed_at', null),
+        supabase.from('depot_repairs').select('id', { count: 'exact', head: true }).eq('company_id', companyId).is('reported_at', null),
         supabase.from('pallet_sorting_batches').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('status', 'in_progress'),
         supabase.from('stock').select('quantity, condition, category_id, category_product_id, product_categories(name), category_products(name)').eq('company_id', companyId),
         supabase.from('stock_alerts').select('*, depot:depots(name), category:product_categories(name)').eq('company_id', companyId).eq('is_active', true),

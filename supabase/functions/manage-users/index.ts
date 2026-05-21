@@ -250,54 +250,59 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      try {
-        const sendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`;
-        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-        let companyName = "";
-        if (effectiveCompanyId) {
-          const { data: c } = await supabaseAdmin
-            .from("companies")
-            .select("name")
-            .eq("id", effectiveCompanyId)
-            .maybeSingle();
-          companyName = c?.name ?? "";
-        }
-        const roleLabels: Record<string, string> = {
-          driver: "Shofer",
-          accountant: "Kontabilist",
-          depot_worker: "Punetor depoje",
-          logistics_admin: "Admin logjistike",
-          company_admin: "Admin kompanie",
-          super_admin: "Super admin",
-        };
-        await fetch(sendUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            apikey: serviceKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            template_code: "invite_user",
-            to: email,
-            user_id: newUser.user.id,
-            company_id: effectiveCompanyId,
-            locale: "sq",
-            data: {
-              full_name: full_name || email,
-              company_name: companyName,
-              role_label: roleLabels[role] || role,
-              inviter_name: callerProfile.full_name || "Admini",
-              setup_url: "",
+      // Only attempt the invitation email when we have a real, human-readable
+      // email (the username-only and profile-only paths skip this — workers
+      // without an email obviously cannot receive an invite).
+      if (createdUserId && !usingUsername && email) {
+        try {
+          const sendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`;
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+          let companyName = "";
+          if (effectiveCompanyId) {
+            const { data: c } = await supabaseAdmin
+              .from("companies")
+              .select("name")
+              .eq("id", effectiveCompanyId)
+              .maybeSingle();
+            companyName = c?.name ?? "";
+          }
+          const roleLabels: Record<string, string> = {
+            driver: "Shofer",
+            accountant: "Kontabilist",
+            depot_worker: "Punetor depoje",
+            logistics_admin: "Admin logjistike",
+            company_admin: "Admin kompanie",
+            super_admin: "Super admin",
+          };
+          await fetch(sendUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${serviceKey}`,
+              apikey: serviceKey,
+              "Content-Type": "application/json",
             },
-          }),
-        });
-      } catch (_e) {
-        // best-effort
+            body: JSON.stringify({
+              template_code: "invite_user",
+              to: email,
+              user_id: createdUserId,
+              company_id: effectiveCompanyId,
+              locale: "sq",
+              data: {
+                full_name: full_name || email,
+                company_name: companyName,
+                role_label: roleLabels[role] || role,
+                inviter_name: "Admini",
+                setup_url: "",
+              },
+            }),
+          });
+        } catch (_e) {
+          // best-effort
+        }
       }
 
       return jsonResponse(
-        { user: { id: newUser.user.id, email, full_name, role } },
+        { user: { id: createdUserId, email: createdUserId ? finalEmail : null, username: username || null, full_name, role } },
         201
       );
     }
