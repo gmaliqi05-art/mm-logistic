@@ -124,7 +124,7 @@ function DepoistDashboard() {
           .select('id', { count: 'exact', head: true })
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
-          .is('completed_at', null),
+          .is('reported_at', null),
       ]);
 
       if (stockRes.error) throw stockRes.error;

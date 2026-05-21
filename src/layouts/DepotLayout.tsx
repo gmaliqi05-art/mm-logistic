@@ -45,7 +45,7 @@ const allNavItems: Array<{
   { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/damage', icon: AlertTriangle, labelKey: 'nav.damage', end: false, bottomNav: false, categories: ['depoist'] },
-  { to: '/depot/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, bottomNav: false },
+  { to: '/depot/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
   { to: '/depot/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
   { to: '/depot/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
