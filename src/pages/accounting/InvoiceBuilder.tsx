@@ -165,6 +165,7 @@ export default function InvoiceBuilder() {
   const [contactId, setContactId] = useState<string>('');
   const [bankId, setBankId] = useState<string>('');
   const [paymentReference, setPaymentReference] = useState('');
+  const [vatOverride, setVatOverride] = useState<'auto' | 'apply' | 'exempt'>('auto');
   const [paymentTermsDays, setPaymentTermsDays] = useState(14);
   const [notes, setNotes] = useState('');
   const [buyerVatOverride, setBuyerVatOverride] = useState('');
@@ -433,6 +434,8 @@ export default function InvoiceBuilder() {
       setPaymentTermsDays(i.payment_terms_days ?? 14);
       setNotes(i.notes ?? '');
       setBuyerVatOverride(i.buyer_vat_number ?? '');
+      const persisted = (i as { vat_override?: string }).vat_override;
+      setVatOverride(persisted === 'apply' || persisted === 'exempt' ? persisted : 'auto');
       // Load linked delivery note info
       const dnId = (inv as any).delivery_note_id;
       if (dnId) {
@@ -503,26 +506,43 @@ export default function InvoiceBuilder() {
   const buyerVat = buyerVatOverride || contact?.vat_number || '';
   const vatCheck = useMemo(() => validateVatFormat(buyerVat), [buyerVat]);
 
-  const regime = useMemo(() => computeVatRegime({
+  const autoRegime = useMemo(() => computeVatRegime({
     sellerCountry: company?.country ?? '',
     buyerCountry: contact?.country ?? vatCheck.country ?? '',
     buyerVatValid: vatCheck.valid,
     isGoods: true,
   }), [company?.country, contact?.country, vatCheck]);
 
+  // `effectiveRegime` honours the manual override. The auto-detected
+  // regime stays visible to the operator (so they understand the law),
+  // but the override wins for the actual totals + persisted flags.
+  const effectiveRegime = useMemo(() => {
+    if (vatOverride === 'apply') {
+      return { regime: 'domestic' as const, legalText: {} as Record<string, string> };
+    }
+    if (vatOverride === 'exempt') {
+      return { regime: 'export' as const, legalText: autoRegime.legalText };
+    }
+    return autoRegime;
+  }, [vatOverride, autoRegime]);
+  const regime = effectiveRegime;
+
   const totals = useMemo(() => {
     const processed = items.map((it) => {
       const gross = it.quantity * it.unit_price;
       const net = Math.max(0, gross - it.discount_amount);
-      return { net, vat_rate: it.vat_rate, vat_category: it.vat_category };
+      // When the operator forces "exempt", zero out the VAT rate for
+      // every line so the breakdown is consistent with the regime.
+      const rate = vatOverride === 'exempt' ? 0 : it.vat_rate;
+      return { net, vat_rate: rate, vat_category: it.vat_category };
     });
     const subtotal = processed.reduce((s, it) => s + it.net, 0);
     const discount = items.reduce((s, it) => s + (it.discount_amount || 0), 0);
-    const breakdown = regime.regime === 'domestic' ? buildVatBreakdown(processed) : [];
+    const breakdown = effectiveRegime.regime === 'domestic' ? buildVatBreakdown(processed) : [];
     const vat_total = breakdown.reduce((s, b) => s + b.vat, 0);
     const total = subtotal + vat_total;
     return { subtotal, discount, vat_total, total, vat_breakdown: breakdown };
-  }, [items, regime.regime]);
+  }, [items, effectiveRegime.regime, vatOverride]);
 
   const preview: InvoicePreviewData = useMemo(() => ({
     logoUrl: company?.logo_url ?? null, language,
@@ -604,7 +624,7 @@ export default function InvoiceBuilder() {
   }
 
   useEffect(() => { dirtyRef.current = true; }, [invoiceType, invoiceNumber, invoiceDate, dueDate, deliveryDate,
-    currency, language, contactId, bankId, paymentReference, paymentTermsDays, notes, buyerVatOverride]);
+    currency, language, contactId, bankId, paymentReference, paymentTermsDays, notes, buyerVatOverride, vatOverride]);
 
   useEffect(() => {
     const t = setInterval(() => { if (dirtyRef.current && !saving) save(true); }, 15000);
@@ -656,6 +676,7 @@ export default function InvoiceBuilder() {
         seller_vat_number: company?.vat_number ?? '',
         reverse_charge: regime.regime === 'reverse_charge',
         intra_community_supply: regime.regime === 'intra_community_supply',
+        vat_override: vatOverride === 'auto' ? null : vatOverride,
         subtotal: totals.subtotal,
         vat_amount: totals.vat_total,
         discount: totals.discount,
@@ -1098,11 +1119,28 @@ export default function InvoiceBuilder() {
                 )}
               </div>
             )}
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600">
-              <div className="font-semibold text-slate-700 mb-1">Regjimi i TVSH-se</div>
-              <RegimeBadge regime={regime.regime} />
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-semibold text-slate-700">Regjimi i TVSH-se</div>
+                <RegimeBadge regime={regime.regime} />
+              </div>
+              {vatOverride === 'auto' && autoRegime.regime !== 'domestic' && autoRegime.regime !== 'not_applicable' && (
+                <div className="text-[11px] text-slate-500">
+                  Auto: {autoRegime.regime === 'intra_community_supply'
+                    ? 'shitje brenda BE-se, e perjashtuar nga TVSH (kerkohet VAT i vlefshem i bleresit)'
+                    : autoRegime.regime === 'export'
+                    ? 'eksport jashte BE-se, pa TVSH'
+                    : 'reverse charge — bleresi paguan TVSH-ne'}
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] uppercase tracking-wider text-slate-500 mr-1">Manuali:</span>
+                <VatOverrideBtn current={vatOverride} value="auto"   label="Auto"        onClick={setVatOverride} />
+                <VatOverrideBtn current={vatOverride} value="apply"  label="Apliko TVSH" onClick={setVatOverride} />
+                <VatOverrideBtn current={vatOverride} value="exempt" label="Pa TVSH"     onClick={setVatOverride} />
+              </div>
               {regime.legalText[language] && (
-                <div className="mt-2 italic">{regime.legalText[language]}</div>
+                <div className="italic text-[11px] mt-1">{regime.legalText[language]}</div>
               )}
             </div>
           </section>
@@ -1426,6 +1464,28 @@ function Field({ label, children, full = false }: { label: React.ReactNode; chil
       <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">{label}</span>
       {children}
     </label>
+  );
+}
+
+function VatOverrideBtn({ current, value, label, onClick }: {
+  current: 'auto' | 'apply' | 'exempt';
+  value: 'auto' | 'apply' | 'exempt';
+  label: string;
+  onClick: (v: 'auto' | 'apply' | 'exempt') => void;
+}) {
+  const active = current === value;
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(value)}
+      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+        active
+          ? 'bg-teal-600 text-white shadow-sm'
+          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
