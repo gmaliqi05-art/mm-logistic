@@ -95,7 +95,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (session && profile) {
-      const redirectPath = roleRedirectMap[profile.role] || '/';
+      // Reparature depot_workers exist as profiles only so depoists can
+      // attribute their work — they don't have a dashboard of their own.
+      const isReparatureOnly = profile.role === 'depot_worker' && profile.worker_category === 'reparature';
+      const redirectPath = isReparatureOnly ? '/no-access' : (roleRedirectMap[profile.role] || '/');
       navigate(redirectPath, { replace: true });
     }
   }, [session, profile, navigate]);
