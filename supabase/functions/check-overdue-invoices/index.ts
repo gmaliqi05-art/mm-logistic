@@ -68,7 +68,7 @@ Deno.serve(async (req: Request) => {
     const { data: invoices, error: fetchErr } = await supabase
       .from("acc_invoices")
       .select(
-        "id, company_id, invoice_number, invoice_date, due_date, total, currency, status, contact:acc_contacts(name, email), bank_account:acc_bank_accounts(iban, bic, bank_name)"
+        "id, company_id, invoice_number, invoice_date, due_date, total, currency, status, language_code, contact:acc_contacts(name, email, preferred_locale), bank_account:acc_bank_accounts(iban, bic, bank_name)"
       )
       .in("status", ["sent", "overdue"])
       .not("due_date", "is", null)
@@ -207,7 +207,13 @@ Deno.serve(async (req: Request) => {
             template_code: companySettings?.reminder_template_code || "invoice_overdue",
             to: [contact.email],
             company_id: invoice.company_id,
-            locale: "sq",
+            // Pick the customer's preferred locale: invoice.language_code
+            // wins (the invoice was prepared in that language), else the
+            // contact's preferred_locale, else the company default, else sq.
+            locale: invoice.language_code
+                  || contact.preferred_locale
+                  || companySettings?.default_locale
+                  || "sq",
             data: templateData,
           }),
         });

@@ -150,7 +150,7 @@ export default function Invoices() {
 
   const [emailInvoice, setEmailInvoice] = useState<AccInvoice | null>(null);
   const [emailTo, setEmailTo] = useState('');
-  const [emailLocale, setEmailLocale] = useState<'sq' | 'de' | 'en'>('sq');
+  const [emailLocale, setEmailLocale] = useState<'sq' | 'de' | 'en' | 'fr'>('sq');
   const [emailSending, setEmailSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
@@ -535,6 +535,13 @@ export default function Invoices() {
       if (newStatus === 'sent' && invoice.status === 'draft') {
         setEmailInvoice(invoice);
         setEmailTo(invoice.contact?.email || '');
+        // Seed the locale from the invoice's language_code so a German
+        // customer gets the German template by default. Operator can
+        // still flip it in the modal.
+        const lang = (invoice as { language_code?: string }).language_code;
+        if (lang === 'sq' || lang === 'de' || lang === 'en' || lang === 'fr') {
+          setEmailLocale(lang);
+        }
         setEmailSent(false);
         return;
       }
@@ -972,6 +979,8 @@ export default function Invoices() {
                               onClick={() => {
                                 setEmailInvoice(invoice);
                                 setEmailTo(invoice.contact?.email || '');
+                                const lng = (invoice as { language_code?: string }).language_code;
+                                if (lng === 'sq' || lng === 'de' || lng === 'en' || lng === 'fr') setEmailLocale(lng);
                                 setEmailSent(false);
                               }}
                               className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
@@ -1541,12 +1550,13 @@ export default function Invoices() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gjuha e email-it</label>
                     <select
                       value={emailLocale}
-                      onChange={(e) => setEmailLocale(e.target.value as 'sq' | 'de' | 'en')}
+                      onChange={(e) => setEmailLocale(e.target.value as 'sq' | 'de' | 'en' | 'fr')}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="sq">Shqip</option>
                       <option value="de">Gjermanisht</option>
                       <option value="en">Anglisht</option>
+                      <option value="fr">Frengjisht</option>
                     </select>
                   </div>
                   {emailInvoice.sent_at && (
