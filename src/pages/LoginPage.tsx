@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { useTranslation } from '../i18n';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
@@ -95,10 +96,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (session && profile) {
-      // Reparature depot_workers exist as profiles only so depoists can
-      // attribute their work — they don't have a dashboard of their own.
-      const isReparatureOnly = profile.role === 'depot_worker' && profile.worker_category === 'reparature';
-      const redirectPath = isReparatureOnly ? '/no-access' : (roleRedirectMap[profile.role] || '/');
+      const redirectPath = roleRedirectMap[profile.role] || '/';
       navigate(redirectPath, { replace: true });
     }
   }, [session, profile, navigate]);
@@ -111,7 +109,21 @@ export default function LoginPage() {
     submitButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
     try {
-      const { error: signInError } = await signIn(email, password);
+      // Support both email logins and username-only logins (no '@').
+      // For username inputs, ask the DB to resolve to the synthetic email.
+      let signInEmail = email.trim();
+      if (signInEmail && !signInEmail.includes('@')) {
+        const { data: resolved } = await supabase.rpc('resolve_username_to_email', {
+          p_username: signInEmail.toLowerCase(),
+        });
+        if (!resolved) {
+          setError(t('auth.genericError'));
+          setLoading(false);
+          return;
+        }
+        signInEmail = resolved as string;
+      }
+      const { error: signInError } = await signIn(signInEmail, password);
       if (signInError) {
         setError(signInError);
         setLoading(false);
@@ -263,15 +275,14 @@ export default function LoginPage() {
                   </div>
                   <input
                     id="email"
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t('auth.emailPlaceholder')}
                     required
                     autoCapitalize="none"
                     autoCorrect="off"
-                    autoComplete="email"
-                    inputMode="email"
+                    autoComplete="username"
                     className="w-full pl-12 pr-4 py-3 text-base sm:text-sm rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
                   />
                 </div>

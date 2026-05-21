@@ -34,11 +34,13 @@ interface DepotForm {
 interface WorkerForm {
   id?: string;
   email: string;
+  username: string;
   password: string;
   full_name: string;
   phone: string;
   depot_id: string;
   worker_category: WorkerCategory;
+  create_login: boolean;
 }
 
 interface RepairLog {
@@ -71,11 +73,13 @@ interface RepairForm {
 const emptyDepotForm: DepotForm = { name: '', address: '', phone: '', manager_id: '' };
 const emptyWorkerForm: WorkerForm = {
   email: '',
+  username: '',
   password: '',
   full_name: '',
   phone: '',
   depot_id: '',
   worker_category: 'depoist',
+  create_login: true,
 };
 const emptyRepairForm: RepairForm = {
   depot_id: '',
@@ -256,7 +260,13 @@ export default function CompanyDepots() {
         await logAudit('update', 'depot_worker', workerEditing.id, { name: workerForm.full_name });
       } else {
         const isRepair = workerForm.worker_category === 'reparature';
+        // Depoist always needs an email login. Reparature can be either:
+        //   create_login=true  + username + password  (worker can log in)
+        //   create_login=false                         (profile-only, no login)
         if (!isRepair && (!workerForm.email.trim() || !workerForm.password.trim())) return;
+        if (isRepair && workerForm.create_login) {
+          if (!workerForm.username.trim() || !workerForm.password.trim()) return;
+        }
         const activeWorkers = workers.filter((w) => w.is_active).length;
         if (!isWithinLimit('depots', activeWorkers)) {
           const limit = getLimit('depots');
@@ -264,14 +274,23 @@ export default function CompanyDepots() {
           setSaving(false);
           return;
         }
-        const slug = workerForm.full_name
-          .trim()
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '.')
-          .replace(/^\.|\.$/g, '') || 'puntor';
-        const autoEmail = `${slug}.${Date.now()}@reparature.local`;
-        const autoPassword = crypto.randomUUID();
         const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`;
+        const payload: Record<string, unknown> = {
+          full_name: workerForm.full_name,
+          role: 'depot_worker',
+          company_id: profile!.company_id,
+          depot_id: workerForm.depot_id || null,
+          phone: workerForm.phone,
+          worker_category: workerForm.worker_category,
+          create_login: isRepair ? workerForm.create_login : true,
+        };
+        if (!isRepair) {
+          payload.email = workerForm.email;
+          payload.password = workerForm.password;
+        } else if (workerForm.create_login) {
+          payload.username = workerForm.username.trim().toLowerCase();
+          payload.password = workerForm.password;
+        }
         const res = await fetch(apiUrl, {
           method: 'POST',
           headers: {
@@ -279,16 +298,7 @@ export default function CompanyDepots() {
             'Content-Type': 'application/json',
             apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({
-            email: isRepair ? autoEmail : workerForm.email,
-            password: isRepair ? autoPassword : workerForm.password,
-            full_name: workerForm.full_name,
-            role: 'depot_worker',
-            company_id: profile!.company_id,
-            depot_id: workerForm.depot_id || null,
-            phone: workerForm.phone,
-            worker_category: workerForm.worker_category,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || t('common.errorSaving'));
@@ -380,11 +390,13 @@ export default function CompanyDepots() {
     setWorkerEditing(w);
     setWorkerForm({
       email: w.email,
+      username: w.username || '',
       password: '',
       full_name: w.full_name,
       phone: w.phone || '',
       depot_id: w.depot_id || '',
       worker_category: (w.worker_category ?? 'depoist') as WorkerCategory,
+      create_login: true,
     });
     setWorkerModal(true);
   }
@@ -641,9 +653,10 @@ export default function CompanyDepots() {
           saving={saving}
           disabled={
             !workerForm.full_name.trim() ||
-            (!workerEditing &&
-              workerForm.worker_category !== 'reparature' &&
-              (!workerForm.email.trim() || !workerForm.password.trim()))
+            (!workerEditing && workerForm.worker_category !== 'reparature' &&
+              (!workerForm.email.trim() || !workerForm.password.trim())) ||
+            (!workerEditing && workerForm.worker_category === 'reparature' && workerForm.create_login &&
+              (!workerForm.username.trim() || !workerForm.password.trim()))
           }
           t={t}
         >
@@ -665,6 +678,47 @@ export default function CompanyDepots() {
                   className="input"
                 />
               </Field>
+            </>
+          )}
+          {!workerEditing && workerForm.worker_category === 'reparature' && (
+            <>
+              <Field label="A deshironi te krijoni llogari?">
+                <label className="flex items-center gap-2 text-sm text-slate-700 mt-1">
+                  <input
+                    type="checkbox"
+                    checked={workerForm.create_login}
+                    onChange={(e) => setWorkerForm({ ...workerForm, create_login: e.target.checked })}
+                    className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  Po, krijo username dhe fjalekalim per kete reparator
+                </label>
+                <p className="text-xs text-slate-500 mt-1">
+                  Nese e leni te zbrazet, punetori ekziston vetem per gjurmim ne raporte (pa qasje ne llogari).
+                </p>
+              </Field>
+              {workerForm.create_login && (
+                <>
+                  <Field label="Username">
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      value={workerForm.username}
+                      onChange={(e) => setWorkerForm({ ...workerForm, username: e.target.value.replace(/[^a-zA-Z0-9._-]/g, '').toLowerCase() })}
+                      placeholder="p.sh. agimi"
+                      className="input"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">3-32 karaktere · vetem shkronja, numra, . _ -</p>
+                  </Field>
+                  <Field label={t('common.password')}>
+                    <input
+                      type="password"
+                      value={workerForm.password}
+                      onChange={(e) => setWorkerForm({ ...workerForm, password: e.target.value })}
+                      className="input"
+                    />
+                  </Field>
+                </>
+              )}
             </>
           )}
           <Field label={t('common.fullName')}>

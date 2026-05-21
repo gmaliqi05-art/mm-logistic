@@ -18,6 +18,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import DeliveryReviewPanel from '../../components/delivery/DeliveryReviewPanel';
+import ReparatureDashboard from './ReparatureDashboard';
 
 interface StockValueRow {
   category_id: string;
@@ -60,7 +61,7 @@ function isoDaysBack(n: number) {
   return d.toISOString().substring(0, 10);
 }
 
-export default function DepotDashboard() {
+function DepoistDashboard() {
   const { profile, refreshProfile } = useAuth();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -480,6 +481,16 @@ export default function DepotDashboard() {
       </div>
     </div>
   );
+}
+
+export default function DepotDashboard() {
+  const { profile } = useAuth();
+  // Reparature workers see a focused "my work" dashboard — they aren't
+  // operators of the depot, they're recipients of work attribution.
+  if (profile?.role === 'depot_worker' && profile.worker_category === 'reparature') {
+    return <ReparatureDashboard />;
+  }
+  return <DepoistDashboard />;
 }
 
 function StatCard({

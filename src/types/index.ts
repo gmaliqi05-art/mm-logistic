@@ -17,6 +17,7 @@ export interface Profile {
   avatar_url: string;
   is_active: boolean;
   worker_category?: 'depoist' | 'reparature' | null;
+  username?: string | null;
   created_at: string;
 }
 
