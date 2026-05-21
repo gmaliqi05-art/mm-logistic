@@ -37,11 +37,12 @@ export default function ReparatureDashboard() {
   }, [profile?.id]);
 
   async function load() {
-    if (!profile?.id) return;
+    if (!profile?.id || !profile.company_id) return;
     setLoading(true);
     const { data } = await supabase
       .from('depot_repairs')
       .select('id, logged_at, quantity_repaired, quantity_scrapped, product_name, category:product_categories(name)')
+      .eq('company_id', profile.company_id)
       .eq('worker_id', profile.id)
       .gte('logged_at', startOfWeek())
       .order('logged_at', { ascending: false })
