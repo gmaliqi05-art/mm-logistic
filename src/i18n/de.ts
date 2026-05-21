@@ -261,6 +261,8 @@ export const de: typeof sq = {
     groupFleet: 'Flotte',
     groupReports: 'Berichte',
     groupConfig: 'Konfiguration',
+    groupRepairs: 'Reparaturen',
+    groupHr: 'Personal',
     clientInvoices: 'Firmen / Rechnungen',
     imports: 'Importe',
     coa: 'Kontenplan',
