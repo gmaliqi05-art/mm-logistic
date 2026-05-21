@@ -14,7 +14,10 @@ import {
   Truck,
   Calendar,
   Clock,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
 import { useCompanyBranding } from '../hooks/useCompanyBranding';
@@ -25,21 +28,54 @@ import DriverShiftEndModal from '../components/DriverShiftEndModal';
 import { DriverTrackingProvider } from '../contexts/DriverTrackingContext';
 import DeletionBanner from '../components/DeletionBanner';
 
-const navItems = [
+type NavLeaf = {
+  kind?: 'leaf';
+  to: string;
+  icon: LucideIcon;
+  labelKey: string;
+  end: boolean;
+  bottomNav: boolean;
+};
+
+type NavGroup = {
+  kind: 'group';
+  groupKey: string;
+  labelKey: string;
+  icon: LucideIcon;
+  items: NavLeaf[];
+};
+
+type NavEntry = NavLeaf | NavGroup;
+
+const navEntries: NavEntry[] = [
   { to: '/driver', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, bottomNav: true },
   { to: '/driver/tracking', icon: MapPin, labelKey: 'nav.tracking', end: false, bottomNav: true },
   { to: '/driver/trailers', icon: Truck, labelKey: 'nav.trailers', end: false, bottomNav: true },
   { to: '/driver/navigation', icon: Navigation, labelKey: 'nav.navigation', end: false, bottomNav: false },
   { to: '/driver/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, bottomNav: false },
-  { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
-  { to: '/driver/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
-  { to: '/driver/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
-  { to: '/driver/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
   { to: '/driver/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
+  { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
+
+  {
+    kind: 'group', groupKey: 'hr', icon: Calendar, labelKey: 'nav.groupHr',
+    items: [
+      { to: '/driver/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
+      { to: '/driver/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
+      { to: '/driver/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
+    ],
+  },
+
   { to: '/driver/settings', icon: SettingsIcon, labelKey: 'nav.settings', end: false, bottomNav: true },
 ];
 
+const navItems: NavLeaf[] = navEntries.flatMap((e) => (e.kind === 'group' ? e.items : [e]));
 const bottomNavItems = navItems.filter((i) => i.bottomNav);
+
+function isGroupActive(group: NavGroup, pathname: string): boolean {
+  return group.items.some((it) =>
+    it.end ? pathname === it.to : pathname.startsWith(it.to) && it.to !== '/driver'
+  );
+}
 
 export default function DriverLayout() {
   const { profile, signOut } = useAuth();
@@ -53,6 +89,58 @@ export default function DriverLayout() {
   }, [location.pathname]);
 
   const roleLabel = t(`roles.${profile?.role ?? ''}`);
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    let stored: Record<string, boolean> = {};
+    try {
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('mml.driverNav.openGroups') : null;
+      if (raw) stored = JSON.parse(raw);
+    } catch { /* ignore */ }
+    const initial: Record<string, boolean> = {};
+    for (const e of navEntries) {
+      if (e.kind === 'group') {
+        initial[e.groupKey] = stored[e.groupKey] ?? isGroupActive(e, location.pathname);
+      }
+    }
+    return initial;
+  });
+  function toggleGroup(key: string) {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { window.localStorage.setItem('mml.driverNav.openGroups', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const e of navEntries) {
+        if (e.kind === 'group' && isGroupActive(e, location.pathname) && !next[e.groupKey]) {
+          next[e.groupKey] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [location.pathname]);
+
+  function renderLeaf(item: NavLeaf) {
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+          ${isActive ? 'bg-teal-700 text-white font-medium' : 'text-teal-200 hover:bg-teal-800 hover:text-white'}`
+        }
+      >
+        <item.icon className="w-4 h-4 flex-shrink-0" />
+        <span className="whitespace-nowrap">{t(item.labelKey)}</span>
+      </NavLink>
+    );
+  }
 
   return (
     <DriverTrackingProvider>
@@ -81,23 +169,35 @@ export default function DriverLayout() {
         </div>
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-                ${isActive
-                  ? 'bg-teal-700 text-white font-medium'
-                  : 'text-teal-200 hover:bg-teal-800 hover:text-white'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span className="whitespace-nowrap">{t(item.labelKey)}</span>
-            </NavLink>
-          ))}
+          {navEntries.map((entry) => {
+            if (entry.kind === 'group') {
+              const isOpen = !!openGroups[entry.groupKey];
+              const containsActive = isGroupActive(entry, location.pathname);
+              return (
+                <div key={entry.groupKey} className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(entry.groupKey)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      containsActive ? 'text-white' : 'text-teal-300'
+                    } hover:bg-teal-800/60`}
+                  >
+                    <entry.icon className="w-4 h-4 flex-shrink-0 opacity-80" />
+                    <span className="flex-1 text-left text-[11px] uppercase tracking-wider font-semibold">
+                      {t(entry.labelKey)}
+                    </span>
+                    {isOpen ? <ChevronDown className="w-4 h-4 opacity-60" /> : <ChevronRight className="w-4 h-4 opacity-60" />}
+                  </button>
+                  {isOpen && (
+                    <div className="mt-0.5 ml-2 pl-2 border-l border-teal-800/60 space-y-0.5">
+                      {entry.items.map((it) => renderLeaf(it))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return renderLeaf(entry);
+          })}
         </nav>
 
         <div className="p-4 border-t border-teal-800">

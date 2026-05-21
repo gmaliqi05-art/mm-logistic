@@ -18,6 +18,8 @@ import {
   Clock,
   Settings,
   AlertTriangle,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -28,38 +30,78 @@ import DeletionBanner from '../components/DeletionBanner';
 
 type WorkerCategory = 'depoist' | 'reparature';
 
-const allNavItems: Array<{
+type NavLeaf = {
+  kind?: 'leaf';
   to: string;
   icon: typeof LayoutDashboard;
   labelKey: string;
   end: boolean;
   bottomNav: boolean;
   categories?: WorkerCategory[];
-}> = [
+};
+
+type NavGroup = {
+  kind: 'group';
+  groupKey: string;
+  labelKey: string;
+  icon: typeof LayoutDashboard;
+  categories?: WorkerCategory[];
+  items: NavLeaf[];
+};
+
+type NavEntry = NavLeaf | NavGroup;
+
+const navEntries: NavEntry[] = [
   { to: '/depot', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, bottomNav: true },
   { to: '/depot/stock', icon: Package, labelKey: 'nav.stock', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/trailers', icon: Truck, labelKey: 'nav.trailers', end: false, bottomNav: true, categories: ['depoist'] },
   { to: '/depot/receiving', icon: ArrowLeftRight, labelKey: 'nav.receiving', end: false, bottomNav: true, categories: ['depoist'] },
   { to: '/depot/sorting', icon: Layers, labelKey: 'nav.sorting', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, bottomNav: false, categories: ['depoist'] },
-  { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false, categories: ['depoist'] },
-  { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false, categories: ['depoist'] },
-  { to: '/depot/damage', icon: AlertTriangle, labelKey: 'nav.damage', end: false, bottomNav: false, categories: ['depoist'] },
+
+  {
+    kind: 'group', groupKey: 'repairs', icon: Wrench, labelKey: 'nav.groupRepairs', categories: ['depoist'],
+    items: [
+      { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false, categories: ['depoist'] },
+      { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false, categories: ['depoist'] },
+      { to: '/depot/damage', icon: AlertTriangle, labelKey: 'nav.damage', end: false, bottomNav: false, categories: ['depoist'] },
+    ],
+  },
+
   { to: '/depot/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, bottomNav: false, categories: ['depoist'] },
-  { to: '/depot/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
-  { to: '/depot/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
-  { to: '/depot/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
   { to: '/depot/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/depot/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
+
+  {
+    kind: 'group', groupKey: 'hr', icon: Calendar, labelKey: 'nav.groupHr',
+    items: [
+      { to: '/depot/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
+      { to: '/depot/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
+      { to: '/depot/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
+    ],
+  },
+
   { to: '/depot/settings', icon: Settings, labelKey: 'nav.settings', end: false, bottomNav: false },
 ];
 
-function filterByCategory(cat: WorkerCategory | null | undefined) {
-  return allNavItems.filter((item) => {
-    if (!item.categories) return true;
-    if (!cat) return true;
-    return item.categories.includes(cat);
-  });
+function leafVisible(item: NavLeaf, cat: WorkerCategory | null | undefined): boolean {
+  if (!item.categories) return true;
+  if (!cat) return true;
+  return item.categories.includes(cat);
+}
+
+function entryVisible(entry: NavEntry, cat: WorkerCategory | null | undefined): boolean {
+  if (entry.kind === 'group') {
+    if (entry.categories && cat && !entry.categories.includes(cat)) return false;
+    return entry.items.some((it) => leafVisible(it, cat));
+  }
+  return leafVisible(entry, cat);
+}
+
+function isGroupActive(group: NavGroup, pathname: string): boolean {
+  return group.items.some((it) =>
+    it.end ? pathname === it.to : pathname.startsWith(it.to) && it.to !== '/depot'
+  );
 }
 
 export default function DepotLayout() {
@@ -75,8 +117,63 @@ export default function DepotLayout() {
 
   const roleLabel = t(`roles.${profile?.role ?? ''}`);
   const workerCategory = profile?.worker_category as WorkerCategory | null | undefined;
-  const navItems = filterByCategory(workerCategory);
+  const visibleEntries = navEntries.filter((e) => entryVisible(e, workerCategory));
+  const navItems = visibleEntries.flatMap((e) =>
+    e.kind === 'group' ? e.items.filter((it) => leafVisible(it, workerCategory)) : [e]
+  );
   const bottomNavItems = navItems.filter((i) => i.bottomNav);
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    let stored: Record<string, boolean> = {};
+    try {
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('mml.depotNav.openGroups') : null;
+      if (raw) stored = JSON.parse(raw);
+    } catch { /* ignore */ }
+    const initial: Record<string, boolean> = {};
+    for (const e of navEntries) {
+      if (e.kind === 'group') {
+        initial[e.groupKey] = stored[e.groupKey] ?? isGroupActive(e, location.pathname);
+      }
+    }
+    return initial;
+  });
+  function toggleGroup(key: string) {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { window.localStorage.setItem('mml.depotNav.openGroups', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const e of navEntries) {
+        if (e.kind === 'group' && isGroupActive(e, location.pathname) && !next[e.groupKey]) {
+          next[e.groupKey] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [location.pathname]);
+
+  function renderLeaf(item: NavLeaf) {
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+          ${isActive ? 'bg-teal-700 text-white font-medium' : 'text-teal-200 hover:bg-teal-800 hover:text-white'}`
+        }
+      >
+        <item.icon className="w-4 h-4 flex-shrink-0" />
+        <span className="whitespace-nowrap">{t(item.labelKey)}</span>
+      </NavLink>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
@@ -95,23 +192,36 @@ export default function DepotLayout() {
         </div>
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-                ${isActive
-                  ? 'bg-teal-700 text-white font-medium'
-                  : 'text-teal-200 hover:bg-teal-800 hover:text-white'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span className="whitespace-nowrap">{t(item.labelKey)}</span>
-            </NavLink>
-          ))}
+          {visibleEntries.map((entry) => {
+            if (entry.kind === 'group') {
+              const isOpen = !!openGroups[entry.groupKey];
+              const containsActive = isGroupActive(entry, location.pathname);
+              const childLeaves = entry.items.filter((it) => leafVisible(it, workerCategory));
+              return (
+                <div key={entry.groupKey} className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(entry.groupKey)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      containsActive ? 'text-white' : 'text-teal-300'
+                    } hover:bg-teal-800/60`}
+                  >
+                    <entry.icon className="w-4 h-4 flex-shrink-0 opacity-80" />
+                    <span className="flex-1 text-left text-[11px] uppercase tracking-wider font-semibold">
+                      {t(entry.labelKey)}
+                    </span>
+                    {isOpen ? <ChevronDown className="w-4 h-4 opacity-60" /> : <ChevronRight className="w-4 h-4 opacity-60" />}
+                  </button>
+                  {isOpen && (
+                    <div className="mt-0.5 ml-2 pl-2 border-l border-teal-800/60 space-y-0.5">
+                      {childLeaves.map((it) => renderLeaf(it))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return renderLeaf(entry);
+          })}
         </nav>
 
         <div className="px-2 pb-2">

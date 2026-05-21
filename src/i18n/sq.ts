@@ -259,6 +259,8 @@ export const sq = {
     groupFleet: 'Flota',
     groupReports: 'Raportet',
     groupConfig: 'Konfigurim',
+    groupRepairs: 'Reparime',
+    groupHr: 'Burimet njerezore',
     clientInvoices: 'Kompanite / Faturat',
     imports: 'Importet',
     coa: 'Plani i Llogarive',
