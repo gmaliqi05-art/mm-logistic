@@ -122,6 +122,11 @@ export default function WorkerRepairStats() {
             'id, depot_id, worker_id, category_id, category_product_id, product_name, quantity_repaired, quantity_scrapped, quantity_in, logged_at, worker:profiles!depot_repairs_worker_id_fkey(full_name, avatar_url), category:product_categories(name)',
           )
           .eq('company_id', profile.company_id)
+          // Only rows where actual repair work was logged. Sorting-originated
+          // rows (worker_id IS NULL, quantity_repaired = 0) are case openers,
+          // not repair-worker contributions — they belong in sorting reports.
+          .not('worker_id', 'is', null)
+          .gt('quantity_repaired', 0)
           .gte('logged_at', range.from)
           .lte('logged_at', range.to)
           .order('logged_at', { ascending: false })

@@ -34,6 +34,8 @@ interface RepairRow {
   total_in: number;
   total_repaired: number;
   total_scrapped: number;
+  worker_full_name: string | null;
+  opened_by_full_name: string | null;
 }
 
 interface SortingRow {
@@ -44,6 +46,8 @@ interface SortingRow {
   product_name: string | null;
   condition: string;
   quantity: number;
+  created_by_full_name: string | null;
+  completed_by_full_name: string | null;
 }
 
 interface DamagedRow {
@@ -123,14 +127,14 @@ export default function DepotReports() {
         supabase.from('profiles').select('id, full_name').eq('company_id', companyId),
         supabase
           .from('v_depot_repair_productivity')
-          .select('repair_date, category_name, product_name, total_in, total_repaired, total_scrapped')
+          .select('repair_date, category_name, product_name, total_in, total_repaired, total_scrapped, worker_full_name, opened_by_full_name')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .gte('repair_date', since.substring(0, 10))
           .order('repair_date', { ascending: false }),
         supabase
           .from('v_depot_sorting_outcomes')
-          .select('batch_id, batch_date, status, category_name, product_name, condition, quantity')
+          .select('batch_id, batch_date, status, category_name, product_name, condition, quantity, created_by_full_name, completed_by_full_name')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .gte('batch_date', since.substring(0, 10))
@@ -322,10 +326,12 @@ export default function DepotReports() {
                 </button>
               </div>
               <Table
-                headers={['Data', 'Produkti', 'Hyri', 'Reparuar', 'Scrap']}
+                headers={['Data', 'Produkti', 'Reparator', 'Hapur nga', 'Hyri', 'Reparuar', 'Scrap']}
                 rows={repair.map((r) => [
                   fmtDate(r.repair_date),
                   `${r.category_name ?? ''}${r.product_name ? ` · ${r.product_name}` : ''}`,
+                  r.worker_full_name ?? '—',
+                  r.opened_by_full_name ?? '—',
                   r.total_in,
                   r.total_repaired,
                   r.total_scrapped,
@@ -347,13 +353,14 @@ export default function DepotReports() {
                 </button>
               </div>
               <Table
-                headers={['Data', 'Kategoria', 'Produkti i ndare', 'Gjendja', 'Sasi', 'Statusi']}
+                headers={['Data', 'Kategoria', 'Produkti i ndare', 'Gjendja', 'Sasi', 'Sortuar nga', 'Statusi']}
                 rows={sorting.map((r) => [
                   fmtDate(r.batch_date),
                   r.category_name ?? '—',
                   r.product_name ?? '—',
                   r.condition,
                   r.quantity,
+                  r.completed_by_full_name ?? r.created_by_full_name ?? '—',
                   r.status,
                 ])}
                 empty="Asnje sortim"
