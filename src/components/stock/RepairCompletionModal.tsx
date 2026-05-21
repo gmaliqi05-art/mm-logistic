@@ -3,21 +3,19 @@ import { X, Loader2, Wrench, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Props {
-  repairId: string;
+  stockId: string;
   onClose: () => void;
   onApplied?: () => void;
 }
 
-interface RepairDetail {
+interface StockDetail {
   id: string;
   company_id: string;
   depot_id: string | null;
   category_id: string | null;
-  quantity_in: number;
-  quantity_repaired: number;
-  quantity_scrapped: number;
-  category?: { id: string; name: string } | null;
-  depot?: { name: string } | null;
+  quantity: number;
+  category_name?: string;
+  depot_name?: string;
 }
 
 interface CategoryProduct {
@@ -30,8 +28,8 @@ interface ReparatureOption {
   full_name: string;
 }
 
-export default function RepairCompletionModal({ repairId, onClose, onApplied }: Props) {
-  const [detail, setDetail] = useState<RepairDetail | null>(null);
+export default function RepairCompletionModal({ stockId, onClose, onApplied }: Props) {
+  const [detail, setDetail] = useState<StockDetail | null>(null);
   const [products, setProducts] = useState<CategoryProduct[]>([]);
   const [reparatures, setReparatures] = useState<ReparatureOption[]>([]);
   const [targetProductId, setTargetProductId] = useState('');
@@ -48,17 +46,27 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
     async function load() {
       setLoading(true);
       const { data, error: err } = await supabase
-        .from('depot_repairs')
-        .select('*, category:product_categories(id,name), depot:depots(name)')
-        .eq('id', repairId)
+        .from('stock')
+        .select('id, company_id, depot_id, category_id, quantity, category:product_categories(name), depot:depots(name)')
+        .eq('id', stockId)
         .maybeSingle();
       if (cancelled) return;
       if (err || !data) {
-        setError(err?.message ?? 'Reparimi nuk u gjet');
+        setError(err?.message ?? 'Stoku nuk u gjet');
         setLoading(false);
         return;
       }
-      setDetail(data as RepairDetail);
+      const cat = Array.isArray((data as any).category) ? (data as any).category[0] : (data as any).category;
+      const dep = Array.isArray((data as any).depot) ? (data as any).depot[0] : (data as any).depot;
+      setDetail({
+        id: data.id,
+        company_id: data.company_id,
+        depot_id: data.depot_id,
+        category_id: data.category_id,
+        quantity: data.quantity,
+        category_name: cat?.name ?? null,
+        depot_name: dep?.name ?? null,
+      });
       if (data.category_id) {
         const { data: prods } = await supabase
           .from('category_products')
@@ -72,7 +80,6 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
           if (prods.length > 0) setTargetProductId(prods[0].id);
         }
       }
-      // Load reparature workers so the depoist can credit who did the work.
       const { data: workers } = await supabase
         .from('profiles')
         .select('id, full_name')
@@ -87,12 +94,8 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
       setLoading(false);
     }
     void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [repairId]);
-
-  const remaining = detail ? detail.quantity_in - detail.quantity_repaired - detail.quantity_scrapped : 0;
+    return () => { cancelled = true; };
+  }, [stockId]);
 
   async function submit() {
     if (!detail) return;
@@ -103,8 +106,8 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
       setError('Shtoni se paku nje sasi te riparuar ose scrap');
       return;
     }
-    if (r + s > remaining) {
-      setError(`Totali ${r + s} tejkalon te mbeturat (${remaining})`);
+    if (r + s > detail.quantity) {
+      setError(`Totali ${r + s} tejkalon stokun defekt (${detail.quantity})`);
       return;
     }
     if (r > 0 && !targetProductId) {
@@ -116,8 +119,8 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
       return;
     }
     setSaving(true);
-    const { error: rpcErr } = await supabase.rpc('apply_repair_completion', {
-      p_repair_id: detail.id,
+    const { error: rpcErr } = await supabase.rpc('apply_repair_from_stock', {
+      p_stock_id: detail.id,
       p_repaired_qty: r,
       p_scrapped_qty: s,
       p_target_category_product_id: targetProductId || null,
@@ -140,14 +143,14 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
+            <span className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
               <Wrench className="w-4 h-4" />
             </span>
             <div>
               <h2 className="text-base font-bold text-slate-900">Raporto riparim</h2>
               <p className="text-xs text-slate-500">
-                {detail?.category?.name ?? '—'}
-                {detail?.depot?.name ? ` · ${detail.depot.name}` : ''}
+                {detail?.category_name ?? '—'}
+                {detail?.depot_name ? ` · ${detail.depot_name}` : ''}
               </p>
             </div>
           </div>
@@ -162,22 +165,18 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
           </div>
         ) : detail ? (
           <div className="p-5 space-y-4">
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <Stat label="Hyri" value={detail.quantity_in} tone="slate" />
-              <Stat label="Repar." value={detail.quantity_repaired} tone="emerald" />
-              <Stat label="Scrap" value={detail.quantity_scrapped} tone="rose" />
-            </div>
-            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-              Mbeten <strong>{remaining}</strong> paleta per raportim.
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-center">
+              <p className="text-[10px] uppercase tracking-wide text-amber-600 font-medium">Stoku defekt i disponueshem</p>
+              <p className="text-3xl font-bold text-amber-800 mt-1">{detail.quantity}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <NumField label="Te riparuara" value={repairedQty} onChange={setRepairedQty} max={remaining} />
-              <NumField label="Scrap (hedhur)" value={scrappedQty} onChange={setScrappedQty} max={remaining} />
+              <NumField label="Te riparuara" value={repairedQty} onChange={setRepairedQty} max={detail.quantity} />
+              <NumField label="Scrap (hedhur)" value={scrappedQty} onChange={setScrappedQty} max={detail.quantity} />
             </div>
 
             <label className="block">
-              <span className="text-[11px] uppercase tracking-wide text-slate-500">Produkti i synuar</span>
+              <span className="text-[11px] uppercase tracking-wide text-slate-500">Produkti i synuar (ku shkojne te riparuarat)</span>
               <select
                 value={targetProductId}
                 onChange={(e) => setTargetProductId(e.target.value)}
@@ -185,9 +184,7 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
               >
                 <option value="">Zgjidhni produktin...</option>
                 {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </label>
@@ -201,9 +198,7 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
               >
                 <option value="">Zgjidhni reparatorin...</option>
                 {reparatures.map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.full_name}
-                  </option>
+                  <option key={w.id} value={w.id}>{w.full_name}</option>
                 ))}
               </select>
             </label>
@@ -225,7 +220,7 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
               </button>
               <button
                 onClick={submit}
-                disabled={saving || remaining <= 0}
+                disabled={saving || detail.quantity <= 0}
                 className="px-4 py-2 text-sm rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-60 inline-flex items-center gap-2"
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />} Aplikoni raportimin
@@ -236,20 +231,6 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
           <div className="p-5 text-sm text-rose-700">{error}</div>
         )}
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, tone }: { label: string; value: number; tone: 'slate' | 'emerald' | 'rose' }) {
-  const toneMap: Record<string, string> = {
-    slate: 'bg-slate-50 text-slate-700 border-slate-200',
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    rose: 'bg-rose-50 text-rose-700 border-rose-100',
-  };
-  return (
-    <div className={`rounded-lg border p-2 ${toneMap[tone]}`}>
-      <div className="text-[10px] uppercase tracking-wide opacity-70">{label}</div>
-      <div className="text-lg font-bold">{value}</div>
     </div>
   );
 }

@@ -120,14 +120,12 @@ function DepoistDashboard() {
           .eq('status', 'in_progress')
           .order('created_at', { ascending: false }),
         supabase
-          .from('depot_repairs')
-          .select('id', { count: 'exact', head: true })
+          .from('stock')
+          .select('quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
-          // "Pending" = case opened by sorting but not yet credited to
-          // any reparature. After PR #19 the worker_id is NULL exactly
-          // in that state.
-          .is('worker_id', null),
+          .eq('condition', 'damaged')
+          .gt('quantity', 0),
       ]);
 
       if (stockRes.error) throw stockRes.error;
@@ -138,7 +136,8 @@ function DepoistDashboard() {
       setFlowRows((flowRes.data ?? []) as FlowRow[]);
       setRecent((recentRes.data ?? []) as unknown as RecentMovement[]);
       setPendingSorting((sortingRes.data ?? []) as unknown as PendingSortingBatch[]);
-      setPendingRepairs(repairsRes.count ?? 0);
+      const damagedTotal = (repairsRes.data ?? []).reduce((s: number, r: { quantity: number }) => s + (r.quantity || 0), 0);
+      setPendingRepairs(damagedTotal);
     } catch (err) {
       setError((err as Error).message || t('common.errorLoading'));
     } finally {
@@ -238,7 +237,7 @@ function DepoistDashboard() {
       <DeliveryReviewPanel role="depot_worker" />
 
       {pendingRepairs > 0 && (
-        <Link to="/depot/repairs" className="block bg-orange-50 border border-orange-200 rounded-xl p-4 hover:border-orange-300 transition-colors">
+        <Link to="/depot/repairs?tab=damaged" className="block bg-orange-50 border border-orange-200 rounded-xl p-4 hover:border-orange-300 transition-colors">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-orange-100 flex-shrink-0">
@@ -246,12 +245,10 @@ function DepoistDashboard() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-orange-900">
-                  {pendingRepairs === 1
-                    ? t('company.dashboard.depotPendingRepairsOne')
-                    : t('company.dashboard.depotPendingRepairsMany').replace('{count}', String(pendingRepairs))}
+                  {pendingRepairs.toLocaleString()} paleta defekt ne stok
                 </p>
                 <p className="text-xs text-orange-700 mt-0.5">
-                  {t('company.dashboard.depotPendingRepairsDescription')}
+                  Klikoni per te pare stokun defekt dhe raportuar reparime.
                 </p>
               </div>
             </div>

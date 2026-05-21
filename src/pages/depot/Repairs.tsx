@@ -12,6 +12,7 @@ import {
   Search,
   TrendingUp,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -49,34 +50,28 @@ interface ProductSummary {
 interface DamagedStockRow {
   id: string;
   category_id: string;
+  category_product_id: string | null;
   quantity: number;
   updated_at: string;
-  category?: { name: string } | null;
+  category_name?: string;
+  product_name?: string;
 }
 
-type TabKey = 'reports' | 'damaged' | 'pending';
-
-interface OpenRepairCase {
-  id: string;
-  category_id: string | null;
-  quantity_in: number;
-  quantity_repaired: number;
-  quantity_scrapped: number;
-  created_at: string;
-  category?: { name: string } | null;
-  depot?: { name: string } | null;
-}
+type TabKey = 'reports' | 'damaged';
 
 export default function DepotRepairs() {
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
 
-  const [tab, setTab] = useState<TabKey>('reports');
+  const [tab, setTab] = useState<TabKey>(() => {
+    const urlTab = searchParams.get('tab');
+    return urlTab === 'damaged' ? 'damaged' : 'reports';
+  });
   const [reports, setReports] = useState<RepairReportRow[]>([]);
   const [openRepairs, setOpenRepairs] = useState<OpenRepair[]>([]);
   const [damagedStock, setDamagedStock] = useState<DamagedStockRow[]>([]);
-  const [openCases, setOpenCases] = useState<OpenRepairCase[]>([]);
-  const [activeRepairId, setActiveRepairId] = useState<string | null>(null);
+  const [activeStockId, setActiveStockId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -94,22 +89,14 @@ export default function DepotRepairs() {
 
       let stockQuery = supabase
         .from('stock')
-        .select('id, category_id, quantity, updated_at, category:product_categories(name)')
+        .select('id, category_id, category_product_id, quantity, updated_at, category:product_categories(name), product:category_products(name)')
         .eq('company_id', companyId)
         .eq('condition', 'damaged')
         .gt('quantity', 0)
         .order('quantity', { ascending: false });
       if (depotId) stockQuery = stockQuery.eq('depot_id', depotId);
 
-      let casesQuery = supabase
-        .from('depot_repairs')
-        .select('id, category_id, quantity_in, quantity_repaired, quantity_scrapped, created_at, category:product_categories(name), depot:depots(name)')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      if (depotId) casesQuery = casesQuery.eq('depot_id', depotId);
-
-      const [reportsRes, openRes, stockRes, casesRes] = await Promise.all([
+      const [reportsRes, openRes, stockRes] = await Promise.all([
         supabase
           .from('depot_repair_reports')
           .select('id, report_date, total_quantity, details')
@@ -123,24 +110,11 @@ export default function DepotRepairs() {
           .eq('company_id', companyId)
           .is('reported_at', null),
         stockQuery,
-        casesQuery,
       ]);
 
       if (reportsRes.error) throw reportsRes.error;
       if (openRes.error) throw openRes.error;
       if (stockRes.error) throw stockRes.error;
-      if (casesRes.error) throw casesRes.error;
-
-      const casesData = (casesRes.data ?? []) as unknown as OpenRepairCase[];
-      setOpenCases(
-        casesData
-          .map((c) => ({
-            ...c,
-            category: Array.isArray((c as any).category) ? (c as any).category[0] ?? null : (c as any).category ?? null,
-            depot: Array.isArray((c as any).depot) ? (c as any).depot[0] ?? null : (c as any).depot ?? null,
-          }))
-          .filter((c) => c.quantity_in - c.quantity_repaired - c.quantity_scrapped > 0),
-      );
 
       setReports((reportsRes.data ?? []) as RepairReportRow[]);
 
@@ -164,18 +138,26 @@ export default function DepotRepairs() {
       const stockRows = (stockRes.data ?? []) as unknown as Array<{
         id: string;
         category_id: string;
+        category_product_id: string | null;
         quantity: number;
         updated_at: string;
         category?: { name: string } | { name: string }[] | null;
+        product?: { name: string } | { name: string }[] | null;
       }>;
       setDamagedStock(
-        stockRows.map((r) => ({
-          id: r.id,
-          category_id: r.category_id,
-          quantity: r.quantity,
-          updated_at: r.updated_at,
-          category: Array.isArray(r.category) ? r.category[0] ?? null : r.category ?? null,
-        })),
+        stockRows.map((r) => {
+          const cat = Array.isArray(r.category) ? r.category[0] : r.category;
+          const prod = Array.isArray(r.product) ? r.product[0] : r.product;
+          return {
+            id: r.id,
+            category_id: r.category_id,
+            category_product_id: r.category_product_id,
+            quantity: r.quantity,
+            updated_at: r.updated_at,
+            category_name: cat?.name ?? undefined,
+            product_name: prod?.name ?? undefined,
+          };
+        }),
       );
     } catch (err) {
       setError((err as Error).message || t('common.errorLoading'));
@@ -257,7 +239,7 @@ export default function DepotRepairs() {
     <div className="space-y-6 pb-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{t('depot.repairs.title')}</h1>
-        <p className="text-gray-500 mt-1">Raporti i paletave te reparuara dhe stoku per reparim</p>
+        <p className="text-gray-500 mt-1">Stoku defekt sipas kategorise dhe historiku i reparimeve</p>
       </div>
 
       {error && (
@@ -284,7 +266,7 @@ export default function DepotRepairs() {
           tone="bg-emerald-100"
         />
         <StatCard
-          label="Per Reparim (Stok)"
+          label="Defekt ne Stok"
           value={totalDamaged}
           icon={<AlertOctagon className="w-6 h-6 text-amber-600" />}
           tone="bg-amber-100"
@@ -293,104 +275,42 @@ export default function DepotRepairs() {
 
       <div className="flex items-center gap-2 border-b border-slate-200">
         <TabButton
-          active={tab === 'reports'}
-          onClick={() => setTab('reports')}
-          icon={<ClipboardList className="w-4 h-4" />}
-          label="Raporti i Reparuar"
-          count={productSummary.length}
-        />
-        <TabButton
           active={tab === 'damaged'}
           onClick={() => setTab('damaged')}
           icon={<AlertOctagon className="w-4 h-4" />}
-          label="Stoku per Reparim"
-          count={damagedStock.length}
+          label="Stoku Defekt"
+          count={totalDamaged}
         />
         <TabButton
-          active={tab === 'pending'}
-          onClick={() => setTab('pending')}
-          icon={<Wrench className="w-4 h-4" />}
-          label="Rastet e hapura"
-          count={openCases.length}
+          active={tab === 'reports'}
+          onClick={() => setTab('reports')}
+          icon={<ClipboardList className="w-4 h-4" />}
+          label="Historiku i Reparimeve"
+          count={productSummary.length}
         />
       </div>
 
-      {tab === 'reports' ? (
+      {tab === 'damaged' ? (
+        <DamagedTab rows={damagedStock} onRepair={(id) => setActiveStockId(id)} />
+      ) : (
         <ReportsTab
           rows={filteredProducts}
           search={search}
           setSearch={setSearch}
           totalRepaired={totalRepaired}
         />
-      ) : tab === 'damaged' ? (
-        <DamagedTab rows={damagedStock} />
-      ) : (
-        <OpenCasesTab rows={openCases} onReport={(id) => setActiveRepairId(id)} />
       )}
 
-      {activeRepairId && (
+      {activeStockId && (
         <RepairCompletionModal
-          repairId={activeRepairId}
-          onClose={() => setActiveRepairId(null)}
+          stockId={activeStockId}
+          onClose={() => setActiveStockId(null)}
           onApplied={() => {
-            setActiveRepairId(null);
+            setActiveStockId(null);
             fetchAll();
           }}
         />
       )}
-    </div>
-  );
-}
-
-function OpenCasesTab({ rows, onReport }: { rows: OpenRepairCase[]; onReport: (id: string) => void }) {
-  if (rows.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-        <CheckCircle className="w-10 h-10 mx-auto mb-3 text-emerald-300" />
-        <p className="text-sm text-slate-400">Asnje rast i hapur reparimi.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 border-b border-slate-200">
-          <tr>
-            <th className="px-4 py-2 text-left">Data</th>
-            <th className="px-4 py-2 text-left">Kategori</th>
-            <th className="px-4 py-2 text-left">Depo</th>
-            <th className="px-4 py-2 text-right">Hyri</th>
-            <th className="px-4 py-2 text-right">Reparuar</th>
-            <th className="px-4 py-2 text-right">Scrap</th>
-            <th className="px-4 py-2 text-right">Mbetet</th>
-            <th className="px-4 py-2 text-right">Veprim</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {rows.map((r) => {
-            const remaining = r.quantity_in - r.quantity_repaired - r.quantity_scrapped;
-            return (
-              <tr key={r.id} className="hover:bg-slate-50">
-                <td className="px-4 py-2 text-slate-600 whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</td>
-                <td className="px-4 py-2 text-slate-800 font-medium">{r.category?.name ?? '-'}</td>
-                <td className="px-4 py-2 text-slate-600">{r.depot?.name ?? '-'}</td>
-                <td className="px-4 py-2 text-right text-slate-700">{r.quantity_in}</td>
-                <td className="px-4 py-2 text-right text-emerald-700">{r.quantity_repaired}</td>
-                <td className="px-4 py-2 text-right text-rose-700">{r.quantity_scrapped}</td>
-                <td className="px-4 py-2 text-right font-semibold text-amber-700">{remaining}</td>
-                <td className="px-4 py-2 text-right">
-                  <button
-                    onClick={() => onReport(r.id)}
-                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg bg-teal-600 text-white hover:bg-teal-700"
-                  >
-                    <Wrench className="w-3 h-3" /> Raporto
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
     </div>
   );
 }
@@ -411,7 +331,7 @@ function StatCard({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-1">{value.toLocaleString()}</p>
         </div>
         <div className={`p-3 rounded-xl ${tone}`}>{icon}</div>
       </div>
@@ -449,12 +369,81 @@ function TabButton({
           active ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-600'
         }`}
       >
-        {count}
+        {count.toLocaleString()}
       </span>
       {active && (
         <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-teal-600 rounded-full" />
       )}
     </button>
+  );
+}
+
+function DamagedTab({ rows, onRepair }: { rows: DamagedStockRow[]; onRepair: (stockId: string) => void }) {
+  const total = rows.reduce((s, r) => s + r.quantity, 0);
+
+  if (rows.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+        <CheckCircle className="w-10 h-10 mx-auto mb-3 text-emerald-300" />
+        <p className="text-sm text-slate-400">Nuk ka paleta defekte ne stok.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+          <AlertOctagon className="w-4 h-4" />
+        </div>
+        <h3 className="text-sm font-semibold text-slate-900">
+          Paleta Defekte ne Stok
+        </h3>
+        <p className="text-xs text-slate-500 hidden sm:block">
+          Klikoni nje rresht per te raportuar reparimin
+        </p>
+        <span className="ml-auto inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+          {total.toLocaleString()}
+        </span>
+      </div>
+
+      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {rows.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => onRepair(r.id)}
+            className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 flex items-start gap-3 hover:border-amber-400 hover:bg-amber-50 transition-all text-left group cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-200 transition-colors">
+              <Package className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-900 truncate">
+                {r.category_name ?? '—'}
+              </p>
+              {r.product_name && (
+                <p className="text-xs text-slate-500 truncate">{r.product_name}</p>
+              )}
+              <p className="text-2xl font-bold text-amber-700 mt-2">{r.quantity.toLocaleString()}</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[11px] text-slate-400">
+                  {new Date(r.updated_at).toLocaleDateString()}
+                </p>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-teal-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Raporto riparim
+                </span>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <p className="text-sm text-slate-600">Totali defekt ne stok</p>
+        <p className="text-lg font-bold text-amber-700">{total.toLocaleString()} paleta</p>
+      </div>
+    </div>
   );
 }
 
@@ -570,62 +559,6 @@ function ReportsTab({
             </tfoot>
           </table>
         </div>
-      )}
-    </div>
-  );
-}
-
-function DamagedTab({ rows }: { rows: DamagedStockRow[] }) {
-  const total = rows.reduce((s, r) => s + r.quantity, 0);
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
-          <AlertOctagon className="w-4 h-4" />
-        </div>
-        <h3 className="text-sm font-semibold text-slate-900">
-          Paleta Defekte qe Presin Reparim
-        </h3>
-        <span className="ml-auto inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-          {rows.length}
-        </span>
-      </div>
-      {rows.length === 0 ? (
-        <div className="p-12 text-center">
-          <CheckCircle className="w-10 h-10 mx-auto mb-3 text-emerald-300" />
-          <p className="text-sm text-slate-400">Nuk ka paleta defekte ne stok.</p>
-        </div>
-      ) : (
-        <>
-          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {rows.map((r) => (
-              <div
-                key={r.id}
-                className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 flex items-start gap-3"
-              >
-                <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
-                  <Package className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 truncate">
-                    {r.category?.name ?? '-'}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Defekt · per reparim
-                  </p>
-                  <p className="text-2xl font-bold text-amber-700 mt-2">{r.quantity}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Perditesuar: {new Date(r.updated_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-            <p className="text-sm text-slate-600">Totali ne pritje per reparim</p>
-            <p className="text-lg font-bold text-amber-700">{total} paleta</p>
-          </div>
-        </>
       )}
     </div>
   );
