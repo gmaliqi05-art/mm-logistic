@@ -99,23 +99,50 @@ Deno.serve(async (req: Request) => {
         depot_id,
         phone,
         worker_category,
+        username,
+        create_login,
       } = body;
 
-      if (!email || !password || !full_name || !role) {
+      // A worker can be created in three modes:
+      //  1. email-based login (driver, accountant, depoist) — supply email + password
+      //  2. username-based login (reparature with credentials) — supply username + password
+      //  3. profile-only (reparature without credentials) — neither; create_login=false
+      const wantsAuthAccount =
+        create_login === false ? false : (!!email || !!username);
+      const usingUsername = !!username && !email;
+
+      if (!full_name || !role) {
         return jsonResponse(
           {
-            error: "Fushat e detyrueshme: email, password, full_name, role",
-            received: { email: !!email, password: !!password, full_name: !!full_name, role: !!role },
+            error: "Fushat e detyrueshme: full_name, role",
+            received: { full_name: !!full_name, role: !!role },
           },
           400
         );
       }
 
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (typeof email !== "string" || !emailRe.test(email) || email.length > 254) {
-        return jsonResponse({ error: "Email i pavlefshem" }, 400);
+      if (wantsAuthAccount) {
+        if (!password) {
+          return jsonResponse({ error: "Fjalekalimi eshte i detyrueshem kur krijoni llogari" }, 400);
+        }
+        if (!email && !username) {
+          return jsonResponse({ error: "Duhet ose email ose username" }, 400);
+        }
       }
-      if (typeof password !== "string" || password.length < 8 || password.length > 128) {
+
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (email !== undefined && email !== null && email !== "") {
+        if (typeof email !== "string" || !emailRe.test(email) || email.length > 254) {
+          return jsonResponse({ error: "Email i pavlefshem" }, 400);
+        }
+      }
+      const usernameRe = /^[a-zA-Z0-9._-]+$/;
+      if (username !== undefined && username !== null && username !== "") {
+        if (typeof username !== "string" || username.length < 3 || username.length > 32 || !usernameRe.test(username)) {
+          return jsonResponse({ error: "Username duhet 3-32 karaktere (vetem shkronja, numra, . _ -)" }, 400);
+        }
+      }
+      if (wantsAuthAccount && (typeof password !== "string" || password.length < 8 || password.length > 128)) {
         return jsonResponse({ error: "Fjalekalimi duhet 8-128 karaktere" }, 400);
       }
       if (typeof full_name !== "string" || full_name.trim().length === 0 || full_name.length > 200) {
@@ -162,24 +189,35 @@ Deno.serve(async (req: Request) => {
           ? callerProfile.company_id
           : company_id || null;
 
-      const { data: newUser, error: createError } =
-        await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: { full_name },
-        });
+      // Build the synthetic email when the caller supplied a username so
+      // we can satisfy Supabase Auth's email requirement. The synthetic
+      // email is never shown to humans.
+      const companyIdShort = (effectiveCompanyId || "").replace(/-/g, "").slice(0, 12);
+      const finalEmail = usingUsername
+        ? `${companyIdShort}-${(username as string).toLowerCase()}@workers.local`
+        : email;
 
-      if (createError) {
-        return jsonResponse(
-          { error: createError.message, step: "create_auth_user" },
-          400
-        );
+      let createdUserId: string | null = null;
+
+      if (wantsAuthAccount) {
+        const { data: newUser, error: createError } =
+          await supabaseAdmin.auth.admin.createUser({
+            email: finalEmail,
+            password,
+            email_confirm: true,
+            user_metadata: { full_name, ...(username ? { username } : {}) },
+          });
+
+        if (createError) {
+          return jsonResponse(
+            { error: createError.message, step: "create_auth_user" },
+            400
+          );
+        }
+        createdUserId = newUser.user.id;
       }
 
       const profileData: Record<string, unknown> = {
-        id: newUser.user.id,
-        email,
         full_name,
         role,
         company_id: effectiveCompanyId,
@@ -187,6 +225,13 @@ Deno.serve(async (req: Request) => {
         phone: phone || "",
         is_active: true,
       };
+      if (createdUserId) {
+        profileData.id = createdUserId;
+        profileData.email = finalEmail;
+      }
+      if (username) {
+        profileData.username = (username as string).toLowerCase();
+      }
       if (worker_category) {
         profileData.worker_category = worker_category;
       }
@@ -196,7 +241,9 @@ Deno.serve(async (req: Request) => {
         .insert(profileData);
 
       if (profileError) {
-        await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+        if (createdUserId) {
+          await supabaseAdmin.auth.admin.deleteUser(createdUserId);
+        }
         return jsonResponse(
           { error: profileError.message, step: "create_profile", code: profileError.code },
           400

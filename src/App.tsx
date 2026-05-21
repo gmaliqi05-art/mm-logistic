@@ -349,22 +349,22 @@ function AppRoutes() {
         </Route>
 
         <Route path="/depot" element={
-          <ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}>
+          <ProtectedRoute roles={['depot_worker']}>
             <DepotLayout />
           </ProtectedRoute>
         }>
           <Route index element={<DepotDashboard />} />
-          <Route path="stock" element={<DepotStock />} />
-          <Route path="receiving" element={<DepotReceiving />} />
-          <Route path="sorting" element={<DepotSorting />} />
-          <Route path="delivery-notes" element={<DepotDeliveryNotes />} />
-          <Route path="trailers" element={<DepotTrailers />} />
-          <Route path="repairs" element={<DepotRepairs />} />
-          <Route path="repair-workers" element={<DepotRepairWorkers />} />
-          <Route path="repair-workers/:workerId" element={<WorkerRepairEntry />} />
-          <Route path="damage" element={<DepotDamage />} />
+          <Route path="stock" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotStock /></ProtectedRoute>} />
+          <Route path="receiving" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotReceiving /></ProtectedRoute>} />
+          <Route path="sorting" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotSorting /></ProtectedRoute>} />
+          <Route path="delivery-notes" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotDeliveryNotes /></ProtectedRoute>} />
+          <Route path="trailers" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotTrailers /></ProtectedRoute>} />
+          <Route path="repairs" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotRepairs /></ProtectedRoute>} />
+          <Route path="repair-workers" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotRepairWorkers /></ProtectedRoute>} />
+          <Route path="repair-workers/:workerId" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><WorkerRepairEntry /></ProtectedRoute>} />
+          <Route path="damage" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotDamage /></ProtectedRoute>} />
           <Route path="documents" element={<DepotDocuments />} />
-          <Route path="reports" element={<DepotReports />} />
+          <Route path="reports" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotReports /></ProtectedRoute>} />
           <Route path="leave" element={<HRMyLeave />} />
           <Route path="attendance" element={<HRMyAttendance />} />
           <Route path="work-hours" element={<HRMyWorkHours />} />
