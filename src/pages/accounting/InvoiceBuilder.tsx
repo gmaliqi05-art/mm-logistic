@@ -757,12 +757,17 @@ export default function InvoiceBuilder() {
     }
     setInvoiceNumber(officialNumber as string);
 
-    const { error: sendErr } = await supabase
+    // Persist the locked-in invoice_number but DO NOT flip status to
+    // 'sent' here — that flag must reflect actual delivery. The edge
+    // function below sets status + sent_at on a successful send; if the
+    // operator skips auto-send, the invoice stays draft so they can
+    // retry from the email modal.
+    const { error: numErr2 } = await supabase
       .from('acc_invoices')
-      .update({ status: 'sent', sent_at: new Date().toISOString(), invoice_number: officialNumber as string })
+      .update({ invoice_number: officialNumber as string })
       .eq('id', id);
-    if (sendErr) {
-      setError(sendErr.message || 'Dergimi deshtoi');
+    if (numErr2) {
+      setError(numErr2.message || 'Dergimi deshtoi');
       return;
     }
     setFinalized(true);
@@ -784,7 +789,10 @@ export default function InvoiceBuilder() {
             locale: defaultEmailLocale,
           }),
         });
-        if (resp.ok) {
+        // The edge function returns 202 even when the provider rejects,
+        // so trust the body's `ok` flag, not the HTTP status.
+        const sendResult = await resp.json().catch(() => ({} as { ok?: boolean }));
+        if (resp.ok && sendResult.ok !== false) {
           setEmailSent(true);
           setEmailRecipient(selectedContact.email);
           setShowEmailDialog(true);

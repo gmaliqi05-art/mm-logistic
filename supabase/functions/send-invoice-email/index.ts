@@ -117,8 +117,8 @@ Deno.serve(async (req: Request) => {
           };
         }
       }
-    } catch {
-      // PDF generation failed silently, send without attachment
+    } catch (pdfErr) {
+      console.error("PDF generation failed:", pdfErr);
     }
 
     // Build template data
@@ -185,13 +185,15 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify(emailPayload),
     });
 
-    const result = await resp.json().catch(() => ({}));
+    const result = await resp.json().catch(() => ({} as Record<string, unknown>));
 
-    // Only mark the invoice as sent when delivery actually succeeded.
-    // A bounced or queued-failed SMTP response would otherwise flip the
-    // status to 'sent' and let the customer's missing invoice slip by
-    // unnoticed.
-    if (resp.ok) {
+    // `send-email` returns HTTP 202 even when Resend/SMTP rejects the
+    // message, so HTTP status alone cannot be trusted. The body carries
+    // `{ ok: boolean }` reflecting actual provider success.
+    const trueOk = resp.ok && (result as { ok?: boolean }).ok !== false;
+    const pdfOk = !!pdfAttachment;
+
+    if (trueOk) {
       await supabase
         .from("acc_invoices")
         .update({
@@ -213,9 +215,9 @@ Deno.serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({
-        ok: resp.ok,
+        ok: trueOk,
         result,
-        has_pdf: !!pdfAttachment,
+        has_pdf: pdfOk,
       }),
       {
         status: resp.ok ? 200 : 202,
