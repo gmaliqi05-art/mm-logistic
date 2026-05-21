@@ -9,7 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import InvoiceTemplate, { type InvoicePreviewData } from '../../components/accounting/InvoiceTemplate';
 import {
-  buildVatBreakdown, computeVatRegime, formatInvoiceNumber, normalizeVat,
+  buildVatBreakdown, computeVatRegime, normalizeVat,
   UN_ECE_UNITS, VAT_CATEGORIES, validateVatFormat,
   type EuCountry, type EuVatRate,
 } from '../../utils/euCompliance';
@@ -468,21 +468,26 @@ export default function InvoiceBuilder() {
 
   async function generateNextNumber(companyId: string, docType: string) {
     const year = new Date().getFullYear();
+    let prefix: string;
+    if (docType === 'credit_note') prefix = 'CN';
+    else if (docType === 'proforma') prefix = 'PF';
+    else {
+      const { data: settings } = await supabase
+        .from('acc_company_settings')
+        .select('invoice_prefix')
+        .eq('company_id', companyId)
+        .maybeSingle();
+      prefix = ((settings as { invoice_prefix?: string } | null)?.invoice_prefix || 'RE').replace(/-+$/, '');
+    }
     const { data: seq } = await supabase
       .from('acc_invoice_sequences')
-      .select('*')
+      .select('current_number')
       .eq('company_id', companyId)
-      .eq('doc_type', docType)
+      .eq('prefix', prefix)
       .eq('year', year)
       .maybeSingle();
-    if (seq) {
-      const s = seq as { prefix: string; format_mask: string; current_number: number };
-      const next = (s.current_number ?? 0) + 1;
-      setInvoiceNumber(formatInvoiceNumber(s.format_mask, s.prefix, year, next));
-    } else {
-      const prefix = docType === 'credit_note' ? 'CN-' : docType === 'proforma' ? 'PF-' : 'INV-';
-      setInvoiceNumber(formatInvoiceNumber('{prefix}{year}-{number:0000}', prefix, year, 1));
-    }
+    const next = ((seq as { current_number?: number } | null)?.current_number ?? 0) + 1;
+    setInvoiceNumber(`${prefix}-${year}-${String(next).padStart(4, '0')}`);
   }
 
   const contact = useMemo(() => contacts.find((c) => c.id === contactId) ?? null, [contacts, contactId]);
@@ -710,31 +715,30 @@ export default function InvoiceBuilder() {
   async function finalizeAndSend() {
     const id = await save(false);
     if (!id) return;
-    const year = new Date().getFullYear();
-    try { await supabase.rpc('noop'); } catch { /* placeholder no-op */ }
-    const { data: seq } = await supabase
-      .from('acc_invoice_sequences')
-      .select('*')
-      .eq('company_id', profile!.company_id!)
-      .eq('doc_type', invoiceType)
-      .eq('year', year)
-      .maybeSingle();
-    if (seq) {
-      const s = seq as { id: string; current_number: number };
-      await supabase.from('acc_invoice_sequences').update({ current_number: (s.current_number ?? 0) + 1, updated_at: new Date().toISOString() }).eq('id', s.id);
-    } else {
-      await supabase.from('acc_invoice_sequences').insert({
-        company_id: profile!.company_id!,
-        doc_type: invoiceType,
-        year,
-        prefix: invoiceType === 'credit_note' ? 'CN-' : invoiceType === 'proforma' ? 'PF-' : 'INV-',
-        current_number: 1,
-        format_mask: '{prefix}{year}-{number:0000}',
-      });
+
+    // Reserve the official invoice_number atomically via the RPC.
+    let prefix: string;
+    if (invoiceType === 'credit_note') prefix = 'CN';
+    else if (invoiceType === 'proforma') prefix = 'PF';
+    else {
+      const { data: settings } = await supabase
+        .from('acc_company_settings')
+        .select('invoice_prefix')
+        .eq('company_id', profile!.company_id!)
+        .maybeSingle();
+      prefix = ((settings as { invoice_prefix?: string } | null)?.invoice_prefix || 'RE').replace(/-+$/, '');
     }
+    const { data: officialNumber, error: numErr } = await supabase
+      .rpc('get_next_acc_number', { p_company_id: profile!.company_id!, p_prefix: prefix });
+    if (numErr || !officialNumber) {
+      setError('Numerimi i fatures deshtoi');
+      return;
+    }
+    setInvoiceNumber(officialNumber as string);
+
     const { error: sendErr } = await supabase
       .from('acc_invoices')
-      .update({ status: 'sent', sent_at: new Date().toISOString() })
+      .update({ status: 'sent', sent_at: new Date().toISOString(), invoice_number: officialNumber as string })
       .eq('id', id);
     if (sendErr) {
       setError(sendErr.message || 'Dergimi deshtoi');

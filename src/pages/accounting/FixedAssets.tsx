@@ -72,19 +72,39 @@ export default function FixedAssets() {
     const monthly = form.useful_life_years > 0
       ? Math.round((form.acquisition_cost / (form.useful_life_years * 12)) * 100) / 100
       : 0;
-    await supabase.from('acc_fixed_assets').insert({
+    const { data: asset, error: aErr } = await supabase
+      .from('acc_fixed_assets')
+      .insert({
+        company_id: profile!.company_id!,
+        created_by: profile!.id,
+        name: form.name,
+        category: form.category,
+        acquisition_date: form.acquisition_date,
+        acquisition_cost: form.acquisition_cost,
+        vat_amount: form.vat_amount,
+        useful_life_years: form.useful_life_years,
+        monthly_depreciation: monthly,
+        current_book_value: form.acquisition_cost,
+        notes: form.notes,
+      })
+      .select('id')
+      .single();
+    if (aErr || !asset) return;
+
+    // Mirror the scanner path: create a paired expense transaction so the
+    // investment lands in the P&L / cash-flow statements.
+    await supabase.from('acc_transactions').insert({
       company_id: profile!.company_id!,
+      transaction_type: 'expense',
+      amount: form.acquisition_cost + (form.vat_amount || 0),
+      currency: 'EUR',
+      description: `Investim: ${form.name}`,
+      transaction_date: form.acquisition_date,
+      notes: `Aset fiks (${form.useful_life_years} vite, zhvleresim mujor ${monthly})`,
       created_by: profile!.id,
-      name: form.name,
-      category: form.category,
-      acquisition_date: form.acquisition_date,
-      acquisition_cost: form.acquisition_cost,
-      vat_amount: form.vat_amount,
-      useful_life_years: form.useful_life_years,
-      monthly_depreciation: monthly,
-      current_book_value: form.acquisition_cost,
-      notes: form.notes,
+      fixed_asset_id: asset.id,
     });
+
     setShowManual(false);
     setForm({ name: '', category: 'equipment', acquisition_date: new Date().toISOString().slice(0, 10), acquisition_cost: 0, vat_amount: 0, useful_life_years: 5, notes: '' });
     fetchAssets();

@@ -529,6 +529,16 @@ export default function Invoices() {
       setError(null);
       setStatusDropdownId(null);
 
+      // Route draft → sent through the email modal so the customer actually
+      // receives the invoice. The send-invoice-email edge function flips
+      // status to 'sent' and stamps sent_at on success.
+      if (newStatus === 'sent' && invoice.status === 'draft') {
+        setEmailInvoice(invoice);
+        setEmailTo(invoice.contact?.email || '');
+        setEmailSent(false);
+        return;
+      }
+
       const { error: err } = await supabase
         .from('acc_invoices')
         .update({ status: newStatus })
