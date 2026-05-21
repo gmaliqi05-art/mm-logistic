@@ -67,6 +67,16 @@ interface DamageHistoryRow {
   reporter_full_name: string | null;
 }
 
+interface DamagedEntryRow {
+  flow_date: string;
+  movement_type: string;
+  category_name: string;
+  product_name: string;
+  quantity: number;
+  performer_name: string;
+  source_partner: string;
+}
+
 function isoDays(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
@@ -110,6 +120,7 @@ export default function DepotReports() {
   const [sorting, setSorting] = useState<SortingRow[]>([]);
   const [damaged, setDamaged] = useState<DamagedRow[]>([]);
   const [damageHistory, setDamageHistory] = useState<DamageHistoryRow[]>([]);
+  const [damagedEntries, setDamagedEntries] = useState<DamagedEntryRow[]>([]);
 
   useEffect(() => {
     if (!profile?.depot_id || !profile?.company_id) return;
@@ -124,7 +135,7 @@ export default function DepotReports() {
       const companyId = profile!.company_id!;
       const since = isoDays(days);
 
-      const [flowRes, flowLookup, prodLookup, performerLookup, repRes, sortRes, damRes, damHistRes] = await Promise.all([
+      const [flowRes, flowLookup, prodLookup, performerLookup, repRes, sortRes, damRes, damHistRes, damEntryRes] = await Promise.all([
         supabase
           .from('stock_movements')
           .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner')
@@ -165,6 +176,15 @@ export default function DepotReports() {
           .gte('created_at', since)
           .order('created_at', { ascending: false })
           .limit(200),
+        supabase
+          .from('stock_movements')
+          .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner')
+          .eq('company_id', companyId)
+          .eq('depot_id', depotId)
+          .eq('condition_after', 'damaged')
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(200),
       ]);
 
       if (flowRes.error) throw flowRes.error;
@@ -190,10 +210,21 @@ export default function DepotReports() {
         source_partner: r.source_partner || '',
       })) as FlowRow[];
 
+      const damEntryEnriched = (damEntryRes.data ?? []).map((r: any) => ({
+        flow_date: (r.created_at || '').substring(0, 10),
+        movement_type: r.movement_type,
+        category_name: r.category_id ? catMap.get(r.category_id) ?? '' : '',
+        product_name: r.category_product_id ? prodMap.get(r.category_product_id) ?? '' : '',
+        quantity: r.quantity,
+        performer_name: r.performed_by ? perfMap.get(r.performed_by) ?? '' : '',
+        source_partner: r.source_partner || '',
+      })) as DamagedEntryRow[];
+
       setFlow(flowEnriched);
       setRepair(repRes.data ?? []);
       setSorting(sortRes.data ?? []);
       setDamaged((damRes.data ?? []).filter((r: DamagedRow) => (r.quantity ?? 0) > 0));
+      setDamagedEntries(damEntryEnriched);
       setDamageHistory(((damHistRes.data as any[]) ?? []).map((r) => ({
         id: r.id,
         created_at: r.created_at,
@@ -416,6 +447,31 @@ export default function DepotReports() {
                     r.quantity,
                   ])}
                   empty="Asnje palete e demtuar"
+                />
+              </div>
+
+              <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold text-slate-900 text-sm">Hyrje / Dalje defekt (levizjet)</h2>
+                  <button
+                    onClick={() => downloadCsv('depot-damaged-entries.csv', toCsv(damagedEntries as unknown as Record<string, unknown>[]))}
+                    className="inline-flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-900"
+                  >
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </button>
+                </div>
+                <Table
+                  headers={['Data', 'Lloji', 'Kategoria', 'Produkti', 'Sasi', 'Punetori', 'Nga kush']}
+                  rows={damagedEntries.map((r) => [
+                    fmtDate(r.flow_date),
+                    r.movement_type === 'entry' ? 'Hyrje' : r.movement_type === 'exit' ? 'Dalje' : r.movement_type,
+                    r.category_name || '—',
+                    r.product_name || '—',
+                    r.quantity,
+                    r.performer_name || '—',
+                    r.source_partner || '—',
+                  ])}
+                  empty="Asnje levizje defekt ne kete periudhe"
                 />
               </div>
 

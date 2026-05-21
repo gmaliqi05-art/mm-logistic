@@ -350,7 +350,7 @@ export default function CompanyReports() {
       ]);
       exportToCsv(headers, rows, 'stoku_kompanise');
     } else if (activeTab === 'movements') {
-      const headers = ['Data', 'Burimi', 'Tipi', 'Sasi', 'Gjendja', 'Depoja', 'Flow'];
+      const headers = ['Data', 'Burimi', 'Tipi', 'Sasi', 'Gjendja', 'Depoja', 'Punetori', 'Nga / Per', 'Flow'];
       const rows = filteredMovements.map(r => [
         new Date(r.movement_date).toLocaleString(),
         r.source_type,
@@ -358,6 +358,8 @@ export default function CompanyReports() {
         String(r.quantity_delta),
         conditionLabel(r.condition),
         depots.find(d => d.id === r.depot_id)?.name ?? '',
+        r.performed_by_full_name ?? '',
+        r.source_contact_name ?? r.source_partner ?? '',
         r.flow_role ?? '',
       ]);
       exportToCsv(headers, rows, 'levizjet_kompanise');
@@ -664,6 +666,50 @@ export default function CompanyReports() {
                 </table>
               </div>
             )}
+          </Card>
+
+          <Card title="Hyrje / Dalje defekt (levizje)" icon={AlertTriangle} hint="Te gjitha levizjet me gjendjen defekt — kush e regjistroi dhe nga/per kend.">
+            {(() => {
+              const damagedMoves = filteredMovements.filter(m => m.condition === 'damaged' && m.source_type === 'stock_movement');
+              if (damagedMoves.length === 0) return <EmptyState icon={AlertTriangle} label="Asnje levizje defekt ne kete periudhe." />;
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
+                      <tr>
+                        <th className="text-left px-3 py-2">Data</th>
+                        <th className="text-left px-3 py-2">Tipi</th>
+                        <th className="text-left px-3 py-2">Depoja</th>
+                        <th className="text-right px-3 py-2">Sasi</th>
+                        <th className="text-left px-3 py-2">Punetori</th>
+                        <th className="text-left px-3 py-2">Nga / Per</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {damagedMoves.map(m => (
+                        <tr key={m.source_id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{new Date(m.movement_date).toLocaleString()}</td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold ${m.movement_type === 'entry' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                              {m.movement_type === 'entry' ? 'Hyrje' : 'Dalje'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-700">{depots.find(d => d.id === m.depot_id)?.name ?? '—'}</td>
+                          <td className={`px-3 py-2 text-right font-semibold ${m.quantity_delta < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                            {m.quantity_delta > 0 ? '+' : ''}{m.quantity_delta}
+                          </td>
+                          <td className="px-3 py-2 text-gray-700">{m.performed_by_full_name ?? '—'}</td>
+                          <td className="px-3 py-2 text-gray-700">
+                            {m.source_contact_name ?? m.source_partner ?? '—'}
+                            {m.source_contact_id && <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" title="Lidhur me kontakt" />}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </Card>
 
           <Card title="Historiku i raportimit te demtimeve" icon={AlertTriangle} hint="Cdo demtim i regjistruar nga depoisti — kush, sa, kur dhe pse.">
