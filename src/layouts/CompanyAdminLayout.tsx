@@ -30,7 +30,10 @@ import {
   Layers,
   Users,
   Mail,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -42,42 +45,101 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import { usePendingReviewCounts } from '../hooks/usePendingReviewCounts';
 import DeletionBanner from '../components/DeletionBanner';
 
-const allNavItems = [
-  { to: '/company', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, premium: false, bottomNav: true },
-  { to: '/company/invoices', icon: FileCheck2, labelKey: 'nav.invoices', end: false, premium: false, bottomNav: false },
-  { to: '/company/email', icon: Mail, labelKey: 'nav.emailAutomation', end: false, premium: true, bottomNav: false },
-  { to: '/company/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, premium: false, bottomNav: true },
-  { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', end: false, premium: false, bottomNav: false, badgeKey: 'review' as const },
-  { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, premium: false, bottomNav: false },
-  { to: '/company/partners', icon: Building2, labelKey: 'nav.partners', end: false, premium: false, bottomNav: false },
-  { to: '/company/partner-flows', icon: Building2, labelKey: 'nav.partnerFlows', end: false, premium: false, bottomNav: false },
-  { to: '/company/pallet-accounts', icon: Package, labelKey: 'nav.palletAccounts', end: false, premium: false, bottomNav: false },
-  { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap', end: false, premium: false, bottomNav: false },
-  { to: '/company/fleet-reports', icon: BarChart3, labelKey: 'nav.fleetReports', end: false, premium: true, bottomNav: false },
-  { to: '/company/stock', icon: Package, labelKey: 'nav.stock', end: false, premium: false, bottomNav: true },
-  { to: '/company/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, premium: false, bottomNav: true },
-  { to: '/company/depots', icon: Warehouse, labelKey: 'nav.depots', end: false, premium: false, bottomNav: false },
-  { to: '/company/sorting-reports', icon: Layers, labelKey: 'nav.sortingReports', end: false, premium: false, bottomNav: false },
-  { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports', end: false, premium: false, bottomNav: false },
-  { to: '/company/worker-repair-stats', icon: BarChart3, labelKey: 'nav.workerRepairStats', end: false, premium: false, bottomNav: false },
-  { to: '/company/drivers', icon: Truck, labelKey: 'nav.drivers', end: false, premium: false, bottomNav: false },
-  { to: '/company/automjetet', icon: Truck, labelKey: 'nav.automjetet', end: false, premium: false, bottomNav: false },
-  { to: '/company/compliance', icon: ShieldCheck, labelKey: 'nav.compliance', end: false, premium: false, bottomNav: false },
-  { to: '/company/categories', icon: Tags, labelKey: 'nav.categories', end: false, premium: false, bottomNav: false },
-  { to: '/company/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, premium: false, bottomNav: false },
-  { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, premium: false, bottomNav: false },
-  { to: '/company/audit-log', icon: ClipboardList, labelKey: 'nav.auditLog', end: false, premium: true, bottomNav: false },
-  { to: '/company/audit-report', icon: FileCheck2, labelKey: 'nav.auditReport', end: false, premium: false, bottomNav: false },
-  { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', end: false, premium: true, bottomNav: false },
-  { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', end: false, premium: true, bottomNav: false },
-  { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary', end: false, premium: false, bottomNav: false },
-  { to: '/company/hr', icon: Users, labelKey: 'nav.hr', end: true, premium: true, bottomNav: false },
-  { to: '/logistics', icon: Truck, labelKey: 'nav.logistics', end: false, premium: false, bottomNav: false },
-  { to: '/company/settings', icon: Settings, labelKey: 'nav.settings', end: false, premium: false, bottomNav: false },
-  { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', end: false, premium: true, bottomNav: false },
+type NavLeaf = {
+  kind?: 'leaf';
+  to: string;
+  icon: LucideIcon;
+  labelKey: string;
+  end?: boolean;
+  premium?: boolean;
+  bottomNav?: boolean;
+  badgeKey?: 'review';
+};
+
+type NavGroup = {
+  kind: 'group';
+  groupKey: string;
+  labelKey: string;
+  icon: LucideIcon;
+  items: NavLeaf[];
+};
+
+type NavEntry = NavLeaf | NavGroup;
+
+// The sidebar is split into:
+//   - Top-level "daily" leaves the operator hits multiple times a day
+//   - Collapsible groups for areas touched weekly / occasionally
+//   - A "Konfigurim" group at the bottom for admin / setup pages
+// This keeps the visible surface small without losing any link.
+const navEntries: NavEntry[] = [
+  // Daily / always-visible
+  { to: '/company', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, bottomNav: true },
+  { to: '/company/stock', icon: Package, labelKey: 'nav.stock', bottomNav: true },
+  { to: '/company/invoices', icon: FileCheck2, labelKey: 'nav.invoices' },
+  { to: '/company/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', bottomNav: true },
+  { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', badgeKey: 'review' },
+  { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue' },
+  { to: '/company/chat', icon: MessageSquare, labelKey: 'nav.chat', bottomNav: true },
+  { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap' },
+
+  {
+    kind: 'group', groupKey: 'partners', icon: Building2, labelKey: 'nav.groupPartners',
+    items: [
+      { to: '/company/partners', icon: Building2, labelKey: 'nav.partners' },
+      { to: '/company/partner-flows', icon: Building2, labelKey: 'nav.partnerFlows' },
+      { to: '/company/pallet-accounts', icon: Package, labelKey: 'nav.palletAccounts' },
+    ],
+  },
+
+  {
+    kind: 'group', groupKey: 'fleet', icon: Truck, labelKey: 'nav.groupFleet',
+    items: [
+      { to: '/company/drivers', icon: Truck, labelKey: 'nav.drivers' },
+      { to: '/company/automjetet', icon: Truck, labelKey: 'nav.automjetet' },
+      { to: '/company/compliance', icon: ShieldCheck, labelKey: 'nav.compliance' },
+      { to: '/company/fleet-reports', icon: BarChart3, labelKey: 'nav.fleetReports', premium: true },
+    ],
+  },
+
+  {
+    kind: 'group', groupKey: 'reports', icon: BarChart3, labelKey: 'nav.groupReports',
+    items: [
+      { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports' },
+      { to: '/company/sorting-reports', icon: Layers, labelKey: 'nav.sortingReports' },
+      { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports' },
+      { to: '/company/worker-repair-stats', icon: BarChart3, labelKey: 'nav.workerRepairStats' },
+      { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary' },
+      { to: '/company/audit-report', icon: FileCheck2, labelKey: 'nav.auditReport' },
+      { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', premium: true },
+    ],
+  },
+
+  {
+    kind: 'group', groupKey: 'config', icon: Settings, labelKey: 'nav.groupConfig',
+    items: [
+      { to: '/company/depots', icon: Warehouse, labelKey: 'nav.depots' },
+      { to: '/company/categories', icon: Tags, labelKey: 'nav.categories' },
+      { to: '/company/documents', icon: FolderOpen, labelKey: 'nav.documents' },
+      { to: '/company/hr', icon: Users, labelKey: 'nav.hr', premium: true, end: true },
+      { to: '/company/email', icon: Mail, labelKey: 'nav.emailAutomation', premium: true },
+      { to: '/logistics', icon: Truck, labelKey: 'nav.logistics' },
+      { to: '/company/audit-log', icon: ClipboardList, labelKey: 'nav.auditLog', premium: true },
+      { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', premium: true },
+      { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', premium: true },
+      { to: '/company/settings', icon: Settings, labelKey: 'nav.settings' },
+    ],
+  },
 ];
 
-const bottomNavItems = allNavItems.filter(i => i.bottomNav);
+// Flatten all leaves for the mobile bottom nav (no groups on small screens).
+const allLeaves: NavLeaf[] = navEntries.flatMap((e) => (e.kind === 'group' ? e.items : [e]));
+const bottomNavItems = allLeaves.filter((i) => i.bottomNav);
+
+function isGroupActive(group: NavGroup, pathname: string): boolean {
+  return group.items.some((it) =>
+    it.end ? pathname === it.to : pathname.startsWith(it.to) && it.to !== '/company'
+  );
+}
 
 export default function CompanyAdminLayout() {
   const { profile, signOut } = useAuth();
@@ -94,6 +156,47 @@ export default function CompanyAdminLayout() {
   const [supportOpen, setSupportOpen] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string>('');
   const [companyName, setCompanyName] = useState<string>('');
+
+  // Remember which sidebar groups are expanded. Defaults: a group is
+  // open if the current route is inside it; otherwise closed. Persists
+  // to localStorage so the choice survives reloads.
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    let stored: Record<string, boolean> = {};
+    try {
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('mml.nav.openGroups') : null;
+      if (raw) stored = JSON.parse(raw);
+    } catch { /* ignore */ }
+    const initial: Record<string, boolean> = {};
+    for (const e of navEntries) {
+      if (e.kind === 'group') {
+        initial[e.groupKey] = stored[e.groupKey] ?? isGroupActive(e, location.pathname);
+      }
+    }
+    return initial;
+  });
+
+  function toggleGroup(key: string) {
+    setOpenGroups((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { window.localStorage.setItem('mml.nav.openGroups', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  // Auto-open the group that contains the current route on navigation.
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const e of navEntries) {
+        if (e.kind === 'group' && isGroupActive(e, location.pathname) && !next[e.groupKey]) {
+          next[e.groupKey] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [location.pathname]);
 
   useEffect(() => {
     if (profile?.company_id) fetchCompanyInfo();
@@ -124,6 +227,37 @@ export default function CompanyAdminLayout() {
       : location.pathname.startsWith(item.to) && item.to !== '/company'
   ) && location.pathname !== '/company';
 
+  function renderLeaf(item: NavLeaf) {
+    const isPremiumLocked = !!item.premium && planTier !== 'premium';
+    const badgeCount = item.badgeKey === 'review' ? reviewCounts.total : 0;
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+          ${isActive
+            ? 'bg-teal-700 text-white font-medium'
+            : isPremiumLocked
+              ? 'text-teal-400/60 hover:bg-teal-800/50 hover:text-teal-300'
+              : 'text-teal-200 hover:bg-teal-800 hover:text-white'}`
+        }
+      >
+        <item.icon className="w-4 h-4 flex-shrink-0" />
+        <span className="flex-1 whitespace-nowrap">{t(item.labelKey)}</span>
+        {badgeCount > 0 && (
+          <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-red-500 text-white">
+            {badgeCount}
+          </span>
+        )}
+        {item.premium && (
+          <Crown className={`w-3.5 h-3.5 flex-shrink-0 ${isPremiumLocked ? 'text-amber-400/60' : 'text-amber-400'}`} />
+        )}
+      </NavLink>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Desktop Sidebar */}
@@ -139,36 +273,34 @@ export default function CompanyAdminLayout() {
         </div>
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
-          {allNavItems.map((item) => {
-            const isPremiumLocked = item.premium && planTier !== 'premium';
-            const badgeCount = (item as any).badgeKey === 'review' ? reviewCounts.total : 0;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-                  ${isActive
-                    ? 'bg-teal-700 text-white font-medium'
-                    : isPremiumLocked
-                    ? 'text-teal-400/60 hover:bg-teal-800/50 hover:text-teal-300'
-                    : 'text-teal-200 hover:bg-teal-800 hover:text-white'
-                  }`
-                }
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="flex-1 whitespace-nowrap">{t(item.labelKey)}</span>
-                {badgeCount > 0 && (
-                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-red-500 text-white">
-                    {badgeCount}
-                  </span>
-                )}
-                {item.premium && (
-                  <Crown className={`w-3.5 h-3.5 flex-shrink-0 ${isPremiumLocked ? 'text-amber-400/60' : 'text-amber-400'}`} />
-                )}
-              </NavLink>
-            );
+          {navEntries.map((entry) => {
+            if (entry.kind === 'group') {
+              const isOpen = !!openGroups[entry.groupKey];
+              const containsActive = isGroupActive(entry, location.pathname);
+              return (
+                <div key={entry.groupKey} className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(entry.groupKey)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      containsActive ? 'text-white' : 'text-teal-300'
+                    } hover:bg-teal-800/60`}
+                  >
+                    <entry.icon className="w-4 h-4 flex-shrink-0 opacity-80" />
+                    <span className="flex-1 text-left text-[11px] uppercase tracking-wider font-semibold">
+                      {t(entry.labelKey)}
+                    </span>
+                    {isOpen ? <ChevronDown className="w-4 h-4 opacity-60" /> : <ChevronRight className="w-4 h-4 opacity-60" />}
+                  </button>
+                  {isOpen && (
+                    <div className="mt-0.5 ml-2 pl-2 border-l border-teal-800/60 space-y-0.5">
+                      {entry.items.map((item) => renderLeaf(item))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return renderLeaf(entry);
           })}
           <button
             onClick={() => setSupportOpen(true)}
@@ -319,12 +451,12 @@ export default function CompanyAdminLayout() {
 
           <div className="overflow-y-auto flex-1 p-3" style={{ maxHeight: 'calc(100vh - 180px)' }}>
             <div className="grid grid-cols-3 gap-2">
-              {allNavItems.map((item) => {
+              {allLeaves.map((item) => {
                 const isPremiumLocked = item.premium && planTier !== 'premium';
                 const isActive = item.end
                   ? location.pathname === item.to
                   : location.pathname.startsWith(item.to);
-                const badgeCount = (item as any).badgeKey === 'review' ? reviewCounts.total : 0;
+                const badgeCount = item.badgeKey === 'review' ? reviewCounts.total : 0;
                 return (
                   <NavLink
                     key={item.to}
