@@ -273,11 +273,13 @@ export default function GermanFinancials() {
           supabase.from('acc_invoices')
             .select('subtotal, vat_amount, total, status, invoice_date')
             .eq('company_id', companyId)
+            .not('status', 'in', '("draft","cancelled")')
             .gte('invoice_date', dateFrom)
             .lte('invoice_date', dateTo),
           supabase.from('acc_purchases')
             .select('subtotal, vat_amount, total, status, purchase_date')
             .eq('company_id', companyId)
+            .not('status', 'in', '("draft","awaiting_document","cancelled")')
             .gte('purchase_date', dateFrom)
             .lte('purchase_date', dateTo),
           supabase.from('acc_transactions')
@@ -344,11 +346,13 @@ export default function GermanFinancials() {
           supabase.from('acc_invoices')
             .select('subtotal, vat_amount, total, invoice_date')
             .eq('company_id', companyId)
+            .not('status', 'in', '("draft","cancelled")')
             .gte('invoice_date', dateFrom)
             .lte('invoice_date', dateTo),
           supabase.from('acc_purchases')
             .select('subtotal, vat_amount, total')
             .eq('company_id', companyId)
+            .not('status', 'in', '("draft","awaiting_document","cancelled")')
             .gte('purchase_date', dateFrom)
             .lte('purchase_date', dateTo),
           supabase.from('acc_imports')
@@ -360,13 +364,15 @@ export default function GermanFinancials() {
 
         const [{ data: invItems }, { data: purItems }] = await Promise.all([
           supabase.from('acc_invoice_items')
-            .select('vat_rate, line_total, invoice_id, acc_invoices!inner(invoice_date, company_id)')
+            .select('vat_rate, line_total, invoice_id, acc_invoices!inner(invoice_date, company_id, status)')
             .eq('acc_invoices.company_id', companyId)
+            .not('acc_invoices.status', 'in', '("draft","cancelled")')
             .gte('acc_invoices.invoice_date', dateFrom)
             .lte('acc_invoices.invoice_date', dateTo),
           supabase.from('acc_purchase_items')
-            .select('vat_rate, line_total, purchase_id, acc_purchases!inner(purchase_date, company_id)')
+            .select('vat_rate, line_total, purchase_id, acc_purchases!inner(purchase_date, company_id, status)')
             .eq('acc_purchases.company_id', companyId)
+            .not('acc_purchases.status', 'in', '("draft","awaiting_document","cancelled")')
             .gte('acc_purchases.purchase_date', dateFrom)
             .lte('acc_purchases.purchase_date', dateTo),
         ]);

@@ -206,7 +206,7 @@ export default function Reports() {
           .from('acc_invoices')
           .select('id, contact_id, contact:acc_contacts(id, name)')
           .eq('company_id', companyId)
-          .in('status', ['sent', 'paid'])
+          .not('status', 'in', '("draft","cancelled")')
           .gte('invoice_date', dateFrom)
           .lte('invoice_date', dateTo);
         if (invErr) throw invErr;
@@ -309,14 +309,14 @@ export default function Reports() {
             .from('acc_invoices')
             .select('id, vat_amount')
             .eq('company_id', companyId)
-            .in('status', ['sent', 'paid'])
+            .not('status', 'in', '("draft","cancelled")')
             .gte('invoice_date', dateFrom)
             .lte('invoice_date', dateTo),
           supabase
             .from('acc_purchases')
             .select('id, vat_amount')
             .eq('company_id', companyId)
-            .in('status', ['received', 'paid'])
+            .not('status', 'in', '("draft","awaiting_document","cancelled")')
             .gte('purchase_date', dateFrom)
             .lte('purchase_date', dateTo),
         ]);
@@ -378,14 +378,14 @@ export default function Reports() {
             .from('acc_invoices')
             .select('id')
             .eq('company_id', companyId)
-            .in('status', ['sent', 'paid'])
+            .not('status', 'in', '("draft","cancelled")')
             .gte('invoice_date', dateFrom)
             .lte('invoice_date', dateTo),
           supabase
             .from('acc_purchases')
             .select('id')
             .eq('company_id', companyId)
-            .in('status', ['received', 'paid'])
+            .not('status', 'in', '("draft","awaiting_document","cancelled")')
             .gte('purchase_date', dateFrom)
             .lte('purchase_date', dateTo),
         ]);
@@ -550,14 +550,14 @@ export default function Reports() {
           .from('acc_invoices')
           .select('invoice_number, invoice_date, total, vat_amount, notes, contact:acc_contacts(name)')
           .eq('company_id', companyId)
-          .in('status', ['sent', 'paid'])
+          .not('status', 'in', '("draft","cancelled")')
           .gte('invoice_date', dateFrom)
           .lte('invoice_date', dateTo),
         supabase
           .from('acc_purchases')
           .select('purchase_number, purchase_date, total, vat_amount, notes, external_invoice_number, contact:acc_contacts(name)')
           .eq('company_id', companyId)
-          .in('status', ['received', 'paid'])
+          .not('status', 'in', '("draft","awaiting_document","cancelled")')
           .gte('purchase_date', dateFrom)
           .lte('purchase_date', dateTo),
         supabase
@@ -625,14 +625,14 @@ export default function Reports() {
           .from('acc_invoices')
           .select('id, vat_amount, subtotal')
           .eq('company_id', companyId)
-          .in('status', ['sent', 'paid'])
+          .not('status', 'in', '("draft","cancelled")')
           .gte('invoice_date', dateFrom)
           .lte('invoice_date', dateTo),
         supabase
           .from('acc_purchases')
           .select('vat_amount')
           .eq('company_id', companyId)
-          .in('status', ['received', 'paid'])
+          .not('status', 'in', '("draft","awaiting_document","cancelled")')
           .gte('purchase_date', dateFrom)
           .lte('purchase_date', dateTo),
         supabase.from('companies').select('name').eq('id', companyId).maybeSingle(),
