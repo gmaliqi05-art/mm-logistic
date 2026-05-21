@@ -70,7 +70,7 @@ export default function DepotDeliveryNotes() {
       setError(null);
       const { data, error: err } = await supabase
         .from('delivery_notes')
-        .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(name), items:delivery_note_items(intended_action, quantity)')
+        .select('*, driver:profiles!delivery_notes_assigned_driver_id_fkey(full_name), stock_confirmer:profiles!delivery_notes_stock_confirmed_by_fkey(full_name), depot:depots!delivery_notes_assigned_depot_id_fkey(name), items:delivery_note_items(intended_action, quantity)')
         .eq('company_id', profile!.company_id!)
         .neq('status', 'draft')
         .neq('status', 'cancelled')
@@ -202,6 +202,11 @@ export default function DepotDeliveryNotes() {
                           <Truck className="w-3 h-3" />
                           {n.driver?.full_name ?? 'I pacaktuar'}
                         </span>
+                        {(n as { stock_confirmer?: { full_name?: string } }).stock_confirmer?.full_name && (
+                          <span className="flex items-center gap-1 text-emerald-700">
+                            Konfirmuar nga: {(n as { stock_confirmer?: { full_name?: string } }).stock_confirmer?.full_name}
+                          </span>
+                        )}
                         {n.depot?.name && (
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />

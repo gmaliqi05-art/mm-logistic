@@ -24,6 +24,7 @@ import LoginPage from './pages/LoginPage';
 import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
 import RegisterPage from './pages/RegisterPage';
 const LegalPage = lazy(() => import('./pages/LegalPage'));
+const NoAccessPage = lazy(() => import('./pages/NoAccessPage'));
 const FeaturesPage = lazy(() => import('./pages/FeaturesPage'));
 const SecuritySettings = lazy(() => import('./pages/SecuritySettings'));
 const AccountDeletion = lazy(() => import('./pages/AccountDeletion'));
@@ -120,6 +121,7 @@ const DepotReceiving = lazy(() => import('./pages/depot/Receiving'));
 const DepotSorting = lazy(() => import('./pages/depot/Sorting'));
 const DepotRepairs = lazy(() => import('./pages/depot/Repairs'));
 const DepotRepairWorkers = lazy(() => import('./pages/depot/RepairWorkers'));
+const DepotDamage = lazy(() => import('./pages/depot/Damage'));
 const WorkerRepairEntry = lazy(() => import('./pages/depot/WorkerRepairEntry'));
 const DepotDeliveryNotes = lazy(() => import('./pages/depot/DeliveryNotes'));
 const DepotChat = lazy(() => import('./pages/depot/Chat'));
@@ -195,12 +197,19 @@ function LoadingScreen() {
   );
 }
 
-function ProtectedRoute({ children, roles }: { children: ReactNode; roles?: string[] }) {
+function ProtectedRoute({ children, roles, workerCategories }: { children: ReactNode; roles?: string[]; workerCategories?: string[] }) {
   const { session, profile, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (!session || !profile) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(profile.role)) return <Navigate to="/login" replace />;
+  // depot_workers can be further partitioned by worker_category (depoist vs
+  // reparature). Reparature accounts exist only so the depoist can attribute
+  // their work — they should not see the depot dashboard.
+  if (workerCategories && profile.role === 'depot_worker'
+      && !workerCategories.includes(profile.worker_category ?? '')) {
+    return <Navigate to="/no-access" replace />;
+  }
 
   return <>{children}</>;
 }
@@ -212,6 +221,7 @@ function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/no-access" element={<NoAccessPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/sa-access" element={<SuperAdminLoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -339,7 +349,7 @@ function AppRoutes() {
         </Route>
 
         <Route path="/depot" element={
-          <ProtectedRoute roles={['depot_worker']}>
+          <ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}>
             <DepotLayout />
           </ProtectedRoute>
         }>
@@ -352,6 +362,7 @@ function AppRoutes() {
           <Route path="repairs" element={<DepotRepairs />} />
           <Route path="repair-workers" element={<DepotRepairWorkers />} />
           <Route path="repair-workers/:workerId" element={<WorkerRepairEntry />} />
+          <Route path="damage" element={<DepotDamage />} />
           <Route path="documents" element={<DepotDocuments />} />
           <Route path="reports" element={<DepotReports />} />
           <Route path="leave" element={<HRMyLeave />} />

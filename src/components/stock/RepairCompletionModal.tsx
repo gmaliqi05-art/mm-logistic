@@ -25,10 +25,17 @@ interface CategoryProduct {
   name: string;
 }
 
+interface ReparatureOption {
+  id: string;
+  full_name: string;
+}
+
 export default function RepairCompletionModal({ repairId, onClose, onApplied }: Props) {
   const [detail, setDetail] = useState<RepairDetail | null>(null);
   const [products, setProducts] = useState<CategoryProduct[]>([]);
+  const [reparatures, setReparatures] = useState<ReparatureOption[]>([]);
   const [targetProductId, setTargetProductId] = useState('');
+  const [reparatorId, setReparatorId] = useState('');
   const [repairedQty, setRepairedQty] = useState<string>('');
   const [scrappedQty, setScrappedQty] = useState<string>('0');
   const [loading, setLoading] = useState(true);
@@ -65,6 +72,18 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
           if (prods.length > 0) setTargetProductId(prods[0].id);
         }
       }
+      // Load reparature workers so the depoist can credit who did the work.
+      const { data: workers } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('company_id', data.company_id)
+        .eq('role', 'depot_worker')
+        .eq('worker_category', 'reparature')
+        .eq('is_active', true)
+        .order('full_name');
+      if (!cancelled && workers) {
+        setReparatures(workers as ReparatureOption[]);
+      }
       setLoading(false);
     }
     void load();
@@ -92,12 +111,17 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
       setError('Zgjidhni produktin e synuar per paletat e riparuara');
       return;
     }
+    if (!reparatorId) {
+      setError('Zgjidhni reparatorin qe e ka kryer punen');
+      return;
+    }
     setSaving(true);
     const { error: rpcErr } = await supabase.rpc('apply_repair_completion', {
       p_repair_id: detail.id,
       p_repaired_qty: r,
       p_scrapped_qty: s,
       p_target_category_product_id: targetProductId || null,
+      p_worker_id: reparatorId,
     });
     setSaving(false);
     if (rpcErr) {
@@ -163,6 +187,22 @@ export default function RepairCompletionModal({ repairId, onClose, onApplied }: 
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-[11px] uppercase tracking-wide text-slate-500">Reparatori qe e ka kryer punen</span>
+              <select
+                value={reparatorId}
+                onChange={(e) => setReparatorId(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="">Zgjidhni reparatorin...</option>
+                {reparatures.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.full_name}
                   </option>
                 ))}
               </select>

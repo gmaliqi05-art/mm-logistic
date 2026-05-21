@@ -228,6 +228,7 @@ export const en: typeof sq = {
     sorting: 'Sorting',
     repairs: 'Repairs',
     repairWorkers: 'Repair Process',
+    damage: 'Damage Reports',
     companies: 'Companies',
     plans: 'Plans',
     revenue: 'Revenue',

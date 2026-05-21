@@ -35,6 +35,8 @@ interface BatchWithItems extends PalletSortingBatch {
   items: PalletSortingItem[];
   reference_number_snapshot?: string | null;
   report_sent_at?: string | null;
+  creator?: { full_name?: string | null } | null;
+  completer?: { full_name?: string | null } | null;
 }
 
 interface ItemInput {
@@ -103,7 +105,11 @@ export default function DepotSorting() {
 
       const batchQuery = supabase
         .from('pallet_sorting_batches')
-        .select('*, items:pallet_sorting_items(*)')
+        .select(`*,
+          items:pallet_sorting_items(*),
+          creator:profiles!pallet_sorting_batches_created_by_fkey(full_name),
+          completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name)
+        `)
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
         .limit(30);
@@ -516,6 +522,14 @@ export default function DepotSorting() {
                         {b.reference_number_snapshot && <span className="text-teal-600 font-medium">{b.reference_number_snapshot} · </span>}
                         {new Date(b.created_at).toLocaleDateString()} {new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
+                      {(b.creator?.full_name || b.completer?.full_name) && (
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          {b.creator?.full_name && <>Krijuar nga: <span className="font-medium">{b.creator.full_name}</span></>}
+                          {b.completer?.full_name && b.completer.full_name !== b.creator?.full_name && (
+                            <> · Mbaruar nga: <span className="font-medium">{b.completer.full_name}</span></>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </div>
