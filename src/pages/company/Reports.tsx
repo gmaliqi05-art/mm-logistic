@@ -22,7 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 
-type TabKey = 'summary' | 'stock' | 'movements' | 'sorting_repair' | 'partners' | 'financials';
+type TabKey = 'summary' | 'stock' | 'movements' | 'sorting_repair' | 'damage' | 'partners' | 'financials';
 
 interface StockRow {
   company_id: string;
@@ -49,6 +49,11 @@ interface MovementRow {
   flow_role: string | null;
   delivery_note_id: string | null;
   movement_date: string;
+  performed_by?: string | null;
+  performed_by_full_name?: string | null;
+  source_partner?: string | null;
+  source_contact_id?: string | null;
+  source_contact_name?: string | null;
 }
 
 interface PartnerRow {
@@ -57,6 +62,17 @@ interface PartnerRow {
   in_qty: number;
   out_qty: number;
   balance: number;
+}
+
+interface DamageReportRow {
+  id: string;
+  depot_id: string;
+  created_at: string;
+  quantity: number;
+  product_name: string | null;
+  condition_from: string;
+  reason: string | null;
+  reporter_full_name: string | null;
 }
 
 interface ScannedDocRow {
@@ -107,6 +123,7 @@ export default function CompanyReports() {
   const [stockRows, setStockRows] = useState<StockRow[]>([]);
   const [movementRows, setMovementRows] = useState<MovementRow[]>([]);
   const [partnerRows, setPartnerRows] = useState<PartnerRow[]>([]);
+  const [damageReports, setDamageReports] = useState<DamageReportRow[]>([]);
   const [scannedRows, setScannedRows] = useState<ScannedDocRow[]>([]);
   const [depotCount, setDepotCount] = useState(0);
   const [driverCount, setDriverCount] = useState(0);
@@ -133,7 +150,7 @@ export default function CompanyReports() {
       const fromIso = new Date(dateFrom + 'T00:00:00').toISOString();
       const toIso = new Date(dateTo + 'T23:59:59').toISOString();
 
-      const [stockRes, movRes, depotsRes, driversRes, notesRes, flowsRes, contactsRes] = await Promise.all([
+      const [stockRes, movRes, depotsRes, driversRes, notesRes, flowsRes, contactsRes, damRes] = await Promise.all([
         supabase
           .from('v_company_stock_breakdown')
           .select('*')
@@ -160,6 +177,14 @@ export default function CompanyReports() {
           .from('acc_contacts')
           .select('id, name')
           .eq('company_id', companyId),
+        supabase
+          .from('stock_damage_reports')
+          .select('id, depot_id, created_at, quantity, product_name, condition_from, reason, reporter:profiles!stock_damage_reports_reported_by_fkey(full_name)')
+          .eq('company_id', companyId)
+          .gte('created_at', fromIso)
+          .lte('created_at', toIso)
+          .order('created_at', { ascending: false })
+          .limit(500),
       ]);
 
       if (stockRes.error) throw stockRes.error;
@@ -197,6 +222,17 @@ export default function CompanyReports() {
         partnerAgg.set(f.partner_contact_id, cur);
       }
       setPartnerRows(Array.from(partnerAgg.values()).sort((a, b) => (b.in_qty + b.out_qty) - (a.in_qty + a.out_qty)));
+
+      setDamageReports(((damRes.data as any[]) ?? []).map((r) => ({
+        id: r.id,
+        depot_id: r.depot_id,
+        created_at: r.created_at,
+        quantity: r.quantity,
+        product_name: r.product_name,
+        condition_from: r.condition_from,
+        reason: r.reason,
+        reporter_full_name: r.reporter?.full_name ?? null,
+      })));
 
       const { data: scannedNotes } = await supabase
         .from('delivery_notes')
@@ -297,6 +333,7 @@ export default function CompanyReports() {
     { key: 'stock', label: 'Stoku', icon: Package },
     { key: 'movements', label: 'Levizjet', icon: TrendingUp },
     { key: 'sorting_repair', label: 'Sortim & Riparim', icon: Wrench },
+    { key: 'damage', label: 'Defekt', icon: AlertTriangle },
     { key: 'partners', label: 'Partneret', icon: Users },
     { key: 'financials', label: 'Skanimet AI', icon: Sparkles },
   ];
@@ -540,6 +577,8 @@ export default function CompanyReports() {
                     <th className="text-left px-3 py-2">Tipi</th>
                     <th className="text-left px-3 py-2">Gjendja</th>
                     <th className="text-left px-3 py-2">Depoja</th>
+                    <th className="text-left px-3 py-2">Punetori</th>
+                    <th className="text-left px-3 py-2">Nga / Per</th>
                     <th className="text-right px-3 py-2">Sasi</th>
                     <th className="text-left px-3 py-2">Flow</th>
                   </tr>
@@ -554,6 +593,13 @@ export default function CompanyReports() {
                       <td className="px-3 py-2 text-gray-700">{m.movement_type}</td>
                       <td className="px-3 py-2 text-gray-700">{conditionLabel(m.condition)}</td>
                       <td className="px-3 py-2 text-gray-700">{depots.find(d => d.id === m.depot_id)?.name ?? '—'}</td>
+                      <td className="px-3 py-2 text-gray-700">{m.performed_by_full_name ?? '—'}</td>
+                      <td className="px-3 py-2 text-gray-700">
+                        {m.source_contact_name ?? m.source_partner ?? '—'}
+                        {m.source_contact_id && (
+                          <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" title="Lidhur me kontakt" />
+                        )}
+                      </td>
                       <td className={`px-3 py-2 text-right font-semibold ${m.quantity_delta < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                         {m.quantity_delta > 0 ? '+' : ''}{m.quantity_delta}
                       </td>
@@ -583,6 +629,76 @@ export default function CompanyReports() {
           </Card>
           <Card title="Riparimi" icon={Wrench}>
             <SortingOrRepairTable rows={filteredMovements.filter(m => m.source_type === 'repair')} depots={depots} />
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'damage' && (
+        <div className="space-y-6">
+          <Card title="Stoku aktual i demtuar" icon={AlertTriangle}>
+            {stockRows.filter((s) => s.condition === 'damaged' && (s.quantity ?? 0) > 0).length === 0 ? (
+              <EmptyState icon={AlertTriangle} label="Asnje palete e demtuar ne stok." />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
+                    <tr>
+                      <th className="text-left px-3 py-2">Depoja</th>
+                      <th className="text-left px-3 py-2">Kategoria</th>
+                      <th className="text-left px-3 py-2">Produkti</th>
+                      <th className="text-right px-3 py-2">Sasi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {stockRows
+                      .filter((s) => s.condition === 'damaged' && (s.quantity ?? 0) > 0)
+                      .map((s, i) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-gray-700">{depots.find((d) => d.id === s.depot_id)?.name ?? '—'}</td>
+                          <td className="px-3 py-2 text-gray-700">{s.category_name ?? '—'}</td>
+                          <td className="px-3 py-2 text-gray-700">{s.product_name ?? '—'}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-rose-600">{s.quantity}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+
+          <Card title="Historiku i raportimit te demtimeve" icon={AlertTriangle} hint="Cdo demtim i regjistruar nga depoisti — kush, sa, kur dhe pse.">
+            {damageReports.length === 0 ? (
+              <EmptyState icon={AlertTriangle} label="Asnje demtim i raportuar ne kete periudhe." />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
+                    <tr>
+                      <th className="text-left px-3 py-2">Data</th>
+                      <th className="text-left px-3 py-2">Depoja</th>
+                      <th className="text-left px-3 py-2">Produkti</th>
+                      <th className="text-left px-3 py-2">Gjendja burim</th>
+                      <th className="text-right px-3 py-2">Sasi</th>
+                      <th className="text-left px-3 py-2">Punetori</th>
+                      <th className="text-left px-3 py-2">Arsyeja</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {damageReports.map((r) => (
+                      <tr key={r.id} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+                        <td className="px-3 py-2 text-gray-700">{depots.find((d) => d.id === r.depot_id)?.name ?? '—'}</td>
+                        <td className="px-3 py-2 text-gray-700">{r.product_name ?? '—'}</td>
+                        <td className="px-3 py-2 text-gray-700">{r.condition_from}</td>
+                        <td className="px-3 py-2 text-right font-semibold text-rose-600">{r.quantity}</td>
+                        <td className="px-3 py-2 text-gray-700">{r.reporter_full_name ?? '—'}</td>
+                        <td className="px-3 py-2 text-gray-600">{r.reason ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
         </div>
       )}

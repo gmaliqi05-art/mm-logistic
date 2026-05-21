@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import SmartDocScanner, { SmartScanResult } from '../../components/scanner/SmartDocScanner';
 import PalletScanner from '../../components/scanner/PalletScanner';
+import ContactAutocomplete from '../../components/depot/ContactAutocomplete';
 import type { StockMovement, ProductCategory } from '../../types';
 import { epalClassRank } from '../../utils/productSort';
 
@@ -51,6 +52,7 @@ export default function DepotReceiving() {
   const [receivingRows, setReceivingRows] = useState<ItemRow[]>([createRow()]);
   const [receivingNotes, setReceivingNotes] = useState('');
   const [sourcePartner, setSourcePartner] = useState('');
+  const [sourceContactId, setSourceContactId] = useState<string | null>(null);
 
   const [showScanner, setShowScanner] = useState(false);
   const [showPalletScanner, setShowPalletScanner] = useState(false);
@@ -129,6 +131,7 @@ export default function DepotReceiving() {
     setReceivingRows(finalRows);
     setReceivingNotes(refNote);
     setSourcePartner(partnerName);
+    setSourceContactId(null);
 
     const unmatched = (r.extracted.line_items || []).length - rows.length;
     const parts = [t('common.scanner.depotScan.aiFilled'), `${rows.length} ${t('common.scanner.depotScan.itemsRecognized')}`];
@@ -251,6 +254,7 @@ export default function DepotReceiving() {
         notes: receivingNotes,
         performed_by: profile!.id,
         source_partner: sourcePartner.trim() || '',
+        source_contact_id: sourceContactId,
       }));
 
       const { error: movErr } = await supabase.from('stock_movements').insert(movements);
@@ -289,6 +293,7 @@ export default function DepotReceiving() {
       setReceivingRows([createRow()]);
       setReceivingNotes('');
       setSourcePartner('');
+      setSourceContactId(null);
       setSuccess('Pranimi u regjistrua me sukses');
       await fetchData();
     } catch (err: any) {
@@ -488,16 +493,16 @@ export default function DepotReceiving() {
                 {t('depot.receiving.addItem')}
               </button>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nga kush? (Kompania/Personi)</label>
-                <input
-                  type="text"
-                  value={sourcePartner}
-                  onChange={(e) => setSourcePartner(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                  placeholder="Emri i kompanise ose personit qe ka sjelle paletat..."
-                />
-              </div>
+              <ContactAutocomplete
+                label="Nga kush? (Kompania/Personi)"
+                placeholder="Emri i kompanise ose personit qe ka sjelle paletat..."
+                contactId={sourceContactId}
+                partnerText={sourcePartner}
+                onChange={({ contactId, partnerText }) => {
+                  setSourceContactId(contactId);
+                  setSourcePartner(partnerText);
+                }}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.notes')}</label>

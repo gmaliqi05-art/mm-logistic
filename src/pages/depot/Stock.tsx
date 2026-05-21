@@ -22,6 +22,7 @@ import { useTranslation } from '../../i18n';
 import type { StockMovement, ProductCategory } from '../../types';
 import { compareCategoriesByPriority } from '../../utils/productSort';
 import PalletScanner from '../../components/scanner/PalletScanner';
+import ContactAutocomplete from '../../components/depot/ContactAutocomplete';
 
 interface StockValueRow {
   company_id: string;
@@ -86,6 +87,8 @@ export default function DepotStock() {
   const [formConditionBefore, setFormConditionBefore] = useState('damaged');
   const [formConditionAfter, setFormConditionAfter] = useState('good');
   const [formNotes, setFormNotes] = useState('');
+  const [formSourcePartner, setFormSourcePartner] = useState('');
+  const [formSourceContactId, setFormSourceContactId] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
 
   const [filterCondition, setFilterCondition] = useState<string>('');
@@ -231,6 +234,8 @@ export default function DepotStock() {
         condition_after: formConditionAfter,
         notes: formNotes,
         performed_by: profile!.id,
+        source_partner: formSourcePartner.trim() || '',
+        source_contact_id: formSourceContactId,
       });
       if (movErr) throw movErr;
 
@@ -318,6 +323,8 @@ export default function DepotStock() {
       setFormConditionBefore('damaged');
       setFormConditionAfter('good');
       setFormNotes('');
+      setFormSourcePartner('');
+      setFormSourceContactId(null);
       setShowForm(false);
       await fetchAll();
     } catch (err) {
@@ -652,6 +659,19 @@ export default function DepotStock() {
                     <option value="damaged">Defekt</option>
                   </select>
                 </div>
+              )}
+
+              {(formType === 'entry' || formType === 'exit') && (
+                <ContactAutocomplete
+                  label={formType === 'entry' ? 'Nga kush?' : 'Per kend?'}
+                  placeholder={formType === 'entry' ? 'Kompania/Personi qe ka sjelle...' : 'Kompania/Personi qe i merr...'}
+                  contactId={formSourceContactId}
+                  partnerText={formSourcePartner}
+                  onChange={({ contactId, partnerText }) => {
+                    setFormSourceContactId(contactId);
+                    setFormSourcePartner(partnerText);
+                  }}
+                />
               )}
 
               <div>

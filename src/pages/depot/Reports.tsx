@@ -57,6 +57,16 @@ interface DamagedRow {
   quantity: number;
 }
 
+interface DamageHistoryRow {
+  id: string;
+  created_at: string;
+  quantity: number;
+  product_name: string | null;
+  condition_from: string;
+  reason: string | null;
+  reporter_full_name: string | null;
+}
+
 function isoDays(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
@@ -99,6 +109,7 @@ export default function DepotReports() {
   const [repair, setRepair] = useState<RepairRow[]>([]);
   const [sorting, setSorting] = useState<SortingRow[]>([]);
   const [damaged, setDamaged] = useState<DamagedRow[]>([]);
+  const [damageHistory, setDamageHistory] = useState<DamageHistoryRow[]>([]);
 
   useEffect(() => {
     if (!profile?.depot_id || !profile?.company_id) return;
@@ -113,7 +124,7 @@ export default function DepotReports() {
       const companyId = profile!.company_id!;
       const since = isoDays(days);
 
-      const [flowRes, flowLookup, prodLookup, performerLookup, repRes, sortRes, damRes] = await Promise.all([
+      const [flowRes, flowLookup, prodLookup, performerLookup, repRes, sortRes, damRes, damHistRes] = await Promise.all([
         supabase
           .from('stock_movements')
           .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner')
@@ -146,6 +157,14 @@ export default function DepotReports() {
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .eq('condition', 'damaged'),
+        supabase
+          .from('stock_damage_reports')
+          .select('id, created_at, quantity, product_name, condition_from, reason, reporter:profiles!stock_damage_reports_reported_by_fkey(full_name)')
+          .eq('company_id', companyId)
+          .eq('depot_id', depotId)
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(200),
       ]);
 
       if (flowRes.error) throw flowRes.error;
@@ -175,6 +194,15 @@ export default function DepotReports() {
       setRepair(repRes.data ?? []);
       setSorting(sortRes.data ?? []);
       setDamaged((damRes.data ?? []).filter((r: DamagedRow) => (r.quantity ?? 0) > 0));
+      setDamageHistory(((damHistRes.data as any[]) ?? []).map((r) => ({
+        id: r.id,
+        created_at: r.created_at,
+        quantity: r.quantity,
+        product_name: r.product_name,
+        condition_from: r.condition_from,
+        reason: r.reason,
+        reporter_full_name: r.reporter?.full_name ?? null,
+      })));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -369,25 +397,51 @@ export default function DepotReports() {
           )}
 
           {tab === 'damaged' && (
-            <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-slate-900 text-sm">Paleta te demtuara ne radhe</h2>
-                <button
-                  onClick={() => downloadCsv('depot-damaged.csv', toCsv(damaged as unknown as Record<string, unknown>[]))}
-                  className="inline-flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-900"
-                >
-                  <Download className="w-3.5 h-3.5" /> CSV
-                </button>
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold text-slate-900 text-sm">Paleta te demtuara ne radhe</h2>
+                  <button
+                    onClick={() => downloadCsv('depot-damaged.csv', toCsv(damaged as unknown as Record<string, unknown>[]))}
+                    className="inline-flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-900"
+                  >
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </button>
+                </div>
+                <Table
+                  headers={['Kategoria', 'Produkti', 'Sasi']}
+                  rows={damaged.map((r) => [
+                    r.category_name ?? '—',
+                    r.product_name ?? '—',
+                    r.quantity,
+                  ])}
+                  empty="Asnje palete e demtuar"
+                />
               </div>
-              <Table
-                headers={['Kategoria', 'Produkti', 'Sasi']}
-                rows={damaged.map((r) => [
-                  r.category_name ?? '—',
-                  r.product_name ?? '—',
-                  r.quantity,
-                ])}
-                empty="Asnje palete e demtuar"
-              />
+
+              <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold text-slate-900 text-sm">Historiku i raportimit te demtimeve</h2>
+                  <button
+                    onClick={() => downloadCsv('depot-damage-history.csv', toCsv(damageHistory as unknown as Record<string, unknown>[]))}
+                    className="inline-flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-900"
+                  >
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </button>
+                </div>
+                <Table
+                  headers={['Data', 'Produkti', 'Gjendja burim', 'Sasi', 'Punetori', 'Arsyeja']}
+                  rows={damageHistory.map((r) => [
+                    fmtDate(r.created_at),
+                    r.product_name ?? '—',
+                    r.condition_from,
+                    r.quantity,
+                    r.reporter_full_name ?? '—',
+                    r.reason ?? '—',
+                  ])}
+                  empty="Asnje raport demtimi ne kete periudhe"
+                />
+              </div>
             </div>
           )}
         </>
