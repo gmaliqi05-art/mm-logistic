@@ -546,19 +546,29 @@ export default function Invoices() {
       if (err) throw err;
 
       if (newStatus === 'paid') {
+        // Convert to EUR before persisting so the dashboard's revenue
+        // tile can sum cross-currency invoices without lying. Falls
+        // back to 1 if the invoice was already in EUR or has no rate.
+        const fx = Number(
+          (invoice as { exchange_rate_to_eur?: number }).exchange_rate_to_eur ??
+          (invoice as { exchange_rate?: number }).exchange_rate ?? 1
+        );
+        const amountEur = Number(invoice.total ?? 0) * (fx > 0 ? fx : 1);
         await supabase.from('acc_transactions').insert({
           company_id: profile!.company_id!,
           transaction_type: 'income',
           contact_id: invoice.contact_id,
           invoice_id: invoice.id,
           bank_account_id: invoice.bank_account_id,
-          amount: invoice.total,
-          currency: invoice.currency,
+          amount: amountEur,
+          currency: 'EUR',
           description: `Pagese per faturen ${invoice.invoice_number}`,
           transaction_date: new Date().toISOString().slice(0, 10),
           payment_method: 'bank_transfer',
           reference_number: invoice.invoice_number,
-          notes: '',
+          notes: invoice.currency && invoice.currency !== 'EUR'
+            ? `Origjinali: ${invoice.total} ${invoice.currency} @ ${fx}`
+            : '',
           created_by: session?.user.id || null,
         });
       }

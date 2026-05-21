@@ -201,12 +201,14 @@ export default function AccountingDashboard() {
           .not('status', 'in', '(draft,cancelled)')
           .gte('invoice_date', monthStart)
           .lte('invoice_date', monthEnd),
-        // Accrual purchases: total of supplier invoices received this month
+        // Accrual purchases: total of supplier invoices received this month.
+        // Exclude `awaiting_document` (auto-stubs with total=0) and drafts —
+        // they aren't real purchases yet.
         supabase
           .from('acc_purchases')
           .select('total')
           .eq('company_id', companyId)
-          .neq('status', 'cancelled')
+          .not('status', 'in', '("draft","awaiting_document","cancelled")')
           .gte('purchase_date', monthStart)
           .lte('purchase_date', monthEnd),
         // Open accounts receivable that are NOT overdue yet

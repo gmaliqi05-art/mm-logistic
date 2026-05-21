@@ -124,7 +124,10 @@ function DepoistDashboard() {
           .select('id', { count: 'exact', head: true })
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
-          .is('reported_at', null),
+          // "Pending" = case opened by sorting but not yet credited to
+          // any reparature. After PR #19 the worker_id is NULL exactly
+          // in that state.
+          .is('worker_id', null),
       ]);
 
       if (stockRes.error) throw stockRes.error;

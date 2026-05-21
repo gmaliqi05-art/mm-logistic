@@ -187,15 +187,29 @@ Deno.serve(async (req: Request) => {
 
     const result = await resp.json().catch(() => ({}));
 
-    // Update invoice status
-    await supabase
-      .from("acc_invoices")
-      .update({
-        sent_at: new Date().toISOString(),
-        email_recipients: recipients,
-        status: "sent",
-      })
-      .eq("id", invoice_id);
+    // Only mark the invoice as sent when delivery actually succeeded.
+    // A bounced or queued-failed SMTP response would otherwise flip the
+    // status to 'sent' and let the customer's missing invoice slip by
+    // unnoticed.
+    if (resp.ok) {
+      await supabase
+        .from("acc_invoices")
+        .update({
+          sent_at: new Date().toISOString(),
+          email_recipients: recipients,
+          status: "sent",
+        })
+        .eq("id", invoice_id);
+    } else {
+      // Record the attempt + recipients for audit, but keep the draft
+      // status so the operator can retry.
+      await supabase
+        .from("acc_invoices")
+        .update({
+          email_recipients: recipients,
+        })
+        .eq("id", invoice_id);
+    }
 
     return new Response(
       JSON.stringify({

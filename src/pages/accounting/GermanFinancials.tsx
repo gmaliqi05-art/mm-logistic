@@ -432,7 +432,7 @@ export default function GermanFinancials() {
       if (activeTab === 'afa') {
         const { data: assets } = await supabase
           .from('acc_fixed_assets')
-          .select('name, acquisition_cost, useful_life_years, accumulated_depreciation, book_value, acquisition_date')
+          .select('name, acquisition_cost, useful_life_years, accumulated_depreciation, current_book_value, acquisition_date')
           .eq('company_id', companyId)
           .order('acquisition_date', { ascending: false });
 
@@ -442,7 +442,7 @@ export default function GermanFinancials() {
           years: Number(a.useful_life_years || 1),
           annual: Number(a.acquisition_cost || 0) / Math.max(Number(a.useful_life_years || 1), 1),
           accumulated: Number(a.accumulated_depreciation || 0),
-          book: Number(a.book_value || 0),
+          book: Number(a.current_book_value || 0),
           acquired: a.acquisition_date,
         })));
       }
