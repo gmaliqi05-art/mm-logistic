@@ -413,7 +413,6 @@ export async function buildMultiPagePdf(blobs: Blob[]): Promise<Blob> {
     push(p.buf);
     pushStr('\nendstream');
     pushStr('\nendobj\n');
-    objPositions[imgId] = objPositions[imgId];
 
     const content = `q\n${pageW} 0 0 ${pageH} 0 0 cm\n/Im${i} Do\nQ\n`;
     writeObj(

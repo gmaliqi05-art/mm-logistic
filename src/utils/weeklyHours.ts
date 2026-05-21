@@ -33,17 +33,17 @@ export const WEEKLY_LIMIT_SOFT = 48;
 /** Returns the ISO date (YYYY-MM-DD) of the Monday of the given date's week. */
 export function isoWeekStart(date: Date): string {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0 = Sun
+  d.setUTCHours(0, 0, 0, 0);
+  const day = d.getUTCDay(); // 0 = Sun
   const diff = (day === 0 ? -6 : 1 - day);
-  d.setDate(d.getDate() + diff);
+  d.setUTCDate(d.getUTCDate() + diff);
   return d.toISOString().slice(0, 10);
 }
 
 /** Returns the ISO date (YYYY-MM-DD) of the Sunday of the given date's week. */
 export function isoWeekEnd(date: Date): string {
-  const start = new Date(isoWeekStart(date));
-  start.setDate(start.getDate() + 6);
+  const start = new Date(`${isoWeekStart(date)}T00:00:00Z`);
+  start.setUTCDate(start.getUTCDate() + 6);
   return start.toISOString().slice(0, 10);
 }
 
