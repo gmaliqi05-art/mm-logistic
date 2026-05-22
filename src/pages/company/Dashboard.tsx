@@ -215,6 +215,10 @@ export default function CompanyDashboard() {
       setError(null);
       const companyId = profile!.company_id!;
       const now = new Date();
+      // "Overdue" means the scheduled day is already in the past. A note
+      // scheduled for today is not overdue until the next day starts.
+      const overdueCutoff = new Date(now);
+      overdueCutoff.setHours(0, 0, 0, 0);
       const todayIso = now.toISOString().split('T')[0];
       const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
       const fromDate = new Date(now);
@@ -272,7 +276,7 @@ export default function CompanyDashboard() {
           .select('id', { count: 'exact', head: true })
           .eq('company_id', companyId)
           .in('status', ['sent', 'in_transit', 'pending_company_review', 'pending_stock_confirmation', 'delivered'])
-          .or(`and(type.eq.delivery,scheduled_delivery_at.lt.${now.toISOString()}),and(type.eq.pickup,scheduled_pickup_at.lt.${now.toISOString()})`),
+          .or(`and(type.eq.delivery,scheduled_delivery_at.lt.${overdueCutoff.toISOString()}),and(type.eq.pickup,scheduled_pickup_at.lt.${overdueCutoff.toISOString()})`),
       ]);
 
       const stocks = stockRes.data ?? [];

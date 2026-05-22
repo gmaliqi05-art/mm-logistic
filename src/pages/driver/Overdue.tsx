@@ -30,6 +30,8 @@ interface OverdueRow {
   pickup_address: string | null;
   scheduled_delivery_at: string | null;
   scheduled_pickup_at: string | null;
+  scheduled_delivery_time_set: boolean | null;
+  scheduled_pickup_time_set: boolean | null;
   reference_number: string | null;
 }
 
@@ -58,7 +60,15 @@ function scheduledOf(n: OverdueRow): Date | null {
 function daysOverdue(n: OverdueRow): number {
   const d = scheduledOf(n);
   if (!d) return 0;
-  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+  // Count whole days between the scheduled day and today (both at 00:00
+  // local). Same-day deliveries return 0 — they aren't late yet — and
+  // are filtered out of the overdue list by the query cutoff.
+  const scheduledStart = new Date(d);
+  scheduledStart.setHours(0, 0, 0, 0);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const diffMs = todayStart.getTime() - scheduledStart.getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 export default function DriverOverdue() {
@@ -82,16 +92,21 @@ export default function DriverOverdue() {
     try {
       setLoading(true);
       setError(null);
-      const nowIso = new Date().toISOString();
+      // Cutoff = start of today (local 00:00). A note scheduled for today
+      // is not overdue until the next day starts; only yesterday-or-earlier
+      // shows up here.
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const cutoffIso = todayStart.toISOString();
       const { data, error: qErr } = await supabase
         .from('delivery_notes')
         .select(
-          'id, note_number, type, status, partner_name, delivery_address, pickup_address, scheduled_delivery_at, scheduled_pickup_at, reference_number'
+          'id, note_number, type, status, partner_name, delivery_address, pickup_address, scheduled_delivery_at, scheduled_pickup_at, scheduled_delivery_time_set, scheduled_pickup_time_set, reference_number'
         )
         .eq('assigned_driver_id', profile.id)
         .in('status', OVERDUE_STATUSES)
         .or(
-          `and(type.eq.delivery,scheduled_delivery_at.lt.${nowIso}),and(type.eq.pickup,scheduled_pickup_at.lt.${nowIso})`
+          `and(type.eq.delivery,scheduled_delivery_at.lt.${cutoffIso}),and(type.eq.pickup,scheduled_pickup_at.lt.${cutoffIso})`
         )
         .order('scheduled_delivery_at', { ascending: true, nullsFirst: false });
       if (qErr) throw qErr;
@@ -272,7 +287,9 @@ export default function DriverOverdue() {
                         {sched && (
                           <span className="inline-flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {sched.toLocaleString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {(n.type === 'pickup' ? n.scheduled_pickup_time_set : n.scheduled_delivery_time_set)
+                              ? sched.toLocaleString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                              : sched.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </span>
                         )}
                         {n.reference_number && (
