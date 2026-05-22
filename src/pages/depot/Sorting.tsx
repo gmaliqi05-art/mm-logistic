@@ -11,14 +11,13 @@ import {
   Package,
   Trash2,
   ArrowRight,
-  ScanLine,
   ChevronDown,
   ChevronRight,
   Wrench,
   Minus,
   Send,
+  Truck,
 } from 'lucide-react';
-import PalletScanner from '../../components/scanner/PalletScanner';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -31,12 +30,21 @@ interface CategoryProduct {
   name: string;
 }
 
+interface DeliveryNoteSource {
+  id: string;
+  partner_name?: string | null;
+  counterparty_name?: string | null;
+  delivery_date?: string | null;
+  type?: string | null;
+}
+
 interface BatchWithItems extends PalletSortingBatch {
   items: PalletSortingItem[];
   reference_number_snapshot?: string | null;
   report_sent_at?: string | null;
   creator?: { full_name?: string | null } | null;
   completer?: { full_name?: string | null } | null;
+  source_delivery_note?: DeliveryNoteSource | null;
 }
 
 interface ItemInput {
@@ -62,6 +70,34 @@ function primaryRank(name: string): number {
   return 99;
 }
 
+type Breakdown = { a: number; b: number; c: number; defekt: number; other: number };
+
+function computeBreakdown(
+  items: PalletSortingItem[],
+  productNameById: Map<string, string>,
+): Breakdown {
+  const out: Breakdown = { a: 0, b: 0, c: 0, defekt: 0, other: 0 };
+  for (const it of items) {
+    const name = productNameById.get(it.category_product_id) || '';
+    if (it.condition === 'damaged' || isDefectProduct(name)) {
+      out.defekt += it.quantity;
+      continue;
+    }
+    const rank = primaryRank(name);
+    if (rank === 0) out.a += it.quantity;
+    else if (rank === 1) out.b += it.quantity;
+    else if (rank === 2) out.c += it.quantity;
+    else out.other += it.quantity;
+  }
+  return out;
+}
+
+function partnerLabel(b: { source_delivery_note?: DeliveryNoteSource | null }): string | null {
+  const note = b.source_delivery_note;
+  if (!note) return null;
+  return note.partner_name || note.counterparty_name || null;
+}
+
 export default function DepotSorting() {
   const { profile } = useAuth();
   const { t } = useTranslation();
@@ -74,12 +110,6 @@ export default function DepotSorting() {
   const [products, setProducts] = useState<CategoryProduct[]>([]);
   const [batches, setBatches] = useState<BatchWithItems[]>([]);
   const [submitting, setSubmitting] = useState(false);
-
-  const [showNewBatch, setShowNewBatch] = useState(false);
-  const [showPalletScanner, setShowPalletScanner] = useState(false);
-  const [newCategoryId, setNewCategoryId] = useState('');
-  const [newTotalReceived, setNewTotalReceived] = useState('');
-  const [newNotes, setNewNotes] = useState('');
 
   const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
   const [itemInputs, setItemInputs] = useState<ItemInput[]>([]);
@@ -108,7 +138,10 @@ export default function DepotSorting() {
         .select(`*,
           items:pallet_sorting_items(*),
           creator:profiles!pallet_sorting_batches_created_by_fkey(full_name),
-          completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name)
+          completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name),
+          source_delivery_note:delivery_notes!pallet_sorting_batches_source_delivery_note_id_fkey(
+            id, partner_name, counterparty_name, delivery_date, type
+          )
         `)
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
@@ -152,6 +185,12 @@ export default function DepotSorting() {
     return m;
   }, [products]);
 
+  const productNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of products) m.set(p.id, p.name);
+    return m;
+  }, [products]);
+
   const openBatch = (batch: BatchWithItems) => {
     const cat = categories.find((c) => c.id === batch.category_id);
     const catProducts = (productsByCat.get(batch.category_id) ?? []).slice();
@@ -191,43 +230,6 @@ export default function DepotSorting() {
     setItemInputs([]);
     setEditTotal('');
   };
-
-  async function handleCreateBatch() {
-    if (!newCategoryId) return;
-    const total = Math.max(0, parseInt(newTotalReceived || '0', 10) || 0);
-    try {
-      setSubmitting(true);
-      setError(null);
-      const companyId = profile!.company_id!;
-      const depotId = profile!.depot_id!;
-
-      const { data, error: insErr } = await supabase
-        .from('pallet_sorting_batches')
-        .insert({
-          company_id: companyId,
-          depot_id: depotId,
-          category_id: newCategoryId,
-          total_received: total,
-          notes: newNotes,
-          created_by: profile!.id,
-        })
-        .select('*, items:pallet_sorting_items(*)')
-        .maybeSingle();
-
-      if (insErr) throw insErr;
-
-      setShowNewBatch(false);
-      setNewCategoryId('');
-      setNewTotalReceived('');
-      setNewNotes('');
-      await fetchAll();
-      if (data) openBatch(data as BatchWithItems);
-    } catch (err: any) {
-      setError(err.message || t('common.errorSaving'));
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   async function persistItems(batchId: string) {
     const rows: Array<{ batch_id: string; category_product_id: string; quantity: number; condition: string }> = [];
@@ -385,33 +387,6 @@ export default function DepotSorting() {
     }
   }
 
-  function normalizeMatch(s: string) {
-    return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
-  }
-
-  function handlePalletScan(code: string) {
-    const key = normalizeMatch(code);
-    if (!key) return;
-    const prod = products.find((p) => normalizeMatch(p.name) === key || normalizeMatch(p.name).includes(key));
-    const cat = prod
-      ? categories.find((c) => c.id === prod.category_id)
-      : categories.find((c) => normalizeMatch(c.name) === key || normalizeMatch(c.name).includes(key));
-    if (!cat) {
-      setError(t('common.error') + ': ' + code);
-      return;
-    }
-    const existing = batches.find((b) => b.status === 'in_progress' && b.category_id === cat.id);
-    if (existing) {
-      setShowPalletScanner(false);
-      openBatch(existing);
-    } else {
-      setNewCategoryId(cat.id);
-      setNewTotalReceived('');
-      setNewNotes('');
-      setShowPalletScanner(false);
-      setShowNewBatch(true);
-    }
-  }
 
   const currentBatch = useMemo(
     () => batches.find((b) => b.id === activeBatchId) ?? null,
@@ -449,24 +424,6 @@ export default function DepotSorting() {
           </h1>
           <p className="text-gray-500 mt-1 text-sm">{t('depot.sorting.subtitle')}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowPalletScanner(true)}
-            disabled={categories.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ScanLine className="w-4 h-4" />
-            {t('scanner.title') || 'Skano'}
-          </button>
-          <button
-            onClick={() => setShowNewBatch(true)}
-            disabled={categories.length === 0}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-4 h-4" />
-            {t('depot.sorting.newBatch')}
-          </button>
-        </div>
       </div>
 
       {error && (
@@ -501,7 +458,11 @@ export default function DepotSorting() {
         </div>
         {inProgress.length === 0 ? (
           <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-400 text-sm">
-            {t('depot.sorting.noActiveBatches')}
+            <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+            <p className="font-medium text-gray-500">{t('depot.sorting.noActiveBatches')}</p>
+            <p className="mt-1 text-xs text-gray-400">
+              Sortimet shfaqen automatikisht kur regjistrohet nje fletmarrje me artikuj per sortim.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -509,6 +470,9 @@ export default function DepotSorting() {
               const cat = categories.find((c) => c.id === b.category_id);
               const sorted = b.items.reduce((s, i) => s + i.quantity, 0);
               const pct = b.total_received > 0 ? Math.min(100, Math.round((sorted / b.total_received) * 100)) : 0;
+              const partner = partnerLabel(b);
+              const deliveryDate = b.source_delivery_note?.delivery_date;
+              const bd = computeBreakdown(b.items, productNameById);
               return (
                 <button
                   key={b.id}
@@ -518,18 +482,18 @@ export default function DepotSorting() {
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 truncate">{cat?.name ?? '-'}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {b.reference_number_snapshot && <span className="text-teal-600 font-medium">{b.reference_number_snapshot} · </span>}
-                        {new Date(b.created_at).toLocaleDateString()} {new Date(b.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      {(b.creator?.full_name || b.completer?.full_name) && (
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          {b.creator?.full_name && <>Krijuar nga: <span className="font-medium">{b.creator.full_name}</span></>}
-                          {b.completer?.full_name && b.completer.full_name !== b.creator?.full_name && (
-                            <> · Mbaruar nga: <span className="font-medium">{b.completer.full_name}</span></>
-                          )}
+                      {partner && (
+                        <p className="text-xs text-slate-700 mt-0.5 flex items-center gap-1 truncate">
+                          <Truck className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                          <span className="truncate font-medium">{partner}</span>
                         </p>
                       )}
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {b.reference_number_snapshot && <span className="text-teal-600 font-medium">{b.reference_number_snapshot} · </span>}
+                        {deliveryDate
+                          ? new Date(deliveryDate).toLocaleDateString()
+                          : new Date(b.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   </div>
@@ -543,8 +507,25 @@ export default function DepotSorting() {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
+                  {sorted > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {bd.a > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">A: {bd.a}</span>}
+                      {bd.b > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">B: {bd.b}</span>}
+                      {bd.c > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-medium">C: {bd.c}</span>}
+                      {bd.defekt > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">Defekt: {bd.defekt}</span>}
+                      {bd.other > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Te tjera: {bd.other}</span>}
+                    </div>
+                  )}
+                  {(b.creator?.full_name || b.completer?.full_name) && (
+                    <p className="text-[11px] text-slate-500 mt-2">
+                      {b.creator?.full_name && <>Krijuar nga: <span className="font-medium">{b.creator.full_name}</span></>}
+                      {b.completer?.full_name && b.completer.full_name !== b.creator?.full_name && (
+                        <> · Mbaruar nga: <span className="font-medium">{b.completer.full_name}</span></>
+                      )}
+                    </p>
+                  )}
                   {b.notes && (
-                    <p className="text-xs text-gray-500 mt-2 line-clamp-1">{b.notes}</p>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">{b.notes}</p>
                   )}
                 </button>
               );
@@ -563,8 +544,10 @@ export default function DepotSorting() {
               {recent.map((b) => {
                 const cat = categories.find((c) => c.id === b.category_id);
                 const sorted = b.items.reduce((s, i) => s + i.quantity, 0);
+                const partner = partnerLabel(b);
+                const bd = computeBreakdown(b.items, productNameById);
                 return (
-                  <li key={b.id} className="flex items-center gap-3 px-4 py-3">
+                  <li key={b.id} className="flex items-start gap-3 px-4 py-3">
                     <div
                       className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         b.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
@@ -575,9 +558,20 @@ export default function DepotSorting() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{cat?.name ?? '-'}</p>
                       <p className="text-xs text-gray-500">
+                        {partner && <span className="font-medium text-slate-600">{partner} &middot; </span>}
+                        {b.reference_number_snapshot && <span className="text-teal-600">{b.reference_number_snapshot} &middot; </span>}
                         {sorted} / {b.total_received} &middot;{' '}
                         {new Date(b.completed_at || b.updated_at).toLocaleDateString()}
                       </p>
+                      {b.status === 'completed' && sorted > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {bd.a > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">A: {bd.a}</span>}
+                          {bd.b > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">B: {bd.b}</span>}
+                          {bd.c > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-medium">C: {bd.c}</span>}
+                          {bd.defekt > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">Defekt: {bd.defekt}</span>}
+                          {bd.other > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Te tjera: {bd.other}</span>}
+                        </div>
+                      )}
                     </div>
                     {b.status === 'completed' && !b.report_sent_at && (
                       <button
@@ -608,84 +602,6 @@ export default function DepotSorting() {
             </ul>
           </div>
         </section>
-      )}
-
-      {/* New Batch Modal */}
-      {showNewBatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowNewBatch(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">{t('depot.sorting.newBatch')}</h2>
-              <button
-                onClick={() => setShowNewBatch(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t('depot.sorting.category')}
-                </label>
-                <select
-                  value={newCategoryId}
-                  onChange={(e) => setNewCategoryId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                >
-                  <option value="">{t('depot.sorting.selectCategory')}</option>
-                  {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.sorting_mode ? `(${t(`depot.sorting.mode.${c.sorting_mode}`)})` : ''}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t('depot.sorting.totalReceived')}
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={newTotalReceived}
-                  onChange={(e) => setNewTotalReceived(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                  placeholder="e.g. 660"
-                />
-                <p className="text-xs text-gray-500 mt-1">{t('depot.sorting.totalReceivedHint')}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t('common.notes')}
-                </label>
-                <textarea
-                  value={newNotes}
-                  onChange={(e) => setNewNotes(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 p-5 border-t border-gray-100">
-              <button
-                onClick={() => setShowNewBatch(false)}
-                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={handleCreateBatch}
-                disabled={submitting || !newCategoryId}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
-              >
-                {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {t('depot.sorting.startSorting')}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Active Batch Modal */}
@@ -773,12 +689,6 @@ export default function DepotSorting() {
                 categories={categories}
                 batches={batches}
                 onOpen={(b) => openBatch(b)}
-                onCreate={(catId) => {
-                  setNewCategoryId(catId);
-                  setNewTotalReceived('');
-                  setNewNotes('');
-                  setShowNewBatch(true);
-                }}
               />
 
               {currentBatch.notes && (
@@ -825,14 +735,6 @@ export default function DepotSorting() {
         </div>
       )}
 
-      <PalletScanner
-        open={showPalletScanner}
-        onClose={() => setShowPalletScanner(false)}
-        onScan={handlePalletScan}
-        context="sorting"
-        continuous={false}
-        title={t('scanner.title') || 'Skano paleten'}
-      />
     </div>
   );
 }
@@ -1017,17 +919,22 @@ function OtherCategoriesPanel({
   categories,
   batches,
   onOpen,
-  onCreate,
 }: {
   currentCategoryId: string;
   categories: ProductCategory[];
   batches: BatchWithItems[];
   onOpen: (b: BatchWithItems) => void;
-  onCreate: (catId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const others = categories.filter((c) => c.id !== currentCategoryId);
-  if (others.length === 0) return null;
+  // Only show categories that already have an in-progress batch (auto-created
+  // from an incoming delivery). Manual batch creation was removed in favour of
+  // the auto-flow.
+  const otherActive = categories
+    .filter((c) => c.id !== currentCategoryId)
+    .map((c) => ({ cat: c, batch: batches.find((b) => b.category_id === c.id && b.status === 'in_progress') }))
+    .filter((x): x is { cat: ProductCategory; batch: BatchWithItems } => Boolean(x.batch));
+
+  if (otherActive.length === 0) return null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
@@ -1038,20 +945,19 @@ function OtherCategoriesPanel({
       >
         <span className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-teal-600" />
-          Kategori te tjera ({others.length})
+          Sortime te tjera aktive ({otherActive.length})
         </span>
         <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
       {expanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 pt-0">
-          {others.map((c) => {
-            const batch = batches.find((b) => b.category_id === c.id && b.status === 'in_progress');
-            const sorted = batch ? batch.items.reduce((s, i) => s + i.quantity, 0) : 0;
+          {otherActive.map(({ cat: c, batch }) => {
+            const sorted = batch.items.reduce((s, i) => s + i.quantity, 0);
             return (
               <button
                 key={c.id}
                 type="button"
-                onClick={() => (batch ? onOpen(batch) : onCreate(c.id))}
+                onClick={() => onOpen(batch)}
                 className="text-left rounded-lg border border-gray-100 hover:border-teal-300 hover:bg-teal-50/50 transition-colors p-3 flex items-center gap-3"
               >
                 <div className="w-9 h-9 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
@@ -1059,9 +965,7 @@ function OtherCategoriesPanel({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
-                  <p className="text-[11px] text-gray-500">
-                    {batch ? `${sorted}/${batch.total_received} paleta` : 'Krijo batch te ri'}
-                  </p>
+                  <p className="text-[11px] text-gray-500">{sorted}/{batch.total_received} paleta</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-gray-400" />
               </button>
