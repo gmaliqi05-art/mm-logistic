@@ -21,6 +21,7 @@ import {
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
@@ -482,11 +483,7 @@ export default function CompanyDashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={6} cols={4} />;
   }
 
   if (error) {

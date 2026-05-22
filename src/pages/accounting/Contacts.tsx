@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Plus, CreditCard as Edit2, X, AlertTriangle, Loader2, Search, Users, ToggleLeft, ToggleRight, Mail, Phone, MapPin, Globe, CreditCard, Calendar, Tag } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import type { AccContact, AccContactType } from '../../types/accounting';
 import ClientPricesModal from '../../components/accounting/ClientPricesModal';
@@ -224,11 +225,7 @@ export default function Contacts() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton showStats={false} rows={10} cols={5} />;
   }
 
   return (

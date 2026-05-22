@@ -4,6 +4,7 @@ import DocumentPreviewModal from '../../components/accounting/DocumentPreviewMod
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import type {
   AccPurchase,
@@ -434,11 +435,7 @@ export default function Purchases() {
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton rows={10} cols={7} />;
   }
 
   return (
