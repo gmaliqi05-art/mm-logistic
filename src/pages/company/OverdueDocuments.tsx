@@ -73,8 +73,15 @@ function scheduledOf(n: OverdueNote): Date | null {
 function daysOverdue(n: OverdueNote): number {
   const d = scheduledOf(n);
   if (!d) return 0;
-  const diff = Date.now() - d.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  // Count whole days between the scheduled day and today (both at 00:00
+  // local). Same-day deliveries return 0 — they aren't late yet — and
+  // are filtered out of the overdue list by the query cutoff.
+  const scheduledStart = new Date(d);
+  scheduledStart.setHours(0, 0, 0, 0);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const diffMs = todayStart.getTime() - scheduledStart.getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
 export default function CompanyOverdueDocuments() {
@@ -99,7 +106,12 @@ export default function CompanyOverdueDocuments() {
     try {
       setLoading(true);
       setError(null);
-      const nowIso = new Date().toISOString();
+      // Cutoff = start of today (local 00:00). A note scheduled for today
+      // is not overdue until the next day starts; only yesterday-or-earlier
+      // shows up here.
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const cutoffIso = todayStart.toISOString();
       const { data, error: qErr } = await supabase
         .from('delivery_notes')
         .select(
@@ -108,7 +120,7 @@ export default function CompanyOverdueDocuments() {
         .eq('company_id', profile.company_id)
         .in('status', ACTIVE_STATUSES)
         .or(
-          `and(type.eq.delivery,scheduled_delivery_at.lt.${nowIso}),and(type.eq.pickup,scheduled_pickup_at.lt.${nowIso})`
+          `and(type.eq.delivery,scheduled_delivery_at.lt.${cutoffIso}),and(type.eq.pickup,scheduled_pickup_at.lt.${cutoffIso})`
         )
         .order('scheduled_delivery_at', { ascending: true, nullsFirst: false });
 
