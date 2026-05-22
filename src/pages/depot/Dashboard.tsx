@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   X,
   ArrowRight,
-  Loader2,
   TrendingDown,
   MessageSquare,
   Layers,
@@ -16,6 +15,7 @@ import {
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import DeliveryReviewPanel from '../../components/delivery/DeliveryReviewPanel';
 import ReparatureDashboard from './ReparatureDashboard';
@@ -211,11 +211,7 @@ function DepoistDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={6} cols={4} />;
   }
 
   return (

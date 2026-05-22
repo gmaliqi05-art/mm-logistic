@@ -8,7 +8,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Package,
-  Loader2,
   ScanLine,
   Truck,
   ChevronRight,
@@ -17,6 +16,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { formatCurrency } from '../../types/accounting';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import PendingScansPanel from '../../components/scanner/PendingScansPanel';
@@ -273,11 +273,7 @@ export default function AccountingDashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton rows={6} cols={5} />;
   }
 
   if (error) {
