@@ -54,6 +54,12 @@ interface ItemInput {
   condition: 'good' | 'damaged';
 }
 
+// Sentinel id for the synthetic "Defekt" input row. It is not a real
+// category_products.id — when this row is saved we write
+// category_product_id = NULL so the damaged quantity is recorded at the
+// category level only, matching how pallet companies model defekt stock.
+const DEFEKT_INPUT_ID = '__defekt__';
+
 function isDefectProduct(name: string) {
   const n = (name || '').toLowerCase();
   return n.includes('defekt') || n.includes('defect') || n.includes('damaged');
@@ -77,7 +83,9 @@ function computeBreakdown(
 ): Breakdown {
   const out: Breakdown = { a: 0, b: 0, c: 0, defekt: 0, other: 0 };
   for (const it of items) {
-    const name = productNameById.get(it.category_product_id) || '';
+    const name = it.category_product_id
+      ? productNameById.get(it.category_product_id) || ''
+      : '';
     if (it.condition === 'damaged' || isDefectProduct(name)) {
       out.defekt += it.quantity;
       continue;
@@ -204,41 +212,39 @@ export default function DepotSorting() {
       return a.name.localeCompare(b.name);
     });
 
-    // Locate the dedicated "Defekt" product for this category so legacy
-    // batches (where damaged quantities were stored per-product on
-    // Klasse A/B/C) can be folded back into the single Defekt row.
-    const defectProduct = catProducts.find((p) => isDefectProduct(p.name));
-    let legacyDamagedOnOthers = 0;
+    // Defekt is a category-level bucket — sum every damaged item in the
+    // batch regardless of whether it has a product_id (NULL = new model)
+    // or sits on the legacy "Defekt" / Klasse A/B/C category_products.
+    let damagedTotal = 0;
     for (const item of batch.items) {
-      if (item.condition !== 'damaged') continue;
-      const prod = catProducts.find((p) => p.id === item.category_product_id);
-      if (!prod) continue;
-      if (isDefectProduct(prod.name)) continue;
-      legacyDamagedOnOthers += item.quantity;
+      if (item.condition === 'damaged') damagedTotal += item.quantity;
     }
 
-    const inputs: ItemInput[] = catProducts.map((p) => {
-      const isDefect = isDefectProduct(p.name);
-      const goodItem = batch.items.find((i) => i.category_product_id === p.id && i.condition === 'good');
-      const damagedItem = batch.items.find((i) => i.category_product_id === p.id && i.condition === 'damaged');
-      if (isDefect) {
-        const base = damagedItem?.quantity ?? goodItem?.quantity ?? 0;
-        // Roll any legacy per-class damaged into the Defekt total.
-        const total = base + (defectProduct?.id === p.id ? legacyDamagedOnOthers : 0);
+    // Drop any legacy "Defekt" category_product from the per-product rows so
+    // it doesn't render twice; we render a single synthetic Defekt row below.
+    const productRows: ItemInput[] = catProducts
+      .filter((p) => !isDefectProduct(p.name))
+      .map((p) => {
+        const goodItem = batch.items.find(
+          (i) => i.category_product_id === p.id && i.condition === 'good',
+        );
         return {
           category_product_id: p.id,
           product_name: p.name,
-          quantity: total > 0 ? String(total) : '',
-          condition: 'damaged',
+          quantity: goodItem ? String(goodItem.quantity) : '',
+          condition: 'good',
         };
-      }
-      return {
-        category_product_id: p.id,
-        product_name: p.name,
-        quantity: goodItem ? String(goodItem.quantity) : '',
-        condition: 'good',
-      };
-    });
+      });
+
+    const inputs: ItemInput[] = [
+      ...productRows,
+      {
+        category_product_id: DEFEKT_INPUT_ID,
+        product_name: 'Defekt',
+        quantity: damagedTotal > 0 ? String(damagedTotal) : '',
+        condition: 'damaged',
+      },
+    ];
 
     setActiveBatchId(batch.id);
     setItemInputs(inputs);
@@ -252,19 +258,25 @@ export default function DepotSorting() {
   };
 
   async function persistItems(batchId: string) {
-    const rows: Array<{ batch_id: string; category_product_id: string; quantity: number; condition: string }> = [];
+    const rows: Array<{
+      batch_id: string;
+      category_product_id: string | null;
+      quantity: number;
+      condition: string;
+    }> = [];
 
-    // Each ItemInput now stores a single quantity: 'good' for class-product
-    // rows, 'damaged' for the dedicated Defekt-product row. The legacy
-    // per-class "defekt_quantity" column has been removed.
+    // Class/product rows save with their real category_product_id; the
+    // synthetic Defekt row saves with NULL so the damaged quantity lives at
+    // the category level (no fictional "Defekt" product behind it).
     for (const r of itemInputs) {
       const qty = Math.max(0, parseInt(r.quantity || '0', 10) || 0);
       if (qty <= 0) continue;
+      const isDefektRow = r.category_product_id === DEFEKT_INPUT_ID;
       rows.push({
         batch_id: batchId,
-        category_product_id: r.category_product_id,
+        category_product_id: isDefektRow ? null : r.category_product_id,
         quantity: qty,
-        condition: r.condition === 'damaged' ? 'damaged' : 'good',
+        condition: isDefektRow ? 'damaged' : r.condition === 'damaged' ? 'damaged' : 'good',
       });
     }
 
@@ -362,8 +374,11 @@ export default function DepotSorting() {
       const itemsSummary = batch.items
         .filter((i) => i.quantity > 0)
         .map((i) => {
-          const prod = products.find((p) => p.id === i.category_product_id);
-          return `${prod?.name || '-'}: ${i.quantity}`;
+          const label =
+            i.condition === 'damaged'
+              ? 'Defekt'
+              : products.find((p) => p.id === i.category_product_id)?.name || '-';
+          return `${label}: ${i.quantity}`;
         })
         .join(', ');
 
@@ -386,7 +401,10 @@ export default function DepotSorting() {
             category: cat?.name,
             total_received: batch.total_received,
             items: batch.items.filter((i) => i.quantity > 0).map((i) => ({
-              product_name: products.find((p) => p.id === i.category_product_id)?.name || '-',
+              product_name:
+                i.condition === 'damaged'
+                  ? 'Defekt'
+                  : products.find((p) => p.id === i.category_product_id)?.name || '-',
               quantity: i.quantity,
               condition: i.condition,
             })),

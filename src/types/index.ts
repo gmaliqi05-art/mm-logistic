@@ -104,7 +104,8 @@ export interface PalletSortingBatch {
 export interface PalletSortingItem {
   id: string;
   batch_id: string;
-  category_product_id: string;
+  // NULL when the row is a category-level bucket (e.g. defekt before repair)
+  category_product_id: string | null;
   quantity: number;
   condition: StockCondition;
   created_at: string;
