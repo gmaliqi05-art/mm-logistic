@@ -18,7 +18,7 @@ export const cookies = {
     shortTitle: 'Cookies',
     title: 'Politika e Cookies',
     subtitle: 'Si i perdorim cookies dhe teknologjite e ngjashme ne platformen tone.',
-    intro: 'Kjo politike shpjegon cilat cookies perdorim ne platformen [EMRI I PLATFORMES], pse i perdorim dhe si ju mund t\'i kontrolloni. Ne respektojme te drejten tuaj per privatesi sipas \u00a7 25 TTDSG dhe GDPR Art. 6, dhe nuk vendosim cookies jo-thelbesore pa pelqimin tuaj te qarte paraprak.',
+    intro: 'Kjo politike shpjegon cilat cookies perdorim ne platformen mm-logistic, pse i perdorim dhe si ju mund t\'i kontrolloni. Ne respektojme te drejten tuaj per privatesi sipas \u00a7 25 TTDSG dhe GDPR Art. 6, dhe nuk vendosim cookies jo-thelbesore pa pelqimin tuaj te qarte paraprak.',
     lastUpdated: '15 Maj 2026',
     version: 'Versioni 1.0',
 
@@ -52,7 +52,7 @@ export const cookies = {
     },
     section8: {
       title: 'Te drejtat tuaja sipas GDPR',
-      body: 'Ne lidhje me cookies dhe te dhenat e mbledhura permes tyre, keni te drejten:\n\n\u2022 Te dini cilat te dhena mblidhen (e drejta e informimit - GDPR Art. 13)\n\u2022 Te aksesoni te dhenat tuaja (e drejta e aksesimit - Art. 15)\n\u2022 Te korrigjoni te dhenat e gabuara (e drejta e korrigjimit - Art. 16)\n\u2022 Te kerkoni fshirjen e te dhenave (e drejta per t\'u harruar - Art. 17)\n\u2022 Te kufizoni perpunimin (e drejta e kufizimit - Art. 18)\n\u2022 Te merrni te dhenat tuaja ne format te ndertuar (portabiliteti - Art. 20)\n\u2022 Te kundershtoni perpunimin (e drejta e kundershtimit - Art. 21)\n\u2022 Te terhiqni pelqimin ne cdo kohe (Art. 7 paragrafit 3)\n\u2022 Te dorezoni ankese tek autoriteti mbikqyres (Art. 77)\n\nPer t\'i ushtruar keto te drejta, na kontaktoni ne: [datenschutz@kompani.de]',
+      body: 'Ne lidhje me cookies dhe te dhenat e mbledhura permes tyre, keni te drejten:\n\n\u2022 Te dini cilat te dhena mblidhen (e drejta e informimit - GDPR Art. 13)\n\u2022 Te aksesoni te dhenat tuaja (e drejta e aksesimit - Art. 15)\n\u2022 Te korrigjoni te dhenat e gabuara (e drejta e korrigjimit - Art. 16)\n\u2022 Te kerkoni fshirjen e te dhenave (e drejta per t\'u harruar - Art. 17)\n\u2022 Te kufizoni perpunimin (e drejta e kufizimit - Art. 18)\n\u2022 Te merrni te dhenat tuaja ne format te ndertuar (portabiliteti - Art. 20)\n\u2022 Te kundershtoni perpunimin (e drejta e kundershtimit - Art. 21)\n\u2022 Te terhiqni pelqimin ne cdo kohe (Art. 7 paragrafit 3)\n\u2022 Te dorezoni ankese tek autoriteti mbikqyres (Art. 77)\n\nPer t\'i ushtruar keto te drejta, na kontaktoni ne: privacy@mm-logistic.eu',
     },
     section9: {
       title: 'Ndryshime ne kete politike',
@@ -60,7 +60,7 @@ export const cookies = {
     },
     section10: {
       title: 'Kontakti per pyetje rreth cookies',
-      body: 'Per pyetje rreth kesaj politike te cookies ose perpunimit te te dhenave permes cookies, na kontaktoni:\n\nEmail: [datenschutz@kompani.de]\nAdresa: [Adresa e kompanise sic eshte ne Impressum]\n\nMund te kontaktoni gjithashtu Pergjegjesin tone te Mbrojtjes se te Dhenave (DPO) ne:\n[dpo@kompani.de]\n\nKemi nje detyrim ligjor te pergjigjemi brenda 30 diteve nga marrja e kerkeses tuaj.',
+      body: 'Per pyetje rreth kesaj politike te cookies ose perpunimit te te dhenave permes cookies, na kontaktoni:\n\nEmail: privacy@mm-logistic.eu\nAdresa: (shiko Impressum)\n\nMund te kontaktoni gjithashtu Pergjegjesin tone te Mbrojtjes se te Dhenave (DPO) ne:\ndpo@mm-logistic.eu\n\nKemi nje detyrim ligjor te pergjigjemi brenda 30 diteve nga marrja e kerkeses tuaj.',
     },
   },
 
@@ -71,7 +71,7 @@ export const cookies = {
     shortTitle: 'Cookies',
     title: 'Cookie Policy',
     subtitle: 'How we use cookies and similar technologies on our platform.',
-    intro: 'This policy explains which cookies we use on the [PLATFORM NAME] platform, why we use them and how you can control them. We respect your right to privacy under \u00a7 25 TTDSG and GDPR Art. 6, and we do not set non-essential cookies without your clear prior consent.',
+    intro: 'This policy explains which cookies we use on the mm-logistic platform, why we use them and how you can control them. We respect your right to privacy under \u00a7 25 TTDSG and GDPR Art. 6, and we do not set non-essential cookies without your clear prior consent.',
     lastUpdated: '15 May 2026',
     version: 'Version 1.0',
 
@@ -105,7 +105,7 @@ export const cookies = {
     },
     section8: {
       title: 'Your rights under GDPR',
-      body: 'In relation to cookies and data collected through them, you have the right:\n\n\u2022 To know what data is collected (right of information - GDPR Art. 13)\n\u2022 To access your data (right of access - Art. 15)\n\u2022 To correct incorrect data (right of correction - Art. 16)\n\u2022 To request data deletion (right to be forgotten - Art. 17)\n\u2022 To limit processing (right of restriction - Art. 18)\n\u2022 To receive your data in a structured format (portability - Art. 20)\n\u2022 To object to processing (right of objection - Art. 21)\n\u2022 To withdraw consent at any time (Art. 7 paragraph 3)\n\u2022 To file a complaint with the supervisory authority (Art. 77)\n\nTo exercise these rights, contact us at: [datenschutz@company.de]',
+      body: 'In relation to cookies and data collected through them, you have the right:\n\n\u2022 To know what data is collected (right of information - GDPR Art. 13)\n\u2022 To access your data (right of access - Art. 15)\n\u2022 To correct incorrect data (right of correction - Art. 16)\n\u2022 To request data deletion (right to be forgotten - Art. 17)\n\u2022 To limit processing (right of restriction - Art. 18)\n\u2022 To receive your data in a structured format (portability - Art. 20)\n\u2022 To object to processing (right of objection - Art. 21)\n\u2022 To withdraw consent at any time (Art. 7 paragraph 3)\n\u2022 To file a complaint with the supervisory authority (Art. 77)\n\nTo exercise these rights, contact us at: privacy@mm-logistic.eu',
     },
     section9: {
       title: 'Changes to this policy',
@@ -113,7 +113,7 @@ export const cookies = {
     },
     section10: {
       title: 'Contact for cookie questions',
-      body: 'For questions about this cookie policy or data processing through cookies, contact us:\n\nEmail: [datenschutz@company.de]\nAddress: [Company address as in Imprint]\n\nYou can also contact our Data Protection Officer (DPO) at:\n[dpo@company.de]\n\nWe have a legal obligation to respond within 30 days of receiving your request.',
+      body: 'For questions about this cookie policy or data processing through cookies, contact us:\n\nEmail: privacy@mm-logistic.eu\nAddress: (see Imprint)\n\nYou can also contact our Data Protection Officer (DPO) at:\ndpo@mm-logistic.eu\n\nWe have a legal obligation to respond within 30 days of receiving your request.',
     },
   },
 
@@ -124,7 +124,7 @@ export const cookies = {
     shortTitle: 'Cookies',
     title: 'Cookie-Richtlinie',
     subtitle: 'Wie wir Cookies und \u00e4hnliche Technologien auf unserer Plattform verwenden.',
-    intro: 'Diese Richtlinie erkl\u00e4rt, welche Cookies wir auf der Plattform [PLATTFORMNAME] verwenden, warum wir sie verwenden und wie Sie sie kontrollieren k\u00f6nnen. Wir respektieren Ihr Recht auf Privatsph\u00e4re gem\u00e4\u00df \u00a7 25 TTDSG und DSGVO Art. 6, und setzen keine nicht-essentiellen Cookies ohne Ihre klare vorherige Einwilligung.',
+    intro: 'Diese Richtlinie erkl\u00e4rt, welche Cookies wir auf der Plattform mm-logistic verwenden, warum wir sie verwenden und wie Sie sie kontrollieren k\u00f6nnen. Wir respektieren Ihr Recht auf Privatsph\u00e4re gem\u00e4\u00df \u00a7 25 TTDSG und DSGVO Art. 6, und setzen keine nicht-essentiellen Cookies ohne Ihre klare vorherige Einwilligung.',
     lastUpdated: '15. Mai 2026',
     version: 'Version 1.0',
 
@@ -158,7 +158,7 @@ export const cookies = {
     },
     section8: {
       title: 'Ihre Rechte nach DSGVO',
-      body: 'In Bezug auf Cookies und durch sie erhobene Daten haben Sie das Recht:\n\n\u2022 Zu wissen, welche Daten erhoben werden (Informationsrecht - DSGVO Art. 13)\n\u2022 Auf Ihre Daten zuzugreifen (Auskunftsrecht - Art. 15)\n\u2022 Falsche Daten zu berichtigen (Berichtigungsrecht - Art. 16)\n\u2022 L\u00f6schung von Daten zu verlangen (Recht auf Vergessenwerden - Art. 17)\n\u2022 Die Verarbeitung einzuschr\u00e4nken (Einschr\u00e4nkungsrecht - Art. 18)\n\u2022 Ihre Daten in strukturiertem Format zu erhalten (Portabilit\u00e4t - Art. 20)\n\u2022 Der Verarbeitung zu widersprechen (Widerspruchsrecht - Art. 21)\n\u2022 Einwilligung jederzeit zu widerrufen (Art. 7 Abs. 3)\n\u2022 Beschwerde bei der Aufsichtsbeh\u00f6rde einzureichen (Art. 77)\n\nUm diese Rechte auszu\u00fcben, kontaktieren Sie uns: [datenschutz@firma.de]',
+      body: 'In Bezug auf Cookies und durch sie erhobene Daten haben Sie das Recht:\n\n\u2022 Zu wissen, welche Daten erhoben werden (Informationsrecht - DSGVO Art. 13)\n\u2022 Auf Ihre Daten zuzugreifen (Auskunftsrecht - Art. 15)\n\u2022 Falsche Daten zu berichtigen (Berichtigungsrecht - Art. 16)\n\u2022 L\u00f6schung von Daten zu verlangen (Recht auf Vergessenwerden - Art. 17)\n\u2022 Die Verarbeitung einzuschr\u00e4nken (Einschr\u00e4nkungsrecht - Art. 18)\n\u2022 Ihre Daten in strukturiertem Format zu erhalten (Portabilit\u00e4t - Art. 20)\n\u2022 Der Verarbeitung zu widersprechen (Widerspruchsrecht - Art. 21)\n\u2022 Einwilligung jederzeit zu widerrufen (Art. 7 Abs. 3)\n\u2022 Beschwerde bei der Aufsichtsbeh\u00f6rde einzureichen (Art. 77)\n\nUm diese Rechte auszu\u00fcben, kontaktieren Sie uns: privacy@mm-logistic.eu',
     },
     section9: {
       title: '\u00c4nderungen an dieser Richtlinie',
@@ -166,7 +166,7 @@ export const cookies = {
     },
     section10: {
       title: 'Kontakt f\u00fcr Cookie-Fragen',
-      body: 'F\u00fcr Fragen zu dieser Cookie-Richtlinie oder zur Datenverarbeitung durch Cookies kontaktieren Sie uns:\n\nE-Mail: [datenschutz@firma.de]\nAnschrift: [Firmenanschrift wie im Impressum]\n\nSie k\u00f6nnen auch unseren Datenschutzbeauftragten (DPO) kontaktieren:\n[dpo@firma.de]\n\nWir haben eine gesetzliche Pflicht, innerhalb von 30 Tagen nach Erhalt Ihrer Anfrage zu antworten.',
+      body: 'F\u00fcr Fragen zu dieser Cookie-Richtlinie oder zur Datenverarbeitung durch Cookies kontaktieren Sie uns:\n\nE-Mail: privacy@mm-logistic.eu\nAnschrift: (siehe Impressum)\n\nSie k\u00f6nnen auch unseren Datenschutzbeauftragten (DPO) kontaktieren:\n[dpo@firma.de]\n\nWir haben eine gesetzliche Pflicht, innerhalb von 30 Tagen nach Erhalt Ihrer Anfrage zu antworten.',
     },
   },
 
@@ -177,7 +177,7 @@ export const cookies = {
     shortTitle: 'Cookies',
     title: 'Politique de Cookies',
     subtitle: 'Comment nous utilisons les cookies et technologies similaires sur notre plateforme.',
-    intro: 'Cette politique explique quels cookies nous utilisons sur la plateforme [NOM DE LA PLATEFORME], pourquoi nous les utilisons et comment vous pouvez les contr\u00f4ler. Nous respectons votre droit \u00e0 la vie priv\u00e9e selon \u00a7 25 TTDSG et RGPD Art. 6, et nous ne pla\u00e7ons pas de cookies non-essentiels sans votre consentement clair pr\u00e9alable.',
+    intro: 'Cette politique explique quels cookies nous utilisons sur la plateforme mm-logistic, pourquoi nous les utilisons et comment vous pouvez les contr\u00f4ler. Nous respectons votre droit \u00e0 la vie priv\u00e9e selon \u00a7 25 TTDSG et RGPD Art. 6, et nous ne pla\u00e7ons pas de cookies non-essentiels sans votre consentement clair pr\u00e9alable.',
     lastUpdated: '15 mai 2026',
     version: 'Version 1.0',
 
@@ -211,7 +211,7 @@ export const cookies = {
     },
     section8: {
       title: 'Vos droits selon RGPD',
-      body: 'Concernant les cookies et les donn\u00e9es collect\u00e9es par leur biais, vous avez le droit:\n\n\u2022 De savoir quelles donn\u00e9es sont collect\u00e9es (droit \u00e0 l\'information - RGPD Art. 13)\n\u2022 D\'acc\u00e9der \u00e0 vos donn\u00e9es (droit d\'acc\u00e8s - Art. 15)\n\u2022 De corriger les donn\u00e9es incorrectes (droit de rectification - Art. 16)\n\u2022 De demander la suppression des donn\u00e9es (droit \u00e0 l\'oubli - Art. 17)\n\u2022 De limiter le traitement (droit de limitation - Art. 18)\n\u2022 De recevoir vos donn\u00e9es dans un format structur\u00e9 (portabilit\u00e9 - Art. 20)\n\u2022 De vous opposer au traitement (droit d\'opposition - Art. 21)\n\u2022 De retirer le consentement \u00e0 tout moment (Art. 7 paragraphe 3)\n\u2022 De d\u00e9poser une plainte aupr\u00e8s de l\'autorit\u00e9 de contr\u00f4le (Art. 77)\n\nPour exercer ces droits, contactez-nous \u00e0: [datenschutz@entreprise.de]',
+      body: 'Concernant les cookies et les donn\u00e9es collect\u00e9es par leur biais, vous avez le droit:\n\n\u2022 De savoir quelles donn\u00e9es sont collect\u00e9es (droit \u00e0 l\'information - RGPD Art. 13)\n\u2022 D\'acc\u00e9der \u00e0 vos donn\u00e9es (droit d\'acc\u00e8s - Art. 15)\n\u2022 De corriger les donn\u00e9es incorrectes (droit de rectification - Art. 16)\n\u2022 De demander la suppression des donn\u00e9es (droit \u00e0 l\'oubli - Art. 17)\n\u2022 De limiter le traitement (droit de limitation - Art. 18)\n\u2022 De recevoir vos donn\u00e9es dans un format structur\u00e9 (portabilit\u00e9 - Art. 20)\n\u2022 De vous opposer au traitement (droit d\'opposition - Art. 21)\n\u2022 De retirer le consentement \u00e0 tout moment (Art. 7 paragraphe 3)\n\u2022 De d\u00e9poser une plainte aupr\u00e8s de l\'autorit\u00e9 de contr\u00f4le (Art. 77)\n\nPour exercer ces droits, contactez-nous \u00e0: privacy@mm-logistic.eu',
     },
     section9: {
       title: 'Modifications de cette politique',
@@ -219,7 +219,7 @@ export const cookies = {
     },
     section10: {
       title: 'Contact pour les questions cookies',
-      body: 'Pour des questions sur cette politique de cookies ou le traitement des donn\u00e9es via cookies, contactez-nous:\n\nE-mail: [datenschutz@entreprise.de]\nAdresse: [Adresse de l\'entreprise comme dans les Mentions l\u00e9gales]\n\nVous pouvez \u00e9galement contacter notre D\u00e9l\u00e9gu\u00e9 \u00e0 la Protection des Donn\u00e9es (DPO):\n[dpo@entreprise.de]\n\nNous avons une obligation l\u00e9gale de r\u00e9pondre dans les 30 jours suivant la r\u00e9ception de votre demande.',
+      body: 'Pour des questions sur cette politique de cookies ou le traitement des donn\u00e9es via cookies, contactez-nous:\n\nE-mail: privacy@mm-logistic.eu\nAdresse: (voir Mentions légales)\n\nVous pouvez \u00e9galement contacter notre D\u00e9l\u00e9gu\u00e9 \u00e0 la Protection des Donn\u00e9es (DPO):\ndpo@mm-logistic.eu\n\nNous avons une obligation l\u00e9gale de r\u00e9pondre dans les 30 jours suivant la r\u00e9ception de votre demande.',
     },
   },
 };

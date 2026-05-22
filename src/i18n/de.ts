@@ -267,6 +267,7 @@ export const de: typeof sq = {
     imports: 'Importe',
     coa: 'Kontenplan',
     financials: 'Finanzberichte',
+    datevExport: 'DATEV-Export',
     contacts: 'Kontakte',
     products: 'Produkte',
     invoices: 'Rechnungen',
@@ -2635,6 +2636,7 @@ export const de: typeof sq = {
       vatRates: 'USt-Saetze',
       taxAuthority: 'Finanzbehoerde',
       nextDeadline: 'Naechste UStVA-Frist',
+      openExportHint: 'Exportmodul fuer diese Behoerde oeffnen',
     },
     arAgeing: {
       title: 'Forderungen nach Faelligkeit',

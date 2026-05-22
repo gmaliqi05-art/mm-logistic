@@ -265,6 +265,7 @@ export const sq = {
     imports: 'Importet',
     coa: 'Plani i Llogarive',
     financials: 'Raportet Financiare',
+    datevExport: 'Eksport DATEV',
     contacts: 'Kontaktet',
     products: 'Produktet',
     invoices: 'Faturat',
@@ -2633,6 +2634,7 @@ export const sq = {
       vatRates: 'Normat e TVSH',
       taxAuthority: 'Autoriteti tatimor',
       nextDeadline: 'Afati i ardhshem i deklarimit te TVSH',
+      openExportHint: 'Hap modulin e eksportit per kete autoritet',
     },
     arAgeing: {
       title: 'Vjetersia e Faturave te Arketueshme',

@@ -21,7 +21,7 @@ export const aup = {
     shortTitle: 'Perdorimi i pranueshem',
     title: 'Politika e Perdorimit te Pranueshem (AUP)',
     subtitle: 'Cfare lejohet dhe cfare nuk lejohet ne perdorimin e platformes sone. Per te mbrojtur te gjithe perdoruesit.',
-    intro: 'Kjo Politike e Perdorimit te Pranueshem ("AUP") percakton se cfare nuk lejohet te bejne perdoruesit me platformen [EMRI I PLATFORMES]. Eshte pjese e pa-ndashme e Kushteve te Pergjithshme te Perdorimit (AGB) dhe shkelja e saj mund te shkaktoje pezullim ose perfundim te llogarise. Synojme te mbajme nje mjedis te sigurte, te ligjshem dhe profesional per te gjithe klientet tane.',
+    intro: 'Kjo Politike e Perdorimit te Pranueshem ("AUP") percakton se cfare nuk lejohet te bejne perdoruesit me platformen mm-logistic. Eshte pjese e pa-ndashme e Kushteve te Pergjithshme te Perdorimit (AGB) dhe shkelja e saj mund te shkaktoje pezullim ose perfundim te llogarise. Synojme te mbajme nje mjedis te sigurte, te ligjshem dhe profesional per te gjithe klientet tane.',
     lastUpdated: '15 Maj 2026',
     version: 'Versioni 1.0',
 
@@ -63,7 +63,7 @@ export const aup = {
     },
     section10: {
       title: 'Raportimi i shkeljeve',
-      body: 'NESE NJIHNI NJE SHKELJE TE KESAJ AUP:\n\nKANALE TE RAPORTIMIT:\n\nE-mail: [abuse@kompani.de]\nPergjigje: 24-72 ore (sipas urgjences)\n\nPER RASTE EMERGJENTE:\nE-mail: [security@kompani.de]\nTelefon: [+49 XXX XXXXXXX] (orari i punes)\n\nPER PERMBAJTJE QE PERFSHIN FEMIJE:\nDo te raportohet menjehere tek:\n\u2022 BKA (Bundeskriminalamt) ne Gjermani\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol per raste nderkombetare\n\nINFORMACIONI I NEVOJSHEM:\n\u2022 Llogaria/perdoruesi i dyshuar\n\u2022 Pershkrim i shkeljes\n\u2022 Evidenca (screenshots, links, etj.)\n\u2022 Kontaktet tuaja (per ndjekje)\n\nNE GARANTOJME:\n\u2022 Trajtim konfidencial te raportimit\n\u2022 Mbrojtje nga whistleblower retaliation\n\u2022 Update mbi statusin e hetimit\n\u2022 Investigim profesional',
+      body: 'NESE NJIHNI NJE SHKELJE TE KESAJ AUP:\n\nKANALE TE RAPORTIMIT:\n\nE-mail: [abuse@kompani.de]\nPergjigje: 24-72 ore (sipas urgjences)\n\nPER RASTE EMERGJENTE:\nE-mail: [security@kompani.de]\nTelefon: +49 172 8443861 (orari i punes)\n\nPER PERMBAJTJE QE PERFSHIN FEMIJE:\nDo te raportohet menjehere tek:\n\u2022 BKA (Bundeskriminalamt) ne Gjermani\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol per raste nderkombetare\n\nINFORMACIONI I NEVOJSHEM:\n\u2022 Llogaria/perdoruesi i dyshuar\n\u2022 Pershkrim i shkeljes\n\u2022 Evidenca (screenshots, links, etj.)\n\u2022 Kontaktet tuaja (per ndjekje)\n\nNE GARANTOJME:\n\u2022 Trajtim konfidencial te raportimit\n\u2022 Mbrojtje nga whistleblower retaliation\n\u2022 Update mbi statusin e hetimit\n\u2022 Investigim profesional',
     },
     section11: {
       title: 'Mbrojtja e platformes',
@@ -83,7 +83,7 @@ export const aup = {
     },
     section15: {
       title: 'Kontakti dhe pyetjet',
-      body: 'PYETJE PER KETE AUP:\nE-mail: [legal@kompani.de]\nPergjigja brenda 14 ditesh.\n\nRAPORTIM SHKELJE:\nE-mail: [abuse@kompani.de]\nUrgjente: 24-72 ore\n\nINCIDENTE SIGURIE:\nE-mail: [security@kompani.de]\nTelefon: [+49 XXX XXXXXXX]\n\nAPELIME:\nE-mail: [appeals@kompani.de]\nAfat: 30 dite nga pezullimi\n\nMBESHTETJE TE PERGJITHSHME:\nE-mail: [support@kompani.de]\n\nDPO:\nE-mail: [dpo@kompani.de]\n\nPOSTA ZYRTARE:\n[EMRI I KOMPANISE]\n[Adresa e plote]\nGjermania\n\nE DREJTA E ANKESES:\nMund t\'i dorezoni ankesa tek autoritet mbikqyres si BfDI (per privatesi) ose policise (per krime).',
+      body: 'PYETJE PER KETE AUP:\nE-mail: [legal@kompani.de]\nPergjigja brenda 14 ditesh.\n\nRAPORTIM SHKELJE:\nE-mail: [abuse@kompani.de]\nUrgjente: 24-72 ore\n\nINCIDENTE SIGURIE:\nE-mail: [security@kompani.de]\nTelefon: +49 172 8443861\n\nAPELIME:\nE-mail: [appeals@kompani.de]\nAfat: 30 dite nga pezullimi\n\nMBESHTETJE TE PERGJITHSHME:\nE-mail: [support@kompani.de]\n\nDPO:\nE-mail: dpo@mm-logistic.eu\n\nPOSTA ZYRTARE:\nMar Group (Genton Maliqi)\nPfädlistraße 10, 79576 Weil am Rhein, Germany\nGjermania\n\nE DREJTA E ANKESES:\nMund t\'i dorezoni ankesa tek autoritet mbikqyres si BfDI (per privatesi) ose policise (per krime).',
     },
   },
 
@@ -94,7 +94,7 @@ export const aup = {
     shortTitle: 'Acceptable Use',
     title: 'Acceptable Use Policy (AUP)',
     subtitle: 'What is and is not allowed when using our platform. To protect all users.',
-    intro: 'This Acceptable Use Policy ("AUP") defines what users are not allowed to do with the [PLATFORM NAME] platform. It is an integral part of the Terms of Service (AGB) and violations may result in account suspension or termination. We aim to maintain a safe, lawful, and professional environment for all our customers.',
+    intro: 'This Acceptable Use Policy ("AUP") defines what users are not allowed to do with the mm-logistic platform. It is an integral part of the Terms of Service (AGB) and violations may result in account suspension or termination. We aim to maintain a safe, lawful, and professional environment for all our customers.',
     lastUpdated: '15 May 2026',
     version: 'Version 1.0',
 
@@ -136,7 +136,7 @@ export const aup = {
     },
     section10: {
       title: 'Reporting violations',
-      body: 'IF YOU NOTICE A VIOLATION OF THIS AUP:\n\nREPORTING CHANNELS:\n\nEmail: [abuse@company.de]\nResponse: 24-72 hours (depending on urgency)\n\nFOR EMERGENCY CASES:\nEmail: [security@company.de]\nPhone: [+49 XXX XXXXXXX] (business hours)\n\nFOR CHILD-INVOLVED CONTENT:\nWill be reported immediately to:\n\u2022 BKA (Bundeskriminalamt) in Germany\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol for international cases\n\nREQUIRED INFORMATION:\n\u2022 Suspected account/user\n\u2022 Description of violation\n\u2022 Evidence (screenshots, links, etc.)\n\u2022 Your contact info (for follow-up)\n\nWE GUARANTEE:\n\u2022 Confidential treatment of reports\n\u2022 Protection from whistleblower retaliation\n\u2022 Update on investigation status\n\u2022 Professional investigation',
+      body: 'IF YOU NOTICE A VIOLATION OF THIS AUP:\n\nREPORTING CHANNELS:\n\nEmail: [abuse@company.de]\nResponse: 24-72 hours (depending on urgency)\n\nFOR EMERGENCY CASES:\nEmail: [security@company.de]\nPhone: +49 172 8443861 (business hours)\n\nFOR CHILD-INVOLVED CONTENT:\nWill be reported immediately to:\n\u2022 BKA (Bundeskriminalamt) in Germany\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol for international cases\n\nREQUIRED INFORMATION:\n\u2022 Suspected account/user\n\u2022 Description of violation\n\u2022 Evidence (screenshots, links, etc.)\n\u2022 Your contact info (for follow-up)\n\nWE GUARANTEE:\n\u2022 Confidential treatment of reports\n\u2022 Protection from whistleblower retaliation\n\u2022 Update on investigation status\n\u2022 Professional investigation',
     },
     section11: {
       title: 'Platform protection',
@@ -156,7 +156,7 @@ export const aup = {
     },
     section15: {
       title: 'Contact and questions',
-      body: 'QUESTIONS ABOUT THIS AUP:\nEmail: [legal@company.de]\nResponse within 14 days.\n\nVIOLATION REPORTS:\nEmail: [abuse@company.de]\nUrgent: 24-72 hours\n\nSECURITY INCIDENTS:\nEmail: [security@company.de]\nPhone: [+49 XXX XXXXXXX]\n\nAPPEALS:\nEmail: [appeals@company.de]\nDeadline: 30 days from suspension\n\nGENERAL SUPPORT:\nEmail: [support@company.de]\n\nDPO:\nEmail: [dpo@company.de]\n\nOFFICIAL MAIL:\n[COMPANY NAME]\n[Full address]\nGermany\n\nRIGHT OF COMPLAINT:\nYou can file complaints with supervisory authorities such as BfDI (for privacy) or police (for crimes).',
+      body: 'QUESTIONS ABOUT THIS AUP:\nEmail: [legal@company.de]\nResponse within 14 days.\n\nVIOLATION REPORTS:\nEmail: [abuse@company.de]\nUrgent: 24-72 hours\n\nSECURITY INCIDENTS:\nEmail: [security@company.de]\nPhone: +49 172 8443861\n\nAPPEALS:\nEmail: [appeals@company.de]\nDeadline: 30 days from suspension\n\nGENERAL SUPPORT:\nEmail: [support@company.de]\n\nDPO:\nEmail: dpo@mm-logistic.eu\n\nOFFICIAL MAIL:\nMar Group (Genton Maliqi)\nPfädlistraße 10, 79576 Weil am Rhein, Germany\nGermany\n\nRIGHT OF COMPLAINT:\nYou can file complaints with supervisory authorities such as BfDI (for privacy) or police (for crimes).',
     },
   },
 
@@ -167,7 +167,7 @@ export const aup = {
     shortTitle: 'Nutzungsrichtlinien',
     title: 'Richtlinien zur akzeptablen Nutzung (AUP)',
     subtitle: 'Was bei der Nutzung unserer Plattform erlaubt und nicht erlaubt ist. Zum Schutz aller Nutzer.',
-    intro: 'Diese Richtlinien zur akzeptablen Nutzung ("AUP") legen fest, was Nutzer mit der Plattform [PLATTFORMNAME] nicht tun d\u00fcrfen. Sie sind integraler Bestandteil der Allgemeinen Gesch\u00e4ftsbedingungen (AGB) und Verst\u00f6\u00dfe k\u00f6nnen zu Kontosuspendierung oder -beendigung f\u00fchren. Wir streben danach, eine sichere, rechtm\u00e4\u00dfige und professionelle Umgebung f\u00fcr alle unsere Kunden zu erhalten.',
+    intro: 'Diese Richtlinien zur akzeptablen Nutzung ("AUP") legen fest, was Nutzer mit der Plattform mm-logistic nicht tun d\u00fcrfen. Sie sind integraler Bestandteil der Allgemeinen Gesch\u00e4ftsbedingungen (AGB) und Verst\u00f6\u00dfe k\u00f6nnen zu Kontosuspendierung oder -beendigung f\u00fchren. Wir streben danach, eine sichere, rechtm\u00e4\u00dfige und professionelle Umgebung f\u00fcr alle unsere Kunden zu erhalten.',
     lastUpdated: '15. Mai 2026',
     version: 'Version 1.0',
 
@@ -209,7 +209,7 @@ export const aup = {
     },
     section10: {
       title: 'Meldung von Verst\u00f6\u00dfen',
-      body: 'WENN SIE EINEN VERSTOSS GEGEN DIESE AUP BEMERKEN:\n\nMELDEKAN\u00c4LE:\n\nE-Mail: [abuse@firma.de]\nAntwort: 24-72 Stunden (je nach Dringlichkeit)\n\nF\u00dcR NOTF\u00c4LLE:\nE-Mail: [security@firma.de]\nTelefon: [+49 XXX XXXXXXX] (Gesch\u00e4ftszeiten)\n\nF\u00dcR KINDERBEZOGENE INHALTE:\nWird sofort gemeldet an:\n\u2022 BKA (Bundeskriminalamt) in Deutschland\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol f\u00fcr internationale F\u00e4lle\n\nERFORDERLICHE INFORMATIONEN:\n\u2022 Verd\u00e4chtiges Konto/Nutzer\n\u2022 Beschreibung des Versto\u00dfes\n\u2022 Beweise (Screenshots, Links usw.)\n\u2022 Ihre Kontaktinformationen (f\u00fcr Verfolgung)\n\nWIR GARANTIEREN:\n\u2022 Vertrauliche Behandlung der Meldung\n\u2022 Schutz vor Whistleblower-Vergeltung\n\u2022 Update zum Ermittlungsstand\n\u2022 Professionelle Untersuchung',
+      body: 'WENN SIE EINEN VERSTOSS GEGEN DIESE AUP BEMERKEN:\n\nMELDEKAN\u00c4LE:\n\nE-Mail: [abuse@firma.de]\nAntwort: 24-72 Stunden (je nach Dringlichkeit)\n\nF\u00dcR NOTF\u00c4LLE:\nE-Mail: [security@firma.de]\nTelefon: +49 172 8443861 (Gesch\u00e4ftszeiten)\n\nF\u00dcR KINDERBEZOGENE INHALTE:\nWird sofort gemeldet an:\n\u2022 BKA (Bundeskriminalamt) in Deutschland\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol f\u00fcr internationale F\u00e4lle\n\nERFORDERLICHE INFORMATIONEN:\n\u2022 Verd\u00e4chtiges Konto/Nutzer\n\u2022 Beschreibung des Versto\u00dfes\n\u2022 Beweise (Screenshots, Links usw.)\n\u2022 Ihre Kontaktinformationen (f\u00fcr Verfolgung)\n\nWIR GARANTIEREN:\n\u2022 Vertrauliche Behandlung der Meldung\n\u2022 Schutz vor Whistleblower-Vergeltung\n\u2022 Update zum Ermittlungsstand\n\u2022 Professionelle Untersuchung',
     },
     section11: {
       title: 'Plattformschutz',
@@ -229,7 +229,7 @@ export const aup = {
     },
     section15: {
       title: 'Kontakt und Fragen',
-      body: 'FRAGEN ZU DIESER AUP:\nE-Mail: [legal@firma.de]\nAntwort innerhalb von 14 Tagen.\n\nVERSTOSS-MELDUNGEN:\nE-Mail: [abuse@firma.de]\nDringend: 24-72 Stunden\n\nSICHERHEITSVORF\u00c4LLE:\nE-Mail: [security@firma.de]\nTelefon: [+49 XXX XXXXXXX]\n\nEINSPR\u00dcCHE:\nE-Mail: [appeals@firma.de]\nFrist: 30 Tage ab Sperrung\n\nALLGEMEINER SUPPORT:\nE-Mail: [support@firma.de]\n\nDSB:\nE-Mail: [dsb@firma.de]\n\nOFFIZIELLE POST:\n[FIRMENNAME]\n[Vollst\u00e4ndige Anschrift]\nDeutschland\n\nBESCHWERDERECHT:\nSie k\u00f6nnen Beschwerden bei Aufsichtsbeh\u00f6rden wie BfDI (f\u00fcr Datenschutz) oder Polizei (f\u00fcr Verbrechen) einreichen.',
+      body: 'FRAGEN ZU DIESER AUP:\nE-Mail: [legal@firma.de]\nAntwort innerhalb von 14 Tagen.\n\nVERSTOSS-MELDUNGEN:\nE-Mail: [abuse@firma.de]\nDringend: 24-72 Stunden\n\nSICHERHEITSVORF\u00c4LLE:\nE-Mail: [security@firma.de]\nTelefon: +49 172 8443861\n\nEINSPR\u00dcCHE:\nE-Mail: [appeals@firma.de]\nFrist: 30 Tage ab Sperrung\n\nALLGEMEINER SUPPORT:\nE-Mail: [support@firma.de]\n\nDSB:\nE-Mail: dpo@mm-logistic.eu\n\nOFFIZIELLE POST:\nMar Group (Genton Maliqi)\nPfädlistraße 10, 79576 Weil am Rhein, Germany\nDeutschland\n\nBESCHWERDERECHT:\nSie k\u00f6nnen Beschwerden bei Aufsichtsbeh\u00f6rden wie BfDI (f\u00fcr Datenschutz) oder Polizei (f\u00fcr Verbrechen) einreichen.',
     },
   },
 
@@ -240,7 +240,7 @@ export const aup = {
     shortTitle: 'Usage acceptable',
     title: 'Politique d\'Usage Acceptable (PUA)',
     subtitle: 'Ce qui est et n\'est pas autoris\u00e9 lors de l\'utilisation de notre plateforme. Pour prot\u00e9ger tous les utilisateurs.',
-    intro: 'Cette Politique d\'Usage Acceptable ("PUA") d\u00e9finit ce que les utilisateurs ne sont pas autoris\u00e9s \u00e0 faire avec la plateforme [NOM DE LA PLATEFORME]. Elle fait partie int\u00e9grante des Conditions G\u00e9n\u00e9rales d\'Utilisation (CGU) et les violations peuvent entra\u00eener la suspension ou la r\u00e9siliation du compte. Nous visons \u00e0 maintenir un environnement s\u00fbr, l\u00e9gal et professionnel pour tous nos clients.',
+    intro: 'Cette Politique d\'Usage Acceptable ("PUA") d\u00e9finit ce que les utilisateurs ne sont pas autoris\u00e9s \u00e0 faire avec la plateforme mm-logistic. Elle fait partie int\u00e9grante des Conditions G\u00e9n\u00e9rales d\'Utilisation (CGU) et les violations peuvent entra\u00eener la suspension ou la r\u00e9siliation du compte. Nous visons \u00e0 maintenir un environnement s\u00fbr, l\u00e9gal et professionnel pour tous nos clients.',
     lastUpdated: '15 mai 2026',
     version: 'Version 1.0',
 
@@ -282,7 +282,7 @@ export const aup = {
     },
     section10: {
       title: 'Signalement des violations',
-      body: 'SI VOUS REMARQUEZ UNE VIOLATION DE CETTE PUA:\n\nCANAUX DE SIGNALEMENT:\n\nE-mail: [abuse@entreprise.de]\nR\u00e9ponse: 24-72 heures (selon urgence)\n\nPOUR LES CAS D\'URGENCE:\nE-mail: [security@entreprise.de]\nT\u00e9l\u00e9phone: [+49 XXX XXXXXXX] (heures de bureau)\n\nPOUR CONTENU IMPLIQUANT DES ENFANTS:\nSera signal\u00e9 imm\u00e9diatement \u00e0:\n\u2022 BKA (Bundeskriminalamt) en Allemagne\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol pour les cas internationaux\n\nINFORMATIONS REQUISES:\n\u2022 Compte/utilisateur suspect\n\u2022 Description de la violation\n\u2022 Preuves (captures d\'\u00e9cran, liens, etc.)\n\u2022 Vos coordonn\u00e9es (pour suivi)\n\nNOUS GARANTISSONS:\n\u2022 Traitement confidentiel des signalements\n\u2022 Protection contre les repr\u00e9sailles aux whistleblowers\n\u2022 Mise \u00e0 jour sur le statut de l\'enqu\u00eate\n\u2022 Enqu\u00eate professionnelle',
+      body: 'SI VOUS REMARQUEZ UNE VIOLATION DE CETTE PUA:\n\nCANAUX DE SIGNALEMENT:\n\nE-mail: [abuse@entreprise.de]\nR\u00e9ponse: 24-72 heures (selon urgence)\n\nPOUR LES CAS D\'URGENCE:\nE-mail: [security@entreprise.de]\nT\u00e9l\u00e9phone: +49 172 8443861 (heures de bureau)\n\nPOUR CONTENU IMPLIQUANT DES ENFANTS:\nSera signal\u00e9 imm\u00e9diatement \u00e0:\n\u2022 BKA (Bundeskriminalamt) en Allemagne\n\u2022 NCMEC (National Center for Missing & Exploited Children)\n\u2022 Interpol pour les cas internationaux\n\nINFORMATIONS REQUISES:\n\u2022 Compte/utilisateur suspect\n\u2022 Description de la violation\n\u2022 Preuves (captures d\'\u00e9cran, liens, etc.)\n\u2022 Vos coordonn\u00e9es (pour suivi)\n\nNOUS GARANTISSONS:\n\u2022 Traitement confidentiel des signalements\n\u2022 Protection contre les repr\u00e9sailles aux whistleblowers\n\u2022 Mise \u00e0 jour sur le statut de l\'enqu\u00eate\n\u2022 Enqu\u00eate professionnelle',
     },
     section11: {
       title: 'Protection de la plateforme',
@@ -302,7 +302,7 @@ export const aup = {
     },
     section15: {
       title: 'Contact et questions',
-      body: 'QUESTIONS SUR CETTE PUA:\nE-mail: [legal@entreprise.de]\nR\u00e9ponse dans les 14 jours.\n\nSIGNALEMENTS DE VIOLATION:\nE-mail: [abuse@entreprise.de]\nUrgent: 24-72 heures\n\nINCIDENTS DE S\u00c9CURIT\u00c9:\nE-mail: [security@entreprise.de]\nT\u00e9l\u00e9phone: [+49 XXX XXXXXXX]\n\nAPPELS:\nE-mail: [appeals@entreprise.de]\nD\u00e9lai: 30 jours depuis la suspension\n\nSUPPORT G\u00c9N\u00c9RAL:\nE-mail: [support@entreprise.de]\n\nDPO:\nE-mail: [dpo@entreprise.de]\n\nCOURRIER OFFICIEL:\n[NOM DE L\'ENTREPRISE]\n[Adresse compl\u00e8te]\nAllemagne\n\nDROIT DE PLAINTE:\nVous pouvez d\u00e9poser des plaintes aupr\u00e8s d\'autorit\u00e9s de surveillance comme BfDI (pour la vie priv\u00e9e) ou la police (pour les crimes).',
+      body: 'QUESTIONS SUR CETTE PUA:\nE-mail: [legal@entreprise.de]\nR\u00e9ponse dans les 14 jours.\n\nSIGNALEMENTS DE VIOLATION:\nE-mail: [abuse@entreprise.de]\nUrgent: 24-72 heures\n\nINCIDENTS DE S\u00c9CURIT\u00c9:\nE-mail: [security@entreprise.de]\nT\u00e9l\u00e9phone: +49 172 8443861\n\nAPPELS:\nE-mail: [appeals@entreprise.de]\nD\u00e9lai: 30 jours depuis la suspension\n\nSUPPORT G\u00c9N\u00c9RAL:\nE-mail: [support@entreprise.de]\n\nDPO:\nE-mail: dpo@mm-logistic.eu\n\nCOURRIER OFFICIEL:\nMar Group (Genton Maliqi)\nPfädlistraße 10, 79576 Weil am Rhein, Germany\nAllemagne\n\nDROIT DE PLAINTE:\nVous pouvez d\u00e9poser des plaintes aupr\u00e8s d\'autorit\u00e9s de surveillance comme BfDI (pour la vie priv\u00e9e) ou la police (pour les crimes).',
     },
   },
 };
