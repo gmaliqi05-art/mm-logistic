@@ -70,7 +70,6 @@ function DepoistDashboard() {
   const [flowRows, setFlowRows] = useState<FlowRow[]>([]);
   const [recent, setRecent] = useState<RecentMovement[]>([]);
   const [pendingSorting, setPendingSorting] = useState<PendingSortingBatch[]>([]);
-  const [pendingRepairs, setPendingRepairs] = useState(0);
 
   useEffect(() => {
     if (profile?.depot_id && profile?.company_id) {
@@ -93,7 +92,7 @@ function DepoistDashboard() {
       const companyId = profile!.company_id!;
       const since = isoDaysBack(6);
 
-      const [stockRes, flowRes, recentRes, sortingRes, repairsRes] = await Promise.all([
+      const [stockRes, flowRes, recentRes, sortingRes] = await Promise.all([
         supabase
           .from('v_depot_stock_value')
           .select('category_id, category_name, category_product_id, product_name, condition, quantity')
@@ -119,13 +118,6 @@ function DepoistDashboard() {
           .eq('company_id', companyId)
           .eq('status', 'in_progress')
           .order('created_at', { ascending: false }),
-        supabase
-          .from('stock')
-          .select('quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('condition', 'damaged')
-          .gt('quantity', 0),
       ]);
 
       if (stockRes.error) throw stockRes.error;
@@ -136,8 +128,6 @@ function DepoistDashboard() {
       setFlowRows((flowRes.data ?? []) as FlowRow[]);
       setRecent((recentRes.data ?? []) as unknown as RecentMovement[]);
       setPendingSorting((sortingRes.data ?? []) as unknown as PendingSortingBatch[]);
-      const damagedTotal = (repairsRes.data ?? []).reduce((s: number, r: { quantity: number }) => s + (r.quantity || 0), 0);
-      setPendingRepairs(damagedTotal);
     } catch (err) {
       setError((err as Error).message || t('common.errorLoading'));
     } finally {
@@ -235,27 +225,6 @@ function DepoistDashboard() {
       )}
 
       <DeliveryReviewPanel role="depot_worker" />
-
-      {pendingRepairs > 0 && (
-        <Link to="/depot/repairs?tab=damaged" className="block bg-orange-50 border border-orange-200 rounded-xl p-4 hover:border-orange-300 transition-colors">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-100 flex-shrink-0">
-                <Wrench className="w-5 h-5 text-orange-700" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-orange-900">
-                  {pendingRepairs.toLocaleString()} paleta defekt ne stok
-                </p>
-                <p className="text-xs text-orange-700 mt-0.5">
-                  Klikoni per te pare stokun defekt dhe raportuar reparime.
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-orange-700 flex-shrink-0" />
-          </div>
-        </Link>
-      )}
 
       {pendingSorting.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
