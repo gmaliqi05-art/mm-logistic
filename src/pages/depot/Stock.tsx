@@ -83,6 +83,7 @@ export default function DepotStock() {
 
   const [formType, setFormType] = useState<'entry' | 'exit' | 'repair'>('entry');
   const [formCategory, setFormCategory] = useState('');
+  const [formProduct, setFormProduct] = useState<string>('');
   const [formQuantity, setFormQuantity] = useState('');
   const [formConditionBefore, setFormConditionBefore] = useState('damaged');
   const [formConditionAfter, setFormConditionAfter] = useState('good');
@@ -90,6 +91,12 @@ export default function DepotStock() {
   const [formSourcePartner, setFormSourcePartner] = useState('');
   const [formSourceContactId, setFormSourceContactId] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  // Products available within the selected category. Loaded lazily when
+  // `formCategory` changes so the form can require a real category_product_id
+  // (the legacy bare-category INSERT created orphan stock rows that the
+  // rest of the system, including DATEV/SAF-T export and the delivery
+  // trigger, ignored).
+  const [categoryProducts, setCategoryProducts] = useState<Array<{ id: string; name: string }>>([]);
 
   const [filterCondition, setFilterCondition] = useState<string>('');
   const [filterCategory, setFilterCategory] = useState<string>('');
@@ -99,6 +106,37 @@ export default function DepotStock() {
   useEffect(() => {
     if (profile?.depot_id && profile?.company_id) void fetchAll();
   }, [profile?.depot_id, profile?.company_id]);
+
+  // When the user picks a category, load the active products for that
+  // category. Reset the product selection so the form doesn't keep a
+  // stale id from the previous category.
+  useEffect(() => {
+    if (!formCategory || !profile?.company_id) {
+      setCategoryProducts([]);
+      setFormProduct('');
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data, error: err } = await supabase
+        .from('category_products')
+        .select('id, name')
+        .eq('company_id', profile.company_id!)
+        .eq('category_id', formCategory)
+        .eq('is_active', true)
+        .order('name');
+      if (cancelled) return;
+      if (err) {
+        setCategoryProducts([]);
+        return;
+      }
+      setCategoryProducts(data ?? []);
+      setFormProduct('');
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [formCategory, profile?.company_id]);
 
   const movementConfig: Record<string, { label: string; className: string; icon: typeof ArrowUpCircle }> = {
     entry: { label: t('depot.stock.entry'), className: 'bg-emerald-100 text-emerald-700', icon: ArrowUpCircle },
@@ -224,6 +262,13 @@ export default function DepotStock() {
   async function handleSubmitMovement(e: React.FormEvent) {
     e.preventDefault();
     if (!formCategory || !formQuantity || submitting) return;
+    // Once we know the category has products configured, a product must
+    // be picked. This is what stops manual entries from creating orphan
+    // stock rows where category_product_id is NULL.
+    if (categoryProducts.length > 0 && !formProduct) {
+      setError(t('depot.stock.pickProduct') || 'Zgjidh produktin');
+      return;
+    }
     try {
       setSubmitting(true);
       setError(null);
@@ -235,11 +280,14 @@ export default function DepotStock() {
         return;
       }
 
+      const productId: string | null = formProduct || null;
       const condBefore = formType === 'repair' ? formConditionBefore : formType === 'exit' ? formConditionAfter : 'good';
+
       const { error: movErr } = await supabase.from('stock_movements').insert({
         company_id: companyId,
         depot_id: depotId,
         category_id: formCategory,
+        category_product_id: productId,
         movement_type: formType,
         quantity: qty,
         condition_before: condBefore,
@@ -251,15 +299,27 @@ export default function DepotStock() {
       });
       if (movErr) throw movErr;
 
-      if (formType === 'entry') {
-        const existing = await supabase
+      // Stock-row lookup helper: include category_product_id when the
+      // form picked one, otherwise match the legacy bare-category row.
+      // `IS NULL` vs `=` matters because `category_product_id = NULL`
+      // never matches anything in SQL.
+      const stockMatchQuery = () => {
+        let q = supabase
           .from('stock')
           .select('id, quantity')
           .eq('depot_id', depotId)
           .eq('company_id', companyId)
-          .eq('category_id', formCategory)
-          .eq('condition', formConditionAfter)
-          .maybeSingle();
+          .eq('category_id', formCategory);
+        if (productId) {
+          q = q.eq('category_product_id', productId);
+        } else {
+          q = q.is('category_product_id', null);
+        }
+        return q;
+      };
+
+      if (formType === 'entry') {
+        const existing = await stockMatchQuery().eq('condition', formConditionAfter).maybeSingle();
         if (existing.data) {
           await supabase
             .from('stock')
@@ -270,19 +330,13 @@ export default function DepotStock() {
             company_id: companyId,
             depot_id: depotId,
             category_id: formCategory,
+            category_product_id: productId,
             quantity: qty,
             condition: formConditionAfter,
           });
         }
       } else if (formType === 'exit') {
-        const existing = await supabase
-          .from('stock')
-          .select('id, quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('category_id', formCategory)
-          .eq('condition', formConditionAfter)
-          .maybeSingle();
+        const existing = await stockMatchQuery().eq('condition', formConditionAfter).maybeSingle();
         if (!existing.data || (existing.data.quantity ?? 0) < qty) {
           setError('Stok i pamjaftueshem per kete levizje.');
           return;
@@ -292,28 +346,14 @@ export default function DepotStock() {
           .update({ quantity: Math.max(0, (existing.data.quantity ?? 0) - qty), updated_at: new Date().toISOString() })
           .eq('id', existing.data.id);
       } else if (formType === 'repair') {
-        const damaged = await supabase
-          .from('stock')
-          .select('id, quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('category_id', formCategory)
-          .eq('condition', formConditionBefore)
-          .maybeSingle();
+        const damaged = await stockMatchQuery().eq('condition', formConditionBefore).maybeSingle();
         if (damaged.data) {
           await supabase
             .from('stock')
             .update({ quantity: Math.max(0, (damaged.data.quantity ?? 0) - qty), updated_at: new Date().toISOString() })
             .eq('id', damaged.data.id);
         }
-        const repaired = await supabase
-          .from('stock')
-          .select('id, quantity')
-          .eq('depot_id', depotId)
-          .eq('company_id', companyId)
-          .eq('category_id', formCategory)
-          .eq('condition', formConditionAfter)
-          .maybeSingle();
+        const repaired = await stockMatchQuery().eq('condition', formConditionAfter).maybeSingle();
         if (repaired.data) {
           await supabase
             .from('stock')
@@ -324,6 +364,7 @@ export default function DepotStock() {
             company_id: companyId,
             depot_id: depotId,
             category_id: formCategory,
+            category_product_id: productId,
             quantity: qty,
             condition: formConditionAfter,
           });
@@ -331,6 +372,7 @@ export default function DepotStock() {
       }
 
       setFormCategory('');
+      setFormProduct('');
       setFormQuantity('');
       setFormConditionBefore('damaged');
       setFormConditionAfter('good');
@@ -619,6 +661,25 @@ export default function DepotStock() {
                   ))}
                 </select>
               </div>
+
+              {categoryProducts.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    {t('depot.stock.product') || 'Produkti'}
+                  </label>
+                  <select
+                    value={formProduct}
+                    onChange={(e) => setFormProduct(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                  >
+                    <option value="">{t('depot.stock.selectProduct') || 'Zgjidh produktin'}</option>
+                    {categoryProducts.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('common.quantity')}</label>

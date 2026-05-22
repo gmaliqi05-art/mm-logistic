@@ -172,20 +172,30 @@ export default function WorkerRepairEntry() {
     try {
       setSaving(true);
       setError(null);
-      const { error: insErr } = await supabase.from('depot_repairs').insert({
-        company_id: profile!.company_id,
-        depot_id: profile!.depot_id ?? null,
-        worker_id: workerId,
-        category_id: formCategory,
-        product_name: formProduct.trim(),
-        quantity_repaired: qty,
-        quantity_in: 0,
-        quantity_scrapped: 0,
-        notes: '',
-        logged_at: new Date().toISOString(),
+      // worker_log_repair RPC creates the depot_repairs row AND tries
+      // to sync damaged → good stock. The legacy direct INSERT path
+      // logged productivity without touching stock, which left
+      // inventory permanently overstated for damaged pallets.
+      const { data, error: rpcErr } = await supabase.rpc('worker_log_repair', {
+        p_worker_id: workerId,
+        p_depot_id: profile!.depot_id ?? null,
+        p_category_id: formCategory,
+        p_product_name: formProduct.trim(),
+        p_quantity_repaired: qty,
+        p_quantity_scrapped: 0,
       });
-      if (insErr) throw insErr;
-      setSuccess(t('depot.repairWorkers.savedOk'));
+      if (rpcErr) throw rpcErr;
+
+      const row = Array.isArray(data) ? data[0] : data;
+      const synced: boolean = Boolean(row?.stock_synced);
+      const message: string = String(row?.message ?? '');
+      if (synced) {
+        setSuccess(t('depot.repairWorkers.savedOk'));
+      } else {
+        // Productivity logged but stock could not be reconciled.
+        // Surface the reason so the worker / admin knows to follow up.
+        setSuccess(`${t('depot.repairWorkers.savedOk')} — ${message}`);
+      }
       setFormQuantity('');
       quantityRef.current?.focus();
       await fetchAll();
