@@ -1390,10 +1390,19 @@ export const fr: typeof sq = {
       movementType: 'Type de mouvement',
       category: 'Cat\u00e9gorie',
       selectCategory: 'S\u00e9lectionner une cat\u00e9gorie...',
+      product: 'Produit',
+      selectProduct: 'S\u00e9lectionner un produit...',
+      pickProduct: 'Veuillez s\u00e9lectionner un produit',
       conditionBefore: '\u00c9tat avant',
       conditionAfter: '\u00c9tat apr\u00e8s',
       positiveQty: 'La quantit\u00e9 doit \u00eatre un nombre positif',
+      insufficient: 'Stock insuffisant pour ce mouvement.',
       movementHistory: 'Historique des mouvements',
+    },
+    damage: {
+      pickProduct: 'Choisir un produit',
+      exceedsAvailable: 'Le stock en condition "{condition}" est seulement {available}',
+      noDepot: 'Votre compte n\'est rattach\u00e9 \u00e0 aucun d\u00e9p\u00f4t',
     },
     receiving: {
       title: 'R\u00e9ception / Exp\u00e9dition',
@@ -1410,6 +1419,9 @@ export const fr: typeof sq = {
       bulkReceiving: 'R\u00e9ception en masse',
       bulkShipping: 'Exp\u00e9dition en masse',
       sortingHint: 'Cette cat\u00e9gorie n\u00e9cessite un tri. Si les palettes sont m\u00e9lang\u00e9es, d\u00e9marrez un lot de tri dans',
+      codeNotFound: 'Code "{code}" introuvable',
+      atLeastOne: 'Ajouter au moins un article valide',
+      pickProductForCategory: 'S\u00e9lectionnez le produit sp\u00e9cifique pour la cat\u00e9gorie "{category}".',
     },
     sorting: {
       title: 'Tri',
@@ -2120,6 +2132,9 @@ export const fr: typeof sq = {
     currentLanguage: 'Langue actuelle',
   },
   accounting: {
+    imports: {
+      searchPlaceholder: 'Rechercher par numéro, fournisseur ou origine...',
+    },
     dashboard: {
       title: 'Tableau de bord',
       subtitle: 'Apercu financier',
@@ -2173,6 +2188,7 @@ export const fr: typeof sq = {
     products: {
       title: 'Produits',
       subtitle: 'Catalogue de produits',
+      searchPlaceholder: 'Rechercher par nom, SKU, description...',
       addProduct: 'Ajouter un produit',
       editProduct: 'Modifier le produit',
       noProducts: 'Aucun produit',
@@ -2190,7 +2206,7 @@ export const fr: typeof sq = {
       inStock: 'En stock',
       lowStock: 'Stock faible',
       outOfStock: 'Rupture de stock',
-      searchPlaceholder: 'Rechercher des produits...',
+      searchProducts: 'Rechercher des produits...',
       allCategories: 'Toutes les categories',
       stockValue: 'Valeur du stock',
       movements: 'Mouvements',
@@ -2442,6 +2458,7 @@ export const fr: typeof sq = {
     transactions: {
       title: 'Transactions',
       subtitle: 'Journal financier',
+      searchPlaceholder: 'Rechercher description, contact...',
       addTransaction: 'Ajouter une transaction',
       editTransaction: 'Modifier la transaction',
       noTransactions: 'Aucune transaction',
@@ -2457,7 +2474,7 @@ export const fr: typeof sq = {
       totalExpenses: 'Total depenses',
       balance: 'Solde',
       allTypes: 'Tous les types',
-      searchPlaceholder: 'Rechercher des transactions...',
+      searchTransactions: 'Rechercher des transactions...',
       exportCsv: 'Exporter CSV',
     },
     expenses: {
@@ -3149,6 +3166,25 @@ export const fr: typeof sq = {
       approved: 'Congé approuvé',
       rejected: 'Congé refusé',
       cancelled: 'Congé annulé',
+    },
+  },
+  cookies: {
+    banner: {
+      title: 'Vos données, votre choix',
+      intro: 'Nous utilisons des cookies essentiels pour faire fonctionner la plateforme et, uniquement avec votre consentement, des cookies fonctionnels pour les préférences et des cookies d\'analyse pour améliorer le produit.',
+      learnMore: 'Lire la politique de cookies',
+      acceptAll: 'Tout accepter',
+      rejectAll: 'Refuser les non-essentiels',
+      customize: 'Personnaliser',
+      saveChoices: 'Enregistrer mes choix',
+      necessary: 'Strictement nécessaires (toujours actifs)',
+      necessaryDesc: 'Pour la connexion, la langue choisie et l\'enregistrement du consentement. La plateforme ne fonctionne pas sans ces cookies.',
+      functional: 'Fonctionnels',
+      functionalDesc: 'Préférences UI (barre latérale repliée, thème). Stockés uniquement dans votre navigateur.',
+      analytics: 'Analyse',
+      analyticsDesc: 'Statistiques d\'usage anonymes pour améliorer le produit (activés uniquement s\'ils sont ajoutés à l\'avenir).',
+      marketing: 'Marketing',
+      marketingDesc: 'Suivi pour des offres pertinentes. Nous n\'utilisons actuellement pas de cookies marketing.',
     },
   },
 };

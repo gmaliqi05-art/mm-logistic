@@ -1393,10 +1393,19 @@ export const en: typeof sq = {
       movementType: 'Movement Type',
       category: 'Category',
       selectCategory: 'Select category...',
+      product: 'Product',
+      selectProduct: 'Select product...',
+      pickProduct: 'Pick a product',
       conditionBefore: 'Condition Before',
       conditionAfter: 'Condition After',
       positiveQty: 'Quantity must be a positive number',
+      insufficient: 'Insufficient stock for this movement.',
       movementHistory: 'Movement History',
+    },
+    damage: {
+      pickProduct: 'Pick a product',
+      exceedsAvailable: 'Stock in condition "{condition}" is only {available}',
+      noDepot: 'Your account is not assigned to a depot',
     },
     receiving: {
       title: 'Receiving / Shipping',
@@ -1413,6 +1422,9 @@ export const en: typeof sq = {
       bulkReceiving: 'Bulk Receiving',
       bulkShipping: 'Bulk Shipping',
       sortingHint: 'This category requires sorting. If pallets are mixed, start a sorting batch in',
+      codeNotFound: 'Code "{code}" was not found',
+      atLeastOne: 'Add at least one valid item',
+      pickProductForCategory: 'Pick the specific product for category "{category}".',
     },
     sorting: {
       title: 'Sorting',
@@ -2123,6 +2135,9 @@ export const en: typeof sq = {
     currentLanguage: 'Current language',
   },
   accounting: {
+    imports: {
+      searchPlaceholder: 'Search by number, supplier or origin...',
+    },
     dashboard: {
       title: 'Accounting',
       subtitle: 'Financial summary',
@@ -2176,6 +2191,7 @@ export const en: typeof sq = {
     products: {
       title: 'Products',
       subtitle: 'Product catalog',
+      searchPlaceholder: 'Search by name, SKU, description...',
       addProduct: 'Add Product',
       editProduct: 'Edit Product',
       noProducts: 'No products',
@@ -2193,7 +2209,7 @@ export const en: typeof sq = {
       inStock: 'In Stock',
       lowStock: 'Low Stock',
       outOfStock: 'Out of Stock',
-      searchPlaceholder: 'Search products...',
+      searchProducts: 'Search products...',
       allCategories: 'All categories',
       stockValue: 'Stock Value',
       movements: 'Movements',
@@ -2445,6 +2461,7 @@ export const en: typeof sq = {
     transactions: {
       title: 'Transactions',
       subtitle: 'Financial journal',
+      searchPlaceholder: 'Search description, contact...',
       addTransaction: 'Add Transaction',
       editTransaction: 'Edit Transaction',
       noTransactions: 'No transactions',
@@ -2460,7 +2477,7 @@ export const en: typeof sq = {
       totalExpenses: 'Total Expenses',
       balance: 'Balance',
       allTypes: 'All types',
-      searchPlaceholder: 'Search transactions...',
+      searchTransactions: 'Search transactions...',
       exportCsv: 'Export CSV',
     },
     expenses: {
@@ -3152,6 +3169,25 @@ export const en: typeof sq = {
       approved: 'Leave approved',
       rejected: 'Leave rejected',
       cancelled: 'Leave cancelled',
+    },
+  },
+  cookies: {
+    banner: {
+      title: 'Your data, your choice',
+      intro: 'We use essential cookies to run the platform and, only with your consent, functional cookies for preferences and analytics to improve the product.',
+      learnMore: 'Read the cookie policy',
+      acceptAll: 'Accept all',
+      rejectAll: 'Reject non-essential',
+      customize: 'Customize',
+      saveChoices: 'Save choices',
+      necessary: 'Strictly necessary (always on)',
+      necessaryDesc: 'For login, selected language and storing your consent. The platform does not work without these.',
+      functional: 'Functional',
+      functionalDesc: 'UI preferences (sidebar collapse, theme). Stored in your browser only.',
+      analytics: 'Analytics',
+      analyticsDesc: 'Anonymous usage statistics to improve the product (only activated if added in the future).',
+      marketing: 'Marketing',
+      marketingDesc: 'Tracking for relevant offers. We currently do not use marketing cookies.',
     },
   },
 };

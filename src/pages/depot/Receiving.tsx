@@ -77,7 +77,8 @@ export default function DepotReceiving() {
         return [...prev, { id: crypto.randomUUID(), category_id: matchedProduct.category_id, category_product_id: matchedProduct.id, quantity: '1', condition: 'good' }];
       });
     } else {
-      setError(`Kodi "${code}" nuk u gjet`);
+      const tpl = t('depot.receiving.codeNotFound') || 'Kodi "{code}" nuk u gjet';
+      setError(tpl.replace('{code}', code));
     }
   }
   const [aiNotice, setAiNotice] = useState<string | null>(null);
@@ -225,13 +226,14 @@ export default function DepotReceiving() {
     e.preventDefault();
     const validRows = receivingRows.filter((r) => r.category_id && r.quantity && parseInt(r.quantity, 10) > 0);
     if (validRows.length === 0) {
-      setError('Shto te pakten nje artikull valid');
+      setError(t('depot.receiving.atLeastOne') || 'Shto te pakten nje artikull valid');
       return;
     }
     const missingProduct = validRows.find((r) => categoryHasProducts(r.category_id) && !r.category_product_id);
     if (missingProduct) {
       const cat = categories.find((c) => c.id === missingProduct.category_id);
-      setError(`Zgjedh produktin specifik per kategorin "${cat?.name ?? ''}".`);
+      const tpl = t('depot.receiving.pickProductForCategory') || 'Zgjedh produktin specifik per kategorin "{category}".';
+      setError(tpl.replace('{category}', cat?.name ?? ''));
       return;
     }
 

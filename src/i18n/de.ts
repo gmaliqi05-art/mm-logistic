@@ -1390,10 +1390,19 @@ export const de: typeof sq = {
       movementType: 'Bewegungsart',
       category: 'Kategorie',
       selectCategory: 'Kategorie wählen...',
+      product: 'Produkt',
+      selectProduct: 'Produkt wählen...',
+      pickProduct: 'Bitte ein Produkt auswählen',
       conditionBefore: 'Zustand vorher',
       conditionAfter: 'Zustand nachher',
       positiveQty: 'Menge muss eine positive Zahl sein',
+      insufficient: 'Nicht genug Bestand für diese Bewegung.',
       movementHistory: 'Bewegungsverlauf',
+    },
+    damage: {
+      pickProduct: 'Produkt auswählen',
+      exceedsAvailable: 'Bestand im Zustand "{condition}" ist nur {available}',
+      noDepot: 'Ihr Konto ist keinem Lager zugeordnet',
     },
     receiving: {
       title: 'Empfang / Versand',
@@ -1410,6 +1419,9 @@ export const de: typeof sq = {
       bulkReceiving: 'Massenempfang',
       bulkShipping: 'Massenversand',
       sortingHint: 'Diese Kategorie erfordert Sortierung. Wenn Paletten gemischt sind, starten Sie einen Sortiervorgang in',
+      codeNotFound: 'Code "{code}" wurde nicht gefunden',
+      atLeastOne: 'Fügen Sie mindestens einen gültigen Artikel hinzu',
+      pickProductForCategory: 'Wählen Sie das spezifische Produkt für die Kategorie "{category}".',
     },
     sorting: {
       title: 'Sortierung',
@@ -2120,6 +2132,9 @@ export const de: typeof sq = {
     currentLanguage: 'Aktuelle Sprache',
   },
   accounting: {
+    imports: {
+      searchPlaceholder: 'Suche nach Nummer, Lieferant oder Ort...',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Finanzuebersicht',
@@ -2173,6 +2188,7 @@ export const de: typeof sq = {
     products: {
       title: 'Produkte',
       subtitle: 'Produktkatalog',
+      searchPlaceholder: 'Suche nach Name, SKU, Beschreibung...',
       addProduct: 'Produkt hinzufuegen',
       editProduct: 'Produkt bearbeiten',
       noProducts: 'Keine Produkte',
@@ -2190,7 +2206,7 @@ export const de: typeof sq = {
       inStock: 'Auf Lager',
       lowStock: 'Niedriger Bestand',
       outOfStock: 'Nicht auf Lager',
-      searchPlaceholder: 'Produkte suchen...',
+      searchProducts: 'Produkte suchen...',
       allCategories: 'Alle Kategorien',
       stockValue: 'Bestandswert',
       movements: 'Bewegungen',
@@ -2442,6 +2458,7 @@ export const de: typeof sq = {
     transactions: {
       title: 'Transaktionen',
       subtitle: 'Finanzjournal',
+      searchPlaceholder: 'Beschreibung, Kontakt suchen...',
       addTransaction: 'Transaktion hinzufuegen',
       editTransaction: 'Transaktion bearbeiten',
       noTransactions: 'Keine Transaktionen',
@@ -2457,7 +2474,7 @@ export const de: typeof sq = {
       totalExpenses: 'Gesamtausgaben',
       balance: 'Saldo',
       allTypes: 'Alle Typen',
-      searchPlaceholder: 'Transaktionen suchen...',
+      searchTransactions: 'Transaktionen suchen...',
       exportCsv: 'CSV exportieren',
     },
     expenses: {
@@ -3149,6 +3166,25 @@ export const de: typeof sq = {
       approved: 'Urlaub genehmigt',
       rejected: 'Urlaub abgelehnt',
       cancelled: 'Urlaub storniert',
+    },
+  },
+  cookies: {
+    banner: {
+      title: 'Ihre Daten, Ihre Wahl',
+      intro: 'Wir setzen technisch notwendige Cookies ein, um die Plattform zu betreiben, und nur mit Ihrer Einwilligung funktionale Cookies fuer Praeferenzen sowie Analyse-Cookies zur Produktverbesserung.',
+      learnMore: 'Cookie-Richtlinie lesen',
+      acceptAll: 'Alle akzeptieren',
+      rejectAll: 'Nicht-notwendige ablehnen',
+      customize: 'Anpassen',
+      saveChoices: 'Auswahl speichern',
+      necessary: 'Erforderlich (immer aktiv)',
+      necessaryDesc: 'Fuer Login, gewaehlte Sprache und Speicherung der Einwilligung. Ohne diese Cookies funktioniert die Plattform nicht.',
+      functional: 'Funktional',
+      functionalDesc: 'UI-Praeferenzen (Sidebar eingeklappt, Theme). Nur in Ihrem Browser gespeichert.',
+      analytics: 'Analyse',
+      analyticsDesc: 'Anonyme Nutzungsstatistiken zur Produktverbesserung (nur aktiv, falls in Zukunft hinzugefuegt).',
+      marketing: 'Marketing',
+      marketingDesc: 'Tracking fuer relevante Angebote. Wir verwenden aktuell keine Marketing-Cookies.',
     },
   },
 };

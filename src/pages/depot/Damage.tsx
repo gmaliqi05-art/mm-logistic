@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Loader2, CheckCircle2, Send, ShieldAlert } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface CategoryProduct {
   id: string;
@@ -37,6 +38,7 @@ const CONDITION_LABELS: Record<string, string> = {
 
 export default function DepotDamage() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [products, setProducts] = useState<CategoryProduct[]>([]);
   const [stock, setStock] = useState<StockRow[]>([]);
   const [history, setHistory] = useState<DamageReport[]>([]);
@@ -95,10 +97,14 @@ export default function DepotDamage() {
     setError(null);
     setSuccess(false);
     const q = parseInt(quantity || '0', 10);
-    if (!productId) return setError('Zgjidhni produktin');
-    if (q <= 0) return setError('Sasia duhet te jete me e madhe se 0');
-    if (q > available) return setError(`Stoku ne gjendjen "${CONDITION_LABELS[conditionFrom] ?? conditionFrom}" eshte vetem ${available}`);
-    if (!profile?.depot_id) return setError('Llogaria juaj nuk ka depo te caktuar');
+    if (!productId) return setError(t('depot.damage.pickProduct') || 'Zgjidhni produktin');
+    if (q <= 0) return setError(t('depot.stock.positiveQty') || 'Sasia duhet te jete me e madhe se 0');
+    if (q > available) {
+      const condLabel = CONDITION_LABELS[conditionFrom] ?? conditionFrom;
+      const tpl = t('depot.damage.exceedsAvailable') || 'Stoku ne gjendjen "{condition}" eshte vetem {available}';
+      return setError(tpl.replace('{condition}', String(condLabel)).replace('{available}', String(available)));
+    }
+    if (!profile?.depot_id) return setError(t('depot.damage.noDepot') || 'Llogaria juaj nuk ka depo te caktuar');
 
     setSubmitting(true);
     const { error: rpcErr } = await supabase.rpc('report_stock_damage', {

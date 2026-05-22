@@ -76,10 +76,47 @@ function datevKreditorAccount(contactIdx: number): string {
   return String(70000 + contactIdx);
 }
 
-function revenueAccountForRate(rate: number): string {
-  if (rate === 19) return "8400";
-  if (rate === 7) return "8300";
-  return "8100";
+// SKR03 revenue mapping with reverse-charge / intra-Community / export
+// detection. The previous helper only switched on the VAT rate, so a
+// reverse-charge invoice (UStG §13b) booked as standard domestic revenue
+// and Finanzamt audits caught the under-reporting. Mapping rules:
+//   - 8336 + BU 94  → reverse-charge (Steuerschuldnerschaft des Leistungsempfaengers)
+//   - 8125 + BU 44  → intra-Community supply (steuerfreie EU-Lieferung §4 Nr.1b UStG)
+//   - 8120 + BU 12  → export to a third country (steuerfreie Ausfuhr §4 Nr.1a UStG)
+//   - 8400          → standard 19% sales
+//   - 8300          → reduced 7% sales
+//   - 8100          → steuerfrei domestic catch-all
+const EU_COUNTRY_CODES = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR",
+  "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+]);
+
+function revenueAccountForInvoice(
+  invoice: Record<string, unknown>,
+  rate: number,
+): { account: string; buKey: string } {
+  const reverseCharge = invoice.reverse_charge === true;
+  const intraCommunity = invoice.intra_community_supply === true;
+  const buyerCountry = String(
+    invoice.buyer_country ?? invoice.contact_country ?? "",
+  ).toUpperCase();
+  const sellerCountry = String(invoice.seller_country ?? "DE").toUpperCase();
+
+  if (reverseCharge) return { account: "8336", buKey: "94" };
+  if (intraCommunity) return { account: "8125", buKey: "44" };
+
+  // Export to non-EU third country (e.g. CH, AL, XK, BA, RS, MK, ME, GB)
+  if (
+    buyerCountry &&
+    buyerCountry !== sellerCountry &&
+    !EU_COUNTRY_CODES.has(buyerCountry)
+  ) {
+    return { account: "8120", buKey: "12" };
+  }
+
+  if (rate === 19) return { account: "8400", buKey: "" };
+  if (rate === 7) return { account: "8300", buKey: "" };
+  return { account: "8100", buKey: "" };
 }
 
 Deno.serve(async (req: Request) => {
@@ -135,12 +172,16 @@ Deno.serve(async (req: Request) => {
     if (exportTypes.includes("buchungen")) {
       let invoicesQ = supabase
         .from("acc_invoices")
-        .select("*, contact:acc_contacts(id, contact_type)")
+        // Pull the country and seller VAT fields explicitly so the
+        // reverse-charge / intra-Community / export detection works.
+        .select("*, contact:acc_contacts(id, contact_type, country)")
         .eq("company_id", company_id)
         .gte("invoice_date", date_from)
         .lte("invoice_date", date_to);
       if (bank_account_id) invoicesQ = invoicesQ.eq("bank_account_id", bank_account_id);
       const { data: invoices } = await invoicesQ;
+
+      const sellerCountry = String((company.country ?? "DE")).toUpperCase();
 
       const rows: string[] = [];
       for (const inv of invoices ?? []) {
@@ -149,17 +190,35 @@ Deno.serve(async (req: Request) => {
         const total = Number(inv.total ?? 0);
         const vatAmt = Number(inv.vat_amount ?? 0);
         const subtotal = Number(inv.subtotal ?? 0);
-        const revenueAcc = revenueAccountForRate(
-          vatAmt > 0 && subtotal > 0 ? Math.round((vatAmt / subtotal) * 100) : 0,
+        const rate = vatAmt > 0 && subtotal > 0
+          ? Math.round((vatAmt / subtotal) * 100)
+          : 0;
+
+        // Augment invoice with derived fields the helper needs.
+        const invForMapping = {
+          ...inv,
+          buyer_country: (inv as Record<string, unknown>).buyer_country
+            ?? (inv as { contact?: { country?: string } }).contact?.country
+            ?? null,
+          seller_country: sellerCountry,
+        };
+        const { account: revenueAcc, buKey } = revenueAccountForInvoice(
+          invForMapping,
+          rate,
         );
+
         const beleg = formatDateDDMM(inv.invoice_date as string);
 
+        // DATEV EXTF 700 column order: Umsatz, S/H, WKZ, Kurs, Basis-Umsatz,
+        // WKZ Basis-Umsatz, Konto, Gegenkonto, BU-Schluessel, Belegdatum,
+        // Belegfeld1, Belegfeld2, Skonto, Buchungstext, ...
         rows.push([
           csvField(money(total), true),
           `"S"`,
           `"${inv.currency ?? "EUR"}"`,
           ``, ``, ``,
-          debitor, revenueAcc, ``,
+          debitor, revenueAcc,
+          buKey ? `"${buKey}"` : ``,
           beleg, csvField(inv.invoice_number), ``, ``,
           csvField((inv.notes as string) ?? inv.invoice_number),
           ``, ``, ``, ``, ``, ``,
