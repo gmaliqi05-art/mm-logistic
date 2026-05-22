@@ -143,10 +143,21 @@ function DepoistDashboard() {
     let sorting = 0;
     for (const r of stockRows) {
       total += r.quantity;
-      if (r.condition === 'good') good += r.quantity;
-      else if (r.condition === 'damaged') damaged += r.quantity;
-      else if (r.condition === 'repaired') repaired += r.quantity;
-      else if (r.condition === 'sorting' || r.condition === 'sorting_pending') sorting += r.quantity;
+      // "Te mira" covers every condition that is NOT damaged or repaired —
+      // good stock, post-sort buckets (ready_a/b/c), and the sorting work
+      // queue. Otherwise rows in ready_a/b/c/sorting would silently vanish
+      // from both the Te mira and the Defekt cards and the operator would
+      // see Te mira + Defekt < Stoku total.
+      if (r.condition === 'damaged') {
+        damaged += r.quantity;
+      } else if (r.condition === 'repaired') {
+        repaired += r.quantity;
+      } else {
+        good += r.quantity;
+        if (r.condition === 'sorting' || r.condition === 'sorting_pending') {
+          sorting += r.quantity;
+        }
+      }
     }
     return { total, good, damaged, repaired, sorting };
   }, [stockRows]);
