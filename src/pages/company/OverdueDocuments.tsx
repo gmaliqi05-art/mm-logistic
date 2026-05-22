@@ -29,6 +29,8 @@ interface OverdueNote {
   pickup_address: string | null;
   scheduled_delivery_at: string | null;
   scheduled_pickup_at: string | null;
+  scheduled_delivery_time_set: boolean | null;
+  scheduled_pickup_time_set: boolean | null;
   scanned_photo_url: string | null;
   assigned_driver_id: string | null;
   notes: string | null;
@@ -68,6 +70,19 @@ function statusLabel(s: string, t: (k: string) => string) {
 function scheduledOf(n: OverdueNote): Date | null {
   const raw = n.type === 'pickup' ? n.scheduled_pickup_at : n.scheduled_delivery_at;
   return raw ? new Date(raw) : null;
+}
+
+function formatScheduled(n: OverdueNote): string {
+  const d = scheduledOf(n);
+  if (!d) return '—';
+  // Time was only set if the operator chose one in the form. Otherwise we
+  // show only the date — the midnight value Postgres stores is an
+  // implementation detail, not user-facing.
+  const timeSet = n.type === 'pickup' ? n.scheduled_pickup_time_set : n.scheduled_delivery_time_set;
+  if (!timeSet) {
+    return d.toLocaleDateString();
+  }
+  return d.toLocaleString();
 }
 
 function daysOverdue(n: OverdueNote): number {
@@ -115,7 +130,7 @@ export default function CompanyOverdueDocuments() {
       const { data, error: qErr } = await supabase
         .from('delivery_notes')
         .select(
-          'id, note_number, type, status, partner_name, delivery_address, pickup_address, scheduled_delivery_at, scheduled_pickup_at, scanned_photo_url, assigned_driver_id, notes, created_at'
+          'id, note_number, type, status, partner_name, delivery_address, pickup_address, scheduled_delivery_at, scheduled_pickup_at, scheduled_delivery_time_set, scheduled_pickup_time_set, scanned_photo_url, assigned_driver_id, notes, created_at'
         )
         .eq('company_id', profile.company_id)
         .in('status', ACTIVE_STATUSES)
@@ -271,7 +286,6 @@ export default function CompanyOverdueDocuments() {
         <ul className="space-y-3">
           {filtered.map((n) => {
             const od = daysOverdue(n);
-            const sched = scheduledOf(n);
             const address = n.type === 'pickup' ? n.pickup_address : n.delivery_address;
             const hasScan = !!n.scanned_photo_url;
             return (
@@ -312,7 +326,7 @@ export default function CompanyOverdueDocuments() {
                     <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-gray-600">
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                        {sched ? sched.toLocaleString() : '—'}
+                        {formatScheduled(n)}
                       </span>
                       <span className="inline-flex items-center gap-1 truncate">
                         <MapPin className="w-3.5 h-3.5 text-gray-400" />
