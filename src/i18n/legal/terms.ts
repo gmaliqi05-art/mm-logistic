@@ -17,7 +17,7 @@ export const terms = {
     shortTitle: 'Kushtet',
     title: 'Kushtet e Pergjithshme te Perdorimit (AGB)',
     subtitle: 'Marreveshja kontraktuale midis nesh dhe klienteve te biznesit per perdorimin e platformes SaaS.',
-    intro: 'Keto Kushte te Pergjithshme te Perdorimit ("AGB") rregullojne marredhenien kontraktuale midis [EMRI I KOMPANISE] ("ne", "ofruesi") dhe klientit ("ju", "klienti") per perdorimin e platformes [EMRI I PLATFORMES]. Ne ofrojme sherbime SaaS ekskluzivisht per kliente biznesi (B2B). Konsumatoret e zakonshem nuk perfshihen ne kete kontrate.',
+    intro: 'Keto Kushte te Pergjithshme te Perdorimit ("AGB") rregullojne marredhenien kontraktuale midis Mar Group (Genton Maliqi) ("ne", "ofruesi") dhe klientit ("ju", "klienti") per perdorimin e platformes mm-logistic. Ne ofrojme sherbime SaaS ekskluzivisht per kliente biznesi (B2B). Konsumatoret e zakonshem nuk perfshihen ne kete kontrate.',
     lastUpdated: '15 Maj 2026',
     version: 'Versioni 1.0',
 
@@ -79,7 +79,7 @@ export const terms = {
     },
     section15: {
       title: 'Dispozita perfundimtare',
-      body: '(1) Ligji i aplikueshem: Ky kontrate i nenshtrohet ligjit gjerman, duke perjashtuar Konventen e Vjenes per Shitjen Nderkombetare te Mallrave (CISG).\n\n(2) Vendi i juridiksionit: Per te gjitha mosmarreveshjet qe rrjedhin nga ky kontrate me sipermarres, persona juridike te ligjit publik ose fonde te pasurise publike, juridiksioni ekskluziv eshte [QYTETI I REGJISTRIMIT], Gjermania.\n\n(3) Klauzola e ndarshmerise (Salvatorische Klausel): Nese ndonje dispozite e ketyre AGB rezulton e pavlefshme ose e pazbatueshme, kjo nuk ndikon ne vlefshmerine e dispozitave te tjera. Dispozita e pavlefshme zevendesohet me nje dispozite te vlefshme qe i afrohet sa me shume qellimit ekonomik te dispozites se pavlefshme.\n\n(4) Gjuha e kontrates: Versioni gjerman i ketyre AGB eshte legalisht detyrues. Perkthimet ne gjuhe te tjera ofrohen vetem per lehtesi.\n\n(5) Te gjitha ndryshimet ose plotesimet duhet te jene me shkrim per te qene te vlefshme. Kjo perfshin edhe ndryshimin e kesaj klauzole me shkrim.',
+      body: '(1) Ligji i aplikueshem: Ky kontrate i nenshtrohet ligjit gjerman, duke perjashtuar Konventen e Vjenes per Shitjen Nderkombetare te Mallrave (CISG).\n\n(2) Vendi i juridiksionit: Per te gjitha mosmarreveshjet qe rrjedhin nga ky kontrate me sipermarres, persona juridike te ligjit publik ose fonde te pasurise publike, juridiksioni ekskluziv eshte Lörrach, Gjermania.\n\n(3) Klauzola e ndarshmerise (Salvatorische Klausel): Nese ndonje dispozite e ketyre AGB rezulton e pavlefshme ose e pazbatueshme, kjo nuk ndikon ne vlefshmerine e dispozitave te tjera. Dispozita e pavlefshme zevendesohet me nje dispozite te vlefshme qe i afrohet sa me shume qellimit ekonomik te dispozites se pavlefshme.\n\n(4) Gjuha e kontrates: Versioni gjerman i ketyre AGB eshte legalisht detyrues. Perkthimet ne gjuhe te tjera ofrohen vetem per lehtesi.\n\n(5) Te gjitha ndryshimet ose plotesimet duhet te jene me shkrim per te qene te vlefshme. Kjo perfshin edhe ndryshimin e kesaj klauzole me shkrim.',
     },
   },
 
@@ -90,7 +90,7 @@ export const terms = {
     shortTitle: 'Terms',
     title: 'Terms of Service (AGB)',
     subtitle: 'Contractual agreement between us and our business customers for the use of the SaaS platform.',
-    intro: 'These Terms of Service ("AGB") govern the contractual relationship between [COMPANY NAME] ("we", "provider") and the customer ("you", "customer") regarding the use of the [PLATFORM NAME] platform. We provide SaaS services exclusively to business customers (B2B). Consumers are not covered by this contract.',
+    intro: 'These Terms of Service ("AGB") govern the contractual relationship between Mar Group (Genton Maliqi) ("we", "provider") and the customer ("you", "customer") regarding the use of the mm-logistic platform. We provide SaaS services exclusively to business customers (B2B). Consumers are not covered by this contract.',
     lastUpdated: '15 May 2026',
     version: 'Version 1.0',
 
@@ -152,7 +152,7 @@ export const terms = {
     },
     section15: {
       title: 'Final Provisions',
-      body: '(1) Applicable law: This contract is subject to German law, excluding the Vienna Convention on International Sale of Goods (CISG).\n\n(2) Jurisdiction: For all disputes arising from this contract with entrepreneurs, legal entities under public law or public funds, the exclusive jurisdiction is [CITY OF REGISTRATION], Germany.\n\n(3) Severability clause (Salvatorische Klausel): If any provision of these Terms is invalid or unenforceable, this does not affect the validity of other provisions. The invalid provision is replaced with a valid provision that comes closest to the economic purpose of the invalid provision.\n\n(4) Contract language: The German version of these Terms is legally binding. Translations into other languages are provided for convenience only.\n\n(5) All changes or supplements must be in writing to be valid. This also includes changing this written form clause.',
+      body: '(1) Applicable law: This contract is subject to German law, excluding the Vienna Convention on International Sale of Goods (CISG).\n\n(2) Jurisdiction: For all disputes arising from this contract with entrepreneurs, legal entities under public law or public funds, the exclusive jurisdiction is Lörrach, Germany.\n\n(3) Severability clause (Salvatorische Klausel): If any provision of these Terms is invalid or unenforceable, this does not affect the validity of other provisions. The invalid provision is replaced with a valid provision that comes closest to the economic purpose of the invalid provision.\n\n(4) Contract language: The German version of these Terms is legally binding. Translations into other languages are provided for convenience only.\n\n(5) All changes or supplements must be in writing to be valid. This also includes changing this written form clause.',
     },
   },
 
@@ -163,7 +163,7 @@ export const terms = {
     shortTitle: 'AGB',
     title: 'Allgemeine Gesch\u00e4ftsbedingungen (AGB)',
     subtitle: 'Vertragliche Vereinbarung zwischen uns und unseren Gesch\u00e4ftskunden zur Nutzung der SaaS-Plattform.',
-    intro: 'Diese Allgemeinen Gesch\u00e4ftsbedingungen ("AGB") regeln das Vertragsverh\u00e4ltnis zwischen [FIRMENNAME] ("wir", "Anbieter") und dem Kunden ("Sie", "Kunde") bez\u00fcglich der Nutzung der Plattform [PLATTFORMNAME]. Wir bieten SaaS-Dienste ausschlie\u00dflich Gesch\u00e4ftskunden (B2B). Verbraucher sind von diesem Vertrag nicht erfasst.',
+    intro: 'Diese Allgemeinen Gesch\u00e4ftsbedingungen ("AGB") regeln das Vertragsverh\u00e4ltnis zwischen Mar Group (Genton Maliqi) ("wir", "Anbieter") und dem Kunden ("Sie", "Kunde") bez\u00fcglich der Nutzung der Plattform mm-logistic. Wir bieten SaaS-Dienste ausschlie\u00dflich Gesch\u00e4ftskunden (B2B). Verbraucher sind von diesem Vertrag nicht erfasst.',
     lastUpdated: '15. Mai 2026',
     version: 'Version 1.0',
 
@@ -225,7 +225,7 @@ export const terms = {
     },
     section15: {
       title: 'Schlussbestimmungen',
-      body: '(1) Anwendbares Recht: Dieser Vertrag unterliegt deutschem Recht unter Ausschluss des UN-Kaufrechts (CISG).\n\n(2) Gerichtsstand: F\u00fcr alle Streitigkeiten aus diesem Vertrag mit Unternehmern, juristischen Personen des \u00f6ffentlichen Rechts oder \u00f6ffentlich-rechtlichem Sonderverm\u00f6gen ist der ausschlie\u00dfliche Gerichtsstand [STADT DER REGISTRIERUNG], Deutschland.\n\n(3) Salvatorische Klausel: Sollte eine Bestimmung dieser AGB unwirksam oder undurchsetzbar sein, ber\u00fchrt dies nicht die G\u00fcltigkeit der \u00fcbrigen Bestimmungen. Die unwirksame Bestimmung wird durch eine wirksame Bestimmung ersetzt, die dem wirtschaftlichen Zweck der unwirksamen Bestimmung am n\u00e4chsten kommt.\n\n(4) Vertragssprache: Die deutsche Version dieser AGB ist rechtlich verbindlich. \u00dcbersetzungen in andere Sprachen werden nur zur Vereinfachung bereitgestellt.\n\n(5) S\u00e4mtliche \u00c4nderungen oder Erg\u00e4nzungen bed\u00fcrfen zu ihrer Wirksamkeit der Schriftform. Dies gilt auch f\u00fcr die \u00c4nderung dieser Schriftformklausel.',
+      body: '(1) Anwendbares Recht: Dieser Vertrag unterliegt deutschem Recht unter Ausschluss des UN-Kaufrechts (CISG).\n\n(2) Gerichtsstand: F\u00fcr alle Streitigkeiten aus diesem Vertrag mit Unternehmern, juristischen Personen des \u00f6ffentlichen Rechts oder \u00f6ffentlich-rechtlichem Sonderverm\u00f6gen ist der ausschlie\u00dfliche Gerichtsstand Lörrach, Deutschland.\n\n(3) Salvatorische Klausel: Sollte eine Bestimmung dieser AGB unwirksam oder undurchsetzbar sein, ber\u00fchrt dies nicht die G\u00fcltigkeit der \u00fcbrigen Bestimmungen. Die unwirksame Bestimmung wird durch eine wirksame Bestimmung ersetzt, die dem wirtschaftlichen Zweck der unwirksamen Bestimmung am n\u00e4chsten kommt.\n\n(4) Vertragssprache: Die deutsche Version dieser AGB ist rechtlich verbindlich. \u00dcbersetzungen in andere Sprachen werden nur zur Vereinfachung bereitgestellt.\n\n(5) S\u00e4mtliche \u00c4nderungen oder Erg\u00e4nzungen bed\u00fcrfen zu ihrer Wirksamkeit der Schriftform. Dies gilt auch f\u00fcr die \u00c4nderung dieser Schriftformklausel.',
     },
   },
 
@@ -236,7 +236,7 @@ export const terms = {
     shortTitle: 'CGU',
     title: 'Conditions G\u00e9n\u00e9rales d\'Utilisation (CGU)',
     subtitle: 'Accord contractuel entre nous et nos clients professionnels pour l\'utilisation de la plateforme SaaS.',
-    intro: 'Ces Conditions G\u00e9n\u00e9rales d\'Utilisation ("CGU") r\u00e9gissent la relation contractuelle entre [NOM DE L\'ENTREPRISE] ("nous", "fournisseur") et le client ("vous", "client") concernant l\'utilisation de la plateforme [NOM DE LA PLATEFORME]. Nous fournissons des services SaaS exclusivement aux clients professionnels (B2B). Les consommateurs ne sont pas couverts par ce contrat.',
+    intro: 'Ces Conditions G\u00e9n\u00e9rales d\'Utilisation ("CGU") r\u00e9gissent la relation contractuelle entre Mar Group (Genton Maliqi) ("nous", "fournisseur") et le client ("vous", "client") concernant l\'utilisation de la plateforme mm-logistic. Nous fournissons des services SaaS exclusivement aux clients professionnels (B2B). Les consommateurs ne sont pas couverts par ce contrat.',
     lastUpdated: '15 mai 2026',
     version: 'Version 1.0',
 
@@ -298,7 +298,7 @@ export const terms = {
     },
     section15: {
       title: 'Dispositions finales',
-      body: '(1) Loi applicable: Ce contrat est soumis au droit allemand, \u00e0 l\'exclusion de la Convention de Vienne sur la vente internationale de marchandises (CISG).\n\n(2) Juridiction: Pour tous les litiges d\u00e9coulant de ce contrat avec des entrepreneurs, des personnes morales de droit public ou des fonds publics, la juridiction exclusive est [VILLE D\'ENREGISTREMENT], Allemagne.\n\n(3) Clause de divisibilit\u00e9 (Salvatorische Klausel): Si une disposition de ces CGU est invalide ou inapplicable, cela n\'affecte pas la validit\u00e9 des autres dispositions. La disposition invalide est remplac\u00e9e par une disposition valide qui se rapproche le plus du but \u00e9conomique de la disposition invalide.\n\n(4) Langue du contrat: La version allemande de ces CGU est juridiquement contraignante. Les traductions dans d\'autres langues sont fournies uniquement pour la commodit\u00e9.\n\n(5) Toutes les modifications ou ajouts doivent \u00eatre par \u00e9crit pour \u00eatre valides. Cela inclut \u00e9galement la modification de cette clause de forme \u00e9crite.',
+      body: '(1) Loi applicable: Ce contrat est soumis au droit allemand, \u00e0 l\'exclusion de la Convention de Vienne sur la vente internationale de marchandises (CISG).\n\n(2) Juridiction: Pour tous les litiges d\u00e9coulant de ce contrat avec des entrepreneurs, des personnes morales de droit public ou des fonds publics, la juridiction exclusive est Lörrach, Allemagne.\n\n(3) Clause de divisibilit\u00e9 (Salvatorische Klausel): Si une disposition de ces CGU est invalide ou inapplicable, cela n\'affecte pas la validit\u00e9 des autres dispositions. La disposition invalide est remplac\u00e9e par une disposition valide qui se rapproche le plus du but \u00e9conomique de la disposition invalide.\n\n(4) Langue du contrat: La version allemande de ces CGU est juridiquement contraignante. Les traductions dans d\'autres langues sont fournies uniquement pour la commodit\u00e9.\n\n(5) Toutes les modifications ou ajouts doivent \u00eatre par \u00e9crit pour \u00eatre valides. Cela inclut \u00e9galement la modification de cette clause de forme \u00e9crite.',
     },
   },
 };

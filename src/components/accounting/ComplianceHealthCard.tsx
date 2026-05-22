@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ShieldCheck, CalendarClock, Landmark, Globe as Globe2 } from 'lucide-react';
 import { useCompliance } from '../../hooks/useCompliance';
 import { useTranslation } from '../../i18n';
@@ -9,6 +10,13 @@ import {
   vatReducedRate,
   vatStandardRate,
 } from '../../lib/complianceEngine';
+
+// Map an export code to its route. Codes without a dedicated page fall
+// through to the country-aware /accounting/financials hub.
+function exportRoute(code: string, countryCode: string | null): string {
+  if (countryCode === 'DE' && code === 'DATEV') return '/accounting/datev-export';
+  return '/accounting/financials';
+}
 
 const LOCALE_MAP: Record<Language, string> = {
   sq: 'sq-AL',
@@ -124,12 +132,14 @@ export default function ComplianceHealthCard() {
           {authority?.exports?.length ? (
             <div className="flex gap-1 mt-2 flex-wrap">
               {authority.exports.map((e) => (
-                <span
+                <Link
                   key={e}
-                  className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium"
+                  to={exportRoute(e, ctx.country_code)}
+                  className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                  title={t('accounting.compliance.openExportHint')}
                 >
                   {e}
-                </span>
+                </Link>
               ))}
             </div>
           ) : null}

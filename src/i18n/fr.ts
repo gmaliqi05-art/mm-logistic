@@ -267,6 +267,7 @@ export const fr: typeof sq = {
     imports: 'Importations',
     coa: 'Plan comptable',
     financials: 'Rapports financiers',
+    datevExport: 'Export DATEV',
     contacts: 'Contacts',
     products: 'Produits',
     invoices: 'Factures',
@@ -2635,6 +2636,7 @@ export const fr: typeof sq = {
       vatRates: 'Taux de TVA',
       taxAuthority: 'Autorit\u00e9 fiscale',
       nextDeadline: 'Prochaine \u00e9ch\u00e9ance de TVA',
+      openExportHint: 'Ouvrir le module d\'export pour cette autorit\u00e9',
     },
     arAgeing: {
       title: 'Balance \u00e2g\u00e9e clients',

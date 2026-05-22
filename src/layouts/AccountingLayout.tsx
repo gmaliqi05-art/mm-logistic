@@ -26,11 +26,21 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useCompliance } from '../hooks/useCompliance';
 import { useTranslation } from '../i18n';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
-const allNavItems = [
+// Country-gated export modules. Empty `countries` means "show everywhere".
+const allNavItems: Array<{
+  to: string;
+  icon: typeof LayoutDashboard;
+  label: string;
+  labelKey: string;
+  end: boolean;
+  bottomNav: boolean;
+  countries?: string[];
+}> = [
   { to: '/accounting', icon: LayoutDashboard, label: 'Dashboard', labelKey: 'nav.dashboard', end: true, bottomNav: true },
   { to: '/accounting/contacts', icon: Users, label: 'Kontaktet', labelKey: 'nav.contacts', end: false, bottomNav: true },
   { to: '/accounting/clients', icon: Building2, label: 'Kompanite / Faturat', labelKey: 'nav.clientInvoices', end: false, bottomNav: false },
@@ -48,6 +58,8 @@ const allNavItems = [
   { to: '/accounting/scans', icon: ScanLine, label: 'Skanimet', labelKey: 'nav.scans', end: false, bottomNav: false },
   { to: '/accounting/reports', icon: BarChart3, label: 'Raportet', labelKey: 'nav.reports', end: false, bottomNav: false },
   { to: '/accounting/financials', icon: Scale, label: 'Raportet Financiare', labelKey: 'nav.financials', end: false, bottomNav: false },
+  // DATEV is German tax-authority specific. Hide for other countries.
+  { to: '/accounting/datev-export', icon: BookOpen, label: 'DATEV Export', labelKey: 'nav.datevExport', end: false, bottomNav: false, countries: ['DE'] },
   { to: '/accounting/settings', icon: Settings, label: 'Cilesimet', labelKey: 'nav.settings', end: false, bottomNav: false },
 ];
 
@@ -55,12 +67,22 @@ const bottomNavItems = allNavItems.filter(i => i.bottomNav);
 
 export default function AccountingLayout() {
   const { profile, signOut } = useAuth();
+  const { ctx } = useCompliance();
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [companyLogo, setCompanyLogo] = useState<string>('');
   const [companyName, setCompanyName] = useState<string>('');
+
+  // Filter nav by country. While compliance ctx is loading we show only the
+  // country-agnostic items so the sidebar never flashes with a DATEV link the
+  // company can't legally use.
+  const navItems = allNavItems.filter((item) => {
+    if (!item.countries || item.countries.length === 0) return true;
+    if (!ctx.country_code) return false;
+    return item.countries.includes(ctx.country_code);
+  });
 
   useEffect(() => {
     if (profile?.company_id) fetchCompanyInfo();
@@ -125,7 +147,7 @@ export default function AccountingLayout() {
         )}
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
-          {allNavItems.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -271,7 +293,7 @@ export default function AccountingLayout() {
               </button>
             )}
             <div className="grid grid-cols-3 gap-2">
-              {allNavItems.map((item) => {
+              {navItems.map((item) => {
                 const isActive = item.end
                   ? location.pathname === item.to
                   : location.pathname.startsWith(item.to);

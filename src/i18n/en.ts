@@ -267,6 +267,7 @@ export const en: typeof sq = {
     imports: 'Imports',
     coa: 'Chart of Accounts',
     financials: 'Financial Reports',
+    datevExport: 'DATEV Export',
     contacts: 'Contacts',
     products: 'Products',
     invoices: 'Invoices',
@@ -2638,6 +2639,7 @@ export const en: typeof sq = {
       vatRates: 'VAT rates',
       taxAuthority: 'Tax authority',
       nextDeadline: 'Next VAT return deadline',
+      openExportHint: 'Open the export module for this authority',
     },
     arAgeing: {
       title: 'Accounts Receivable Ageing',
