@@ -14,7 +14,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SortingItem {
-  category_product_id: string;
+  category_product_id: string | null;
   quantity: number;
   condition: string;
 }
@@ -324,8 +324,12 @@ export default function SortingReports() {
                         {b.items
                           .filter((i) => i.quantity > 0)
                           .sort((a, c) => {
-                            const na = productMap.get(a.category_product_id) || '';
-                            const nc = productMap.get(c.category_product_id) || '';
+                            const na = a.category_product_id
+                              ? productMap.get(a.category_product_id) || ''
+                              : 'Defekt';
+                            const nc = c.category_product_id
+                              ? productMap.get(c.category_product_id) || ''
+                              : 'Defekt';
                             return na.localeCompare(nc);
                           })
                           .map((item, idx) => (
@@ -337,7 +341,9 @@ export default function SortingReports() {
                                   <Package className="w-3.5 h-3.5 text-teal-500" />
                                 )}
                                 <span className="font-medium text-gray-900">
-                                  {productMap.get(item.category_product_id) || '-'}
+                                  {item.category_product_id
+                                    ? productMap.get(item.category_product_id) || '-'
+                                    : 'Defekt'}
                                 </span>
                               </td>
                               <td className="py-2 text-right font-bold text-gray-900">
