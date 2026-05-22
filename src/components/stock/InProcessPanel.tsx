@@ -23,12 +23,10 @@ interface SortingBatch {
   category?: { name: string } | null;
 }
 
-interface RepairRow {
+interface DamagedStockRow {
   id: string;
-  quantity_in: number;
-  quantity_repaired: number;
-  quantity_scrapped: number;
-  created_at: string;
+  quantity: number;
+  category_id: string;
   category?: { name: string } | null;
   depot?: { name: string } | null;
 }
@@ -40,7 +38,7 @@ export default function InProcessPanel({
   repairPath = '/depot/repairs',
 }: Props) {
   const [batches, setBatches] = useState<SortingBatch[]>([]);
-  const [repairs, setRepairs] = useState<RepairRow[]>([]);
+  const [repairs, setRepairs] = useState<DamagedStockRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,11 +54,15 @@ export default function InProcessPanel({
         .limit(10);
       if (depotId) sortingQuery.eq('depot_id', depotId);
 
+      // Damaged stock is the work queue for reparature workers. The
+      // legacy depot_repairs.pending model was retired in 20260522110000.
       const repairQuery = supabase
-        .from('depot_repairs')
-        .select('id, quantity_in, quantity_repaired, quantity_scrapped, created_at, category:product_categories(name), depot:depots(name)')
+        .from('stock')
+        .select('id, quantity, category_id, category:product_categories(name), depot:depots(name)')
         .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
+        .eq('condition', 'damaged')
+        .gt('quantity', 0)
+        .order('updated_at', { ascending: false })
         .limit(10);
       if (depotId) repairQuery.eq('depot_id', depotId);
 
@@ -74,10 +76,7 @@ export default function InProcessPanel({
         if (!seen.has(key)) seen.set(key, b);
       }
       setBatches(Array.from(seen.values()));
-      const openRepairs = ((rRes.data as any) ?? []).filter(
-        (r: RepairRow) => r.quantity_in - r.quantity_repaired - r.quantity_scrapped > 0,
-      );
-      setRepairs(openRepairs);
+      setRepairs(((rRes.data as any) ?? []) as DamagedStockRow[]);
       setLoading(false);
     }
     void load();
@@ -87,7 +86,7 @@ export default function InProcessPanel({
   }, [companyId, depotId]);
 
   const sortingTotal = batches.reduce((s, b) => s + (b.total_received ?? 0), 0);
-  const repairTotal = repairs.reduce((s, r) => s + (r.quantity_in - r.quantity_repaired - r.quantity_scrapped), 0);
+  const repairTotal = repairs.reduce((s, r) => s + (r.quantity ?? 0), 0);
 
   if (!loading && batches.length === 0 && repairs.length === 0) return null;
 
@@ -125,27 +124,24 @@ export default function InProcessPanel({
         icon={Wrench}
         title="Ne reparature"
         tone="rose"
-        totalLabel={`${repairTotal.toLocaleString()} paleta te mbetura ne ${repairs.length} raste`}
+        totalLabel={`${repairTotal.toLocaleString()} paleta defekt ne ${repairs.length} kategori`}
         link={repairPath}
         loading={loading}
       >
-        {repairs.slice(0, 5).map((r) => {
-          const remaining = r.quantity_in - r.quantity_repaired - r.quantity_scrapped;
-          return (
-            <li key={r.id} className="py-1.5 border-b last:border-0 border-rose-100">
-              <Link
-                to={`${repairPath}?repair=${r.id}`}
-                className="flex items-center justify-between gap-3 text-xs hover:text-rose-900"
-              >
-                <span className="truncate text-slate-700">
-                  <span className="font-medium">{r.category?.name ?? 'Pa kategori'}</span>
-                  {r.depot?.name && <span className="text-slate-400"> · {r.depot.name}</span>}
-                </span>
-                <span className="text-rose-700 font-semibold whitespace-nowrap">{remaining}</span>
-              </Link>
-            </li>
-          );
-        })}
+        {repairs.slice(0, 5).map((r) => (
+          <li key={r.id} className="py-1.5 border-b last:border-0 border-rose-100">
+            <Link
+              to={repairPath}
+              className="flex items-center justify-between gap-3 text-xs hover:text-rose-900"
+            >
+              <span className="truncate text-slate-700">
+                <span className="font-medium">{r.category?.name ?? 'Pa kategori'}</span>
+                {r.depot?.name && <span className="text-slate-400"> · {r.depot.name}</span>}
+              </span>
+              <span className="text-rose-700 font-semibold whitespace-nowrap">{r.quantity}</span>
+            </Link>
+          </li>
+        ))}
         {repairs.length > 5 && <li className="text-[11px] text-rose-700 pt-1">+ {repairs.length - 5} te tjera...</li>}
       </ProcessCard>
     </div>
