@@ -196,7 +196,19 @@ export default function DepotStock() {
         });
       }
       const p = g.products.get(pKey)!;
-      p.rows.push(r);
+      // Merge rows that share the same condition into a single badge.
+      // v_depot_stock_value UNIONs the stock table with depot_repairs
+      // in-progress rows, so a product with both stock damaged and
+      // depot_repairs in-progress shows up as multiple "Defekt" rows; the
+      // operator should see one consolidated Defekt count per condition.
+      const existing = p.rows.find((x) => x.condition === r.condition);
+      if (existing) {
+        existing.quantity = (existing.quantity || 0) + r.quantity;
+      } else {
+        // Push a shallow copy so we don't mutate the source row from the
+        // query response.
+        p.rows.push({ ...r });
+      }
       p.qty += r.quantity;
     }
     return Array.from(map.values())
