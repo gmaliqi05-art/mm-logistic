@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Save, CheckCircle2, AlertTriangle, Palette, Upload, RotateCcw, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface BrandingSettings {
   brand_name: string;
@@ -23,6 +24,7 @@ const DEFAULTS: BrandingSettings = {
 
 export default function EmailBranding() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<BrandingSettings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,11 +64,11 @@ export default function EmailBranding() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setError('Vetem imazhe (PNG, JPG, SVG) lejohen');
+      setError(t('company.emailBranding.imagesOnly') || 'Vetem imazhe (PNG, JPG, SVG) lejohen');
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setError('Skedari eshte shume i madh (max 2MB)');
+      setError(t('company.emailBranding.fileTooLarge') || 'Skedari eshte shume i madh (max 2MB)');
       return;
     }
 

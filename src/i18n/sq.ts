@@ -965,6 +965,14 @@ export const sq = {
     },
   },
   company: {
+    vehicles: {
+      plateBrandRequired: 'Targa dhe marka jane te detyrueshme',
+      searchPlaceholder: 'Kerko me targe, VIN, marke...',
+    },
+    emailBranding: {
+      imagesOnly: 'Vetem imazhe (PNG, JPG, SVG) lejohen',
+      fileTooLarge: 'Skedari eshte shume i madh (max 2MB)',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Permbledhje e pergjithshme',
@@ -1066,6 +1074,7 @@ export const sq = {
     stock: {
       title: 'Stoku',
       subtitle: 'Menaxho inventarin e kompanise',
+      rowNotFound: 'Rreshti i stokut nuk u gjet',
       totalStock: 'Stoku Total',
       goodCondition: 'Gjendje e Mire',
       damagedCondition: 'Defekt',

@@ -967,6 +967,14 @@ export const fr: typeof sq = {
     },
   },
   company: {
+    vehicles: {
+      plateBrandRequired: 'La plaque et la marque sont obligatoires',
+      searchPlaceholder: 'Rechercher par plaque, VIN, marque...',
+    },
+    emailBranding: {
+      imagesOnly: 'Seules les images (PNG, JPG, SVG) sont autorisées',
+      fileTooLarge: 'Le fichier est trop volumineux (max 2 Mo)',
+    },
     dashboard: {
       title: 'Tableau de bord',
       subtitle: 'Aper\u00e7u g\u00e9n\u00e9ral',
@@ -1068,6 +1076,7 @@ export const fr: typeof sq = {
     stock: {
       title: 'Stock',
       subtitle: 'G\u00e9rer l\'inventaire de l\'entreprise',
+      rowNotFound: 'Ligne de stock introuvable',
       totalStock: 'Stock total',
       goodCondition: 'Bon \u00e9tat',
       damagedCondition: 'Endommag\u00e9',
