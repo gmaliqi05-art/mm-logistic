@@ -51,7 +51,6 @@ interface ItemInput {
   category_product_id: string;
   product_name: string;
   quantity: string;
-  defect_quantity: string;
   condition: 'good' | 'damaged';
 }
 
@@ -205,18 +204,39 @@ export default function DepotSorting() {
       return a.name.localeCompare(b.name);
     });
 
+    // Locate the dedicated "Defekt" product for this category so legacy
+    // batches (where damaged quantities were stored per-product on
+    // Klasse A/B/C) can be folded back into the single Defekt row.
+    const defectProduct = catProducts.find((p) => isDefectProduct(p.name));
+    let legacyDamagedOnOthers = 0;
+    for (const item of batch.items) {
+      if (item.condition !== 'damaged') continue;
+      const prod = catProducts.find((p) => p.id === item.category_product_id);
+      if (!prod) continue;
+      if (isDefectProduct(prod.name)) continue;
+      legacyDamagedOnOthers += item.quantity;
+    }
+
     const inputs: ItemInput[] = catProducts.map((p) => {
+      const isDefect = isDefectProduct(p.name);
       const goodItem = batch.items.find((i) => i.category_product_id === p.id && i.condition === 'good');
       const damagedItem = batch.items.find((i) => i.category_product_id === p.id && i.condition === 'damaged');
-      const isDefect = isDefectProduct(p.name);
+      if (isDefect) {
+        const base = damagedItem?.quantity ?? goodItem?.quantity ?? 0;
+        // Roll any legacy per-class damaged into the Defekt total.
+        const total = base + (defectProduct?.id === p.id ? legacyDamagedOnOthers : 0);
+        return {
+          category_product_id: p.id,
+          product_name: p.name,
+          quantity: total > 0 ? String(total) : '',
+          condition: 'damaged',
+        };
+      }
       return {
         category_product_id: p.id,
         product_name: p.name,
-        quantity: isDefect
-          ? (damagedItem ? String(damagedItem.quantity) : (goodItem ? String(goodItem.quantity) : ''))
-          : (goodItem ? String(goodItem.quantity) : ''),
-        defect_quantity: isDefect ? '' : (damagedItem ? String(damagedItem.quantity) : ''),
-        condition: isDefect ? 'damaged' : 'good',
+        quantity: goodItem ? String(goodItem.quantity) : '',
+        condition: 'good',
       };
     });
 
@@ -234,17 +254,18 @@ export default function DepotSorting() {
   async function persistItems(batchId: string) {
     const rows: Array<{ batch_id: string; category_product_id: string; quantity: number; condition: string }> = [];
 
+    // Each ItemInput now stores a single quantity: 'good' for class-product
+    // rows, 'damaged' for the dedicated Defekt-product row. The legacy
+    // per-class "defekt_quantity" column has been removed.
     for (const r of itemInputs) {
-      const isDefect = isDefectProduct(r.product_name);
-      const goodQty = Math.max(0, parseInt(r.quantity || '0', 10) || 0);
-      const defectQty = Math.max(0, parseInt(r.defect_quantity || '0', 10) || 0);
-
-      if (isDefect) {
-        if (goodQty > 0) rows.push({ batch_id: batchId, category_product_id: r.category_product_id, quantity: goodQty, condition: 'damaged' });
-      } else {
-        if (goodQty > 0) rows.push({ batch_id: batchId, category_product_id: r.category_product_id, quantity: goodQty, condition: 'good' });
-        if (defectQty > 0) rows.push({ batch_id: batchId, category_product_id: r.category_product_id, quantity: defectQty, condition: 'damaged' });
-      }
+      const qty = Math.max(0, parseInt(r.quantity || '0', 10) || 0);
+      if (qty <= 0) continue;
+      rows.push({
+        batch_id: batchId,
+        category_product_id: r.category_product_id,
+        quantity: qty,
+        condition: r.condition === 'damaged' ? 'damaged' : 'good',
+      });
     }
 
     const { error: delErr } = await supabase
@@ -397,7 +418,7 @@ export default function DepotSorting() {
     [currentBatch, categories],
   );
   const sortedTotal = itemInputs.reduce(
-    (s, r) => s + (parseInt(r.quantity || '0', 10) || 0) + (parseInt(r.defect_quantity || '0', 10) || 0),
+    (s, r) => s + (parseInt(r.quantity || '0', 10) || 0),
     0,
   );
   const totalReceivedNum = parseInt(editTotal || '0', 10) || 0;
@@ -766,23 +787,10 @@ function SortingItemsGrid({
     setItemInputs(copy);
   }
 
-  function updateDefectQty(index: number, next: string) {
-    const copy = itemInputs.slice();
-    copy[index] = { ...copy[index], defect_quantity: next };
-    setItemInputs(copy);
-  }
-
   function bump(index: number, delta: number) {
     const copy = itemInputs.slice();
     const current = parseInt(copy[index].quantity || '0', 10) || 0;
     copy[index] = { ...copy[index], quantity: String(Math.max(0, current + delta)) };
-    setItemInputs(copy);
-  }
-
-  function bumpDefect(index: number, delta: number) {
-    const copy = itemInputs.slice();
-    const current = parseInt(copy[index].defect_quantity || '0', 10) || 0;
-    copy[index] = { ...copy[index], defect_quantity: String(Math.max(0, current + delta)) };
     setItemInputs(copy);
   }
 
@@ -825,60 +833,42 @@ function SortingItemsGrid({
           <p className="text-sm font-semibold text-gray-900 truncate">{row.product_name}</p>
           {isDefect && <p className="text-[11px] text-rose-600">Shkon automatikisht ne stokun e defekteve</p>}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => bump(realIdx, -1)}
-              className="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center"
-            >
-              <Minus className="w-3 h-3" />
-            </button>
-            <input
-              type="number"
-              min="0"
-              inputMode="numeric"
-              value={row.quantity}
-              onChange={(e) => updateQty(realIdx, e.target.value)}
-              className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm text-right font-bold bg-white"
-              placeholder="0"
-            />
-            <button
-              type="button"
-              onClick={() => bump(realIdx, 1)}
-              className="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
-          </div>
-          {!isDefect && (
-            <div className="flex items-center gap-1 pl-2 border-l border-gray-200">
-              <button
-                type="button"
-                onClick={() => bumpDefect(realIdx, -1)}
-                className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 flex items-center justify-center"
-              >
-                <Minus className="w-3 h-3" />
-              </button>
-              <input
-                type="number"
-                min="0"
-                inputMode="numeric"
-                value={row.defect_quantity}
-                onChange={(e) => updateDefectQty(realIdx, e.target.value)}
-                className="w-16 px-2 py-1.5 border border-rose-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400 text-sm text-right font-bold bg-rose-50 text-rose-700 placeholder-rose-300"
-                placeholder="0"
-                title="Defekte"
-              />
-              <button
-                type="button"
-                onClick={() => bumpDefect(realIdx, 1)}
-                className="w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 flex items-center justify-center"
-              >
-                <Plus className="w-3 h-3" />
-              </button>
-            </div>
-          )}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => bump(realIdx, -1)}
+            className={`w-7 h-7 rounded-lg border flex items-center justify-center ${
+              isDefect
+                ? 'bg-white border-rose-200 text-rose-600 hover:bg-rose-50'
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Minus className="w-3 h-3" />
+          </button>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={row.quantity}
+            onChange={(e) => updateQty(realIdx, e.target.value)}
+            className={`w-16 px-2 py-1.5 border rounded-lg focus:outline-none text-sm text-right font-bold ${
+              isDefect
+                ? 'border-rose-200 bg-white text-rose-700 placeholder-rose-300 focus:ring-2 focus:ring-rose-400'
+                : 'border-gray-200 bg-white focus:ring-2 focus:ring-teal-500'
+            }`}
+            placeholder="0"
+          />
+          <button
+            type="button"
+            onClick={() => bump(realIdx, 1)}
+            className={`w-7 h-7 rounded-lg border flex items-center justify-center ${
+              isDefect
+                ? 'bg-white border-rose-200 text-rose-600 hover:bg-rose-50'
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Plus className="w-3 h-3" />
+          </button>
         </div>
       </div>
     );
@@ -891,13 +881,8 @@ function SortingItemsGrid({
         <div className="flex-1 min-w-0">
           <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Produkti</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-[7.5rem] text-center">
-            <span className="text-[11px] font-semibold text-teal-700 uppercase tracking-wide">Sasia</span>
-          </div>
-          <div className="w-[7.5rem] text-center pl-2 border-l border-gray-200">
-            <span className="text-[11px] font-semibold text-rose-600 uppercase tracking-wide">Defekte</span>
-          </div>
+        <div className="w-[7.5rem] text-center">
+          <span className="text-[11px] font-semibold text-teal-700 uppercase tracking-wide">Sasia</span>
         </div>
       </div>
       {primary.map(renderRow)}
