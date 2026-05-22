@@ -34,6 +34,7 @@ const PaymentPending = lazy(() => import('./pages/PaymentPending'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 import InstallPromptBanner from './components/InstallPromptBanner';
+import CookieConsentBanner from './components/CookieConsentBanner';
 import PushAutoSubscribe from './components/PushAutoSubscribe';
 import PushEnableBanner from './components/PushEnableBanner';
 
@@ -452,6 +453,7 @@ export default function App() {
             <PushAutoSubscribe />
             <PushEnableBanner />
             <InstallPromptBanner />
+            <CookieConsentBanner />
           </SubscriptionProvider>
         </AuthProvider>
       </LanguageProvider>

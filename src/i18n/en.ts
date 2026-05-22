@@ -3157,4 +3157,23 @@ export const en: typeof sq = {
       cancelled: 'Leave cancelled',
     },
   },
+  cookies: {
+    banner: {
+      title: 'Your data, your choice',
+      intro: 'We use essential cookies to run the platform and, only with your consent, functional cookies for preferences and analytics to improve the product.',
+      learnMore: 'Read the cookie policy',
+      acceptAll: 'Accept all',
+      rejectAll: 'Reject non-essential',
+      customize: 'Customize',
+      saveChoices: 'Save choices',
+      necessary: 'Strictly necessary (always on)',
+      necessaryDesc: 'For login, selected language and storing your consent. The platform does not work without these.',
+      functional: 'Functional',
+      functionalDesc: 'UI preferences (sidebar collapse, theme). Stored in your browser only.',
+      analytics: 'Analytics',
+      analyticsDesc: 'Anonymous usage statistics to improve the product (only activated if added in the future).',
+      marketing: 'Marketing',
+      marketingDesc: 'Tracking for relevant offers. We currently do not use marketing cookies.',
+    },
+  },
 };

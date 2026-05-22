@@ -3154,4 +3154,23 @@ export const fr: typeof sq = {
       cancelled: 'Congé annulé',
     },
   },
+  cookies: {
+    banner: {
+      title: 'Vos données, votre choix',
+      intro: 'Nous utilisons des cookies essentiels pour faire fonctionner la plateforme et, uniquement avec votre consentement, des cookies fonctionnels pour les préférences et des cookies d\'analyse pour améliorer le produit.',
+      learnMore: 'Lire la politique de cookies',
+      acceptAll: 'Tout accepter',
+      rejectAll: 'Refuser les non-essentiels',
+      customize: 'Personnaliser',
+      saveChoices: 'Enregistrer mes choix',
+      necessary: 'Strictement nécessaires (toujours actifs)',
+      necessaryDesc: 'Pour la connexion, la langue choisie et l\'enregistrement du consentement. La plateforme ne fonctionne pas sans ces cookies.',
+      functional: 'Fonctionnels',
+      functionalDesc: 'Préférences UI (barre latérale repliée, thème). Stockés uniquement dans votre navigateur.',
+      analytics: 'Analyse',
+      analyticsDesc: 'Statistiques d\'usage anonymes pour améliorer le produit (activés uniquement s\'ils sont ajoutés à l\'avenir).',
+      marketing: 'Marketing',
+      marketingDesc: 'Suivi pour des offres pertinentes. Nous n\'utilisons actuellement pas de cookies marketing.',
+    },
+  },
 };

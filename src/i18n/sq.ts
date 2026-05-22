@@ -3152,4 +3152,23 @@ export const sq = {
       cancelled: 'Pushimi u anulua',
     },
   },
+  cookies: {
+    banner: {
+      title: 'Te dhenat tuaja, zgjedhja juaj',
+      intro: 'Ne perdorim cookies thelbesore per te ofruar platformen dhe, vetem me pelqimin tuaj, cookies funksionale per preferenca dhe analitike per te permiresuar produktin.',
+      learnMore: 'Lexo politiken e cookies',
+      acceptAll: 'Pranoji te gjitha',
+      rejectAll: 'Refuzo jo-thelbesoret',
+      customize: 'Personalizo',
+      saveChoices: 'Ruaj zgjedhjet',
+      necessary: 'Thelbesore (gjithmone aktive)',
+      necessaryDesc: 'Per kyqjen, gjuhen e zgjedhur dhe ruajtjen e pelqimit. Pa keto, platforma nuk funksionon.',
+      functional: 'Funksionale',
+      functionalDesc: 'Preferencat UI (sidebar i mbyllur, tema). Vetem ne shfletuesin tuaj.',
+      analytics: 'Analitike',
+      analyticsDesc: 'Statistika anonime te perdorimit per te permiresuar produktin (te aktivizuara vetem nese ofrohen ne te ardhmen).',
+      marketing: 'Marketing',
+      marketingDesc: 'Ndjekje per shfaqjen e ofertave te relevantes. Aktualisht nuk perdorim cookies marketing.',
+    },
+  },
 };

@@ -354,14 +354,36 @@ async function ensureUnsubscribeUrl(userId: string | null | undefined, brand: Br
   }
 }
 
-async function sendViaResend(to: string[], from: string, replyTo: string, subject: string, html: string, attachments?: SendRequest["attachments"]): Promise<{ ok: boolean; id?: string; error?: string; error_type?: string; error_name?: string }> {
+async function sendViaResend(
+  to: string[],
+  from: string,
+  replyTo: string,
+  subject: string,
+  html: string,
+  attachments?: SendRequest["attachments"],
+  unsubscribeUrl?: string,
+): Promise<{ ok: boolean; id?: string; error?: string; error_type?: string; error_name?: string }> {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) return { ok: false, error: "RESEND_API_KEY not configured", error_type: "no_key" };
   try {
+    // RFC 8058 one-click List-Unsubscribe. Required by Gmail and Yahoo
+    // for senders shipping more than 5000 mails/day, and a strong
+    // reputation signal even below that threshold. Falls back to
+    // mailto: when no per-recipient token URL was generated (e.g.
+    // transactional skip).
+    const headers: Record<string, string> = {};
+    const unsubscribeMailto = `mailto:unsubscribe@mm-logistic.eu?subject=unsubscribe`;
+    if (unsubscribeUrl) {
+      headers["List-Unsubscribe"] = `<${unsubscribeUrl}>, <${unsubscribeMailto}>`;
+      headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+    } else {
+      headers["List-Unsubscribe"] = `<${unsubscribeMailto}>`;
+    }
+
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to, reply_to: replyTo, subject, html, attachments }),
+      body: JSON.stringify({ from, to, reply_to: replyTo, subject, html, attachments, headers }),
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) {
@@ -494,6 +516,37 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Drop suppressed addresses (hard bounces, complaints, one-click
+    // unsubscribes). Tests are exempt so we can verify templates with
+    // throwaway addresses on the suppression list.
+    if (!body.test) {
+      const { data: rows } = await supabase
+        .from("email_suppression")
+        .select("email")
+        .in("email", recipients.map((r) => r.toLowerCase()));
+      const suppressed = new Set((rows ?? []).map((r) => (r.email as string).toLowerCase()));
+      const filteredRecipients = recipients.filter((r) => !suppressed.has(r.toLowerCase()));
+      if (filteredRecipients.length === 0) {
+        // Nothing left to send — log a skipped delivery and return 200.
+        await supabase.from("email_deliveries").insert({
+          template_code: body.template_code,
+          to_emails: recipients,
+          subject: rendered.subject,
+          status: "suppressed",
+          provider: "resend",
+          error_message: "All recipients are on the suppression list",
+          user_id: body.user_id ?? null,
+          company_id: companyId,
+        });
+        return new Response(
+          JSON.stringify({ ok: true, status: "suppressed", suppressed: Array.from(suppressed) }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      recipients.length = 0;
+      recipients.push(...filteredRecipients);
+    }
+
     const unsubscribeUrl = body.test ? undefined : await ensureUnsubscribeUrl(body.user_id ?? null, brand);
     const finalRendered = unsubscribeUrl
       ? await renderTemplate(body.template_code, locale, body.data ?? {}, brand, unsubscribeUrl, companyId)
@@ -509,6 +562,7 @@ Deno.serve(async (req: Request) => {
       finalSubject,
       finalHtml,
       body.attachments,
+      unsubscribeUrl,
     );
 
     if (!body.test) {
