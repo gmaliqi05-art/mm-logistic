@@ -1,6 +1,6 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
 import JSZip from "npm:jszip@3.10.1";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
+import { assertOwnCompany, requireCaller } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,16 +92,22 @@ Deno.serve(async (req: Request) => {
     const rl = await checkRateLimit(`generate-datev-export:ip=${ip}`, 5, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
 
+    const caller = await requireCaller(req, {
+      roles: ["company_admin", "accountant", "super_admin"],
+      corsHeaders,
+    });
+    if (!caller.ok) return caller.response;
+
     const payload: Payload = await req.json();
     const { company_id, date_from, date_to, exports: exportTypes, bank_account_id } = payload;
     if (!company_id || !date_from || !date_to || !exportTypes?.length) {
       throw new Error("company_id, date_from, date_to, exports are required");
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const ownErr = assertOwnCompany(caller, company_id, corsHeaders);
+    if (ownErr) return ownErr;
+
+    const supabase = caller.admin;
 
     const { data: company } = await supabase
       .from("companies").select("*").eq("id", company_id).maybeSingle();

@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { assertOwnCompany, forbidden, requireCaller } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,10 +18,13 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
+    const caller = await requireCaller(req, {
+      roles: ["company_admin", "accountant", "super_admin"],
+      corsHeaders,
+    });
+    if (!caller.ok) return caller.response;
+
+    const supabase = caller.admin;
 
     let body: SyncRequest = {};
     try {
@@ -33,8 +36,14 @@ Deno.serve(async (req: Request) => {
 
     const companyIds: string[] = [];
     if (body.company_id) {
+      const ownErr = assertOwnCompany(caller, body.company_id, corsHeaders);
+      if (ownErr) return ownErr;
       companyIds.push(body.company_id);
     } else {
+      // Bulk auto-sync fan-out — restrict to super_admin (the cron path).
+      if (caller.profile.role !== "super_admin") {
+        return forbidden(corsHeaders, "Bulk sync requires super_admin or explicit company_id");
+      }
       const { data } = await supabase
         .from("company_sync_settings")
         .select("company_id")

@@ -158,8 +158,18 @@ Deno.serve(async (req: Request) => {
       if (phone !== undefined && phone !== null && (typeof phone !== "string" || phone.length > 50)) {
         return jsonResponse({ error: "Telefoni i pavlefshem" }, 400);
       }
-      if (worker_category !== undefined && worker_category !== null && (typeof worker_category !== "string" || worker_category.length > 100)) {
-        return jsonResponse({ error: "worker_category i pavlefshem" }, 400);
+      // worker_category must be one of the gated values used by the
+      // depot_worker route partition (depoist | reparature). Any other
+      // string would let a depot_worker bypass the inner
+      // <ProtectedRoute workerCategories=...> in src/App.tsx.
+      const validWorkerCategories = ["depoist", "reparature"];
+      if (worker_category !== undefined && worker_category !== null) {
+        if (typeof worker_category !== "string" || !validWorkerCategories.includes(worker_category)) {
+          return jsonResponse({ error: "worker_category i pavlefshem" }, 400);
+        }
+      }
+      if (role === "depot_worker" && (!worker_category || !validWorkerCategories.includes(worker_category as string))) {
+        return jsonResponse({ error: "depot_worker kerkon worker_category 'depoist' ose 'reparature'" }, 400);
       }
 
       const validRoles = ["driver", "depot_worker", "company_admin", "accountant"];

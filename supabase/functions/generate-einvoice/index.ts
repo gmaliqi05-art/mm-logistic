@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { assertOwnCompany, requireCaller } from "../_shared/requireCaller.ts";
 import { PDFDocument, PDFName, PDFRawStream, PDFHexString } from "npm:pdf-lib@1.17.1";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
@@ -341,14 +342,17 @@ Deno.serve(async (req: Request) => {
     const rl = await checkRateLimit(`generate-einvoice:ip=${ip}`, 10, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
 
+    const caller = await requireCaller(req, {
+      roles: ["company_admin", "accountant", "super_admin"],
+      corsHeaders,
+    });
+    if (!caller.ok) return caller.response;
+
     const { invoice_id, format }: Payload = await req.json();
     if (!invoice_id) throw new Error("invoice_id required");
     if (!["xrechnung", "zugferd"].includes(format)) throw new Error("invalid format");
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const supabase = caller.admin;
 
     const { data: invoice, error: invErr } = await supabase
       .from("acc_invoices")
@@ -357,6 +361,9 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (invErr || !invoice) throw new Error("Invoice not found");
+
+    const ownErr = assertOwnCompany(caller, invoice.company_id as string, corsHeaders);
+    if (ownErr) return ownErr;
 
     const { data: items } = await supabase
       .from("acc_invoice_items")

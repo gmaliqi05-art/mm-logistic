@@ -1,5 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { PDFDocument, rgb, StandardFonts } from "npm:pdf-lib@1.17.1";
+import { assertOwnCompany, requireCaller } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +48,12 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const caller = await requireCaller(req, {
+      roles: ["company_admin", "accountant", "super_admin"],
+      corsHeaders,
+    });
+    if (!caller.ok) return caller.response;
+
     const { invoice_id } = await req.json();
     if (!invoice_id) {
       return new Response(
@@ -56,10 +62,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabase = caller.admin;
 
     const { data: invoice, error: invErr } = await supabase
       .from("acc_invoices")
@@ -75,6 +78,9 @@ Deno.serve(async (req: Request) => {
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const ownErr = assertOwnCompany(caller, invoice.company_id as string, corsHeaders);
+    if (ownErr) return ownErr;
 
     const { data: company } = await supabase
       .from("companies")
