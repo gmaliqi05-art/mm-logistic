@@ -19,6 +19,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import type { StockMovement, ProductCategory } from '../../types';
 import { compareCategoriesByPriority } from '../../utils/productSort';
 import PalletScanner from '../../components/scanner/PalletScanner';
@@ -403,11 +404,7 @@ export default function DepotStock() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={8} cols={6} />;
   }
 
   return (
