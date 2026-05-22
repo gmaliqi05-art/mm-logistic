@@ -1,10 +1,15 @@
+// Bootstrap demo data. Disabled unless SETUP_TOKEN is configured AND
+// the caller presents it in X-Setup-Token. This endpoint creates
+// shared-password demo accounts (super_admin included) and must never
+// be world-reachable in production.
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { requireSetupToken } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
+    "Content-Type, Authorization, X-Client-Info, Apikey, X-Setup-Token",
 };
 
 const DEMO_PASSWORD = "demo123456";
@@ -51,6 +56,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+
+  const tokenError = requireSetupToken(req, corsHeaders);
+  if (tokenError) return tokenError;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

@@ -1,16 +1,24 @@
+// Bootstrap demo accountant. Disabled unless SETUP_TOKEN is configured
+// and presented in X-Setup-Token. Same rationale as seed-demo-users:
+// this creates a known-password account, which must never be
+// world-reachable in production.
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { requireSetupToken } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, X-Client-Info, Apikey",
+    "Content-Type, Authorization, X-Client-Info, Apikey, X-Setup-Token",
 };
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+
+  const tokenError = requireSetupToken(req, corsHeaders);
+  if (tokenError) return tokenError;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

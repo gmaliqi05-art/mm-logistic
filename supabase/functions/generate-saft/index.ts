@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { assertOwnCompany, requireCaller } from "../_shared/requireCaller.ts";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
@@ -247,6 +248,12 @@ Deno.serve(async (req: Request) => {
     const rl = await checkRateLimit(`generate-saft:ip=${ip}`, 5, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
 
+    const caller = await requireCaller(req, {
+      roles: ["company_admin", "accountant", "super_admin"],
+      corsHeaders,
+    });
+    if (!caller.ok) return caller.response;
+
     const { company_id, country_code, date_from, date_to }: Payload = await req.json();
     if (!company_id || !country_code || !date_from || !date_to) {
       throw new Error("company_id, country_code, date_from, date_to required");
@@ -255,10 +262,10 @@ Deno.serve(async (req: Request) => {
       throw new Error("Only RO and PL are supported");
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const ownErr = assertOwnCompany(caller, company_id, corsHeaders);
+    if (ownErr) return ownErr;
+
+    const supabase = caller.admin;
 
     const data = await loadCompanyData(supabase, company_id, date_from, date_to);
     const xml = country_code === "RO"

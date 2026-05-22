@@ -1,5 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
+import { assertOwnCompany, requireCaller } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,13 +17,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const caller = await requireCaller(req, {
+      roles: ["company_admin", "accountant", "super_admin"],
+      corsHeaders,
+    });
+    if (!caller.ok) return caller.response;
+
     const { pallet_account_id }: Payload = await req.json();
     if (!pallet_account_id) throw new Error("pallet_account_id required");
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabase = caller.admin;
 
     const { data: acc, error: accErr } = await supabase
       .from("pallet_accounts")
@@ -31,6 +34,9 @@ Deno.serve(async (req: Request) => {
       .eq("id", pallet_account_id)
       .maybeSingle();
     if (accErr || !acc) throw new Error("Account not found");
+
+    const ownErr = assertOwnCompany(caller, acc.company_id as string, corsHeaders);
+    if (ownErr) return ownErr;
 
     const [{ data: company }, { data: partner }, { data: txns }] = await Promise.all([
       supabase.from("companies").select("name, address, city, postal_code, country, vat_number, email, phone").eq("id", acc.company_id).maybeSingle(),
