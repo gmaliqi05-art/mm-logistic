@@ -453,7 +453,7 @@ export default function CompanyStock() {
         .eq('id', reassignTarget.stockId)
         .maybeSingle();
       if (!existing) {
-        setError('Stock row not found');
+        setError(t('company.stock.rowNotFound') || 'Stock row not found');
         return;
       }
 

@@ -967,6 +967,14 @@ export const de: typeof sq = {
     },
   },
   company: {
+    vehicles: {
+      plateBrandRequired: 'Kennzeichen und Marke sind erforderlich',
+      searchPlaceholder: 'Nach Kennzeichen, VIN, Marke suchen...',
+    },
+    emailBranding: {
+      imagesOnly: 'Nur Bilder (PNG, JPG, SVG) sind erlaubt',
+      fileTooLarge: 'Datei ist zu gross (max 2MB)',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Allgemeine Übersicht',
@@ -1068,6 +1076,7 @@ export const de: typeof sq = {
     stock: {
       title: 'Bestand',
       subtitle: 'Firmenbestand verwalten',
+      rowNotFound: 'Bestandszeile nicht gefunden',
       totalStock: 'Gesamtbestand',
       goodCondition: 'Guter Zustand',
       damagedCondition: 'Beschädigt',

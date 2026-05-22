@@ -970,6 +970,14 @@ export const en: typeof sq = {
     },
   },
   company: {
+    vehicles: {
+      plateBrandRequired: 'License plate and brand are required',
+      searchPlaceholder: 'Search by plate, VIN, brand...',
+    },
+    emailBranding: {
+      imagesOnly: 'Only images (PNG, JPG, SVG) are allowed',
+      fileTooLarge: 'File is too large (max 2MB)',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'General overview',
@@ -1071,6 +1079,7 @@ export const en: typeof sq = {
     stock: {
       title: 'Stock',
       subtitle: 'Manage company inventory',
+      rowNotFound: 'Stock row not found',
       totalStock: 'Total Stock',
       goodCondition: 'Good Condition',
       damagedCondition: 'Damaged',

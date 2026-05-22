@@ -249,10 +249,33 @@ export const UNITS: { value: AccUnit; label: string }[] = [
   { value: 'set', label: 'Set' },
 ];
 
-export function formatCurrency(amount: number, currency: AccCurrency = 'EUR'): string {
-  return new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(amount);
+// Map the app language (stored in localStorage as `ep_language`) to a
+// proper BCP-47 locale tag. Defaulting to de-DE preserved the previous
+// behaviour for the German-first flow; everyone else now sees numbers
+// in their own conventions (1 234,56 in FR, 1,234.56 in EN, etc.).
+function currentLocaleTag(): string {
+  try {
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('ep_language') : null;
+    switch (saved) {
+      case 'sq': return 'sq-AL';
+      case 'en': return 'en-GB';
+      case 'fr': return 'fr-FR';
+      case 'de':
+      default:   return 'de-DE';
+    }
+  } catch {
+    return 'de-DE';
+  }
 }
 
-export function formatNumber(num: number): string {
-  return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+export function formatCurrency(
+  amount: number,
+  currency: AccCurrency = 'EUR',
+  locale?: string,
+): string {
+  return new Intl.NumberFormat(locale ?? currentLocaleTag(), { style: 'currency', currency }).format(amount);
+}
+
+export function formatNumber(num: number, locale?: string): string {
+  return new Intl.NumberFormat(locale ?? currentLocaleTag(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
 }

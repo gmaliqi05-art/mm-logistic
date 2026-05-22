@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Truck, Search, Plus, AlertTriangle, X, Loader2, ChevronRight, Container, ShieldCheck, ScanLine } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import { daysUntil } from '../../lib/fleetCompliance';
@@ -100,6 +101,7 @@ const emptyForm: VehicleForm = {
 
 export default function CompanyVehicles() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [inspections, setInspections] = useState<InspectionRow[]>([]);
   const [insurance, setInsurance] = useState<InsuranceRow[]>([]);
@@ -175,7 +177,7 @@ export default function CompanyVehicles() {
 
   async function handleSave() {
     if (!form.license_plate.trim() || !form.brand.trim()) {
-      setError('Targa dhe marka jane te detyrueshme');
+      setError(t('company.vehicles.plateBrandRequired') || 'Targa dhe marka jane te detyrueshme');
       return;
     }
     try {
@@ -328,7 +330,7 @@ export default function CompanyVehicles() {
         <div className="p-4 border-b border-gray-100">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" placeholder="Kerko me targe, VIN, marke..." value={search} onChange={(e) => setSearch(e.target.value)}
+            <input type="text" placeholder={t('company.vehicles.searchPlaceholder') || 'Kerko me targe, VIN, marke...'} value={search} onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
           </div>
         </div>
