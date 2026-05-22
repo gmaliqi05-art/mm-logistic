@@ -401,7 +401,7 @@ export default function Products() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Kerko emrin, SKU, pershkrimin..."
+              placeholder={t('accounting.products.searchPlaceholder') || 'Kerko emrin, SKU, pershkrimin...'}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
             />
           </div>

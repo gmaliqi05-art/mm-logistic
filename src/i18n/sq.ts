@@ -1394,7 +1394,13 @@ export const sq = {
       conditionBefore: 'Gjendja Para',
       conditionAfter: 'Gjendja Pas',
       positiveQty: 'Sasia duhet te jete nje numer pozitiv',
+      insufficient: 'Stok i pamjaftueshem per kete levizje.',
       movementHistory: 'Historiku i Levizjeve',
+    },
+    damage: {
+      pickProduct: 'Zgjidhni produktin',
+      exceedsAvailable: 'Stoku ne gjendjen "{condition}" eshte vetem {available}',
+      noDepot: 'Llogaria juaj nuk ka depo te caktuar',
     },
     receiving: {
       title: 'Pranim / Dergese',
@@ -1411,6 +1417,9 @@ export const sq = {
       bulkReceiving: 'Pranim ne Mase',
       bulkShipping: 'Dergese ne Mase',
       sortingHint: 'Kjo kategori kerkon selektim. Nese paletat jane te perziera, krijo nje grup selektimi ne',
+      codeNotFound: 'Kodi "{code}" nuk u gjet',
+      atLeastOne: 'Shto te pakten nje artikull valid',
+      pickProductForCategory: 'Zgjedh produktin specifik per kategorin "{category}".',
     },
     sorting: {
       title: 'Sortiren',
@@ -2121,6 +2130,9 @@ export const sq = {
     currentLanguage: 'Gjuha aktuale',
   },
   accounting: {
+    imports: {
+      searchPlaceholder: 'Kerko sipas numrit, furnitorit ose vendit...',
+    },
     dashboard: {
       title: 'Kontabiliteti',
       subtitle: 'Permbledhje financiare',
@@ -2177,6 +2189,7 @@ export const sq = {
       addProduct: 'Shto Produkt',
       editProduct: 'Ndrysho Produktin',
       noProducts: 'Nuk ka produkte',
+      searchPlaceholder: 'Kerko emrin, SKU, pershkrimin...',
       sku: 'SKU',
       unit: 'Njesia',
       priceNet: 'Cmimi pa TVSH',
@@ -2191,7 +2204,7 @@ export const sq = {
       inStock: 'Ne Stok',
       lowStock: 'Stok i Ulet',
       outOfStock: 'Pa Stok',
-      searchPlaceholder: 'Kerko produkte...',
+      searchProducts: 'Kerko produkte...',
       allCategories: 'Te gjitha kategorite',
       stockValue: 'Vlera e Stokut',
       movements: 'Levizjet',
@@ -2445,6 +2458,7 @@ export const sq = {
       subtitle: 'Ditari financiar',
       addTransaction: 'Shto Transaksion',
       editTransaction: 'Ndrysho Transaksionin',
+      searchPlaceholder: 'Kerko pershkrimin, kontaktin...',
       noTransactions: 'Nuk ka transaksione',
       income: 'Te Ardhura',
       expense: 'Shpenzim',
@@ -2458,7 +2472,7 @@ export const sq = {
       totalExpenses: 'Total Shpenzime',
       balance: 'Bilanci',
       allTypes: 'Te gjitha llojet',
-      searchPlaceholder: 'Kerko transaksione...',
+      searchTransactions: 'Kerko transaksione...',
       exportCsv: 'Eksporto CSV',
     },
     expenses: {

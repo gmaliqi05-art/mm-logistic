@@ -276,7 +276,7 @@ export default function DepotStock() {
       const companyId = profile!.company_id!;
       const qty = parseInt(formQuantity, 10);
       if (isNaN(qty) || qty <= 0) {
-        setError('Sasia duhet te jete pozitive');
+        setError(t('depot.stock.positiveQty'));
         return;
       }
 
@@ -338,7 +338,7 @@ export default function DepotStock() {
       } else if (formType === 'exit') {
         const existing = await stockMatchQuery().eq('condition', formConditionAfter).maybeSingle();
         if (!existing.data || (existing.data.quantity ?? 0) < qty) {
-          setError('Stok i pamjaftueshem per kete levizje.');
+          setError(t('depot.stock.insufficient') || 'Stok i pamjaftueshem per kete levizje.');
           return;
         }
         await supabase

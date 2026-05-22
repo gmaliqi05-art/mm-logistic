@@ -1399,7 +1399,13 @@ export const en: typeof sq = {
       conditionBefore: 'Condition Before',
       conditionAfter: 'Condition After',
       positiveQty: 'Quantity must be a positive number',
+      insufficient: 'Insufficient stock for this movement.',
       movementHistory: 'Movement History',
+    },
+    damage: {
+      pickProduct: 'Pick a product',
+      exceedsAvailable: 'Stock in condition "{condition}" is only {available}',
+      noDepot: 'Your account is not assigned to a depot',
     },
     receiving: {
       title: 'Receiving / Shipping',
@@ -1416,6 +1422,9 @@ export const en: typeof sq = {
       bulkReceiving: 'Bulk Receiving',
       bulkShipping: 'Bulk Shipping',
       sortingHint: 'This category requires sorting. If pallets are mixed, start a sorting batch in',
+      codeNotFound: 'Code "{code}" was not found',
+      atLeastOne: 'Add at least one valid item',
+      pickProductForCategory: 'Pick the specific product for category "{category}".',
     },
     sorting: {
       title: 'Sorting',
@@ -2126,6 +2135,9 @@ export const en: typeof sq = {
     currentLanguage: 'Current language',
   },
   accounting: {
+    imports: {
+      searchPlaceholder: 'Search by number, supplier or origin...',
+    },
     dashboard: {
       title: 'Accounting',
       subtitle: 'Financial summary',
@@ -2179,6 +2191,7 @@ export const en: typeof sq = {
     products: {
       title: 'Products',
       subtitle: 'Product catalog',
+      searchPlaceholder: 'Search by name, SKU, description...',
       addProduct: 'Add Product',
       editProduct: 'Edit Product',
       noProducts: 'No products',
@@ -2196,7 +2209,7 @@ export const en: typeof sq = {
       inStock: 'In Stock',
       lowStock: 'Low Stock',
       outOfStock: 'Out of Stock',
-      searchPlaceholder: 'Search products...',
+      searchProducts: 'Search products...',
       allCategories: 'All categories',
       stockValue: 'Stock Value',
       movements: 'Movements',
@@ -2448,6 +2461,7 @@ export const en: typeof sq = {
     transactions: {
       title: 'Transactions',
       subtitle: 'Financial journal',
+      searchPlaceholder: 'Search description, contact...',
       addTransaction: 'Add Transaction',
       editTransaction: 'Edit Transaction',
       noTransactions: 'No transactions',
@@ -2463,7 +2477,7 @@ export const en: typeof sq = {
       totalExpenses: 'Total Expenses',
       balance: 'Balance',
       allTypes: 'All types',
-      searchPlaceholder: 'Search transactions...',
+      searchTransactions: 'Search transactions...',
       exportCsv: 'Export CSV',
     },
     expenses: {

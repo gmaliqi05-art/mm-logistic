@@ -303,7 +303,7 @@ export default function Imports() {
         <Search className="w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Kerko sipas numrit, furnitorit ose vendit..."
+          placeholder={t('accounting.imports.searchPlaceholder') || 'Kerko sipas numrit, furnitorit ose vendit...'}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="flex-1 text-sm focus:outline-none"

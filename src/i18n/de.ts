@@ -1396,7 +1396,13 @@ export const de: typeof sq = {
       conditionBefore: 'Zustand vorher',
       conditionAfter: 'Zustand nachher',
       positiveQty: 'Menge muss eine positive Zahl sein',
+      insufficient: 'Nicht genug Bestand für diese Bewegung.',
       movementHistory: 'Bewegungsverlauf',
+    },
+    damage: {
+      pickProduct: 'Produkt auswählen',
+      exceedsAvailable: 'Bestand im Zustand "{condition}" ist nur {available}',
+      noDepot: 'Ihr Konto ist keinem Lager zugeordnet',
     },
     receiving: {
       title: 'Empfang / Versand',
@@ -1413,6 +1419,9 @@ export const de: typeof sq = {
       bulkReceiving: 'Massenempfang',
       bulkShipping: 'Massenversand',
       sortingHint: 'Diese Kategorie erfordert Sortierung. Wenn Paletten gemischt sind, starten Sie einen Sortiervorgang in',
+      codeNotFound: 'Code "{code}" wurde nicht gefunden',
+      atLeastOne: 'Fügen Sie mindestens einen gültigen Artikel hinzu',
+      pickProductForCategory: 'Wählen Sie das spezifische Produkt für die Kategorie "{category}".',
     },
     sorting: {
       title: 'Sortierung',
@@ -2123,6 +2132,9 @@ export const de: typeof sq = {
     currentLanguage: 'Aktuelle Sprache',
   },
   accounting: {
+    imports: {
+      searchPlaceholder: 'Suche nach Nummer, Lieferant oder Ort...',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Finanzuebersicht',
@@ -2176,6 +2188,7 @@ export const de: typeof sq = {
     products: {
       title: 'Produkte',
       subtitle: 'Produktkatalog',
+      searchPlaceholder: 'Suche nach Name, SKU, Beschreibung...',
       addProduct: 'Produkt hinzufuegen',
       editProduct: 'Produkt bearbeiten',
       noProducts: 'Keine Produkte',
@@ -2193,7 +2206,7 @@ export const de: typeof sq = {
       inStock: 'Auf Lager',
       lowStock: 'Niedriger Bestand',
       outOfStock: 'Nicht auf Lager',
-      searchPlaceholder: 'Produkte suchen...',
+      searchProducts: 'Produkte suchen...',
       allCategories: 'Alle Kategorien',
       stockValue: 'Bestandswert',
       movements: 'Bewegungen',
@@ -2445,6 +2458,7 @@ export const de: typeof sq = {
     transactions: {
       title: 'Transaktionen',
       subtitle: 'Finanzjournal',
+      searchPlaceholder: 'Beschreibung, Kontakt suchen...',
       addTransaction: 'Transaktion hinzufuegen',
       editTransaction: 'Transaktion bearbeiten',
       noTransactions: 'Keine Transaktionen',
@@ -2460,7 +2474,7 @@ export const de: typeof sq = {
       totalExpenses: 'Gesamtausgaben',
       balance: 'Saldo',
       allTypes: 'Alle Typen',
-      searchPlaceholder: 'Transaktionen suchen...',
+      searchTransactions: 'Transaktionen suchen...',
       exportCsv: 'CSV exportieren',
     },
     expenses: {
