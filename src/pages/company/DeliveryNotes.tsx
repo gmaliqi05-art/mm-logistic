@@ -377,10 +377,21 @@ export default function CompanyDeliveryNotes() {
           delivery_address: form.delivery_address,
           pickup_address: form.pickup_address,
           reference_number: form.reference_number || '',
-          scheduled_pickup_at: combineDateTime(form.scheduled_pickup_date, form.scheduled_pickup_time),
-          scheduled_pickup_time_set: !!form.scheduled_pickup_time,
-          scheduled_delivery_at: combineDateTime(form.scheduled_delivery_date, form.scheduled_delivery_time),
-          scheduled_delivery_time_set: !!form.scheduled_delivery_time,
+          // The form only exposes one date input at a time (driven by
+          // form.type), but both `scheduled_pickup_date` and
+          // `scheduled_delivery_date` live in state — so when the user
+          // switches type after typing, the stale date can still be
+          // in the "other" field. Always store the picked date in
+          // BOTH columns so the dashboard's today/tomorrow grouping
+          // works regardless of which column it inspects.
+          scheduled_pickup_at: form.type === 'pickup'
+            ? combineDateTime(form.scheduled_pickup_date, form.scheduled_pickup_time)
+            : combineDateTime(form.scheduled_delivery_date, form.scheduled_delivery_time),
+          scheduled_pickup_time_set: form.type === 'pickup' ? !!form.scheduled_pickup_time : !!form.scheduled_delivery_time,
+          scheduled_delivery_at: form.type === 'delivery'
+            ? combineDateTime(form.scheduled_delivery_date, form.scheduled_delivery_time)
+            : combineDateTime(form.scheduled_pickup_date, form.scheduled_pickup_time),
+          scheduled_delivery_time_set: form.type === 'delivery' ? !!form.scheduled_delivery_time : !!form.scheduled_pickup_time,
           notes: form.notes,
           attachment_url: form.attachment_url || null,
           pallet_type: form.pallet_type || 'EPAL',
