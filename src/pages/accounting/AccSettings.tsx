@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { AccBankAccount, AccCurrency } from '../../types/accounting';
@@ -273,11 +274,7 @@ export default function AccSettings() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton showStats={false} rows={8} cols={3} />;
   }
 
   return (

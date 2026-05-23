@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookUser, Contact as IdCard, Home, Stamp, Plus, Trash2, ScanLine, Loader2, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 import ExpiryBadge from './ExpiryBadge';
 import TwoSidedPhotoCapture from './TwoSidedPhotoCapture';
 
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export default function DriverIdentityPanel({ driverId, companyId, canEdit, residencyStatus, onResidencyChange }: Props) {
+  const { t } = useTranslation();
   const [docs, setDocs] = useState<IdentityDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState<DocumentType | null>(null);
@@ -64,7 +66,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Fshi kete dokument?')) return;
+    if (!confirm(t('common.confirmDeleteDocument') || 'Fshi kete dokument?')) return;
     await supabase.from('driver_identity_documents').delete().eq('id', id);
     fetchDocs();
   }

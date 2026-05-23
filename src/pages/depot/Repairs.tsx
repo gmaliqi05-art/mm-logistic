@@ -3,7 +3,6 @@ import {
   Wrench,
   AlertTriangle,
   X,
-  Loader2,
   Package,
   Calendar,
   CheckCircle,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import RepairCompletionModal from '../../components/stock/RepairCompletionModal';
@@ -228,11 +228,7 @@ export default function DepotRepairs() {
   }, [reports, openRepairs]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={8} cols={5} />;
   }
 
   return (
