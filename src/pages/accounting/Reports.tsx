@@ -15,6 +15,7 @@ import {
   Package,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { TableRowsSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { formatCurrency } from '../../types/accounting';
@@ -1147,9 +1148,7 @@ export default function Reports() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-        </div>
+        <TableRowsSkeleton rows={10} cols={4} />
       ) : (
         renderActiveTab()
       )}

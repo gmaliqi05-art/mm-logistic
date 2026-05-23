@@ -5,6 +5,7 @@ import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageSkeleton } from '../../components/ui/Skeleton';
+import EmptyState from '../../components/ui/EmptyState';
 import { useTranslation } from '../../i18n';
 import type {
   AccPurchase,
@@ -567,10 +568,17 @@ export default function Purchases() {
       </div>
 
       {filteredPurchases.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center">
-          <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 text-sm">{t('accounting.purchases.noPurchases')}</p>
-          <p className="text-gray-400 text-xs mt-1">{t('accounting.purchases.noPurchasesHint')}</p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <EmptyState
+            icon={ShoppingCart}
+            title={t('accounting.purchases.noPurchases')}
+            hint={t('accounting.purchases.noPurchasesHint')}
+            action={{
+              label: t('accounting.purchases.addPurchase') || 'Shto blerje',
+              onClick: openCreate,
+              icon: Plus,
+            }}
+          />
         </div>
       ) : (
         <>

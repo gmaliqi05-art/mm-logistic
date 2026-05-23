@@ -4,6 +4,7 @@ import { Truck, Search, Plus, AlertTriangle, X, Loader2, ChevronRight, Container
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import EmptyState from '../../components/ui/EmptyState';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import { daysUntil } from '../../lib/fleetCompliance';
@@ -351,9 +352,25 @@ export default function CompanyVehicles() {
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-gray-400">
-                    {tab === 'truck' ? <Truck className="w-10 h-10 mx-auto mb-3 text-gray-300" /> : <Container className="w-10 h-10 mx-auto mb-3 text-gray-300" />}
-                    Nuk ka {tab === 'truck' ? 'kamione' : 'rimorkio'} te regjistruara.
+                  <td colSpan={7} className="px-5 py-0">
+                    <EmptyState
+                      icon={tab === 'truck' ? Truck : Container}
+                      title={
+                        tab === 'truck'
+                          ? (t('company.vehicles.noTrucks') || 'Nuk ka kamione te regjistruara')
+                          : (t('company.vehicles.noTrailers') || 'Nuk ka rimorkio te regjistruara')
+                      }
+                      hint={
+                        tab === 'truck'
+                          ? (t('company.vehicles.noTrucksHint') || 'Shto kamionin e pare per te gjurmuar dokumente, kontrolla teknike dhe shofere.')
+                          : (t('company.vehicles.noTrailersHint') || 'Shto rimorkion e pare per te lidhur me kamione dhe dorezime.')
+                      }
+                      action={{
+                        label: tab === 'truck' ? (t('company.vehicles.addTruck') || 'Shto kamion') : (t('company.vehicles.addTrailer') || 'Shto rimorkio'),
+                        onClick: () => openAdd(tab),
+                        icon: Plus,
+                      }}
+                    />
                   </td>
                 </tr>
               ) : (

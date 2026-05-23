@@ -13,6 +13,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCompliance } from '../../hooks/useCompliance';
 import {
@@ -522,11 +523,7 @@ export default function GermanFinancials() {
   }
 
   if (complianceLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-      </div>
-    );
+    return <PageSkeleton rows={6} cols={4} />;
   }
 
   if (!ctx.country_code) {

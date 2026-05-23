@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle2, X, AlertTriangle, FileCheck2, Ban } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, X, AlertTriangle, FileCheck2, Ban } from 'lucide-react';
+import { TableRowsSkeleton } from '../../components/ui/Skeleton';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../types/accounting';
@@ -193,9 +194,7 @@ export default function BankReconciliation() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
-        </div>
+        <TableRowsSkeleton rows={8} cols={6} />
       ) : lines.length === 0 ? (
         <div className="bg-white border border-gray-100 rounded-xl p-12 text-center text-gray-500">
           Nuk ka rreshta per kete filter.
