@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 type DocKind = 'purchase' | 'expense' | 'investment' | 'sale';
 type RoutingDecision = 'auto_saved' | 'pending_confirmation' | 'new_company_required';
@@ -70,6 +71,7 @@ function deriveKind(scan: ScanRow): DocKind {
 
 export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const extracted = (scan.extracted_json ?? {}) as Record<string, unknown>;
   const routing = (extracted._routing ?? {}) as { candidates?: Candidate[]; matched_contact_id?: string | null; match_reason?: string };
   const initialKind = deriveKind(scan);
@@ -110,7 +112,7 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
   async function resolveContactId(): Promise<string | null> {
     if (selectedContactId) return selectedContactId;
     if (!form.name.trim()) {
-      setError('Emri i kompanise eshte i detyrueshem');
+      setError(t('accounting.contacts.companyNameRequired') || 'Emri i kompanise eshte i detyrueshem');
       return null;
     }
     const contactType = kind === 'sale' ? 'customer' : 'supplier';

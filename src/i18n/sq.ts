@@ -2228,6 +2228,7 @@ export const sq = {
     contacts: {
       title: 'Kontaktet',
       subtitle: 'Menaxho klientet dhe furnitoret',
+      companyNameRequired: 'Emri i kompanise eshte i detyrueshem',
       addContact: 'Shto Kontakt',
       editContact: 'Ndrysho Kontaktin',
       noContacts: 'Nuk ka kontakte',
@@ -2286,6 +2287,7 @@ export const sq = {
       noInvoices: 'Nuk ka fatura',
       noInvoicesHint: 'Krijoni faturen e pare per te filluar gjurmimin e te ardhurave dhe te dergoni faturat tek klientet.',
       newInvoice: 'Fature e re',
+      numberingFailed: 'Numerimi i fatures deshtoi',
       pickCustomer: 'Zgjidhni nje klient',
       addAtLeastOneItem: 'Shtoni te pakten nje artikull',
       invoiceNumber: 'Nr. Fatures',
@@ -3017,6 +3019,11 @@ export const sq = {
     },
   },
   fleet: {
+    docScanner: {
+      pickVehicle: 'Ju lutem zgjidhni mjetin',
+      pickDriver: 'Ju lutem zgjidhni shoferin',
+      expiryDateRequired: 'Data e skadimit eshte e detyrueshme',
+    },
     filter: {
       all: 'Te gjitha',
       expired: 'Te skaduara',

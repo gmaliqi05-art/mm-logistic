@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Upload, Loader2, Sparkles, AlertTriangle, FileText, Camera, Check, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import CameraScanner from '../accounting/CameraScanner';
 
 export type FleetMode = 'vehicle' | 'driver';
@@ -72,6 +73,7 @@ const TWO_SIDED_CATEGORIES = ['fuehrerschein', 'kod95', 'adr', 'fahrerkarte'];
 
 export default function FleetDocScanner({ mode, defaultCategory, presetTargetId, onClose, onSaved }: Props) {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const companyId = profile?.company_id ?? '';
   const categories = mode === 'vehicle' ? VEHICLE_CATEGORIES : DRIVER_CATEGORIES;
 
@@ -210,11 +212,11 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
       let linkedId: string | null = null;
 
       if (mode === 'vehicle') {
-        const result = await saveVehicleSide(editMap, category, targetEntityId, companyId);
+        const result = await saveVehicleSide(editMap, category, targetEntityId, companyId, t);
         linkedType = result.entity_type;
         linkedId = result.entity_id;
       } else {
-        const result = await saveDriverSide(editMap, category, targetEntityId, companyId, frontStoragePath, backStoragePath);
+        const result = await saveDriverSide(editMap, category, targetEntityId, companyId, t, frontStoragePath, backStoragePath);
         linkedType = result.entity_type;
         linkedId = result.entity_id;
       }
@@ -671,7 +673,8 @@ async function saveVehicleSide(
   m: Record<string, string | number | string[]>,
   cat: string,
   targetId: string,
-  companyId: string
+  companyId: string,
+  t: (key: string) => string
 ): Promise<{ entity_type: string; entity_id: string | null }> {
   if (cat === 'zulassung') {
     let vehicleId = targetId;
@@ -714,8 +717,8 @@ async function saveVehicleSide(
     return { entity_type: 'vehicle', entity_id: vehicleId };
   }
   if (['hu_tuv', 'au', 'sp', 'uvv', 'tacho'].includes(cat)) {
-    if (!targetId) throw new Error('Ju lutem zgjidhni mjetin');
-    if (!m.expiry_date) throw new Error('Data e skadimit eshte e detyrueshme');
+    if (!targetId) throw new Error(t('fleet.docScanner.pickVehicle') || 'Ju lutem zgjidhni mjetin');
+    if (!m.expiry_date) throw new Error(t('fleet.docScanner.expiryDateRequired') || 'Data e skadimit eshte e detyrueshme');
     const { data, error } = await supabase.from('vehicle_inspections').insert({
       vehicle_id: targetId,
       company_id: companyId,
@@ -729,8 +732,8 @@ async function saveVehicleSide(
     return { entity_type: 'vehicle_inspection', entity_id: data?.id as string };
   }
   if (['haftpflicht', 'vollkasko', 'teilkasko', 'ladung'].includes(cat)) {
-    if (!targetId) throw new Error('Ju lutem zgjidhni mjetin');
-    if (!m.end_date) throw new Error('Data e skadimit eshte e detyrueshme');
+    if (!targetId) throw new Error(t('fleet.docScanner.pickVehicle') || 'Ju lutem zgjidhni mjetin');
+    if (!m.end_date) throw new Error(t('fleet.docScanner.expiryDateRequired') || 'Data e skadimit eshte e detyrueshme');
     const { data, error } = await supabase.from('vehicle_insurance').insert({
       vehicle_id: targetId,
       company_id: companyId,
@@ -745,8 +748,8 @@ async function saveVehicleSide(
     return { entity_type: 'vehicle_insurance', entity_id: data?.id as string };
   }
   if (cat === 'kfz_steuer') {
-    if (!targetId) throw new Error('Ju lutem zgjidhni mjetin');
-    if (!m.due_date) throw new Error('Data e skadimit eshte e detyrueshme');
+    if (!targetId) throw new Error(t('fleet.docScanner.pickVehicle') || 'Ju lutem zgjidhni mjetin');
+    if (!m.due_date) throw new Error(t('fleet.docScanner.expiryDateRequired') || 'Data e skadimit eshte e detyrueshme');
     const { data, error } = await supabase.from('vehicle_taxes').insert({
       vehicle_id: targetId,
       company_id: companyId,
@@ -766,12 +769,13 @@ async function saveDriverSide(
   cat: string,
   targetId: string,
   companyId: string,
+  t: (key: string) => string,
   frontPath?: string,
   backPath?: string
 ): Promise<{ entity_type: string; entity_id: string | null }> {
-  if (!targetId) throw new Error('Ju lutem zgjidhni shoferin');
+  if (!targetId) throw new Error(t('fleet.docScanner.pickDriver') || 'Ju lutem zgjidhni shoferin');
   if (cat === 'fuehrerschein') {
-    if (!m.expiry_date) throw new Error('Data e skadimit eshte e detyrueshme');
+    if (!m.expiry_date) throw new Error(t('fleet.docScanner.expiryDateRequired') || 'Data e skadimit eshte e detyrueshme');
     const cats = typeof m.license_categories === 'string'
       ? m.license_categories.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean)
       : (m.license_categories as string[] || []);
@@ -791,7 +795,7 @@ async function saveDriverSide(
     return { entity_type: 'driver_license', entity_id: data?.id as string };
   }
   if (cat === 'g25_medical') {
-    if (!m.expiry_date) throw new Error('Data e skadimit eshte e detyrueshme');
+    if (!m.expiry_date) throw new Error(t('fleet.docScanner.expiryDateRequired') || 'Data e skadimit eshte e detyrueshme');
     const { data, error } = await supabase.from('driver_medical').insert({
       driver_id: targetId,
       company_id: companyId,
@@ -803,7 +807,7 @@ async function saveDriverSide(
     if (error) throw error;
     return { entity_type: 'driver_medical', entity_id: data?.id as string };
   }
-  if (!m.expiry_date) throw new Error('Data e skadimit eshte e detyrueshme');
+  if (!m.expiry_date) throw new Error(t('fleet.docScanner.expiryDateRequired') || 'Data e skadimit eshte e detyrueshme');
   const { data, error } = await supabase.from('driver_qualifications').insert({
     driver_id: targetId,
     company_id: companyId,

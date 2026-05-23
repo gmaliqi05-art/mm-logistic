@@ -2230,6 +2230,7 @@ export const de: typeof sq = {
     contacts: {
       title: 'Kontakte',
       subtitle: 'Kunden und Lieferanten verwalten',
+      companyNameRequired: 'Firmenname ist erforderlich',
       addContact: 'Kontakt hinzufuegen',
       editContact: 'Kontakt bearbeiten',
       noContacts: 'Keine Kontakte',
@@ -2287,6 +2288,7 @@ export const de: typeof sq = {
       editInvoice: 'Rechnung bearbeiten',
       noInvoices: 'Keine Rechnungen',
       noInvoicesHint: 'Erstellen Sie Ihre erste Rechnung, um Umsaetze zu erfassen und Rechnungen an Kunden zu versenden.',
+      numberingFailed: 'Rechnungsnummerierung fehlgeschlagen',
       pickCustomer: 'Bitte Kunde auswaehlen',
       addAtLeastOneItem: 'Mindestens eine Position hinzufuegen',
       newInvoice: 'Neue Rechnung',
@@ -3019,6 +3021,11 @@ export const de: typeof sq = {
     },
   },
   fleet: {
+    docScanner: {
+      pickVehicle: 'Bitte Fahrzeug auswaehlen',
+      pickDriver: 'Bitte Fahrer auswaehlen',
+      expiryDateRequired: 'Ablaufdatum ist erforderlich',
+    },
     filter: {
       all: 'Alle',
       expired: 'Abgelaufen',

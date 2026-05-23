@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import InvoiceTemplate, { type InvoicePreviewData } from '../../components/accounting/InvoiceTemplate';
 import {
   buildVatBreakdown, computeVatRegime, normalizeVat,
@@ -134,6 +135,7 @@ function newItem(): Item {
 
 export default function InvoiceBuilder() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { id: invoiceId } = useParams<{ id: string }>();
@@ -752,7 +754,7 @@ export default function InvoiceBuilder() {
     const { data: officialNumber, error: numErr } = await supabase
       .rpc('get_next_acc_number', { p_company_id: profile!.company_id!, p_prefix: prefix });
     if (numErr || !officialNumber) {
-      setError('Numerimi i fatures deshtoi');
+      setError(t('accounting.invoices.numberingFailed') || 'Numerimi i fatures deshtoi');
       return;
     }
     setInvoiceNumber(officialNumber as string);
