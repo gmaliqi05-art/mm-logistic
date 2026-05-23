@@ -967,6 +967,18 @@ export const de: typeof sq = {
     },
   },
   company: {
+    routePlanner: {
+      pickDriverOrTransport: 'Waehlen Sie einen Fahrer oder ein Transportmittel, bevor Sie die Route zuweisen.',
+      routeNotSaved: 'Route wurde nicht gespeichert.',
+    },
+    emailTemplate: {
+      codeAndNameRequired: 'Code und Name sind erforderlich',
+    },
+    manualEmail: {
+      pickClientOrEmail: 'Bitte waehlen Sie einen Kunden aus oder geben Sie eine E-Mail-Adresse ein',
+      pickTemplate: 'Bitte waehlen Sie eine Vorlage',
+      networkError: 'Netzwerkfehler',
+    },
     vehicles: {
       plateBrandRequired: 'Kennzeichen und Marke sind erforderlich',
       searchPlaceholder: 'Nach Kennzeichen, VIN, Marke suchen...',

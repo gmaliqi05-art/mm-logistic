@@ -170,11 +170,11 @@ export default function ManualEmail() {
 
   async function handleSend() {
     if (!recipientEmail.trim()) {
-      setError('Ju lutem zgjidhni nje klient ose shkruani nje adrese email');
+      setError(t('company.manualEmail.pickClientOrEmail') || 'Ju lutem zgjidhni nje klient ose shkruani nje adrese email');
       return;
     }
     if (!selectedTemplate) {
-      setError('Ju lutem zgjidhni nje template');
+      setError(t('company.manualEmail.pickTemplate') || 'Ju lutem zgjidhni nje template');
       return;
     }
 
@@ -207,7 +207,7 @@ export default function ManualEmail() {
         setError(err.error || 'Dergimi deshtoi');
       }
     } catch {
-      setError('Gabim rrjeti');
+      setError(t('company.manualEmail.networkError') || 'Gabim rrjeti');
     } finally {
       setSending(false);
     }

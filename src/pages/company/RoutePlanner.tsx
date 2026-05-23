@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Calculator, Check, Crosshair, MapPin, Navigation, Route, Search, Send, Truck, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
 import RouteMapPicker, { reverseGeocode, type Point } from '../../components/fleet/RouteMapPicker';
 
@@ -60,6 +61,7 @@ async function geocode(query: string): Promise<Point | null> {
 
 export default function CompanyRoutePlanner() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [originText, setOriginText] = useState('');
   const [destText, setDestText] = useState('');
   const [origin, setOrigin] = useState<Point | null>(null);
@@ -197,7 +199,7 @@ export default function CompanyRoutePlanner() {
   async function assignRoute() {
     if (!result || !selected || !profile?.id) return;
     if (!deliveryId && !driverId) {
-      setError('Zgjedh nje shofer ose nje transport para se te caktosh rrugen.');
+      setError(t('company.routePlanner.pickDriverOrTransport') || 'Zgjedh nje shofer ose nje transport para se te caktosh rrugen.');
       return;
     }
     setAssigning(true);
@@ -274,7 +276,7 @@ export default function CompanyRoutePlanner() {
       setAssigned(true);
     } catch (err) {
       logger.warn('assign route failed', { error: err });
-      setError('Nuk u ruajt rruga.');
+      setError(t('company.routePlanner.routeNotSaved') || 'Nuk u ruajt rruga.');
     } finally {
       setAssigning(false);
     }

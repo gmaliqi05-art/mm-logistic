@@ -970,6 +970,18 @@ export const en: typeof sq = {
     },
   },
   company: {
+    routePlanner: {
+      pickDriverOrTransport: 'Pick a driver or a transport before assigning the route.',
+      routeNotSaved: 'Route was not saved.',
+    },
+    emailTemplate: {
+      codeAndNameRequired: 'Code and name are required',
+    },
+    manualEmail: {
+      pickClientOrEmail: 'Please pick a client or enter an email address',
+      pickTemplate: 'Please pick a template',
+      networkError: 'Network error',
+    },
     vehicles: {
       plateBrandRequired: 'License plate and brand are required',
       searchPlaceholder: 'Search by plate, VIN, brand...',
