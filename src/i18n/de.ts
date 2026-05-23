@@ -2108,6 +2108,7 @@ export const de: typeof sq = {
     closeTicket: 'Ticket schließen',
   },
   chat: {
+    profilePhotoImagesOnly: 'Nur Bilder sind erlaubt',
     subtitle: 'Mit dem Firmenpersonal kommunizieren',
     typeMessage: 'Nachricht eingeben...',
     noMessages: 'Keine Nachrichten. Beginnen Sie das Gespräch!',
@@ -2226,6 +2227,9 @@ export const de: typeof sq = {
       editProduct: 'Produkt bearbeiten',
       noProducts: 'Keine Produkte',
       noProductsHint: 'Legen Sie Ihr erstes Produkt an, um Rechnungen mit automatischen Positionen zu erstellen.',
+      nameRequired: 'Produktname ist erforderlich',
+      reasonRequired: 'Grund ist erforderlich',
+      newQtySameAsCurrent: 'Neue Menge ist gleich der aktuellen',
       sku: 'SKU',
       unit: 'Einheit',
       priceNet: 'Nettopreis',
@@ -2261,6 +2265,8 @@ export const de: typeof sq = {
       editInvoice: 'Rechnung bearbeiten',
       noInvoices: 'Keine Rechnungen',
       noInvoicesHint: 'Erstellen Sie Ihre erste Rechnung, um Umsaetze zu erfassen und Rechnungen an Kunden zu versenden.',
+      pickCustomer: 'Bitte Kunde auswaehlen',
+      addAtLeastOneItem: 'Mindestens eine Position hinzufuegen',
       newInvoice: 'Neue Rechnung',
       invoiceNumber: 'Rechnungsnr.',
       invoiceDate: 'Rechnungsdatum',
@@ -2500,6 +2506,7 @@ export const de: typeof sq = {
       editTransaction: 'Transaktion bearbeiten',
       noTransactions: 'Keine Transaktionen',
       noTransactionsHint: 'Erfassen Sie Ihre erste Transaktion, um Cashflow zu verfolgen und Rechnungen mit dem Bankkonto zu verknuepfen.',
+      descriptionAndAmountRequired: 'Beschreibung und Betrag sind erforderlich',
       income: 'Einnahmen',
       expense: 'Ausgabe',
       transfer: 'Umbuchung',
@@ -2529,6 +2536,7 @@ export const de: typeof sq = {
     bankAccounts: {
       title: 'Bankkonten',
       subtitle: 'Firmen-Bankkonten verwalten',
+      nameRequired: 'Kontoname ist erforderlich',
       addAccount: 'Konto hinzufuegen',
       editAccount: 'Konto bearbeiten',
       noAccounts: 'Keine Bankkonten',
@@ -2544,6 +2552,7 @@ export const de: typeof sq = {
     reports: {
       title: 'Berichte',
       subtitle: 'Finanzberichte',
+      noDataForPeriod: 'Keine Daten fuer den gewaehlten Zeitraum',
       profitLoss: 'Gewinn und Verlust',
       revenueByCustomer: 'Umsatz nach Kunde',
       expensesByCategory: 'Ausgaben nach Kategorie',
@@ -2797,6 +2806,7 @@ export const de: typeof sq = {
     },
     deliveryNotes: {
       errOrderTitle: 'Bitte geben Sie einen Titel / eine Kennung fuer diesen Auftrag ein.',
+      customerRequired: 'Kunde ist erforderlich',
       referenceNumberLabel: 'Referenznummer (Abholschein)',
       pickupTime: 'Abholzeit',
       pickupDate: 'Abholdatum',

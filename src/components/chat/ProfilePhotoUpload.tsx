@@ -21,7 +21,7 @@ export default function ProfilePhotoUpload({ onClose }: ProfilePhotoUploadProps)
     if (!file || !profile) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('Vetem imazhe lejohen');
+      setError(t('chat.profilePhotoImagesOnly') || 'Vetem imazhe lejohen');
       return;
     }
 

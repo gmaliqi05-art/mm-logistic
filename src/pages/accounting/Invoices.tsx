@@ -397,11 +397,11 @@ export default function Invoices() {
 
   async function handleSave() {
     if (!form.contact_id) {
-      setError('Zgjidhni nje klient');
+      setError(t('accounting.invoices.pickCustomer') || 'Zgjidhni nje klient');
       return;
     }
     if (form.items.every((it) => !it.description.trim())) {
-      setError('Shtoni te pakten nje artikull');
+      setError(t('accounting.invoices.addAtLeastOneItem') || 'Shtoni te pakten nje artikull');
       return;
     }
 

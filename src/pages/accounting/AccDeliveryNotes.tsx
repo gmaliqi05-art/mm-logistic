@@ -245,7 +245,7 @@ export default function AccDeliveryNotes() {
 
   const handleSave = async () => {
     if (!form.contact_id) {
-      setError('Klienti eshte i detyrueshem');
+      setError(t('accounting.deliveryNotes.customerRequired') || 'Klienti eshte i detyrueshem');
       return;
     }
     try {

@@ -2111,6 +2111,7 @@ export const en: typeof sq = {
     closeTicket: 'Close Ticket',
   },
   chat: {
+    profilePhotoImagesOnly: 'Only images are allowed',
     subtitle: 'Communicate with company staff',
     typeMessage: 'Type a message...',
     noMessages: 'No messages. Start the conversation!',
@@ -2229,6 +2230,9 @@ export const en: typeof sq = {
       editProduct: 'Edit Product',
       noProducts: 'No products',
       noProductsHint: 'Add your first product to start creating invoices with automatic line items.',
+      nameRequired: 'Product name is required',
+      reasonRequired: 'Reason is required',
+      newQtySameAsCurrent: 'New quantity is the same as the current one',
       sku: 'SKU',
       unit: 'Unit',
       priceNet: 'Price excl. VAT',
@@ -2264,6 +2268,8 @@ export const en: typeof sq = {
       editInvoice: 'Edit Invoice',
       noInvoices: 'No invoices',
       noInvoicesHint: 'Create your first invoice to start tracking revenue and sending bills to customers.',
+      pickCustomer: 'Pick a customer',
+      addAtLeastOneItem: 'Add at least one item',
       newInvoice: 'New invoice',
       invoiceNumber: 'Invoice No.',
       invoiceDate: 'Invoice Date',
@@ -2503,6 +2509,7 @@ export const en: typeof sq = {
       editTransaction: 'Edit Transaction',
       noTransactions: 'No transactions',
       noTransactionsHint: 'Add your first transaction to track cash flow and link invoices to your bank account.',
+      descriptionAndAmountRequired: 'Description and amount are required',
       income: 'Income',
       expense: 'Expense',
       transfer: 'Transfer',
@@ -2532,6 +2539,7 @@ export const en: typeof sq = {
     bankAccounts: {
       title: 'Bank Accounts',
       subtitle: 'Manage company bank accounts',
+      nameRequired: 'Account name is required',
       addAccount: 'Add Account',
       editAccount: 'Edit Account',
       noAccounts: 'No bank accounts',
@@ -2547,6 +2555,7 @@ export const en: typeof sq = {
     reports: {
       title: 'Reports',
       subtitle: 'Financial reports',
+      noDataForPeriod: 'No data for the selected period',
       profitLoss: 'Profit and Loss',
       revenueByCustomer: 'Revenue by Customer',
       expensesByCategory: 'Expenses by Category',
@@ -2800,6 +2809,7 @@ export const en: typeof sq = {
     },
     deliveryNotes: {
       errOrderTitle: 'Please enter a title / identifier for this order.',
+      customerRequired: 'Customer is required',
       referenceNumberLabel: 'Reference Number (Pickup Note)',
       pickupTime: 'Pickup time',
       pickupDate: 'Pickup date',

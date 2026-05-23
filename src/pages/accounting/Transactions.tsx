@@ -213,7 +213,7 @@ export default function Transactions() {
 
   const handleSave = async () => {
     if (!form.description.trim() || form.amount <= 0) {
-      setError('Pershkrimi dhe shuma jane te detyrueshme');
+      setError(t('accounting.transactions.descriptionAndAmountRequired') || 'Pershkrimi dhe shuma jane te detyrueshme');
       return;
     }
     try {
