@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Star, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Check, ToggleLeft, ToggleRight, GripVertical } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import type { ProductType, SubscriptionPlan } from '../../types';
 import { getPlanIcon as getPlanIconShared, PRODUCT_TYPE_META } from '../../lib/subscriptionPlans';
@@ -146,7 +147,7 @@ export default function SubscriptionPlans() {
           (p) => p.name.toLowerCase() === payload.name.toLowerCase() && p.is_active
         );
         if (duplicate) {
-          setError('Ekziston nje plan aktiv me te njejtin slug.');
+          setError(t('superAdmin.subscriptionPlans.duplicateSlug') || 'Ekziston nje plan aktiv me te njejtin slug.');
           setSaving(false);
           return;
         }
@@ -197,11 +198,7 @@ export default function SubscriptionPlans() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600" />
-      </div>
-    );
+    return <PageSkeleton showStats={false} rows={8} cols={5} />;
   }
 
   const showModal = isCreating || editingPlan !== null;

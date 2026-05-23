@@ -11,12 +11,12 @@ import {
   Zap,
   Star,
   Shield,
-  Loader2,
   Warehouse,
   MessageSquare,
   ArrowUpRight,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 
 interface DashboardStats {
@@ -219,11 +219,7 @@ export default function SuperAdminDashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={8} cols={5} />;
   }
 
   if (error) {

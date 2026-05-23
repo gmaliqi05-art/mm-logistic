@@ -1738,6 +1738,9 @@ export const fr: typeof sq = {
     },
   },
   superAdmin: {
+    subscriptionPlans: {
+      duplicateSlug: 'Un plan actif avec le même slug existe déjà.',
+    },
     dashboard: {
       title: 'Tableau de bord',
       subtitle: 'Aper\u00e7u g\u00e9n\u00e9ral de la plateforme',
@@ -1767,6 +1770,8 @@ export const fr: typeof sq = {
     companies: {
       title: 'Entreprises',
       subtitle: 'G\u00e9rer toutes les entreprises',
+      uploadImage: 'Veuillez t\u00e9l\u00e9verser une image (JPEG, PNG, GIF, WEBP)',
+      imageMax2MB: 'L\'image doit \u00eatre inf\u00e9rieure \u00e0 2 Mo',
       editCompany: 'Modifier l\'entreprise',
       searchPlaceholder: 'Rechercher des entreprises...',
       allPlans: 'Tous les plans',
