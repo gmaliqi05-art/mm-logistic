@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Briefcase, Loader2, Trash2, ExternalLink, Sparkles, Eye } from 'lucide-react';
+import { Plus, Briefcase, Trash2, ExternalLink, Sparkles, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { TableRowsSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { formatCurrency } from '../../types/accounting';
@@ -161,9 +162,7 @@ export default function FixedAssets() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
-        </div>
+        <TableRowsSkeleton rows={6} cols={6} />
       ) : assets.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
           <Briefcase className="w-12 h-12 mx-auto text-gray-300 mb-4" />

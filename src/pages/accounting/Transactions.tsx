@@ -18,6 +18,7 @@ import DocumentPreviewModal from '../../components/accounting/DocumentPreviewMod
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageSkeleton } from '../../components/ui/Skeleton';
+import EmptyState from '../../components/ui/EmptyState';
 import { useTranslation } from '../../i18n';
 import type {
   AccTransaction,
@@ -429,10 +430,17 @@ export default function Transactions() {
             <tbody className="divide-y divide-gray-50">
               {filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-16 text-center">
-                    <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Asnje transaksion</p>
-                    <p className="text-gray-400 text-sm mt-1">Shto transaksionin e pare per te filluar</p>
+                  <td colSpan={8} className="px-6 py-0">
+                    <EmptyState
+                      icon={FileText}
+                      title={t('accounting.transactions.noTransactions') || 'Asnje transaksion'}
+                      hint={t('accounting.transactions.noTransactionsHint') || 'Shto transaksionin e pare per te filluar'}
+                      action={{
+                        label: t('accounting.transactions.addTransaction') || 'Shto transaksion',
+                        onClick: openCreate,
+                        icon: Plus,
+                      }}
+                    />
                   </td>
                 </tr>
               ) : (
