@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireCaller, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,6 +41,10 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+
+  const caller = await requireCaller(req, { corsHeaders });
+  if (!caller.ok) return caller.response;
+
   try {
     const { invoice_id, recipients, locale } = await req.json();
     if (
@@ -80,6 +85,13 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    if (
+      caller.profile.role !== "super_admin" &&
+      invoice.company_id !== caller.profile.company_id
+    ) {
+      return forbidden(corsHeaders, "Cross-tenant access denied");
     }
 
     // Fetch company name

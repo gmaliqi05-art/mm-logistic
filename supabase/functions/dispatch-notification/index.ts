@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,6 +126,14 @@ Deno.serve(async (req: Request) => {
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  // Internal callers (process-notification-queue, check-route-traffic,
+  // pg_cron) use the service-role bearer. The super-admin manual
+  // dispatch UI uses a session bearer. Anything else is rejected.
+  if (!isServiceRoleCall(req)) {
+    const caller = await requireCaller(req, { roles: ["super_admin"], corsHeaders });
+    if (!caller.ok) return caller.response;
   }
 
   try {

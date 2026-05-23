@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -198,6 +199,14 @@ Deno.serve(async (req: Request) => {
   try {
     const url = new URL(req.url);
     const tick = url.searchParams.get("tick");
+
+    // Auth gate: cron uses service-role bearer; UI uses super_admin
+    // session. Without this guard anyone with the anon key (shipped to
+    // every browser) can leak audiences and trigger campaigns.
+    if (!isServiceRoleCall(req)) {
+      const caller = await requireCaller(req, { roles: ["super_admin"], corsHeaders });
+      if (!caller.ok) return caller.response;
+    }
 
     if (tick === "1") {
       const { data: due } = await supabase
