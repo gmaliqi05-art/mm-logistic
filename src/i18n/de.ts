@@ -1738,6 +1738,9 @@ export const de: typeof sq = {
     },
   },
   superAdmin: {
+    subscriptionPlans: {
+      duplicateSlug: 'Ein aktiver Plan mit demselben Slug existiert bereits.',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Allgemeine Plattformübersicht',
@@ -1767,6 +1770,8 @@ export const de: typeof sq = {
     companies: {
       title: 'Firmen',
       subtitle: 'Alle Firmen verwalten',
+      uploadImage: 'Bitte ein Bild hochladen (JPEG, PNG, GIF, WEBP)',
+      imageMax2MB: 'Bild muss kleiner als 2MB sein',
       editCompany: 'Firma bearbeiten',
       searchPlaceholder: 'Firmen suchen...',
       allPlans: 'Alle Pläne',

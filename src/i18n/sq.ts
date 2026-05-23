@@ -1736,6 +1736,9 @@ export const sq = {
     },
   },
   superAdmin: {
+    subscriptionPlans: {
+      duplicateSlug: 'Ekziston nje plan aktiv me te njejtin slug.',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Permbledhje e pergjithshme e platformes',
@@ -1765,6 +1768,8 @@ export const sq = {
     companies: {
       title: 'Kompanite',
       subtitle: 'Menaxho te gjitha kompanite',
+      uploadImage: 'Ju lutem ngarkoni një imazh (JPEG, PNG, GIF, WEBP)',
+      imageMax2MB: 'Imazhi duhet të jetë më i vogël se 2MB',
       editCompany: 'Ndrysho Kompanine',
       searchPlaceholder: 'Kerko kompani...',
       allPlans: 'Te gjitha planet',

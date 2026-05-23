@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Building2, Search, CreditCard as Edit2, ToggleLeft, ToggleRight, X, AlertTriangle, Loader2, Filter, Zap, Star, Shield, Clock, Settings, Upload, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import CompanyFeaturesManager from '../../components/subscription/CompanyFeaturesManager';
 
@@ -121,12 +122,12 @@ export default function SuperAdminCompanies() {
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Ju lutem ngarkoni një imazh (JPEG, PNG, GIF, WEBP)');
+      setError(t('superAdmin.companies.uploadImage') || 'Ju lutem ngarkoni një imazh (JPEG, PNG, GIF, WEBP)');
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      setError('Imazhi duhet të jetë më i vogël se 2MB');
+      setError(t('superAdmin.companies.imageMax2MB') || 'Imazhi duhet të jetë më i vogël se 2MB');
       return;
     }
 
@@ -199,11 +200,7 @@ export default function SuperAdminCompanies() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={10} cols={6} />;
   }
 
   return (

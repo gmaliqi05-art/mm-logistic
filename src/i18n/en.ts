@@ -1741,6 +1741,9 @@ export const en: typeof sq = {
     },
   },
   superAdmin: {
+    subscriptionPlans: {
+      duplicateSlug: 'An active plan with the same slug already exists.',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Platform general overview',
@@ -1770,6 +1773,8 @@ export const en: typeof sq = {
     companies: {
       title: 'Companies',
       subtitle: 'Manage all companies',
+      uploadImage: 'Please upload an image (JPEG, PNG, GIF, WEBP)',
+      imageMax2MB: 'Image must be smaller than 2MB',
       editCompany: 'Edit Company',
       searchPlaceholder: 'Search companies...',
       allPlans: 'All plans',
