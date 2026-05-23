@@ -3135,6 +3135,10 @@ export const sq = {
     liveTab: 'Harta Live',
   },
   hr: {
+    leaveRequest: {
+      pickEmployee: 'Ju lutem zgjidhni nje punonjes',
+      invalidDateRange: 'Diapazoni i datave eshte i pavlefshem',
+    },
     title: 'Burimet Njerezore',
     subtitle: 'Menaxho pushimet, vijueshmerine dhe oraret e punes',
     dashboard: {

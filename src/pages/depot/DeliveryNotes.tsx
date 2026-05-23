@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Send,
   Clock,
-  Loader2,
   AlertTriangle,
   Layers,
   Wrench,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { DeliveryNote } from '../../types';
@@ -118,11 +118,7 @@ export default function DepotDeliveryNotes() {
   });
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={8} cols={5} />;
   }
 
   return (

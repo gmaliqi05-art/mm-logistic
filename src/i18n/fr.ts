@@ -3137,6 +3137,10 @@ export const fr: typeof sq = {
     liveTab: 'Carte en direct',
   },
   hr: {
+    leaveRequest: {
+      pickEmployee: 'Veuillez sélectionner un employé',
+      invalidDateRange: 'Plage de dates invalide',
+    },
     title: 'Ressources Humaines',
     subtitle: 'Gérer les congés, la présence et les horaires de travail',
     dashboard: {

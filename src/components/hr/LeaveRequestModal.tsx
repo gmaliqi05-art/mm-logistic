@@ -98,11 +98,11 @@ export default function LeaveRequestModal({ onClose, onSuccess, adminMode = fals
       return;
     }
     if (adminMode && !selectedEmployee) {
-      setError('Please select an employee');
+      setError(t('hr.leaveRequest.pickEmployee') || 'Please select an employee');
       return;
     }
     if (totalDays <= 0) {
-      setError('Invalid date range');
+      setError(t('hr.leaveRequest.invalidDateRange') || 'Invalid date range');
       return;
     }
 
