@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon, Upload, Save, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 
 type LogoVariant = 'light' | 'social';
 
 export default function PlatformBranding() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [uploadingLight, setUploadingLight] = useState(false);
   const [uploadingSocial, setUploadingSocial] = useState(false);
@@ -53,12 +55,12 @@ export default function PlatformBranding() {
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Ju lutem ngarkoni një imazh (JPEG, PNG, GIF, WEBP, SVG)');
+      setError(t('superAdmin.branding.imageFormat'));
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('Imazhi duhet të jetë më i vogël se 5MB');
+      setError(t('superAdmin.branding.imageTooLarge'));
       return;
     }
 

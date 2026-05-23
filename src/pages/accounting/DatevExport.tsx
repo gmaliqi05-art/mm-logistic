@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Download, Loader2, FileCode2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
 
 type ExportKind = 'buchungen' | 'debitoren' | 'kreditoren' | 'sachkonten';
@@ -13,6 +14,7 @@ interface BankAccount {
 
 export default function DatevExport() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
 
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date();
@@ -62,7 +64,7 @@ export default function DatevExport() {
     if (!profile?.company_id) return;
     const exportsArr = (Object.keys(selected) as ExportKind[]).filter((k) => selected[k]);
     if (exportsArr.length === 0) {
-      setError('Select at least one export type.');
+      setError(t('accounting.datev.pickExportType'));
       return;
     }
     try {

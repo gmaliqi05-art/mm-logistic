@@ -1758,6 +1758,10 @@ export const fr: typeof sq = {
     subscriptionPlans: {
       duplicateSlug: 'Un plan actif avec le même slug existe déjà.',
     },
+    branding: {
+      imageFormat: 'Veuillez téléverser une image (JPEG, PNG, GIF, WEBP, SVG)',
+      imageTooLarge: 'L\'image doit faire moins de 5 Mo',
+    },
     dashboard: {
       title: 'Tableau de bord',
       subtitle: 'Aper\u00e7u g\u00e9n\u00e9ral de la plateforme',
@@ -2795,6 +2799,9 @@ export const fr: typeof sq = {
       expense: 'Charges',
       other: 'Autre',
     },
+    datev: {
+      pickExportType: 'Sélectionnez au moins un type d\'export.',
+    },
   },
   settings: {
     companySettings: 'Parametres de l\'entreprise',
@@ -3054,6 +3061,7 @@ export const fr: typeof sq = {
       pickVehicle: 'Veuillez sélectionner le véhicule',
       pickDriver: 'Veuillez sélectionner le chauffeur',
       expiryDateRequired: 'La date d\'expiration est obligatoire',
+      fileTooLarge: 'Le fichier est trop volumineux (max 15 Mo).',
     },
     filter: {
       all: 'Tous',

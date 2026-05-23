@@ -1758,6 +1758,10 @@ export const de: typeof sq = {
     subscriptionPlans: {
       duplicateSlug: 'Ein aktiver Plan mit demselben Slug existiert bereits.',
     },
+    branding: {
+      imageFormat: 'Bitte laden Sie ein Bild hoch (JPEG, PNG, GIF, WEBP, SVG)',
+      imageTooLarge: 'Bild darf nicht größer als 5MB sein',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Allgemeine Plattformübersicht',
@@ -2795,6 +2799,9 @@ export const de: typeof sq = {
       expense: 'Aufwand',
       other: 'Sonstiges',
     },
+    datev: {
+      pickExportType: 'Wählen Sie mindestens einen Exporttyp.',
+    },
   },
   settings: {
     companySettings: 'Unternehmenseinstellungen',
@@ -3054,6 +3061,7 @@ export const de: typeof sq = {
       pickVehicle: 'Bitte Fahrzeug auswaehlen',
       pickDriver: 'Bitte Fahrer auswaehlen',
       expiryDateRequired: 'Ablaufdatum ist erforderlich',
+      fileTooLarge: 'Datei ist zu groß (max. 15 MB).',
     },
     filter: {
       all: 'Alle',
