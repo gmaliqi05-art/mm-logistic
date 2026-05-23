@@ -3,6 +3,7 @@ import { Plus, CreditCard as Edit2, X, AlertTriangle, Loader2, Search, Users, To
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageSkeleton } from '../../components/ui/Skeleton';
+import EmptyState from '../../components/ui/EmptyState';
 import { useTranslation } from '../../i18n';
 import type { AccContact, AccContactType } from '../../types/accounting';
 import ClientPricesModal from '../../components/accounting/ClientPricesModal';
@@ -291,10 +292,17 @@ export default function Contacts() {
       </div>
 
       {filteredContacts.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center">
-          <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 text-sm">Nuk u gjet asnjë kontakt</p>
-          <p className="text-gray-400 text-xs mt-1">Shtoni kontaktin e parë për të filluar</p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <EmptyState
+            icon={Users}
+            title={t('accounting.contacts.noContacts') || 'Nuk u gjet asnjë kontakt'}
+            hint={t('accounting.contacts.noContactsHint') || 'Shtoni kontaktin e parë për të filluar'}
+            action={{
+              label: t('accounting.contacts.addContact') || 'Shto kontakt',
+              onClick: openAdd,
+              icon: Plus,
+            }}
+          />
         </div>
       ) : (
         <>

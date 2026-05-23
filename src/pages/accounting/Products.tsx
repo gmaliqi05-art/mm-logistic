@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { AccProduct, AccProductCategory } from '../../types/accounting';
 import { UNITS, formatCurrency } from '../../types/accounting';
+import EmptyState from '../../components/ui/EmptyState';
 import { useCountryVatRates } from '../../hooks/useCountryVatRates';
 import { compareProducts } from '../../utils/productSort';
 
@@ -457,10 +458,17 @@ export default function Products() {
             <tbody className="divide-y divide-gray-50">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-16 text-center">
-                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Nuk ka produkte</p>
-                    <p className="text-gray-400 text-sm mt-1">Shto produktin e pare duke klikuar butonin lart</p>
+                  <td colSpan={9} className="px-6 py-0">
+                    <EmptyState
+                      icon={Package}
+                      title={t('accounting.products.noProducts')}
+                      hint={t('accounting.products.noProductsHint') || 'Shto produktin e pare duke klikuar butonin lart'}
+                      action={{
+                        label: t('accounting.products.addProduct'),
+                        onClick: openCreateModal,
+                        icon: Plus,
+                      }}
+                    />
                   </td>
                 </tr>
               ) : (
@@ -527,11 +535,16 @@ export default function Products() {
 
         <div className="lg:hidden divide-y divide-gray-100">
           {filteredProducts.length === 0 ? (
-            <div className="px-6 py-16 text-center">
-              <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 font-medium">Nuk ka produkte</p>
-              <p className="text-gray-400 text-sm mt-1">Shto produktin e pare duke klikuar butonin lart</p>
-            </div>
+            <EmptyState
+              icon={Package}
+              title={t('accounting.products.noProducts')}
+              hint={t('accounting.products.noProductsHint') || 'Shto produktin e pare duke klikuar butonin lart'}
+              action={{
+                label: t('accounting.products.addProduct'),
+                onClick: openCreateModal,
+                icon: Plus,
+              }}
+            />
           ) : (
             filteredProducts.map((product) => (
               <div

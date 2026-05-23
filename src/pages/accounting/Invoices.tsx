@@ -5,6 +5,7 @@ import DocumentPreviewModal from '../../components/accounting/DocumentPreviewMod
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageSkeleton } from '../../components/ui/Skeleton';
+import EmptyState from '../../components/ui/EmptyState';
 import { useTranslation } from '../../i18n';
 import type {
   AccInvoice,
@@ -817,10 +818,23 @@ export default function Invoices() {
       </div>
 
       {filteredInvoices.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center">
-          <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 text-sm">Nuk u gjet asnje fature</p>
-          <p className="text-gray-400 text-xs mt-1">Krijoni faturen e pare per te filluar</p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <EmptyState
+            icon={FileText}
+            title={t('accounting.invoices.noInvoices') || 'Nuk u gjet asnje fature'}
+            hint={t('accounting.invoices.noInvoicesHint') || 'Krijoni faturen e pare per te filluar'}
+            action={{
+              label: t('accounting.invoices.newInvoice') || 'Fature e re',
+              onClick: () => {
+                const target =
+                  typeof window !== 'undefined' && window.location.pathname.startsWith('/company')
+                    ? '/company/invoices/new'
+                    : '/accounting/invoices/new';
+                navigate(target);
+              },
+              icon: Plus,
+            }}
+          />
         </div>
       ) : (
         <>
