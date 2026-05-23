@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, Eye, EyeOff, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 type Locale = 'sq' | 'de' | 'en';
 
@@ -58,6 +59,7 @@ const COMMON_VARS = [
 ];
 
 export default function EmailTemplateEditor() {
+  const { t } = useTranslation();
   const { code } = useParams<{ code: string }>();
   const isNew = code === 'new';
   const navigate = useNavigate();
@@ -149,7 +151,7 @@ export default function EmailTemplateEditor() {
 
   async function handleSave() {
     if (!data.code.trim() || !data.name.trim()) {
-      setError('Kodi dhe emri jane te detyrueshem');
+      setError(t('company.emailTemplate.codeAndNameRequired') || 'Kodi dhe emri jane te detyrueshem');
       return;
     }
     setSaving(true);

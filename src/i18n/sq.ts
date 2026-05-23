@@ -965,6 +965,18 @@ export const sq = {
     },
   },
   company: {
+    routePlanner: {
+      pickDriverOrTransport: 'Zgjedh nje shofer ose nje transport para se te caktosh rrugen.',
+      routeNotSaved: 'Nuk u ruajt rruga.',
+    },
+    emailTemplate: {
+      codeAndNameRequired: 'Kodi dhe emri jane te detyrueshem',
+    },
+    manualEmail: {
+      pickClientOrEmail: 'Ju lutem zgjidhni nje klient ose shkruani nje adrese email',
+      pickTemplate: 'Ju lutem zgjidhni nje template',
+      networkError: 'Gabim rrjeti',
+    },
     vehicles: {
       plateBrandRequired: 'Targa dhe marka jane te detyrueshme',
       searchPlaceholder: 'Kerko me targe, VIN, marke...',

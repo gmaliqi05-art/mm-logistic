@@ -967,6 +967,18 @@ export const fr: typeof sq = {
     },
   },
   company: {
+    routePlanner: {
+      pickDriverOrTransport: 'Sélectionnez un chauffeur ou un transport avant d\'attribuer l\'itinéraire.',
+      routeNotSaved: 'L\'itinéraire n\'a pas été enregistré.',
+    },
+    emailTemplate: {
+      codeAndNameRequired: 'Le code et le nom sont obligatoires',
+    },
+    manualEmail: {
+      pickClientOrEmail: 'Veuillez sélectionner un client ou saisir une adresse e-mail',
+      pickTemplate: 'Veuillez sélectionner un modèle',
+      networkError: 'Erreur réseau',
+    },
     vehicles: {
       plateBrandRequired: 'La plaque et la marque sont obligatoires',
       searchPlaceholder: 'Rechercher par plaque, VIN, marque...',
