@@ -1432,6 +1432,11 @@ export const sq = {
     receiving: {
       title: 'Pranim / Dergese',
       subtitle: 'Regjistro pranime dhe dergesa',
+      intakeType: 'Lloji',
+      notRequiredForDamaged: '(pa nevoje per defekt)',
+      damagedAtCategoryLevel: '— defekt te kategoria —',
+      noProductsForCategory: '— pa produkte —',
+      pickCategoryFirst: '— zgjedh kategorin —',
       tabReceiving: 'Pranim',
       tabShipping: 'Dergese',
       addItem: 'Shto artikull',

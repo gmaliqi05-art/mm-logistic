@@ -1432,6 +1432,11 @@ export const fr: typeof sq = {
       noDepot: 'Votre compte n\'est rattach\u00e9 \u00e0 aucun d\u00e9p\u00f4t',
     },
     receiving: {
+      intakeType: 'Type',
+      notRequiredForDamaged: '(non requis pour endommag\u00e9)',
+      damagedAtCategoryLevel: '\u2014 endommag\u00e9 au niveau de la cat\u00e9gorie \u2014',
+      noProductsForCategory: '\u2014 aucun produit \u2014',
+      pickCategoryFirst: '\u2014 choisir une cat\u00e9gorie \u2014',
       title: 'R\u00e9ception / Exp\u00e9dition',
       subtitle: 'Enregistrer les r\u00e9ceptions et exp\u00e9ditions',
       tabReceiving: 'R\u00e9ception',

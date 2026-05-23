@@ -1432,6 +1432,11 @@ export const de: typeof sq = {
       noDepot: 'Ihr Konto ist keinem Lager zugeordnet',
     },
     receiving: {
+      intakeType: 'Typ',
+      notRequiredForDamaged: '(nicht noetig fuer defekt)',
+      damagedAtCategoryLevel: '— defekt auf Kategorie-Ebene —',
+      noProductsForCategory: '— keine Produkte —',
+      pickCategoryFirst: '— Kategorie waehlen —',
       title: 'Empfang / Versand',
       subtitle: 'Empfänge und Versendungen registrieren',
       tabReceiving: 'Empfang',

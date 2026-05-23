@@ -229,7 +229,13 @@ export default function DepotReceiving() {
       setError(t('depot.receiving.atLeastOne') || 'Shto te pakten nje artikull valid');
       return;
     }
-    const missingProduct = validRows.find((r) => categoryHasProducts(r.category_id) && !r.category_product_id);
+    // Damaged intake skips the product picker — defective pallets are
+    // booked at category level regardless of which specific product
+    // they would have been. Only ask for a product when the row is
+    // marked as good.
+    const missingProduct = validRows.find(
+      (r) => r.condition !== 'damaged' && categoryHasProducts(r.category_id) && !r.category_product_id,
+    );
     if (missingProduct) {
       const cat = categories.find((c) => c.id === missingProduct.category_id);
       const tpl = t('depot.receiving.pickProductForCategory') || 'Zgjedh produktin specifik per kategorin "{category}".';
@@ -244,11 +250,15 @@ export default function DepotReceiving() {
       const depotId = profile!.depot_id!;
       const companyId = profile!.company_id!;
 
+      // Damaged intake: NEVER attach a category_product_id even if the
+      // form has one lingering in state. Damaged stock is a single bucket
+      // per (depot, category) so workers reparature can later credit
+      // their repairs against it.
       const movements = validRows.map((r) => ({
         company_id: companyId,
         depot_id: depotId,
         category_id: r.category_id,
-        category_product_id: r.category_product_id || null,
+        category_product_id: r.condition === 'damaged' ? null : (r.category_product_id || null),
         movement_type: 'entry' as const,
         quantity: parseInt(r.quantity, 10),
         condition_before: r.condition,
@@ -264,7 +274,8 @@ export default function DepotReceiving() {
 
       for (const row of validRows) {
         const qty = parseInt(row.quantity, 10);
-        const productId = row.category_product_id || null;
+        // Mirror the movement insert above — damaged intake is category-only.
+        const productId = row.condition === 'damaged' ? null : (row.category_product_id || null);
         let lookup = supabase
           .from('stock')
           .select('id, quantity')
@@ -435,15 +446,24 @@ export default function DepotReceiving() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Produkti</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          {t('depot.stock.product') || 'Produkti'}
+                          {row.condition === 'damaged' && (
+                            <span className="ml-2 text-amber-700 font-normal text-[10px]">{t('depot.receiving.notRequiredForDamaged') || '(pa nevoje per defekt)'}</span>
+                          )}
+                        </label>
                         <select
                           value={row.category_product_id}
                           onChange={(e) => updateReceivingRow(row.id, 'category_product_id', e.target.value)}
-                          disabled={!row.category_id || !hasProducts}
-                          required={hasProducts}
+                          disabled={!row.category_id || !hasProducts || row.condition === 'damaged'}
+                          required={hasProducts && row.condition !== 'damaged'}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-400"
                         >
-                          <option value="">{hasProducts ? 'Zgjedh produktin' : (row.category_id ? '— pa produkte —' : '— zgjedh kategorin —')}</option>
+                          <option value="">
+                            {row.condition === 'damaged'
+                              ? (t('depot.receiving.damagedAtCategoryLevel') || '— defekt te kategoria —')
+                              : (hasProducts ? (t('depot.stock.selectProduct') || 'Zgjedh produktin') : (row.category_id ? (t('depot.receiving.noProductsForCategory') || '— pa produkte —') : (t('depot.receiving.pickCategoryFirst') || '— zgjedh kategorin —')))}
+                          </option>
                           {rowProducts.map((p) => (
                             <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
@@ -462,16 +482,32 @@ export default function DepotReceiving() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">{t('company.stock.condition')}</label>
-                        <select
-                          value={row.condition}
-                          onChange={(e) => updateReceivingRow(row.id, 'condition', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                        >
-                          <option value="good">{t('company.stock.good')}</option>
-                          <option value="damaged">{t('company.stock.damaged')}</option>
-                          <option value="repaired">{t('company.stock.repaired')}</option>
-                        </select>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">{t('depot.receiving.intakeType') || 'Lloji'}</label>
+                        {/* Replaces the legacy good/damaged/repaired dropdown. Picking
+                            a specific product is implicitly "good" — the only choice
+                            depot workers need at intake is "is this pile defective".
+                            "Repaired" never belongs here; that status is produced by
+                            the apply_repair_from_stock RPC from existing damaged stock. */}
+                        <div className="flex gap-1 bg-white border border-gray-200 rounded-lg p-1">
+                          <button
+                            type="button"
+                            onClick={() => updateReceivingRow(row.id, 'condition', 'good')}
+                            className={`flex-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                              row.condition !== 'damaged' ? 'bg-emerald-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {t('company.stock.good') || 'Mire'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateReceivingRow(row.id, 'condition', 'damaged')}
+                            className={`flex-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                              row.condition === 'damaged' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {t('company.stock.damaged') || 'Defekt'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <button
