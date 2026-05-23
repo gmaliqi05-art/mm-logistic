@@ -1557,6 +1557,10 @@ export const sq = {
     },
   },
   driver: {
+    routePlannerErrors: {
+      noGps: 'Nuk kemi GPS. Aktivizo tracking-un.',
+      destinationNotFound: 'Nuk u gjet destinacioni. Kliko ne harte ose shkruaj adresen.',
+    },
     directionDelivery: 'DOREZON',
     directionDeliverySub: 'Mallrat dalin nga depoja',
     directionPickup: 'MERR',
@@ -1692,6 +1696,7 @@ export const sq = {
     overdue: {
       title: 'Porosite e Vonuara',
       subtitle: 'Detyrat qe kane kaluar daten dhe presin skanim',
+      documentNotFound: 'Dokumenti nuk u gjet',
       all: 'Te gjitha',
       deliveries: 'Fletedergesa',
       pickups: 'Fletemarrje',
