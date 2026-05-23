@@ -1435,6 +1435,11 @@ export const en: typeof sq = {
       noDepot: 'Your account is not assigned to a depot',
     },
     receiving: {
+      intakeType: 'Type',
+      notRequiredForDamaged: '(not needed for damaged)',
+      damagedAtCategoryLevel: '— damaged at category level —',
+      noProductsForCategory: '— no products —',
+      pickCategoryFirst: '— pick a category —',
       title: 'Receiving / Shipping',
       subtitle: 'Register receivings and shipments',
       tabReceiving: 'Receiving',
