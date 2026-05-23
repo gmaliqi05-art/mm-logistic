@@ -604,7 +604,7 @@ export default function Reports() {
       ];
 
       if (rows.length === 0) {
-        setError('Nuk ka te dhena per periudhen e zgjedhur');
+        setError(t('accounting.reports.noDataForPeriod') || 'Nuk ka te dhena per periudhen e zgjedhur');
         return;
       }
 

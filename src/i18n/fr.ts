@@ -2108,6 +2108,7 @@ export const fr: typeof sq = {
     closeTicket: 'Fermer le ticket',
   },
   chat: {
+    profilePhotoImagesOnly: 'Seules les images sont autorisées',
     subtitle: 'Communiquer avec le personnel de l\'entreprise',
     typeMessage: 'Tapez un message...',
     noMessages: 'Aucun message. Commencez la conversation !',
@@ -2226,6 +2227,9 @@ export const fr: typeof sq = {
       editProduct: 'Modifier le produit',
       noProducts: 'Aucun produit',
       noProductsHint: 'Ajoutez votre premier produit pour commencer à créer des factures avec des lignes automatiques.',
+      nameRequired: 'Le nom du produit est obligatoire',
+      reasonRequired: 'La raison est obligatoire',
+      newQtySameAsCurrent: 'La nouvelle quantité est identique à l\'actuelle',
       sku: 'SKU',
       unit: 'Unite',
       priceNet: 'Prix HT',
@@ -2261,6 +2265,8 @@ export const fr: typeof sq = {
       editInvoice: 'Modifier la facture',
       noInvoices: 'Aucune facture',
       noInvoicesHint: 'Créez votre première facture pour suivre les revenus et envoyer les factures aux clients.',
+      pickCustomer: 'Sélectionnez un client',
+      addAtLeastOneItem: 'Ajoutez au moins un article',
       newInvoice: 'Nouvelle facture',
       invoiceNumber: 'N de facture',
       invoiceDate: 'Date de facture',
@@ -2500,6 +2506,7 @@ export const fr: typeof sq = {
       editTransaction: 'Modifier la transaction',
       noTransactions: 'Aucune transaction',
       noTransactionsHint: 'Ajoutez votre première transaction pour suivre la trésorerie et lier les factures au compte bancaire.',
+      descriptionAndAmountRequired: 'La description et le montant sont obligatoires',
       income: 'Revenus',
       expense: 'Depense',
       transfer: 'Virement',
@@ -2529,6 +2536,7 @@ export const fr: typeof sq = {
     bankAccounts: {
       title: 'Comptes bancaires',
       subtitle: 'Gerer les comptes bancaires de l\'entreprise',
+      nameRequired: 'Le nom du compte est obligatoire',
       addAccount: 'Ajouter un compte',
       editAccount: 'Modifier le compte',
       noAccounts: 'Aucun compte bancaire',
@@ -2544,6 +2552,7 @@ export const fr: typeof sq = {
     reports: {
       title: 'Rapports',
       subtitle: 'Rapports financiers',
+      noDataForPeriod: 'Aucune donnée pour la période sélectionnée',
       profitLoss: 'Profits et pertes',
       revenueByCustomer: 'Chiffre d\'affaires par client',
       expensesByCategory: 'Depenses par categorie',
@@ -2797,6 +2806,7 @@ export const fr: typeof sq = {
     },
     deliveryNotes: {
       errOrderTitle: 'Veuillez saisir un titre / identifiant pour cette commande.',
+      customerRequired: 'Le client est obligatoire',
       referenceNumberLabel: 'Numero de reference (Bon d\'enlevement)',
       pickupTime: 'Heure d\'enlevement',
       pickupDate: 'Date d\'enlevement',

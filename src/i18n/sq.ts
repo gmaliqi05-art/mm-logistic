@@ -2106,6 +2106,7 @@ export const sq = {
     closeTicket: 'Mbyll Tiketen',
   },
   chat: {
+    profilePhotoImagesOnly: 'Vetem imazhe lejohen',
     subtitle: 'Komuniko me stafin e kompanise',
     typeMessage: 'Shkruani mesazhin...',
     noMessages: 'Nuk ka mesazhe. Filloni biseden!',
@@ -2223,6 +2224,9 @@ export const sq = {
       editProduct: 'Ndrysho Produktin',
       noProducts: 'Nuk ka produkte',
       noProductsHint: 'Shto produktin e pare per te filluar te krijosh fatura me sasi automatike.',
+      nameRequired: 'Emri i produktit eshte i detyrueshem',
+      reasonRequired: 'Arsyeja eshte e detyrueshme',
+      newQtySameAsCurrent: 'Sasia e re eshte e njejte me ate aktuale',
       searchPlaceholder: 'Kerko emrin, SKU, pershkrimin...',
       sku: 'SKU',
       unit: 'Njesia',
@@ -2260,6 +2264,8 @@ export const sq = {
       noInvoices: 'Nuk ka fatura',
       noInvoicesHint: 'Krijoni faturen e pare per te filluar gjurmimin e te ardhurave dhe te dergoni faturat tek klientet.',
       newInvoice: 'Fature e re',
+      pickCustomer: 'Zgjidhni nje klient',
+      addAtLeastOneItem: 'Shtoni te pakten nje artikull',
       invoiceNumber: 'Nr. Fatures',
       invoiceDate: 'Data e Fatures',
       dueDate: 'Data e Pageses',
@@ -2498,6 +2504,7 @@ export const sq = {
       searchPlaceholder: 'Kerko pershkrimin, kontaktin...',
       noTransactions: 'Nuk ka transaksione',
       noTransactionsHint: 'Shto transaksionin e pare per te ndjekur cash flow-in dhe per te lidhur faturat me llogarine bankare.',
+      descriptionAndAmountRequired: 'Pershkrimi dhe shuma jane te detyrueshme',
       income: 'Te Ardhura',
       expense: 'Shpenzim',
       transfer: 'Transferte',
@@ -2527,6 +2534,7 @@ export const sq = {
     bankAccounts: {
       title: 'Llogarite Bankare',
       subtitle: 'Menaxho llogarite bankare te kompanise',
+      nameRequired: 'Emri i llogarise eshte i detyrueshem',
       addAccount: 'Shto Llogari',
       editAccount: 'Ndrysho Llogarme',
       noAccounts: 'Nuk ka llogari bankare',
@@ -2542,6 +2550,7 @@ export const sq = {
     reports: {
       title: 'Raportet',
       subtitle: 'Raportet financiare',
+      noDataForPeriod: 'Nuk ka te dhena per periudhen e zgjedhur',
       profitLoss: 'Fitimi dhe Humbja',
       revenueByCustomer: 'Te Ardhurat sipas Klientit',
       expensesByCategory: 'Shpenzimet sipas Kategorise',
@@ -2795,6 +2804,7 @@ export const sq = {
     },
     deliveryNotes: {
       errOrderTitle: 'Ju lutem vendosni nje titull / identifikim per kete porosi.',
+      customerRequired: 'Klienti eshte i detyrueshem',
       referenceNumberLabel: 'Numri i References (Fletemarrje)',
       pickupTime: 'Orari i marrjes',
       pickupDate: 'Data e marrjes',

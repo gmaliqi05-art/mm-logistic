@@ -296,7 +296,7 @@ export default function ProductDetail() {
 
   const handleSaveEdit = async () => {
     if (!formData.name.trim() || !product) {
-      setError('Emri i produktit eshte i detyrueshem');
+      setError(t('accounting.products.nameRequired') || 'Emri i produktit eshte i detyrueshem');
       return;
     }
     try {
@@ -397,12 +397,12 @@ export default function ProductDetail() {
 
   const handleSaveAdjustment = async () => {
     if (!product || !adjustReason.trim()) {
-      setError('Arsyeja eshte e detyrueshme');
+      setError(t('accounting.products.reasonRequired') || 'Arsyeja eshte e detyrueshme');
       return;
     }
     const diff = adjustNewQty - product.current_stock;
     if (diff === 0) {
-      setError('Sasia e re eshte e njejte me ate aktuale');
+      setError(t('accounting.products.newQtySameAsCurrent') || 'Sasia e re eshte e njejte me ate aktuale');
       return;
     }
     try {

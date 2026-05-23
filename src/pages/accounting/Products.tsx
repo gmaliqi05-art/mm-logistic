@@ -252,7 +252,7 @@ export default function Products() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setError('Emri i produktit eshte i detyrueshem');
+      setError(t('accounting.products.nameRequired') || 'Emri i produktit eshte i detyrueshem');
       return;
     }
 

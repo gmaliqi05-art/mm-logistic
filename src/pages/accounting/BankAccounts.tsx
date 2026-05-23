@@ -171,7 +171,7 @@ export default function BankAccounts() {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      setError('Emri i llogarise eshte i detyrueshem');
+      setError(t('accounting.bankAccounts.nameRequired') || 'Emri i llogarise eshte i detyrueshem');
       return;
     }
     try {
