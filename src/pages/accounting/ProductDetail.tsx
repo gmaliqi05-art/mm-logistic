@@ -226,12 +226,12 @@ export default function ProductDetail() {
 
   const handleFileSelect = (file: File) => {
     if (file.size > 2 * 1024 * 1024) {
-      setError('Imazhi nuk duhet te jete me i madh se 2MB');
+      setError(t('accounting.products.imageTooLarge'));
       return;
     }
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      setError('Formati i lejuar: JPEG, PNG, WebP');
+      setError(t('accounting.products.imageFormatAllowed'));
       return;
     }
     setSelectedFile(file);

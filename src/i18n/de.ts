@@ -1562,6 +1562,14 @@ export const de: typeof sq = {
       confirmReceipt: 'Empfang bestätigen',
     },
   },
+  stock: {
+    repairModal: {
+      addQty: 'Fügen Sie mindestens eine reparierte oder verschrottete Menge hinzu',
+      totalExceeds: 'Summe übersteigt defekten Bestand',
+      pickProduct: 'Zielprodukt für reparierte Paletten auswählen',
+      pickReparator: 'Reparateur auswählen, der die Arbeit ausgeführt hat',
+    },
+  },
   driver: {
     routePlannerErrors: {
       noGps: 'Kein GPS-Signal. Tracking aktivieren.',
@@ -2131,6 +2139,7 @@ export const de: typeof sq = {
   },
   chat: {
     profilePhotoImagesOnly: 'Nur Bilder sind erlaubt',
+    profilePhotoTooLarge: 'Bild darf nicht größer als 5MB sein',
     subtitle: 'Mit dem Firmenpersonal kommunizieren',
     typeMessage: 'Nachricht eingeben...',
     noMessages: 'Keine Nachrichten. Beginnen Sie das Gespräch!',
@@ -2253,6 +2262,8 @@ export const de: typeof sq = {
       nameRequired: 'Produktname ist erforderlich',
       reasonRequired: 'Grund ist erforderlich',
       newQtySameAsCurrent: 'Neue Menge ist gleich der aktuellen',
+      imageTooLarge: 'Bild darf nicht größer als 2MB sein',
+      imageFormatAllowed: 'Erlaubte Formate: JPEG, PNG, WebP',
       sku: 'SKU',
       unit: 'Einheit',
       priceNet: 'Nettopreis',
@@ -2419,6 +2430,10 @@ export const de: typeof sq = {
       previewTotal: 'Gesamt',
     },
     scanModal: {
+      uploadFirst: 'Bitte laden Sie ein Dokument hoch, bevor Sie scannen.',
+      sessionExpired: 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.',
+      rateLimited: 'Zu viele Anfragen auf einmal. Warten Sie eine Minute und versuchen Sie es erneut.',
+      unauthorized: 'Sie sind nicht zum Scannen berechtigt. Aktualisieren Sie die Seite und versuchen Sie es erneut.',
       title: 'Dokument scannen',
       subtitleUpload: 'Automatische OCR mit KI — laden Sie hoch und das System extrahiert die Daten',
       subtitlePreview: 'Pruefen und bearbeiten Sie die extrahierten Daten und speichern Sie diese',
@@ -3018,6 +3033,20 @@ export const de: typeof sq = {
       rejectionPlaceholder: 'Grund eingeben...',
       notifyApprovedTitle: 'Bericht genehmigt',
       notifyRejectedTitle: 'Bericht zur\u00fcckgewiesen',
+    },
+    errors: {
+      noDepotApprove: 'Kein Depot zugewiesen und kein Zentraldepot. Legen Sie ein Depot f\u00fcr die Firma an, bevor Sie an den Bestand senden.',
+      addItemBeforeApprove: 'F\u00fcgen Sie mindestens einen Artikel hinzu, bevor Sie an das Depot senden.',
+      fillCategoryQty: 'F\u00fcllen Sie Kategorie und Menge f\u00fcr jeden Artikel aus.',
+      linkPartnerApprove: 'Verkn\u00fcpfen Sie einen Partner oder aktivieren Sie \u201eAls neuen Partner registrieren\u201c im Bereich Partner, bevor Sie an den Bestand senden.',
+      noDepotSorting: 'Kein Depot zugewiesen und kein Zentraldepot. Legen Sie ein Depot f\u00fcr die Firma an, bevor Sie sortieren.',
+      addItemBeforeSorting: 'F\u00fcgen Sie mindestens einen Artikel hinzu, bevor Sie zur Sortierung senden.',
+      linkPartnerSorting: 'Verkn\u00fcpfen Sie einen Partner oder aktivieren Sie \u201eAls neuen Partner registrieren\u201c im Bereich Partner, bevor Sie zur Sortierung senden.',
+      noItemsToStock: 'Es gibt keine Artikel zum Erfassen im Bestand. F\u00fcgen Sie Artikel hinzu oder geben Sie die Lieferung zur\u00fcck.',
+      fillCategoryQtyStock: 'Weisen Sie f\u00fcr jeden Artikel Kategorie und Menge zu, bevor Sie ihn im Bestand erfassen.',
+      productRequired: 'Jeder Artikel muss ein Produkt zugewiesen haben (nicht nur eine Kategorie). W\u00e4hlen Sie das genaue Produkt aus, bevor Sie es im Bestand erfassen.',
+      linkPartnerStock: 'Verkn\u00fcpfen Sie einen Partner oder aktivieren Sie \u201eAls neuen Partner registrieren\u201c im Bereich Partner, bevor Sie ihn im Bestand erfassen.',
+      noDepotBasic: 'Kein Depot zugewiesen und kein Zentraldepot.',
     },
   },
   fleet: {

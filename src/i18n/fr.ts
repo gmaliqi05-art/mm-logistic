@@ -1562,6 +1562,14 @@ export const fr: typeof sq = {
       confirmReceipt: 'Confirmer la r\u00e9ception',
     },
   },
+  stock: {
+    repairModal: {
+      addQty: 'Ajoutez au moins une quantit\u00e9 r\u00e9par\u00e9e ou mise au rebut',
+      totalExceeds: 'Le total d\u00e9passe le stock d\u00e9fectueux',
+      pickProduct: 'Choisissez le produit cible pour les palettes r\u00e9par\u00e9es',
+      pickReparator: 'Choisissez le r\u00e9parateur qui a effectu\u00e9 le travail',
+    },
+  },
   driver: {
     routePlannerErrors: {
       noGps: 'Pas de signal GPS. Activez le suivi.',
@@ -2131,6 +2139,7 @@ export const fr: typeof sq = {
   },
   chat: {
     profilePhotoImagesOnly: 'Seules les images sont autorisées',
+    profilePhotoTooLarge: 'L\'image doit faire moins de 5 Mo',
     subtitle: 'Communiquer avec le personnel de l\'entreprise',
     typeMessage: 'Tapez un message...',
     noMessages: 'Aucun message. Commencez la conversation !',
@@ -2253,6 +2262,8 @@ export const fr: typeof sq = {
       nameRequired: 'Le nom du produit est obligatoire',
       reasonRequired: 'La raison est obligatoire',
       newQtySameAsCurrent: 'La nouvelle quantité est identique à l\'actuelle',
+      imageTooLarge: 'L\'image doit faire moins de 2 Mo',
+      imageFormatAllowed: 'Formats autorisés : JPEG, PNG, WebP',
       sku: 'SKU',
       unit: 'Unite',
       priceNet: 'Prix HT',
@@ -2419,6 +2430,10 @@ export const fr: typeof sq = {
       previewTotal: 'Total',
     },
     scanModal: {
+      uploadFirst: 'Veuillez téléverser un document avant de scanner.',
+      sessionExpired: 'Votre session a expiré. Veuillez vous reconnecter.',
+      rateLimited: 'Trop de requêtes en même temps. Patientez une minute et réessayez.',
+      unauthorized: 'Vous n\'êtes pas autorisé à scanner. Actualisez la page et réessayez.',
       title: 'Scanner un document',
       subtitleUpload: 'OCR automatique avec IA — telechargez et le systeme extrait les donnees',
       subtitlePreview: 'Verifiez et modifiez les donnees extraites, puis enregistrez dans le systeme',
@@ -3018,6 +3033,20 @@ export const fr: typeof sq = {
       rejectionPlaceholder: '\u00c9crivez le motif...',
       notifyApprovedTitle: 'Rapport approuv\u00e9',
       notifyRejectedTitle: 'Rapport renvoy\u00e9',
+    },
+    errors: {
+      noDepotApprove: 'Aucun d\u00e9p\u00f4t assign\u00e9 et aucun d\u00e9p\u00f4t central. Cr\u00e9ez un d\u00e9p\u00f4t pour l\'entreprise avant d\'envoyer au stock.',
+      addItemBeforeApprove: 'Ajoutez au moins un article avant d\'envoyer au d\u00e9p\u00f4t.',
+      fillCategoryQty: 'Remplissez la cat\u00e9gorie et la quantit\u00e9 pour chaque article.',
+      linkPartnerApprove: 'Liez un partenaire ou activez \u00ab Enregistrer comme nouveau partenaire \u00bb dans la section Partenaire avant d\'envoyer au stock.',
+      noDepotSorting: 'Aucun d\u00e9p\u00f4t assign\u00e9 et aucun d\u00e9p\u00f4t central. Cr\u00e9ez un d\u00e9p\u00f4t pour l\'entreprise avant le tri.',
+      addItemBeforeSorting: 'Ajoutez au moins un article avant d\'envoyer au tri.',
+      linkPartnerSorting: 'Liez un partenaire ou activez \u00ab Enregistrer comme nouveau partenaire \u00bb dans la section Partenaire avant d\'envoyer au tri.',
+      noItemsToStock: 'Il n\'y a aucun article \u00e0 enregistrer en stock. Ajoutez des articles ou retournez la livraison.',
+      fillCategoryQtyStock: 'Attribuez une cat\u00e9gorie et une quantit\u00e9 \u00e0 chaque article avant l\'enregistrement en stock.',
+      productRequired: 'Chaque article doit avoir un produit d\u00e9fini (pas seulement une cat\u00e9gorie). Choisissez le produit exact avant l\'enregistrement en stock.',
+      linkPartnerStock: 'Liez un partenaire ou activez \u00ab Enregistrer comme nouveau partenaire \u00bb dans la section Partenaire avant l\'enregistrement en stock.',
+      noDepotBasic: 'Aucun d\u00e9p\u00f4t assign\u00e9 et aucun d\u00e9p\u00f4t central.',
     },
   },
   fleet: {
