@@ -327,7 +327,7 @@ export default function DepotRepairWorkers() {
   async function handleReportToAdmin() {
     if (reporting) return;
     if (openRepairs.length === 0) {
-      setError('Nuk ka reparime te sotme per te raportuar.');
+      setError(t('depot.repairWorkers.noRepairsToday') || 'Nuk ka reparime te sotme per te raportuar.');
       return;
     }
     try {

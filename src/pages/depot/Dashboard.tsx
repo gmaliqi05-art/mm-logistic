@@ -78,7 +78,7 @@ function DepoistDashboard() {
       refreshProfile().then(() => {
         if (!profile.depot_id) {
           setLoading(false);
-          setError('Nuk jeni caktuar ne asnje depo. Kontaktoni administratorin e kompanise.');
+          setError(t('depot.dashboard.noDepotAssigned') || 'Nuk jeni caktuar ne asnje depo. Kontaktoni administratorin e kompanise.');
         }
       });
     }

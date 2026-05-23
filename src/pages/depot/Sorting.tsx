@@ -416,7 +416,7 @@ export default function DepotSorting() {
         await supabase.from('notifications').insert(rows);
       }
 
-      setSuccess('Raporti u dergua me sukses');
+      setSuccess(t('depot.sorting.reportSent') || 'Raporti u dergua me sukses');
       setTimeout(() => setSuccess(null), 3000);
       await fetchAll();
     } catch (err: any) {
