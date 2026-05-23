@@ -26,7 +26,7 @@ export default function ProfilePhotoUpload({ onClose }: ProfilePhotoUploadProps)
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('Imazhi nuk mund te jete me i madh se 5MB');
+      setError(t('chat.profilePhotoTooLarge'));
       return;
     }
 

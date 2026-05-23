@@ -26,6 +26,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { matchProduct } from '../../utils/productMatcher';
 import { isEuroPaletteName, isNewPalletProduct, epalClassRank } from '../../utils/productSort';
 import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
@@ -335,6 +336,7 @@ function ReviewModal({
   onDone: () => void | Promise<void>;
 }) {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [showStockDeduction, setShowStockDeduction] = useState(false);
@@ -783,14 +785,14 @@ function ReviewModal({
     try {
       const depotId = await ensureDepotAssigned();
       if (!depotId) {
-        throw new Error('Asnje depo e caktuar dhe asnje depo qendrore. Krijoni nje depo per kompanine para se ta dergoni ne stok.');
+        throw new Error(t('review.errors.noDepotApprove'));
       }
       if (rows.length === 0) {
-        throw new Error('Shtoni se paku nje artikull para se ta dergoni ne depo.');
+        throw new Error(t('review.errors.addItemBeforeApprove'));
       }
       const invalid = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
       if (invalid.length > 0) {
-        throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
+        throw new Error(t('review.errors.fillCategoryQty'));
       }
       let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
@@ -804,7 +806,7 @@ function ReviewModal({
         }
       }
       if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
-        if (!getAiPartnerName()) throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne stok.');
+        if (!getAiPartnerName()) throw new Error(t('review.errors.linkPartnerApprove'));
       }
 
       const autoRouted = rows.map((r) => {
@@ -928,14 +930,14 @@ function ReviewModal({
     try {
       const depotId = await ensureDepotAssigned();
       if (!depotId) {
-        throw new Error('Asnje depo e caktuar dhe asnje depo qendrore. Krijoni nje depo per kompanine para sortirimit.');
+        throw new Error(t('review.errors.noDepotSorting'));
       }
       if (rows.length === 0) {
-        throw new Error('Shtoni se paku nje artikull para se ta dergoni ne sortire.');
+        throw new Error(t('review.errors.addItemBeforeSorting'));
       }
       const invalid = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
       if (invalid.length > 0) {
-        throw new Error('Plotesoni kategorine dhe sasine per cdo artikull.');
+        throw new Error(t('review.errors.fillCategoryQty'));
       }
       let hasPartnerLink = !!(note.partner_id || note.counterparty_contact_id || note.counterparty_company_id);
       const willAutoRegister = !!(note as any).auto_register_partner;
@@ -949,7 +951,7 @@ function ReviewModal({
         }
       }
       if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
-        if (!getAiPartnerName()) throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne sortire.');
+        if (!getAiPartnerName()) throw new Error(t('review.errors.linkPartnerSorting'));
       }
       const sortingRows: RowState[] = rows.map((r) => ({
         ...r,
@@ -1099,19 +1101,17 @@ function ReviewModal({
     setError(null);
     try {
       if (rows.length === 0) {
-        throw new Error('Nuk ka asnje artikull per te regjistruar ne stok. Shtoni artikujt ose kthejeni dergesen.');
+        throw new Error(t('review.errors.noItemsToStock'));
       }
       const missing = rows.filter((r) => !r.category_id || !r.quantity || r.quantity <= 0);
       if (missing.length > 0) {
-        throw new Error('Caktoni kategorine dhe sasine per cdo artikull para regjistrimit ne stok.');
+        throw new Error(t('review.errors.fillCategoryQtyStock'));
       }
       const missingProduct = rows.filter(
         (r) => r.intended_action !== 'repair' && !r.product_id,
       );
       if (missingProduct.length > 0) {
-        throw new Error(
-          'Cdo artikull duhet te kete produkt te caktuar (jo vetem kategori). Zgjidhni produktin e sakte para regjistrimit ne stok.',
-        );
+        throw new Error(t('review.errors.productRequired'));
       }
 
       if (!allowNegative) {
@@ -1141,7 +1141,7 @@ function ReviewModal({
         }
       }
       if (!partnerIsOwnCompany && !hasPartnerLink && !willAutoRegister) {
-        if (!getAiPartnerName()) throw new Error('Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta regjistroni ne stok.');
+        if (!getAiPartnerName()) throw new Error(t('review.errors.linkPartnerStock'));
       }
 
       await persistItems();
@@ -1154,7 +1154,7 @@ function ReviewModal({
       }
 
       const depotId = await ensureDepotAssigned();
-      if (!depotId) throw new Error('Asnje depo e caktuar dhe asnje depo qendrore.');
+      if (!depotId) throw new Error(t('review.errors.noDepotBasic'));
 
       const { data: validation, error: vErr } = await supabase.functions.invoke('validate-delivery-action', {
         body: {

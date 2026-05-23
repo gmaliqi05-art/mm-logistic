@@ -1560,6 +1560,14 @@ export const sq = {
       confirmReceipt: 'Konfirmo Pranimin',
     },
   },
+  stock: {
+    repairModal: {
+      addQty: 'Shtoni se paku nje sasi te riparuar ose scrap',
+      totalExceeds: 'Totali tejkalon stokun defekt',
+      pickProduct: 'Zgjidhni produktin e synuar per paletat e riparuara',
+      pickReparator: 'Zgjidhni reparatorin qe e ka kryer punen',
+    },
+  },
   driver: {
     routePlannerErrors: {
       noGps: 'Nuk kemi GPS. Aktivizo tracking-un.',
@@ -2129,6 +2137,7 @@ export const sq = {
   },
   chat: {
     profilePhotoImagesOnly: 'Vetem imazhe lejohen',
+    profilePhotoTooLarge: 'Imazhi nuk mund te jete me i madh se 5MB',
     subtitle: 'Komuniko me stafin e kompanise',
     typeMessage: 'Shkruani mesazhin...',
     noMessages: 'Nuk ka mesazhe. Filloni biseden!',
@@ -2250,6 +2259,8 @@ export const sq = {
       nameRequired: 'Emri i produktit eshte i detyrueshem',
       reasonRequired: 'Arsyeja eshte e detyrueshme',
       newQtySameAsCurrent: 'Sasia e re eshte e njejte me ate aktuale',
+      imageTooLarge: 'Imazhi nuk duhet te jete me i madh se 2MB',
+      imageFormatAllowed: 'Formati i lejuar: JPEG, PNG, WebP',
       searchPlaceholder: 'Kerko emrin, SKU, pershkrimin...',
       sku: 'SKU',
       unit: 'Njesia',
@@ -2417,6 +2428,10 @@ export const sq = {
       previewTotal: 'Totali',
     },
     scanModal: {
+      uploadFirst: 'Ju lutem ngarkoni nje dokument para se te skanoni.',
+      sessionExpired: 'Sesioni ka skaduar. Ju lutem kyquni perseri.',
+      rateLimited: 'Shume kerkesa njehere. Prisni nje minute dhe provoni perseri.',
+      unauthorized: 'Nuk jeni i autorizuar per skanim. Rifreskoni faqen dhe provoni perseri.',
       title: 'Skano Dokument',
       subtitleUpload: 'OCR automatik me AI — ngarkoni dhe sistemi ekstrakton të dhënat',
       subtitlePreview: 'Kontrolloni dhe ndryshoni të dhënat e ekstraktuara, pastaj ruani në sistem',
@@ -3016,6 +3031,20 @@ export const sq = {
       rejectionPlaceholder: 'Shkruani arsyen...',
       notifyApprovedTitle: 'Raporti u miratua',
       notifyRejectedTitle: 'Raporti u kthye',
+    },
+    errors: {
+      noDepotApprove: 'Asnje depo e caktuar dhe asnje depo qendrore. Krijoni nje depo per kompanine para se ta dergoni ne stok.',
+      addItemBeforeApprove: 'Shtoni se paku nje artikull para se ta dergoni ne depo.',
+      fillCategoryQty: 'Plotesoni kategorine dhe sasine per cdo artikull.',
+      linkPartnerApprove: 'Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne stok.',
+      noDepotSorting: 'Asnje depo e caktuar dhe asnje depo qendrore. Krijoni nje depo per kompanine para sortirimit.',
+      addItemBeforeSorting: 'Shtoni se paku nje artikull para se ta dergoni ne sortire.',
+      linkPartnerSorting: 'Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta dergoni ne sortire.',
+      noItemsToStock: 'Nuk ka asnje artikull per te regjistruar ne stok. Shtoni artikujt ose kthejeni dergesen.',
+      fillCategoryQtyStock: 'Caktoni kategorine dhe sasine per cdo artikull para regjistrimit ne stok.',
+      productRequired: 'Cdo artikull duhet te kete produkt te caktuar (jo vetem kategori). Zgjidhni produktin e sakte para regjistrimit ne stok.',
+      linkPartnerStock: 'Lidhni nje partner ose aktivizoni "Regjistroje si partner te ri" te seksioni Partneri perpara se ta regjistroni ne stok.',
+      noDepotBasic: 'Asnje depo e caktuar dhe asnje depo qendrore.',
     },
   },
   fleet: {

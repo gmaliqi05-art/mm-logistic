@@ -172,7 +172,7 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
 
   async function runScan() {
     if (!file || !companyId) {
-      setError('Ju lutem ngarkoni nje dokument para se te skanoni.');
+      setError(t('accounting.scanModal.uploadFirst'));
       return;
     }
     setStep('scanning');
@@ -211,7 +211,7 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-document`;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
-        throw new Error('Sesioni ka skaduar. Ju lutem kyquni perseri.');
+        throw new Error(t('accounting.scanModal.sessionExpired'));
       }
       const docDirection = chosenKind === 'delivery_in' ? 'in'
         : chosenKind === 'delivery_out' ? 'out'
@@ -237,8 +237,8 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
       if (!res.ok || !json?.success) {
         const serverMsg = json?.error || json?.message;
         if (serverMsg) throw new Error(serverMsg);
-        if (res.status === 429) throw new Error('Shume kerkesa njehere. Prisni nje minute dhe provoni perseri.');
-        if (res.status === 401 || res.status === 403) throw new Error('Nuk jeni i autorizuar per skanim. Rifreskoni faqen dhe provoni perseri.');
+        if (res.status === 429) throw new Error(t('accounting.scanModal.rateLimited'));
+        if (res.status === 401 || res.status === 403) throw new Error(t('accounting.scanModal.unauthorized'));
         if (res.status >= 500) throw new Error(`Serveri ka nje problem (HTTP ${res.status}). Provoni perseri me vone.`);
         throw new Error(`Skanimi deshtoi (HTTP ${res.status})`);
       }

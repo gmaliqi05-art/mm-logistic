@@ -1565,6 +1565,14 @@ export const en: typeof sq = {
       confirmReceipt: 'Confirm Receipt',
     },
   },
+  stock: {
+    repairModal: {
+      addQty: 'Add at least one repaired or scrap quantity',
+      totalExceeds: 'Total exceeds damaged stock',
+      pickProduct: 'Pick the target product for repaired pallets',
+      pickReparator: 'Pick the reparator who did the work',
+    },
+  },
   driver: {
     routePlannerErrors: {
       noGps: 'No GPS signal. Turn tracking on.',
@@ -2134,6 +2142,7 @@ export const en: typeof sq = {
   },
   chat: {
     profilePhotoImagesOnly: 'Only images are allowed',
+    profilePhotoTooLarge: 'Image must be smaller than 5MB',
     subtitle: 'Communicate with company staff',
     typeMessage: 'Type a message...',
     noMessages: 'No messages. Start the conversation!',
@@ -2256,6 +2265,8 @@ export const en: typeof sq = {
       nameRequired: 'Product name is required',
       reasonRequired: 'Reason is required',
       newQtySameAsCurrent: 'New quantity is the same as the current one',
+      imageTooLarge: 'Image must be smaller than 2MB',
+      imageFormatAllowed: 'Allowed formats: JPEG, PNG, WebP',
       sku: 'SKU',
       unit: 'Unit',
       priceNet: 'Price excl. VAT',
@@ -2422,6 +2433,10 @@ export const en: typeof sq = {
       previewTotal: 'Total',
     },
     scanModal: {
+      uploadFirst: 'Please upload a document before scanning.',
+      sessionExpired: 'Your session has expired. Please sign in again.',
+      rateLimited: 'Too many requests at once. Wait a minute and try again.',
+      unauthorized: 'You are not authorized to scan. Refresh the page and try again.',
       title: 'Scan Document',
       subtitleUpload: 'Automatic OCR with AI — upload and the system extracts the data',
       subtitlePreview: 'Review and edit the extracted data, then save it to the system',
@@ -3021,6 +3036,20 @@ export const en: typeof sq = {
       rejectionPlaceholder: 'Write the reason...',
       notifyApprovedTitle: 'Report approved',
       notifyRejectedTitle: 'Report returned',
+    },
+    errors: {
+      noDepotApprove: 'No depot assigned and no central depot. Create a depot for the company before sending to stock.',
+      addItemBeforeApprove: 'Add at least one item before sending to the depot.',
+      fillCategoryQty: 'Fill in category and quantity for every item.',
+      linkPartnerApprove: 'Link a partner or enable "Register as new partner" in the Partner section before sending to stock.',
+      noDepotSorting: 'No depot assigned and no central depot. Create a depot for the company before sorting.',
+      addItemBeforeSorting: 'Add at least one item before sending to sorting.',
+      linkPartnerSorting: 'Link a partner or enable "Register as new partner" in the Partner section before sending to sorting.',
+      noItemsToStock: 'There are no items to register in stock. Add items or return the delivery.',
+      fillCategoryQtyStock: 'Assign category and quantity for every item before registering in stock.',
+      productRequired: 'Every item must have a product set (not just a category). Pick the exact product before registering in stock.',
+      linkPartnerStock: 'Link a partner or enable "Register as new partner" in the Partner section before registering in stock.',
+      noDepotBasic: 'No depot assigned and no central depot.',
     },
   },
   fleet: {

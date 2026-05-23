@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Loader2, Wrench, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   stockId: string;
@@ -29,6 +30,7 @@ interface ReparatureOption {
 }
 
 export default function RepairCompletionModal({ stockId, onClose, onApplied }: Props) {
+  const { t } = useTranslation();
   const [detail, setDetail] = useState<StockDetail | null>(null);
   const [products, setProducts] = useState<CategoryProduct[]>([]);
   const [reparatures, setReparatures] = useState<ReparatureOption[]>([]);
@@ -103,19 +105,19 @@ export default function RepairCompletionModal({ stockId, onClose, onApplied }: P
     const r = parseInt(repairedQty || '0', 10);
     const s = parseInt(scrappedQty || '0', 10);
     if (r < 0 || s < 0 || r + s <= 0) {
-      setError('Shtoni se paku nje sasi te riparuar ose scrap');
+      setError(t('stock.repairModal.addQty'));
       return;
     }
     if (r + s > detail.quantity) {
-      setError(`Totali ${r + s} tejkalon stokun defekt (${detail.quantity})`);
+      setError(`${t('stock.repairModal.totalExceeds')} ${r + s} > ${detail.quantity}`);
       return;
     }
     if (r > 0 && !targetProductId) {
-      setError('Zgjidhni produktin e synuar per paletat e riparuara');
+      setError(t('stock.repairModal.pickProduct'));
       return;
     }
     if (!reparatorId) {
-      setError('Zgjidhni reparatorin qe e ka kryer punen');
+      setError(t('stock.repairModal.pickReparator'));
       return;
     }
     setSaving(true);
