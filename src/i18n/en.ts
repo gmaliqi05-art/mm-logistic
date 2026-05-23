@@ -973,6 +973,8 @@ export const en: typeof sq = {
     routePlanner: {
       pickDriverOrTransport: 'Pick a driver or a transport before assigning the route.',
       routeNotSaved: 'Route was not saved.',
+      originNotFound: 'Origin address not found. Click on the map or type it in.',
+      destinationNotFound: 'Destination address not found.',
     },
     emailTemplate: {
       codeAndNameRequired: 'Code and name are required',
@@ -1080,6 +1082,8 @@ export const en: typeof sq = {
     drivers: {
       title: 'Drivers',
       subtitle: 'Manage company drivers',
+      sessionExpired: 'Session expired. Please sign in again.',
+      passwordMinLength: 'Password must be at least 8 characters.',
       addDriver: 'Add Driver',
       editDriver: 'Edit Driver',
       noDrivers: 'You have no drivers',
@@ -1395,6 +1399,7 @@ export const en: typeof sq = {
   },
   depot: {
     dashboard: {
+      noDepotAssigned: 'You are not assigned to any depot. Contact your company admin.',
       title: 'Dashboard',
       subtitle: 'Depot general overview',
       totalStock: 'Total Stock',
@@ -1435,6 +1440,7 @@ export const en: typeof sq = {
       noDepot: 'Your account is not assigned to a depot',
     },
     receiving: {
+      savedOk: 'Receiving saved successfully',
       intakeType: 'Type',
       notRequiredForDamaged: '(not needed for damaged)',
       damagedAtCategoryLevel: '— damaged at category level —',
@@ -1461,6 +1467,7 @@ export const en: typeof sq = {
     sorting: {
       title: 'Sorting',
       subtitle: 'Split mixed incoming pallets into A/B/C grade or by type',
+      reportSent: 'Report sent successfully',
       newBatch: 'New Sorting Batch',
       category: 'Category',
       selectCategory: 'Select category...',
@@ -1507,6 +1514,7 @@ export const en: typeof sq = {
     repairWorkers: {
       title: 'Repair Process',
       subtitle: 'Click a worker to log their repairs',
+      noRepairsToday: 'No repairs to report today.',
       subtitleWorker: 'Log and report repairs',
       empty: 'No repair workers registered by the company',
       todayTotal: 'Today\u2019s total',

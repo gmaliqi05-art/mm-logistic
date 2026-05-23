@@ -114,8 +114,8 @@ export default function CompanyDrivers() {
         await logAudit('update', 'driver', editingDriver.id, { name: form.full_name });
       } else {
         if (!form.email.trim() || !form.password.trim()) return;
-        if (!session?.access_token) throw new Error('Sesioni ka skaduar. Ju lutem rihyni.');
-        if (form.password.length < 8) throw new Error('Fjalekalimi duhet te kete te pakten 8 karaktere.');
+        if (!session?.access_token) throw new Error(t('company.drivers.sessionExpired') || 'Sesioni ka skaduar. Ju lutem rihyni.');
+        if (form.password.length < 8) throw new Error(t('company.drivers.passwordMinLength') || 'Fjalekalimi duhet te kete te pakten 8 karaktere.');
         const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-users`;
         const res = await fetch(apiUrl, {
           method: 'POST',

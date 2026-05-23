@@ -970,6 +970,8 @@ export const fr: typeof sq = {
     routePlanner: {
       pickDriverOrTransport: 'Sélectionnez un chauffeur ou un transport avant d\'attribuer l\'itinéraire.',
       routeNotSaved: 'L\'itinéraire n\'a pas été enregistré.',
+      originNotFound: 'Adresse de départ introuvable. Cliquez sur la carte ou saisissez-la.',
+      destinationNotFound: 'Adresse de destination introuvable.',
     },
     emailTemplate: {
       codeAndNameRequired: 'Le code et le nom sont obligatoires',
@@ -1077,6 +1079,8 @@ export const fr: typeof sq = {
     drivers: {
       title: 'Chauffeurs',
       subtitle: 'G\u00e9rer les chauffeurs de l\'entreprise',
+      sessionExpired: 'Session expir\u00e9e. Veuillez vous reconnecter.',
+      passwordMinLength: 'Le mot de passe doit comporter au moins 8 caract\u00e8res.',
       addDriver: 'Ajouter un chauffeur',
       editDriver: 'Modifier le chauffeur',
       noDrivers: 'Vous n\'avez aucun chauffeur',
@@ -1392,6 +1396,7 @@ export const fr: typeof sq = {
   },
   depot: {
     dashboard: {
+      noDepotAssigned: 'Vous n\'êtes affecté à aucun dépôt. Contactez l\'administrateur de l\'entreprise.',
       title: 'Tableau de bord',
       subtitle: 'Aper\u00e7u g\u00e9n\u00e9ral du d\u00e9p\u00f4t',
       totalStock: 'Stock total',
@@ -1432,6 +1437,7 @@ export const fr: typeof sq = {
       noDepot: 'Votre compte n\'est rattach\u00e9 \u00e0 aucun d\u00e9p\u00f4t',
     },
     receiving: {
+      savedOk: 'Réception enregistrée avec succès',
       intakeType: 'Type',
       notRequiredForDamaged: '(non requis pour endommag\u00e9)',
       damagedAtCategoryLevel: '\u2014 endommag\u00e9 au niveau de la cat\u00e9gorie \u2014',
@@ -1458,6 +1464,7 @@ export const fr: typeof sq = {
     sorting: {
       title: 'Tri',
       subtitle: 'R\u00e9partir les palettes mixtes entrantes par classe A/B/C ou par type',
+      reportSent: 'Rapport envoy\u00e9 avec succ\u00e8s',
       newBatch: 'Nouveau lot de tri',
       category: 'Cat\u00e9gorie',
       selectCategory: 'S\u00e9lectionner la cat\u00e9gorie...',
@@ -1504,6 +1511,7 @@ export const fr: typeof sq = {
     repairWorkers: {
       title: 'Processus de R\u00e9paration',
       subtitle: 'Cliquez sur un r\u00e9parateur pour enregistrer ses r\u00e9parations',
+      noRepairsToday: 'Aucune r\u00e9paration \u00e0 signaler aujourd\'hui.',
       subtitleWorker: 'Enregistrer et signaler les r\u00e9parations',
       empty: 'Aucun r\u00e9parateur enregistr\u00e9 par la soci\u00e9t\u00e9',
       todayTotal: "Total aujourd'hui",

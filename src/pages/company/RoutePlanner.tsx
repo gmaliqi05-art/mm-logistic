@@ -148,11 +148,11 @@ export default function CompanyRoutePlanner() {
     try {
       let o = origin;
       if (!o && originText.trim()) o = await geocode(originText);
-      if (!o) throw new Error('Nuk u gjet adresa e nisjes. Kliko ne harte ose shkruaj adresen.');
+      if (!o) throw new Error(t('company.routePlanner.originNotFound') || 'Nuk u gjet adresa e nisjes. Kliko ne harte ose shkruaj adresen.');
       setOrigin(o);
       let d = dest;
       if (!d && destText.trim()) d = await geocode(destText);
-      if (!d) throw new Error('Nuk u gjet adresa e destinacionit.');
+      if (!d) throw new Error(t('company.routePlanner.destinationNotFound') || 'Nuk u gjet adresa e destinacionit.');
       setDest(d);
 
       const v = vehicleId ? vehicles.find((x) => x.id === vehicleId) ?? null : null;

@@ -968,6 +968,8 @@ export const sq = {
     routePlanner: {
       pickDriverOrTransport: 'Zgjedh nje shofer ose nje transport para se te caktosh rrugen.',
       routeNotSaved: 'Nuk u ruajt rruga.',
+      originNotFound: 'Nuk u gjet adresa e nisjes. Kliko ne harte ose shkruaj adresen.',
+      destinationNotFound: 'Nuk u gjet adresa e destinacionit.',
     },
     emailTemplate: {
       codeAndNameRequired: 'Kodi dhe emri jane te detyrueshem',
@@ -1075,6 +1077,8 @@ export const sq = {
     drivers: {
       title: 'Shoferet',
       subtitle: 'Menaxho shoferet e kompanise',
+      sessionExpired: 'Sesioni ka skaduar. Ju lutem rihyni.',
+      passwordMinLength: 'Fjalekalimi duhet te kete te pakten 8 karaktere.',
       addDriver: 'Shto Shofer',
       editDriver: 'Ndrysho Shoferin',
       noDrivers: 'Nuk keni asnje shofer',
@@ -1392,6 +1396,7 @@ export const sq = {
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Permbledhje e pergjithshme e depos',
+      noDepotAssigned: 'Nuk jeni caktuar ne asnje depo. Kontaktoni administratorin e kompanise.',
       totalStock: 'Stoku Total',
       entryToday: 'Hyrje Sot',
       exitToday: 'Dalje Sot',
@@ -1432,6 +1437,7 @@ export const sq = {
     receiving: {
       title: 'Pranim / Dergese',
       subtitle: 'Regjistro pranime dhe dergesa',
+      savedOk: 'Pranimi u regjistrua me sukses',
       intakeType: 'Lloji',
       notRequiredForDamaged: '(pa nevoje per defekt)',
       damagedAtCategoryLevel: '— defekt te kategoria —',
@@ -1456,6 +1462,7 @@ export const sq = {
     sorting: {
       title: 'Sortiren',
       subtitle: 'Ndaj paletat e ardhura ne A/B/C Klasse ose sipas tipit',
+      reportSent: 'Raporti u dergua me sukses',
       newBatch: 'Grup i Ri Sortimi',
       category: 'Kategoria',
       selectCategory: 'Zgjedh kategorine...',
@@ -1502,6 +1509,7 @@ export const sq = {
     repairWorkers: {
       title: 'Procesi i Reparimit',
       subtitle: 'Kliko nje puntor per te regjistruar reparimet e tij',
+      noRepairsToday: 'Nuk ka reparime te sotme per te raportuar.',
       subtitleWorker: 'Regjistro dhe raporto reparimet',
       empty: 'Nuk ka puntor reparature te regjistruar nga kompania',
       todayTotal: 'Totali sot',

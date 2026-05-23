@@ -970,6 +970,8 @@ export const de: typeof sq = {
     routePlanner: {
       pickDriverOrTransport: 'Waehlen Sie einen Fahrer oder ein Transportmittel, bevor Sie die Route zuweisen.',
       routeNotSaved: 'Route wurde nicht gespeichert.',
+      originNotFound: 'Startadresse nicht gefunden. Auf die Karte klicken oder Adresse eingeben.',
+      destinationNotFound: 'Zieladresse nicht gefunden.',
     },
     emailTemplate: {
       codeAndNameRequired: 'Code und Name sind erforderlich',
@@ -1077,6 +1079,8 @@ export const de: typeof sq = {
     drivers: {
       title: 'Fahrer',
       subtitle: 'Firmenfahrer verwalten',
+      sessionExpired: 'Sitzung abgelaufen. Bitte erneut anmelden.',
+      passwordMinLength: 'Passwort muss mindestens 8 Zeichen lang sein.',
       addDriver: 'Fahrer hinzufügen',
       editDriver: 'Fahrer bearbeiten',
       noDrivers: 'Sie haben keine Fahrer',
@@ -1392,6 +1396,7 @@ export const de: typeof sq = {
   },
   depot: {
     dashboard: {
+      noDepotAssigned: 'Sie sind keinem Lager zugewiesen. Wenden Sie sich an den Unternehmensadministrator.',
       title: 'Dashboard',
       subtitle: 'Allgemeine Lagerübersicht',
       totalStock: 'Gesamtbestand',
@@ -1432,6 +1437,7 @@ export const de: typeof sq = {
       noDepot: 'Ihr Konto ist keinem Lager zugeordnet',
     },
     receiving: {
+      savedOk: 'Empfang erfolgreich registriert',
       intakeType: 'Typ',
       notRequiredForDamaged: '(nicht noetig fuer defekt)',
       damagedAtCategoryLevel: '— defekt auf Kategorie-Ebene —',
@@ -1458,6 +1464,7 @@ export const de: typeof sq = {
     sorting: {
       title: 'Sortierung',
       subtitle: 'Eingehende gemischte Paletten nach Klasse A/B/C oder Typ sortieren',
+      reportSent: 'Bericht erfolgreich gesendet',
       newBatch: 'Neuer Sortiervorgang',
       category: 'Kategorie',
       selectCategory: 'Kategorie auswaehlen...',
@@ -1504,6 +1511,7 @@ export const de: typeof sq = {
     repairWorkers: {
       title: 'Reparaturprozess',
       subtitle: 'Klicken Sie auf einen Mitarbeiter, um Reparaturen zu erfassen',
+      noRepairsToday: 'Heute liegen keine Reparaturen zur Meldung vor.',
       subtitleWorker: 'Reparaturen erfassen und melden',
       empty: 'Keine Reparaturmitarbeiter von der Firma registriert',
       todayTotal: 'Heute gesamt',

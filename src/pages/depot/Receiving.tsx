@@ -307,7 +307,7 @@ export default function DepotReceiving() {
       setReceivingNotes('');
       setSourcePartner('');
       setSourceContactId(null);
-      setSuccess('Pranimi u regjistrua me sukses');
+      setSuccess(t('depot.receiving.savedOk') || 'Pranimi u regjistrua me sukses');
       await fetchData();
     } catch (err: any) {
       setError(err.message || t('common.errorSaving'));
