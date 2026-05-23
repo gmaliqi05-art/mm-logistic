@@ -207,3 +207,34 @@ export function requireSetupToken(
   }
   return null;
 }
+
+/**
+ * Returns true when the request carries an Authorization bearer that
+ * matches SUPABASE_SERVICE_ROLE_KEY exactly. Used to allow cron jobs
+ * and inter-function calls (which carry the service-role bearer)
+ * through endpoints that otherwise require a user session.
+ *
+ * Never expose service-role bearers to the browser bundle — they grant
+ * full DB access. This check is for trusted server-to-server callers
+ * only (pg_cron via http_post, edge function calling edge function).
+ */
+export function isServiceRoleCall(req: Request): boolean {
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceKey) return false;
+  const header = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+  if (!header.toLowerCase().startsWith("bearer ")) return false;
+  const token = header.slice(7).trim();
+  return token === serviceKey;
+}
+
+/**
+ * Build a service-role Supabase client. Use only AFTER verifying the
+ * caller via requireCaller() or isServiceRoleCall() — this client
+ * bypasses RLS.
+ */
+export function adminClient(): SupabaseClient {
+  const env = buildClients();
+  return createClient(env.url, env.serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}

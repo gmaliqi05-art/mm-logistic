@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
+import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -484,6 +485,14 @@ Deno.serve(async (req: Request) => {
     const ip = getClientIp(req);
     const rl = await checkRateLimit(`send-email:ip=${ip}`, 10, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
+
+    // Allow service-role (cron / inter-function) OR super_admin user.
+    // Without this guard the function is an open relay that sends
+    // platform-branded email to any address.
+    if (!isServiceRoleCall(req)) {
+      const caller = await requireCaller(req, { roles: ["super_admin"], corsHeaders });
+      if (!caller.ok) return caller.response;
+    }
 
     const body = (await req.json()) as SendRequest;
     if (!body.template_code) {

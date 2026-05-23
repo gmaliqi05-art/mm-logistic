@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import webpush from "npm:web-push@3.6.7";
+import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
 const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
   .split(",")
@@ -53,6 +54,15 @@ Deno.serve(async (req: Request) => {
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  // Internal callers (pg trigger via http_post, other edge functions)
+  // carry the service-role bearer. Frontend chat / driver UIs carry a
+  // user session bearer. Reject anonymous calls so the function can't
+  // be used to spam push notifications to any device.
+  if (!isServiceRoleCall(req)) {
+    const caller = await requireCaller(req, { corsHeaders });
+    if (!caller.ok) return caller.response;
   }
 
   try {
