@@ -2233,6 +2233,7 @@ export const en: typeof sq = {
     contacts: {
       title: 'Contacts',
       subtitle: 'Manage customers and suppliers',
+      companyNameRequired: 'Company name is required',
       addContact: 'Add Contact',
       editContact: 'Edit Contact',
       noContacts: 'No contacts',
@@ -2290,6 +2291,7 @@ export const en: typeof sq = {
       editInvoice: 'Edit Invoice',
       noInvoices: 'No invoices',
       noInvoicesHint: 'Create your first invoice to start tracking revenue and sending bills to customers.',
+      numberingFailed: 'Invoice numbering failed',
       pickCustomer: 'Pick a customer',
       addAtLeastOneItem: 'Add at least one item',
       newInvoice: 'New invoice',
@@ -3022,6 +3024,11 @@ export const en: typeof sq = {
     },
   },
   fleet: {
+    docScanner: {
+      pickVehicle: 'Please select the vehicle',
+      pickDriver: 'Please select the driver',
+      expiryDateRequired: 'Expiry date is required',
+    },
     filter: {
       all: 'All',
       expired: 'Expired',

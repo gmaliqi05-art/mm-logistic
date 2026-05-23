@@ -2230,6 +2230,7 @@ export const fr: typeof sq = {
     contacts: {
       title: 'Contacts',
       subtitle: 'Gerer les clients et fournisseurs',
+      companyNameRequired: 'Le nom de l\'entreprise est obligatoire',
       addContact: 'Ajouter un contact',
       editContact: 'Modifier le contact',
       noContacts: 'Aucun contact',
@@ -2287,6 +2288,7 @@ export const fr: typeof sq = {
       editInvoice: 'Modifier la facture',
       noInvoices: 'Aucune facture',
       noInvoicesHint: 'Créez votre première facture pour suivre les revenus et envoyer les factures aux clients.',
+      numberingFailed: 'La numérotation de la facture a échoué',
       pickCustomer: 'Sélectionnez un client',
       addAtLeastOneItem: 'Ajoutez au moins un article',
       newInvoice: 'Nouvelle facture',
@@ -3019,6 +3021,11 @@ export const fr: typeof sq = {
     },
   },
   fleet: {
+    docScanner: {
+      pickVehicle: 'Veuillez sélectionner le véhicule',
+      pickDriver: 'Veuillez sélectionner le chauffeur',
+      expiryDateRequired: 'La date d\'expiration est obligatoire',
+    },
     filter: {
       all: 'Tous',
       expired: 'Expir\u00e9s',
