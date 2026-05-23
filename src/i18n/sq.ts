@@ -1756,6 +1756,10 @@ export const sq = {
     subscriptionPlans: {
       duplicateSlug: 'Ekziston nje plan aktiv me te njejtin slug.',
     },
+    branding: {
+      imageFormat: 'Ju lutem ngarkoni nje imazh (JPEG, PNG, GIF, WEBP, SVG)',
+      imageTooLarge: 'Imazhi duhet te jete me i vogel se 5MB',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Permbledhje e pergjithshme e platformes',
@@ -2793,6 +2797,9 @@ export const sq = {
       expense: 'Shpenzim',
       other: 'Tjeter',
     },
+    datev: {
+      pickExportType: 'Zgjidhni te pakten nje lloj eksporti.',
+    },
   },
   settings: {
     companySettings: 'Cilesimet e Kompanise',
@@ -3052,6 +3059,7 @@ export const sq = {
       pickVehicle: 'Ju lutem zgjidhni mjetin',
       pickDriver: 'Ju lutem zgjidhni shoferin',
       expiryDateRequired: 'Data e skadimit eshte e detyrueshme',
+      fileTooLarge: 'Skedari eshte shume i madh (max 15 MB).',
     },
     filter: {
       all: 'Te gjitha',

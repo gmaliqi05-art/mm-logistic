@@ -1761,6 +1761,10 @@ export const en: typeof sq = {
     subscriptionPlans: {
       duplicateSlug: 'An active plan with the same slug already exists.',
     },
+    branding: {
+      imageFormat: 'Please upload an image (JPEG, PNG, GIF, WEBP, SVG)',
+      imageTooLarge: 'Image must be smaller than 5MB',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Platform general overview',
@@ -2798,6 +2802,9 @@ export const en: typeof sq = {
       expense: 'Expense',
       other: 'Other',
     },
+    datev: {
+      pickExportType: 'Select at least one export type.',
+    },
   },
   settings: {
     companySettings: 'Company Settings',
@@ -3057,6 +3064,7 @@ export const en: typeof sq = {
       pickVehicle: 'Please select the vehicle',
       pickDriver: 'Please select the driver',
       expiryDateRequired: 'Expiry date is required',
+      fileTooLarge: 'File is too large (max 15 MB).',
     },
     filter: {
       all: 'All',

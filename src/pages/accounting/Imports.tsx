@@ -275,7 +275,7 @@ export default function Imports() {
   async function removeImport(id: string) {
     if (!confirm(t('common.deleteImportConfirm'))) return;
     const { error } = await supabase.from('acc_imports').delete().eq('id', id);
-    if (error) { alert('Gabim: ' + error.message); return; }
+    if (error) { alert(`${t('common.error')}: ${error.message}`); return; }
     load();
   }
 

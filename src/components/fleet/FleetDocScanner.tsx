@@ -110,7 +110,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
   async function processFile(file: File) {
     setError('');
     if (file.size > 15 * 1024 * 1024) {
-      setError('Skedari eshte shume i madh (max 15 MB).');
+      setError(t('fleet.docScanner.fileTooLarge'));
       return;
     }
     setStep('uploading');
@@ -178,7 +178,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
   async function processBackFile(file: File) {
     setError('');
     if (file.size > 15 * 1024 * 1024) {
-      setError('Skedari eshte shume i madh (max 15 MB).');
+      setError(t('fleet.docScanner.fileTooLarge'));
       return;
     }
     setStep('uploading_back');
