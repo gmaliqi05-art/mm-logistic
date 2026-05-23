@@ -3140,6 +3140,10 @@ export const en: typeof sq = {
     liveTab: 'Live Map',
   },
   hr: {
+    leaveRequest: {
+      pickEmployee: 'Please select an employee',
+      invalidDateRange: 'Invalid date range',
+    },
     title: 'Human Resources',
     subtitle: 'Manage leave, attendance, and work schedules',
     dashboard: {

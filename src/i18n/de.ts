@@ -3137,6 +3137,10 @@ export const de: typeof sq = {
     liveTab: 'Live-Karte',
   },
   hr: {
+    leaveRequest: {
+      pickEmployee: 'Bitte einen Mitarbeiter auswaehlen',
+      invalidDateRange: 'Ungueltiger Datumsbereich',
+    },
     title: 'Personalwesen',
     subtitle: 'Urlaub, Anwesenheit und Arbeitszeiten verwalten',
     dashboard: {

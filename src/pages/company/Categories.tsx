@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Tags, Plus, CreditCard as Edit2, Trash2, X, AlertTriangle, Loader2, Search, Package, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import FeatureGate from '../../components/subscription/FeatureGate';
@@ -351,11 +352,7 @@ function CategoriesContent() {
   }, [sortedCategories, searchCategory]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton showStats={false} rows={8} cols={4} />;
   }
 
   const productCountByCat = new Map<string, number>();
