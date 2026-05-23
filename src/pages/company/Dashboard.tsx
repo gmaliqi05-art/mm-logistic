@@ -124,7 +124,15 @@ export default function CompanyDashboard() {
     dayAfterStart.setDate(dayAfterStart.getDate() + 2);
 
     const getDate = (n: any) => {
-      const ts = n.type === 'pickup' ? n.scheduled_pickup_at : n.scheduled_delivery_at;
+      // A pickup row's date should live in scheduled_pickup_at and a
+      // delivery's in scheduled_delivery_at, but historical orders
+      // (and rows where the type was switched after the date was set)
+      // can have the date stored in the "other" column. Fall back to
+      // whichever field is populated so the today/tomorrow lists stay
+      // accurate regardless of which column the form happened to fill.
+      const primary = n.type === 'pickup' ? n.scheduled_pickup_at : n.scheduled_delivery_at;
+      const fallback = n.type === 'pickup' ? n.scheduled_delivery_at : n.scheduled_pickup_at;
+      const ts = primary ?? fallback;
       if (!ts) return null;
       const d = new Date(ts);
       d.setHours(0, 0, 0, 0);
@@ -1213,7 +1221,12 @@ function ScheduleColumn({
         <div className="divide-y divide-gray-50">
           {notes.slice(0, 6).map((note: any) => {
             const cfg = statusConfig[note.status];
-            const ts = note.type === 'pickup' ? note.scheduled_pickup_at : note.scheduled_delivery_at;
+            // Same fallback as the grouping helper above — pickup rows
+            // whose date got saved into scheduled_delivery_at still need
+            // a visible time on the card.
+            const primary = note.type === 'pickup' ? note.scheduled_pickup_at : note.scheduled_delivery_at;
+            const fallback = note.type === 'pickup' ? note.scheduled_delivery_at : note.scheduled_pickup_at;
+            const ts = primary ?? fallback;
             return (
               <button
                 key={note.id}
