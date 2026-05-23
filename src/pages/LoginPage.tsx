@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import { useTranslation } from '../i18n';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import {
@@ -110,18 +109,35 @@ export default function LoginPage() {
 
     try {
       // Support both email logins and username-only logins (no '@').
-      // For username inputs, ask the DB to resolve to the synthetic email.
+      // For username inputs, hit the resolve-username edge function. We
+      // used to call the resolve_username_to_email RPC directly with the
+      // anon key, which let anyone enumerate every username → email pair
+      // on the platform. The edge function rate-limits by IP (10/min)
+      // and the underlying RPC is no longer callable by anon.
       let signInEmail = email.trim();
       if (signInEmail && !signInEmail.includes('@')) {
-        const { data: resolved } = await supabase.rpc('resolve_username_to_email', {
-          p_username: signInEmail.toLowerCase(),
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/resolve-username`;
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ username: signInEmail.toLowerCase() }),
         });
-        if (!resolved) {
+        if (!r.ok) {
           setError(t('auth.genericError'));
           setLoading(false);
           return;
         }
-        signInEmail = resolved as string;
+        const j = (await r.json().catch(() => ({}))) as { email?: string | null };
+        if (!j.email) {
+          setError(t('auth.genericError'));
+          setLoading(false);
+          return;
+        }
+        signInEmail = j.email;
       }
       const { error: signInError } = await signIn(signInEmail, password);
       if (signInError) {
