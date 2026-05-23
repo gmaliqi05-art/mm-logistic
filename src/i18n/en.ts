@@ -1562,6 +1562,10 @@ export const en: typeof sq = {
     },
   },
   driver: {
+    routePlannerErrors: {
+      noGps: 'No GPS signal. Turn tracking on.',
+      destinationNotFound: 'Destination not found. Click on the map or type the address.',
+    },
     directionDelivery: 'DELIVERING',
     directionDeliverySub: 'Goods leaving the depot',
     directionPickup: 'PICKING UP',
@@ -1697,6 +1701,7 @@ export const en: typeof sq = {
     overdue: {
       title: 'Overdue orders',
       subtitle: 'Tasks past their date still waiting to be scanned',
+      documentNotFound: 'Document not found',
       all: 'All',
       deliveries: 'Deliveries',
       pickups: 'Pickups',

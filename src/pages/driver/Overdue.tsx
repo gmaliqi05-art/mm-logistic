@@ -137,7 +137,7 @@ export default function DriverOverdue() {
         .eq('id', n.id)
         .maybeSingle();
       if (qErr) throw qErr;
-      if (!data) throw new Error('Dokumenti nuk u gjet');
+      if (!data) throw new Error(t('driver.overdue.documentNotFound') || 'Dokumenti nuk u gjet');
       setSelected(data as unknown as NoteRow);
     } catch (e: any) {
       setError(e?.message ?? 'Hapja deshtoi');

@@ -1559,6 +1559,10 @@ export const fr: typeof sq = {
     },
   },
   driver: {
+    routePlannerErrors: {
+      noGps: 'Pas de signal GPS. Activez le suivi.',
+      destinationNotFound: 'Destination introuvable. Cliquez sur la carte ou saisissez l\'adresse.',
+    },
     directionDelivery: 'LIVRER',
     directionDeliverySub: 'Marchandises quittant le depot',
     directionPickup: 'COLLECTER',
@@ -1694,6 +1698,7 @@ export const fr: typeof sq = {
     overdue: {
       title: 'Commandes en retard',
       subtitle: 'T\u00e2ches pass\u00e9es en attente de scan',
+      documentNotFound: 'Document introuvable',
       all: 'Tous',
       deliveries: 'Livraisons',
       pickups: 'Ramassages',

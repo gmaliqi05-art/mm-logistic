@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AlertCircle, Calculator, Crosshair, MapPin, Navigation, Route, Search, Timer, Truck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
 import RouteMapPicker, { reverseGeocode, type Point } from '../../components/fleet/RouteMapPicker';
 
@@ -23,6 +24,7 @@ async function geocode(query: string): Promise<Point | null> {
 
 export default function DriverRoutePlanner() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [origin, setOrigin] = useState<Point | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [destText, setDestText] = useState('');
@@ -59,10 +61,10 @@ export default function DriverRoutePlanner() {
     setError(null);
     setLoading(true);
     try {
-      if (!origin) throw new Error('Nuk kemi GPS. Aktivizo tracking-un.');
+      if (!origin) throw new Error(t('driver.routePlannerErrors.noGps') || 'Nuk kemi GPS. Aktivizo tracking-un.');
       let d = dest;
       if (!d && destText.trim()) d = await geocode(destText);
-      if (!d) throw new Error('Nuk u gjet destinacioni. Kliko ne harte ose shkruaj adresen.');
+      if (!d) throw new Error(t('driver.routePlannerErrors.destinationNotFound') || 'Nuk u gjet destinacioni. Kliko ne harte ose shkruaj adresen.');
       setDest(d);
 
       const { data, error: fnErr } = await supabase.functions.invoke('plan-truck-route', {

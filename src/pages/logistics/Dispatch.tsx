@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { notifyUsers } from '../../utils/notifications';
@@ -142,11 +143,7 @@ export default function LogisticsDispatch() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={8} cols={6} />;
   }
 
   return (

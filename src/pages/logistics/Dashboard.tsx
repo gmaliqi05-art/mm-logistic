@@ -6,11 +6,11 @@ import {
   Users,
   CheckCircle2,
   ArrowRight,
-  Loader2,
   Clock,
   MapPin,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 
@@ -120,11 +120,7 @@ export default function LogisticsDashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={6} cols={4} />;
   }
 
   return (
