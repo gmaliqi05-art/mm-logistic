@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, AlertTriangle, X, Loader2, Landmark, Star, CreditCard, CreditCard as Edit3, ArrowLeft, ArrowUpRight, ArrowDownRight, ArrowRightLeft, Upload, FileCheck2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import type { AccBankAccount, AccTransaction, AccCurrency } from '../../types/accounting';
 import { formatCurrency, ACC_CURRENCIES } from '../../types/accounting';
@@ -238,11 +239,7 @@ export default function BankAccounts() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton showStats={false} rows={6} cols={4} />;
   }
 
   if (selectedAccount) {

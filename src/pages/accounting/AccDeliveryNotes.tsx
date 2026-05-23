@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, AlertTriangle, X, Loader2, Truck, Search, CreditCard as Edit3, Trash2, ChevronRight, FileText, Eye, ArrowUpRight, ArrowDownLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
 import OurRoleSelector, { type OurRole } from '../../components/delivery/OurRoleSelector';
@@ -377,11 +378,7 @@ export default function AccDeliveryNotes() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-12 h-12 text-emerald-600 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton rows={8} cols={6} />;
   }
 
   return (

@@ -31,6 +31,7 @@ import { applyScanToDeliveryNote } from '../../utils/applyScanToDeliveryNote';
 import { isOwnCompanyName, stripOwnFromPartnerName } from '../../utils/companyName';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import { useDriverComplianceMap } from '../../hooks/useDriverComplianceMap';
 import type { DeliveryNote } from '../../types';
@@ -252,11 +253,7 @@ export default function DriverDashboard() {
     .replace('{tomorrow}', String(totalTomorrow));
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={6} cols={4} />;
   }
 
   return (
