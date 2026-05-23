@@ -2,6 +2,7 @@ import type { sq } from './sq';
 
 export const de: typeof sq = {
   common: {
+    confirmDeleteDocument: 'Dieses Dokument loeschen?',
     logout: 'Abmelden',
     cancel: 'Abbrechen',
     save: 'Speichern',
@@ -990,6 +991,9 @@ export const de: typeof sq = {
       noTrailers: 'Keine Anhaenger registriert',
       noTrailersHint: 'Fuegen Sie Ihren ersten Anhaenger hinzu, um ihn mit LKW und Lieferungen zu verknuepfen.',
       addTrailer: 'Anhaenger hinzufuegen',
+    },
+    trailers: {
+      confirmDelete: 'Diesen Anhaenger loeschen?',
     },
     emailBranding: {
       imagesOnly: 'Nur Bilder (PNG, JPG, SVG) sind erlaubt',

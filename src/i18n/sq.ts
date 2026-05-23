@@ -1,5 +1,6 @@
 export const sq = {
   common: {
+    confirmDeleteDocument: 'Fshi kete dokument?',
     logout: 'Dil',
     cancel: 'Anulo',
     save: 'Ruaj',
@@ -988,6 +989,9 @@ export const sq = {
       noTrailers: 'Nuk ka rimorkio te regjistruara',
       noTrailersHint: 'Shto rimorkion e pare per ta lidhur me kamione dhe dorezime.',
       addTrailer: 'Shto rimorkio',
+    },
+    trailers: {
+      confirmDelete: 'Fshij kete rimorkio?',
     },
     emailBranding: {
       imagesOnly: 'Vetem imazhe (PNG, JPG, SVG) lejohen',

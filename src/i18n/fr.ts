@@ -2,6 +2,7 @@ import type { sq } from './sq';
 
 export const fr: typeof sq = {
   common: {
+    confirmDeleteDocument: 'Supprimer ce document ?',
     logout: 'D\u00e9connexion',
     cancel: 'Annuler',
     save: 'Enregistrer',
@@ -990,6 +991,9 @@ export const fr: typeof sq = {
       noTrailers: 'Aucune remorque enregistrée',
       noTrailersHint: 'Ajoutez votre première remorque pour la lier aux camions et aux livraisons.',
       addTrailer: 'Ajouter une remorque',
+    },
+    trailers: {
+      confirmDelete: 'Supprimer cette remorque ?',
     },
     emailBranding: {
       imagesOnly: 'Seules les images (PNG, JPG, SVG) sont autorisées',

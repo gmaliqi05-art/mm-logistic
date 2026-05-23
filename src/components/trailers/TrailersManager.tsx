@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { notifyUsers } from '../../utils/notifications';
 
 type TrailerStatus = 'available' | 'claimed' | 'dispatched' | 'cancelled';
@@ -131,6 +132,7 @@ export default function TrailersManager({
   subtitle = 'Regjistro targat nje here, pastaj ngarko shpejt nga klikimi i tabeles',
   canRegister = true,
 }: TrailersManagerProps) {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [trailers, setTrailers] = useState<TrailerLoad[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -246,7 +248,7 @@ export default function TrailersManager({
   }, [trailers, search]);
 
   async function handleDelete(id: string) {
-    if (!confirm('Fshij kete rimorkio?')) return;
+    if (!confirm(t('company.trailers.confirmDelete') || 'Fshij kete rimorkio?')) return;
     const { error: err } = await supabase.from('trailer_loads').delete().eq('id', id);
     if (err) {
       setError(err.message);

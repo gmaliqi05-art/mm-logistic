@@ -2,6 +2,7 @@ import type { sq } from './sq';
 
 export const en: typeof sq = {
   common: {
+    confirmDeleteDocument: 'Delete this document?',
     logout: 'Log Out',
     cancel: 'Cancel',
     save: 'Save',
@@ -993,6 +994,9 @@ export const en: typeof sq = {
       noTrailers: 'No trailers registered',
       noTrailersHint: 'Add your first trailer to link it to trucks and deliveries.',
       addTrailer: 'Add trailer',
+    },
+    trailers: {
+      confirmDelete: 'Delete this trailer?',
     },
     emailBranding: {
       imagesOnly: 'Only images (PNG, JPG, SVG) are allowed',

@@ -19,6 +19,7 @@ import {
   Truck,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { ProductCategory, PalletSortingBatch, PalletSortingItem } from '../../types';
@@ -443,11 +444,7 @@ export default function DepotSorting() {
   const diff = totalReceivedNum - sortedTotal;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-      </div>
-    );
+    return <PageSkeleton rows={6} cols={5} />;
   }
 
   const inProgress = batches.filter((b) => b.status === 'in_progress');
