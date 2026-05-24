@@ -1045,6 +1045,9 @@ export const fr: typeof sq = {
     },
     trailers: {
       confirmDelete: 'Supprimer cette remorque ?',
+      pickCategoryPerItem: 'Choisissez une catégorie pour chaque article',
+      pickProductPerItem: 'Choisissez un produit pour chaque article',
+      enterPlate: 'Saisissez le numéro de plaque',
     },
     emailBranding: {
       imagesOnly: 'Seules les images (PNG, JPG, SVG) sont autorisées',
@@ -1626,6 +1629,24 @@ export const fr: typeof sq = {
       noGps: 'Pas de signal GPS. Activez le suivi.',
       destinationNotFound: 'Destination introuvable. Cliquez sur la carte ou saisissez l\'adresse.',
     },
+    settings: {
+      title: 'Paramètres',
+      subtitle: 'Mon profil et mes documents',
+      email: 'E-mail',
+      phone: 'Téléphone',
+      company: 'Entreprise',
+      depot: 'Dépôt',
+      changePhoto: 'Changer la photo',
+      uploadPhoto: 'Téléverser une photo',
+      photoSaved: 'Photo enregistrée',
+      photoRemoved: 'Photo supprimée',
+      errorImageOnly: 'Seules les images sont autorisées',
+      errorTooLarge: 'L\'image doit faire moins de 5 Mo',
+      errorSaving: 'Erreur lors de l\'enregistrement',
+      documentsTitle: 'Mes documents',
+      baseSaved: 'Base enregistrée',
+      noStoredCoordinates: 'Aucune coordonnée enregistrée',
+    },
     tracking: {
       tabTracking: 'Suivi',
       tabNavigation: 'Navigation',
@@ -2084,6 +2105,9 @@ export const fr: typeof sq = {
       qrCodesForDownload: 'Codes QR pour le t\u00e9l\u00e9chargement',
       openLink: 'Ouvrir le lien',
     },
+  },
+  destinationPicker: {
+    pickDriverFirst: 'Aucun chauffeur assign\u00e9. Choisissez d\'abord un chauffeur.',
   },
   subscription: {
     freePlan: 'Gratuit',

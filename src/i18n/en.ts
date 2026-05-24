@@ -1048,6 +1048,9 @@ export const en: typeof sq = {
     },
     trailers: {
       confirmDelete: 'Delete this trailer?',
+      pickCategoryPerItem: 'Pick a category for every item',
+      pickProductPerItem: 'Pick a product for every item',
+      enterPlate: 'Enter the plate number',
     },
     emailBranding: {
       imagesOnly: 'Only images (PNG, JPG, SVG) are allowed',
@@ -1629,6 +1632,24 @@ export const en: typeof sq = {
       noGps: 'No GPS signal. Turn tracking on.',
       destinationNotFound: 'Destination not found. Click on the map or type the address.',
     },
+    settings: {
+      title: 'Settings',
+      subtitle: 'My profile and documents',
+      email: 'Email',
+      phone: 'Phone',
+      company: 'Company',
+      depot: 'Depot',
+      changePhoto: 'Change photo',
+      uploadPhoto: 'Upload photo',
+      photoSaved: 'Photo saved',
+      photoRemoved: 'Photo removed',
+      errorImageOnly: 'Only images are allowed',
+      errorTooLarge: 'Image must be smaller than 5MB',
+      errorSaving: 'Error while saving',
+      documentsTitle: 'My documents',
+      baseSaved: 'Base saved',
+      noStoredCoordinates: 'No stored coordinates',
+    },
     tracking: {
       tabTracking: 'Tracking',
       tabNavigation: 'Navigation',
@@ -2087,6 +2108,9 @@ export const en: typeof sq = {
       qrCodesForDownload: 'QR Codes for Download',
       openLink: 'Open Link',
     },
+  },
+  destinationPicker: {
+    pickDriverFirst: 'No driver assigned. Pick a driver first.',
   },
   subscription: {
     freePlan: 'Free',
