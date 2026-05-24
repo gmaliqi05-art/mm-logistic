@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Plus, Trash2, Loader2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download, BarChart3, Contact as IdCard, ClipboardList } from 'lucide-react';
+import { ArrowLeft, User, Plus, Trash2, CreditCard, GraduationCap, Stethoscope, Truck as TruckIcon, ShieldAlert, ScanLine, FileText, Download, BarChart3, Contact as IdCard, ClipboardList } from 'lucide-react';
 import DriverIdentityPanel from '../../components/fleet/DriverIdentityPanel';
 import DriverCVSummary from '../../components/fleet/DriverCVSummary';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { LICENSE_CATEGORIES, daysUntil } from '../../lib/fleetCompliance';
 import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
@@ -74,7 +75,7 @@ export default function DriverDetail() {
     fetchAll();
   }
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-teal-600" /></div>;
+  if (loading) return <PageSkeleton rows={6} cols={5} showStats={true} />;
   if (!driver) return (
     <div className="text-center p-12">
       <p className="text-gray-500">Shoferi nuk u gjet.</p>

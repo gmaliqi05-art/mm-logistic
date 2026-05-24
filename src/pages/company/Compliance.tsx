@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShieldCheck, Download, Loader2, Filter, Truck, User, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { daysUntil, expiryLevel, type ExpiryLevel } from '../../lib/fleetCompliance';
 import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
@@ -194,7 +195,7 @@ export default function Compliance() {
     }
   }
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-teal-600" /></div>;
+  if (loading) return <PageSkeleton rows={8} cols={6} showStats={true} />;
 
   return (
     <div className="space-y-6">
