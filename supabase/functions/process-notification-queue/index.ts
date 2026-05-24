@@ -10,6 +10,30 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const restHeaders = {
+  apikey: SERVICE_KEY,
+  Authorization: `Bearer ${SERVICE_KEY}`,
+  "Content-Type": "application/json",
+};
+
+async function claimItems(limit: number): Promise<Array<{ id: string }>> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/claim_notifications`, {
+    method: "POST",
+    headers: restHeaders,
+    body: JSON.stringify({ p_limit: limit }),
+  });
+  if (!res.ok) throw new Error(`claim_notifications failed: ${res.status} ${await res.text()}`);
+  return (await res.json()) as Array<{ id: string }>;
+}
+
+async function markFailed(id: string, error: string, transient: boolean): Promise<void> {
+  await fetch(`${SUPABASE_URL}/rest/v1/rpc/mark_notification_failed`, {
+    method: "POST",
+    headers: restHeaders,
+    body: JSON.stringify({ p_id: id, p_error: error.slice(0, 1000), p_transient: transient }),
+  }).catch((e) => console.error("mark_notification_failed call failed", id, e));
+}
+
 Deno.serve(async (req: Request) => {
   const jsonRes = (p: unknown, status = 200) =>
     new Response(JSON.stringify(p), {
@@ -23,13 +47,10 @@ Deno.serve(async (req: Request) => {
   if (!isServiceRoleCall(req)) return forbidden(corsHeaders, "Service-role required");
 
   try {
-    const nowIso = new Date().toISOString();
-    const queuedRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/notification_queue?status=eq.queued&scheduled_at=lte.${nowIso}&select=id&limit=25`,
-      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } },
-    );
-    if (!queuedRes.ok) throw new Error(await queuedRes.text());
-    const items = (await queuedRes.json()) as Array<{ id: string }>;
+    // Atomic claim — FOR UPDATE SKIP LOCKED on the DB side so two
+    // cron ticks never pick up the same row. The RPC also reclaims
+    // rows stuck in "processing" longer than 10 minutes.
+    const items = await claimItems(25);
 
     const results: Array<{ id: string; ok: boolean }> = [];
 
@@ -43,20 +64,21 @@ Deno.serve(async (req: Request) => {
           },
           body: JSON.stringify({ queueId: item.id }),
         });
-        results.push({ id: item.id, ok: dispatchRes.ok });
-        if (!dispatchRes.ok) {
-          await fetch(`${SUPABASE_URL}/rest/v1/notification_queue?id=eq.${item.id}`, {
-            method: "PATCH",
-            headers: {
-              apikey: SERVICE_KEY,
-              Authorization: `Bearer ${SERVICE_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "failed", error_message: await dispatchRes.text() }),
-          });
+        if (dispatchRes.ok) {
+          results.push({ id: item.id, ok: true });
+        } else {
+          // 5xx / network = transient, retry with backoff.
+          // 4xx (e.g. malformed payload) = permanent, go to DLQ.
+          const transient = dispatchRes.status >= 500;
+          const errBody = await dispatchRes.text().catch(() => `HTTP ${dispatchRes.status}`);
+          await markFailed(item.id, errBody, transient);
+          results.push({ id: item.id, ok: false });
         }
       } catch (err) {
-        console.error("Queue dispatch failed", item.id, err);
+        // Network / DNS / connection-refused — definitively transient.
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("Queue dispatch failed", item.id, msg);
+        await markFailed(item.id, msg, true);
         results.push({ id: item.id, ok: false });
       }
     }
@@ -64,6 +86,6 @@ Deno.serve(async (req: Request) => {
     return jsonRes({ success: true, processed: results.length, results });
   } catch (error) {
     console.error("process-notification-queue error", error);
-    return jsonRes({ error: error instanceof Error ? error.message : "Internal error" }, 500);
+    return jsonRes({ error: "Internal error" }, 500);
   }
 });
