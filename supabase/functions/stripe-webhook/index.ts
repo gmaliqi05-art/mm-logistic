@@ -78,34 +78,82 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
+      let details: Record<string, unknown> | null = null;
       switch (event.type) {
         case "checkout.session.completed": {
           const session = event.data.object as Stripe.Checkout.Session;
           await handleCheckoutCompleted(supabase, stripe, session);
+          details = {
+            company_id: session.metadata?.company_id ?? null,
+            plan_id: session.metadata?.plan_id ?? null,
+            amount_total: session.amount_total,
+            currency: session.currency,
+            customer: session.customer,
+            subscription: session.subscription,
+          };
           break;
         }
         case "invoice.paid": {
           const invoice = event.data.object as Stripe.Invoice;
           await handleInvoicePaid(supabase, invoice);
+          details = {
+            invoice_id: invoice.id,
+            invoice_number: invoice.number,
+            customer: invoice.customer,
+            subscription: invoice.subscription,
+            amount_paid: invoice.amount_paid,
+            currency: invoice.currency,
+          };
           break;
         }
         case "invoice.payment_failed": {
           const invoice = event.data.object as Stripe.Invoice;
           await handlePaymentFailed(supabase, invoice);
+          details = {
+            invoice_id: invoice.id,
+            customer: invoice.customer,
+            subscription: invoice.subscription,
+            attempt_count: invoice.attempt_count,
+            next_payment_attempt: invoice.next_payment_attempt,
+          };
           break;
         }
         case "customer.subscription.updated": {
           const subscription = event.data.object as Stripe.Subscription;
           await handleSubscriptionUpdated(supabase, subscription);
+          details = {
+            company_id: subscription.metadata?.company_id ?? null,
+            subscription_id: subscription.id,
+            new_status: subscription.status,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            current_period_end: subscription.current_period_end,
+          };
           break;
         }
         case "customer.subscription.deleted": {
           const subscription = event.data.object as Stripe.Subscription;
           await handleSubscriptionDeleted(supabase, subscription);
+          details = {
+            company_id: subscription.metadata?.company_id ?? null,
+            subscription_id: subscription.id,
+            canceled_at: subscription.canceled_at,
+          };
           break;
         }
         default:
           break;
+      }
+      // Persist audit details so we know which Stripe event caused
+      // which DB change. Best-effort: don't fail the webhook if this
+      // update fails — the side effects have already happened.
+      if (details) {
+        await supabase
+          .from("stripe_webhook_events")
+          .update({ details })
+          .eq("event_id", event.id)
+          .then(({ error }) => {
+            if (error) console.error("stripe audit update failed", event.id, error);
+          });
       }
     } catch (handlerErr) {
       // Roll back the idempotency row so Stripe's automatic retry

@@ -95,26 +95,29 @@ async function invokeFunction(slug: string, body: unknown): Promise<{ sent: numb
   }
 }
 
-async function logDelivery(
-  queueId: string | null,
-  userId: string,
-  channelCode: string,
-  platform: string,
-  status: string,
-  errorMessage?: string,
-): Promise<void> {
-  await pg("notification_deliveries", {
-    method: "POST",
-    body: JSON.stringify({
-      queue_id: queueId,
-      user_id: userId,
-      channel_code: channelCode,
-      platform,
-      status,
-      error_message: errorMessage ?? null,
-      delivered_at: status === "sent" || status === "delivered" ? new Date().toISOString() : null,
-    }),
-  }).catch((e) => console.error("Delivery log failed", e));
+interface DeliveryLogRow {
+  queue_id: string | null;
+  user_id: string;
+  channel_code: string;
+  platform: string;
+  status: string;
+  error_message: string | null;
+  delivered_at: string | null;
+}
+
+async function logDeliveriesBulk(rows: DeliveryLogRow[]): Promise<void> {
+  if (rows.length === 0) return;
+  try {
+    await pg("notification_deliveries", {
+      method: "POST",
+      body: JSON.stringify(rows),
+    });
+  } catch (e) {
+    // Don't swallow — if delivery logging fails the queue row's
+    // sent_count will diverge from notification_deliveries and
+    // the audit trail will be wrong. Log loudly.
+    console.error("notification_deliveries bulk insert failed", e);
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -246,9 +249,18 @@ Deno.serve(async (req: Request) => {
     const totalSent = results.web.sent + results.android.sent + results.ios.sent;
     const totalFailed = results.web.failed + results.android.failed + results.ios.failed;
 
-    for (const r of recipients) {
-      await logDelivery(queueId, r, channelCode, "inapp", "sent");
-    }
+    const nowIso = new Date().toISOString();
+    await logDeliveriesBulk(
+      recipients.map((r) => ({
+        queue_id: queueId,
+        user_id: r,
+        channel_code: channelCode,
+        platform: "inapp",
+        status: "sent",
+        error_message: null,
+        delivered_at: nowIso,
+      })),
+    );
 
     if (queueId) {
       await pg(`notification_queue?id=eq.${queueId}`, {

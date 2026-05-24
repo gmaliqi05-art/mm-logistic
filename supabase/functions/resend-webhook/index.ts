@@ -116,6 +116,25 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  // Replay-attack guard: reject events whose svix-timestamp is more
+  // than 5 minutes off the current time. Without this, a captured
+  // signed payload could be replayed indefinitely (the HMAC itself
+  // doesn't expire).
+  const tsSeconds = Number(svixTimestamp);
+  if (!Number.isFinite(tsSeconds)) {
+    return new Response(JSON.stringify({ error: "Invalid svix-timestamp" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - tsSeconds) > 5 * 60) {
+    return new Response(JSON.stringify({ error: "Timestamp outside tolerance" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const payload = await req.text();
   const valid = await verifySvixSignature(
     payload,
