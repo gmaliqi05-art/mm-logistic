@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,16 @@ const corsHeaders = {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  // CRITICAL guard: this function irreversibly deletes every company
+  // past its scheduled deletion date — ~40 tables wiped + auth.users
+  // dropped for every member. It must be reachable ONLY by the cron
+  // job (which calls with the service-role bearer). Without this
+  // check, anyone holding the anon key — i.e. anyone who opened the
+  // public homepage — could trigger a multi-tenant wipe.
+  if (!isServiceRoleCall(req)) {
+    return forbidden(corsHeaders, "Service-role required");
   }
 
   try {
