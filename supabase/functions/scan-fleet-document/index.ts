@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireCaller, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -269,6 +270,14 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  // Require an authenticated caller. Without this, anyone holding
+  // the anon key (i.e. anyone who opened the public site) could POST
+  // a scanId and trigger Anthropic AI extraction (cost burn) on any
+  // tenant's fleet document, then write attacker-controlled
+  // extracted_json back to the row.
+  const caller = await requireCaller(req, { corsHeaders });
+  if (!caller.ok) return caller.response;
+
   try {
     const { scanId, mode, docCategory }: Payload = await req.json();
     if (!scanId) throw new Error("scanId required");
@@ -286,6 +295,16 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (scanErr || !scan) throw new Error("Scan not found");
+
+    // Tenant gate: the scan row must belong to the caller's company
+    // (super_admin bypass for cross-tenant ops). Mirrors the check
+    // scan-document/index.ts:545 enforces.
+    if (
+      caller.profile.role !== "super_admin" &&
+      scan.company_id !== caller.profile.company_id
+    ) {
+      return forbidden(corsHeaders, "Cross-tenant access denied");
+    }
 
     await supabase.from("fleet_scanned_documents").update({ status: "processing" }).eq("id", scanId);
 
