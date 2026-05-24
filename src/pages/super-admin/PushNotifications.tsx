@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { TableRowsSkeleton, CardListSkeleton } from '../../components/ui/Skeleton';
 
 type Tab = 'overview' | 'compose' | 'templates' | 'channels' | 'permissions' | 'logs' | 'platform' | 'devices';
 
@@ -183,7 +184,7 @@ function OverviewTab() {
     setLoading(false);
   }
 
-  if (loading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-teal-600" /></div>;
+  if (loading) return <CardListSkeleton count={3} />;
 
   const cards = [
     { label: 'Queued', value: stats.totalQueued, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
@@ -529,7 +530,7 @@ function ChannelsTab() {
     await load();
   }
 
-  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-teal-600" />;
+  if (loading) return <TableRowsSkeleton rows={5} cols={4} />;
 
   return (
     <div className="space-y-4">
@@ -658,7 +659,7 @@ function TemplatesTab() {
     await load();
   }
 
-  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-teal-600" />;
+  if (loading) return <TableRowsSkeleton rows={5} cols={4} />;
 
   return (
     <div className="space-y-4">
@@ -779,7 +780,7 @@ function PermissionsTab() {
     setSaving(false);
   }
 
-  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-teal-600" />;
+  if (loading) return <TableRowsSkeleton rows={5} cols={4} />;
 
   return (
     <div className="space-y-3">
@@ -939,7 +940,7 @@ function PlatformTab() {
     setSaving(false);
   }
 
-  if (loading || !settings) return <Loader2 className="w-6 h-6 animate-spin text-teal-600" />;
+  if (loading || !settings) return <CardListSkeleton count={2} />;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -1086,7 +1087,7 @@ function DevicesTab() {
     await load();
   }
 
-  if (loading) return <Loader2 className="w-6 h-6 animate-spin text-teal-600" />;
+  if (loading) return <TableRowsSkeleton rows={5} cols={4} />;
 
   return (
     <div className="space-y-6">

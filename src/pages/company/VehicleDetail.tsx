@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Truck, Plus, Trash2, Loader2, ShieldCheck, Receipt, ClipboardCheck, Users as UsersIcon, ScanLine, FileText, Download } from 'lucide-react';
+import { ArrowLeft, Truck, Plus, Trash2, ShieldCheck, Receipt, ClipboardCheck, Users as UsersIcon, ScanLine, FileText, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import ExpiryBadge from '../../components/fleet/ExpiryBadge';
 import { useFleetComplianceTypes } from '../../hooks/useFleetComplianceTypes';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
@@ -136,7 +137,7 @@ export default function VehicleDetail() {
     fetchAll();
   }
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-teal-600" /></div>;
+  if (loading) return <PageSkeleton rows={6} cols={5} showStats={true} />;
   if (!vehicle) return (
     <div className="text-center p-12">
       <p className="text-gray-500">Mjeti nuk u gjet.</p>

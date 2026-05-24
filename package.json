@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@sentry/browser": "^10.53.1",
     "@supabase/supabase-js": "^2.57.4",
     "@tiptap/extension-link": "^3.22.5",
     "@tiptap/extension-placeholder": "^3.22.5",
