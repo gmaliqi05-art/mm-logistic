@@ -51,34 +51,72 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutCompleted(supabase, stripe, session);
-        break;
+    // Idempotency: Stripe retries on 5xx/timeouts and occasionally
+    // re-delivers events. Insert the event id and short-circuit on
+    // duplicate so we don't double-create subscriptions or
+    // payment_transactions.
+    const { data: inserted, error: idemErr } = await supabase
+      .from("stripe_webhook_events")
+      .insert({ event_id: event.id, event_type: event.type })
+      .select("event_id")
+      .maybeSingle();
+    if (idemErr) {
+      // PG unique_violation -> duplicate event
+      if ((idemErr as { code?: string }).code === "23505") {
+        return new Response(
+          JSON.stringify({ received: true, duplicate: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
-      case "invoice.paid": {
-        const invoice = event.data.object as Stripe.Invoice;
-        await handleInvoicePaid(supabase, invoice);
-        break;
+      throw idemErr;
+    }
+    if (!inserted) {
+      return new Response(
+        JSON.stringify({ received: true, duplicate: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    try {
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object as Stripe.Checkout.Session;
+          await handleCheckoutCompleted(supabase, stripe, session);
+          break;
+        }
+        case "invoice.paid": {
+          const invoice = event.data.object as Stripe.Invoice;
+          await handleInvoicePaid(supabase, invoice);
+          break;
+        }
+        case "invoice.payment_failed": {
+          const invoice = event.data.object as Stripe.Invoice;
+          await handlePaymentFailed(supabase, invoice);
+          break;
+        }
+        case "customer.subscription.updated": {
+          const subscription = event.data.object as Stripe.Subscription;
+          await handleSubscriptionUpdated(supabase, subscription);
+          break;
+        }
+        case "customer.subscription.deleted": {
+          const subscription = event.data.object as Stripe.Subscription;
+          await handleSubscriptionDeleted(supabase, subscription);
+          break;
+        }
+        default:
+          break;
       }
-      case "invoice.payment_failed": {
-        const invoice = event.data.object as Stripe.Invoice;
-        await handlePaymentFailed(supabase, invoice);
-        break;
-      }
-      case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionUpdated(supabase, subscription);
-        break;
-      }
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        await handleSubscriptionDeleted(supabase, subscription);
-        break;
-      }
-      default:
-        break;
+    } catch (handlerErr) {
+      // Roll back the idempotency row so Stripe's automatic retry
+      // gets a fresh chance to process the event. Without this the
+      // event would be marked "processed" but the side effects never
+      // happened.
+      await supabase
+        .from("stripe_webhook_events")
+        .delete()
+        .eq("event_id", event.id);
+      throw handlerErr;
     }
 
     return new Response(
