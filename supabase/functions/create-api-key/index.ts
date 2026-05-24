@@ -1,4 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireCaller } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,32 +21,18 @@ function randomToken(bytes = 32): string {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
+  // Use the shared helper so role enforcement is consistent across
+  // the codebase rather than rolled-by-hand. Restricts to
+  // company_admin + super_admin; everything else gets 403.
+  const caller = await requireCaller(req, { roles: ["company_admin", "super_admin"], corsHeaders });
+  if (!caller.ok) return caller.response;
+
   try {
-    const auth = req.headers.get("Authorization") || "";
-    if (!auth.startsWith("Bearer ")) throw new Error("Unauthorized");
-
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: auth } } },
-    );
-    const { data: userData } = await userClient.auth.getUser();
-    if (!userData.user) throw new Error("Unauthorized");
-
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("id, company_id, role")
-      .eq("id", userData.user.id)
-      .maybeSingle();
-
-    if (!profile?.company_id) throw new Error("No company");
-    if (!["company_admin", "super_admin"].includes(profile.role)) {
-      throw new Error("Not authorized");
+    if (!caller.profile.company_id) {
+      return new Response(
+        JSON.stringify({ success: false, error: "No company" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const body = await req.json();
@@ -56,30 +43,36 @@ Deno.serve(async (req: Request) => {
     const key_hash = await sha256Hex(token);
     const key_prefix = token.slice(0, 16);
 
-    const { data: inserted, error } = await admin
+    const { data: inserted, error } = await caller.admin
       .from("company_api_keys")
       .insert({
-        company_id: profile.company_id,
+        company_id: caller.profile.company_id,
         name,
         scopes,
         key_hash,
         key_prefix,
-        created_by: profile.id,
+        created_by: caller.profile.id,
       })
       .select("id")
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("create-api-key insert failed", error);
+      return new Response(
+        JSON.stringify({ success: false, error: "Internal error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     return new Response(
       JSON.stringify({ success: true, id: inserted.id, api_key: token, prefix: key_prefix }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("create-api-key error", err);
     return new Response(
-      JSON.stringify({ success: false, error: message }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ success: false, error: "Internal error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
