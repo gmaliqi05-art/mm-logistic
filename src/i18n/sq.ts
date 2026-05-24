@@ -1043,6 +1043,9 @@ export const sq = {
     },
     trailers: {
       confirmDelete: 'Fshij kete rimorkio?',
+      pickCategoryPerItem: 'Zgjidh kategorine per cdo artikull',
+      pickProductPerItem: 'Zgjidh produktin per cdo artikull',
+      enterPlate: 'Vendos numrin e tabeles',
     },
     emailBranding: {
       imagesOnly: 'Vetem imazhe (PNG, JPG, SVG) lejohen',
@@ -1624,6 +1627,24 @@ export const sq = {
       noGps: 'Nuk kemi GPS. Aktivizo tracking-un.',
       destinationNotFound: 'Nuk u gjet destinacioni. Kliko ne harte ose shkruaj adresen.',
     },
+    settings: {
+      title: 'Cilesimet',
+      subtitle: 'Profili im dhe dokumentet',
+      email: 'Email',
+      phone: 'Telefon',
+      company: 'Kompania',
+      depot: 'Depo',
+      changePhoto: 'Ndrysho foton',
+      uploadPhoto: 'Ngarko foton',
+      photoSaved: 'Foto u ruajt me sukses',
+      photoRemoved: 'Foto u hoq',
+      errorImageOnly: 'Vetem imazhe lejohen',
+      errorTooLarge: 'Imazhi nuk mund te jete me i madh se 5MB',
+      errorSaving: 'Gabim gjate ruajtjes',
+      documentsTitle: 'Dokumentet e mia',
+      baseSaved: 'Baza u ruajt',
+      noStoredCoordinates: 'Asnje koordinate e ruajtur',
+    },
     tracking: {
       tabTracking: 'Gjurmimi',
       tabNavigation: 'Navigimi',
@@ -2082,6 +2103,9 @@ export const sq = {
       qrCodesForDownload: 'QR Codes per Shkarkim',
       openLink: 'Hap Lidhjen',
     },
+  },
+  destinationPicker: {
+    pickDriverFirst: 'Nuk ka shofer te caktuar. Zgjidh nje shofer ne fillim.',
   },
   subscription: {
     freePlan: 'Falas',

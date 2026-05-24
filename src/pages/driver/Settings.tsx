@@ -20,22 +20,6 @@ import { useTranslation } from '../../i18n';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
 import { Link } from 'react-router-dom';
 
-const L = {
-  title: 'Cilesimet',
-  subtitle: 'Profili im dhe dokumentet',
-  email: 'Email',
-  phone: 'Telefon',
-  company: 'Kompania',
-  depot: 'Depo',
-  changePhoto: 'Ndrysho foton',
-  uploadPhoto: 'Ngarko foton',
-  photoSaved: 'Foto u ruajt me sukses',
-  photoRemoved: 'Foto u hoq',
-  errorImageOnly: 'Vetem imazhe lejohen',
-  errorTooLarge: 'Imazhi nuk mund te jete me i madh se 5MB',
-  errorSaving: 'Gabim gjate ruajtjes',
-  documentsTitle: 'Dokumentet e mia',
-};
 
 export default function DriverSettings() {
   const { profile, refreshProfile } = useAuth();
@@ -90,11 +74,11 @@ export default function DriverSettings() {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
     if (!file.type.startsWith('image/')) {
-      setPhotoError(L.errorImageOnly);
+      setPhotoError(t("driver.settings.errorImageOnly"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setPhotoError(L.errorTooLarge);
+      setPhotoError(t("driver.settings.errorTooLarge"));
       return;
     }
     setPhotoError(null);
@@ -113,9 +97,9 @@ export default function DriverSettings() {
         .eq('id', profile.id);
       if (updateErr) throw updateErr;
       if (refreshProfile) await refreshProfile();
-      setToast(L.photoSaved);
+      setToast(t("driver.settings.photoSaved"));
     } catch (err: any) {
-      setPhotoError(err.message || L.errorSaving);
+      setPhotoError(err.message || t("driver.settings.errorSaving"));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -128,7 +112,7 @@ export default function DriverSettings() {
       setUploading(true);
       await supabase.from('profiles').update({ avatar_url: null }).eq('id', profile.id);
       if (refreshProfile) await refreshProfile();
-      setToast(L.photoRemoved);
+      setToast(t("driver.settings.photoRemoved"));
     } finally {
       setUploading(false);
     }
@@ -170,7 +154,7 @@ export default function DriverSettings() {
         .eq('id', profile.id);
       setBaseLat(lat);
       setBaseLng(lng);
-      setToast('Baza u ruajt');
+      setToast(t('driver.settings.baseSaved'));
     } finally {
       setBaseSaving(false);
     }
@@ -179,8 +163,8 @@ export default function DriverSettings() {
   return (
     <div className="max-w-3xl mx-auto space-y-5 pb-6">
       <div>
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{L.title}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{L.subtitle}</p>
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{t("driver.settings.title")}</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{t("driver.settings.subtitle")}</p>
       </div>
 
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -215,7 +199,7 @@ export default function DriverSettings() {
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50"
               >
                 <Camera className="w-4 h-4" />
-                {profile?.avatar_url ? L.changePhoto : L.uploadPhoto}
+                {profile?.avatar_url ? t("driver.settings.changePhoto") : t("driver.settings.uploadPhoto")}
               </button>
               {profile?.avatar_url && (
                 <button
@@ -237,10 +221,10 @@ export default function DriverSettings() {
           </div>
 
           <dl className="mt-4 divide-y divide-gray-100 border-t border-gray-100">
-            <InfoRow icon={Mail} label={L.email} value={profile?.email ?? '-'} />
-            <InfoRow icon={Phone} label={L.phone} value={profile?.phone ?? '-'} />
-            <InfoRow icon={Building2} label={L.company} value={companyName || '-'} />
-            <InfoRow icon={Warehouse} label={L.depot} value={depotName || '-'} />
+            <InfoRow icon={Mail} label={t("driver.settings.email")} value={profile?.email ?? '-'} />
+            <InfoRow icon={Phone} label={t("driver.settings.phone")} value={profile?.phone ?? '-'} />
+            <InfoRow icon={Building2} label={t("driver.settings.company")} value={companyName || '-'} />
+            <InfoRow icon={Warehouse} label={t("driver.settings.depot")} value={depotName || '-'} />
           </dl>
         </div>
       </section>
@@ -265,7 +249,7 @@ export default function DriverSettings() {
             <div className="text-[11px] text-gray-500">
               {baseLat != null && baseLng != null
                 ? `${baseLat.toFixed(5)}, ${baseLng.toFixed(5)}`
-                : 'Asnje koordinate e ruajtur'}
+                : t('driver.settings.noStoredCoordinates')}
             </div>
             <button
               type="button"
@@ -293,7 +277,7 @@ export default function DriverSettings() {
             <IdCard className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-gray-900">{L.documentsTitle}</h3>
+            <h3 className="text-base font-bold text-gray-900">{t("driver.settings.documentsTitle")}</h3>
             <p className="text-xs text-gray-500 mt-0.5">Shiko patenten, Kod 95, G25, ADR — te ruajtura per ty</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />

@@ -524,6 +524,7 @@ function TrailerLoadEditor({
   onReset: () => void;
   onError: (msg: string) => void;
 }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(trailer.title ?? '');
   const [notes, setNotes] = useState(trailer.notes ?? '');
   const [assignedDriverId, setAssignedDriverId] = useState<string>(
@@ -577,8 +578,8 @@ function TrailerLoadEditor({
       .filter((i) => i.category_id || i.category_product_id || i.quantity > 0 || i.product_title);
 
     for (const it of cleanItems) {
-      if (!it.category_id) return setFormError('Zgjidh kategorine per cdo artikull');
-      if (!it.category_product_id) return setFormError('Zgjidh produktin per cdo artikull');
+      if (!it.category_id) return setFormError(t('company.trailers.pickCategoryPerItem'));
+      if (!it.category_product_id) return setFormError(t('company.trailers.pickProductPerItem'));
       if (it.quantity <= 0) return setFormError('Sasia duhet te jete me e madhe se 0');
     }
 
@@ -844,6 +845,7 @@ function RegisterPlateModal({
   onClose: () => void;
   onSaved: (msg: string) => void;
 }) {
+  const { t } = useTranslation();
   const [plate, setPlate] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -851,7 +853,7 @@ function RegisterPlateModal({
   async function save(keepOpen: boolean) {
     const plateClean = formatPlate(plate);
     if (!plateClean) {
-      setErr('Vendos numrin e tabeles');
+      setErr(t('company.trailers.enterPlate'));
       return;
     }
     try {

@@ -1045,6 +1045,9 @@ export const de: typeof sq = {
     },
     trailers: {
       confirmDelete: 'Diesen Anhaenger loeschen?',
+      pickCategoryPerItem: 'Wählen Sie eine Kategorie für jeden Artikel',
+      pickProductPerItem: 'Wählen Sie ein Produkt für jeden Artikel',
+      enterPlate: 'Kennzeichen eingeben',
     },
     emailBranding: {
       imagesOnly: 'Nur Bilder (PNG, JPG, SVG) sind erlaubt',
@@ -1626,6 +1629,24 @@ export const de: typeof sq = {
       noGps: 'Kein GPS-Signal. Tracking aktivieren.',
       destinationNotFound: 'Ziel nicht gefunden. Auf die Karte klicken oder Adresse eingeben.',
     },
+    settings: {
+      title: 'Einstellungen',
+      subtitle: 'Mein Profil und meine Dokumente',
+      email: 'E-Mail',
+      phone: 'Telefon',
+      company: 'Firma',
+      depot: 'Depot',
+      changePhoto: 'Foto ändern',
+      uploadPhoto: 'Foto hochladen',
+      photoSaved: 'Foto gespeichert',
+      photoRemoved: 'Foto entfernt',
+      errorImageOnly: 'Nur Bilder sind erlaubt',
+      errorTooLarge: 'Bild darf nicht größer als 5MB sein',
+      errorSaving: 'Fehler beim Speichern',
+      documentsTitle: 'Meine Dokumente',
+      baseSaved: 'Basis gespeichert',
+      noStoredCoordinates: 'Keine gespeicherten Koordinaten',
+    },
     tracking: {
       tabTracking: 'Tracking',
       tabNavigation: 'Navigation',
@@ -2084,6 +2105,9 @@ export const de: typeof sq = {
       qrCodesForDownload: 'QR-Codes zum Herunterladen',
       openLink: 'Link öffnen',
     },
+  },
+  destinationPicker: {
+    pickDriverFirst: 'Kein Fahrer zugewiesen. Bitte zuerst einen Fahrer auswählen.',
   },
   subscription: {
     freePlan: 'Kostenlos',

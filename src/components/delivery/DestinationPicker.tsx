@@ -3,6 +3,7 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-lea
 import L from 'leaflet';
 import { Crosshair, Loader2, Map as MapIcon, MapPin, Navigation, Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   address: string;
@@ -60,6 +61,7 @@ function Recenter({ lat, lng }: { lat: number; lng: number }) {
 }
 
 export default function DestinationPicker({ address, lat, lng, driverId, onChange }: Props) {
+  const { t } = useTranslation();
   const [mapOpen, setMapOpen] = useState(false);
   const [pickerLat, setPickerLat] = useState<number>(lat ?? 44.5);
   const [pickerLng, setPickerLng] = useState<number>(lng ?? 20.5);
@@ -78,7 +80,7 @@ export default function DestinationPicker({ address, lat, lng, driverId, onChang
 
   async function useDriverLocation() {
     if (!driverId) {
-      setDriverErr('Nuk ka shofer te caktuar. Zgjidh nje shofer ne fillim.');
+      setDriverErr(t('destinationPicker.pickDriverFirst'));
       return;
     }
     setLoadingDriver(true);
