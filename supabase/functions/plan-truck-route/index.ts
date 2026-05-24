@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
+import { requireCaller, forbidden } from '../_shared/requireCaller.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -145,6 +146,9 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  const caller = await requireCaller(req, { corsHeaders });
+  if (!caller.ok) return caller.response;
+
   try {
     const body = (await req.json()) as Body;
     if (!body.origin || !body.destination) {
@@ -152,6 +156,14 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Tenant gate: if the caller passes company_id/driver_id, they
+    // must own that tenant. Otherwise drop those persistence fields
+    // so the function can still compute the route (read-only flow).
+    const isSuperAdmin = caller.profile.role === 'super_admin';
+    if (body.company_id && !isSuperAdmin && body.company_id !== caller.profile.company_id) {
+      return forbidden(corsHeaders, 'Cross-tenant access denied');
     }
 
     const admin = createClient(

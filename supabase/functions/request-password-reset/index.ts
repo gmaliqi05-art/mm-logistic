@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +25,13 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // IP-level rate limit — prevents single attacker hitting the
+    // endpoint with a list of emails. Per-email limit below handles
+    // the targeted-user case.
+    const ip = getClientIp(req);
+    const ipRl = await checkRateLimit(`reset-request:ip=${ip}`, 10, 60_000);
+    if (!ipRl.allowed) return rateLimitResponse(ipRl, corsHeaders);
+
     const { email, locale } = await req.json() as { email: string; locale?: string };
 
     if (!email || typeof email !== "string") {

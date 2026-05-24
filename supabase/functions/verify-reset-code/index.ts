@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,11 +19,28 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Brute-force protection for the 6-digit code. Without this an
+    // attacker can try ~1M combinations in seconds.
+    const ip = getClientIp(req);
+    const ipRl = await checkRateLimit(`reset-verify:ip=${ip}`, 10, 60_000);
+    if (!ipRl.allowed) return rateLimitResponse(ipRl, corsHeaders);
+
     const { email, code, newPassword } = await req.json() as {
       email: string;
       code: string;
       newPassword: string;
     };
+
+    // Per-email throttle: at most 10 attempts in 10 minutes against
+    // the same email regardless of IP.
+    if (email && typeof email === "string") {
+      const emailRl = await checkRateLimit(
+        `reset-verify:email=${email.trim().toLowerCase()}`,
+        10,
+        600_000,
+      );
+      if (!emailRl.allowed) return rateLimitResponse(emailRl, corsHeaders);
+    }
 
     if (!email || !code || !newPassword) {
       return new Response(
