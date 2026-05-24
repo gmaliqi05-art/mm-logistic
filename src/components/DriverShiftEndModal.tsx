@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Power, CheckCircle2, AlertTriangle, Infinity } from 'lucide-react';
+import { Clock, Power, CheckCircle2, AlertTriangle, Infinity as InfinityIcon } from 'lucide-react';
 import { useDriverTracking } from '../contexts/DriverTrackingContext';
 
 const PRESETS = [1, 2, 3, 4];
@@ -74,7 +74,7 @@ export default function DriverShiftEndModal() {
             disabled={busy}
             className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold disabled:opacity-50"
           >
-            <Infinity className="w-5 h-5" />
+            <InfinityIcon className="w-5 h-5" />
             Pa limit (deri sa ta ndalesh manualisht)
           </button>
 

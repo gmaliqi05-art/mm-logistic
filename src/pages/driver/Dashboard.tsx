@@ -1123,8 +1123,9 @@ export function TaskDetailSheet({
             // admin doesn't have to lift a finger.
             update.auto_register_partner = true;
           }
-        } catch (err) {
-          console.warn('auto partner detect failed', err);
+        } catch {
+          // Auto partner detect is best-effort; the fallback below
+          // (auto_register_partner = true) handles the no-match case.
           if (detectedName) update.auto_register_partner = true;
         }
       }

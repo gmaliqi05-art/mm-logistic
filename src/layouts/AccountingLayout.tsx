@@ -104,7 +104,7 @@ export default function AccountingLayout() {
         setCompanyName(data.name || '');
         setCompanyLogo(data.logo_url || '');
       }
-    } catch {}
+    } catch { /* best effort */ }
   }
 
   function getLabel(item: typeof allNavItems[0]) {

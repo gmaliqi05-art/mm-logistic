@@ -102,14 +102,14 @@ function parseCamt053(xml: string): ParsedStatement {
 
 function parseMt940(text: string): ParsedStatement {
   const currency = (text.match(/:60F:[CD]\d{6}([A-Z]{3})/) || [])[1] || "EUR";
-  const openingMatch = text.match(/:60F:([CD])\d{6}[A-Z]{3}([\d,\.]+)/);
-  const closingMatch = text.match(/:62F:([CD])\d{6}[A-Z]{3}([\d,\.]+)/);
+  const openingMatch = text.match(/:60F:([CD])\d{6}[A-Z]{3}([\d,.]+)/);
+  const closingMatch = text.match(/:62F:([CD])\d{6}[A-Z]{3}([\d,.]+)/);
   const parseAmt = (s: string) => parseFloat(s.replace(",", ".")) || 0;
   const opening = openingMatch ? (openingMatch[1] === "D" ? -parseAmt(openingMatch[2]) : parseAmt(openingMatch[2])) : 0;
   const closing = closingMatch ? (closingMatch[1] === "D" ? -parseAmt(closingMatch[2]) : parseAmt(closingMatch[2])) : 0;
 
   const lines: ParsedLine[] = [];
-  const rx = /:61:(\d{6})(?:\d{4})?([CD])R?([\d,\.]+)N[A-Z0-9]{3}([^\r\n]*)[\r\n]+(?::86:([\s\S]*?)(?=(?::\d{2}[A-Z]?:|$)))?/g;
+  const rx = /:61:(\d{6})(?:\d{4})?([CD])R?([\d,.]+)N[A-Z0-9]{3}([^\r\n]*)[\r\n]+(?::86:([\s\S]*?)(?=(?::\d{2}[A-Z]?:|$)))?/g;
   let m: RegExpExecArray | null;
   while ((m = rx.exec(text))) {
     const yy = m[1].slice(0, 2);

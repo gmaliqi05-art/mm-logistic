@@ -109,12 +109,12 @@ async function buildCountryBreakdown(
   samples.push({ country: await reverseCountry(last[1], last[0]), lat: last[1], lng: last[0] });
 
   const segments: { country: string; km: number }[] = [];
-  let totalKm = 0;
+  let _totalKm = 0;
   for (let i = 1; i < samples.length; i++) {
     const a = samples[i - 1];
     const b = samples[i];
     const d = haversine(a.lat, a.lng, b.lat, b.lng);
-    totalKm += d;
+    _totalKm += d;
     const cc = (b.country ?? a.country ?? 'DE').toUpperCase();
     const last = segments[segments.length - 1];
     if (last && last.country === cc) last.km += d;

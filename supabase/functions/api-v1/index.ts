@@ -77,7 +77,10 @@ Deno.serve(async (req: Request) => {
           .eq("company_id", companyId)
           .order("invoice_date", { ascending: false })
           .limit(limit);
-        if (error) return json({ error: error.message }, 500);
+        if (error) {
+          console.error("api-v1 invoices query failed", error);
+          return json({ error: "Internal error" }, 500);
+        }
         return json({ data });
       }
       case "delivery-notes": {
@@ -87,7 +90,10 @@ Deno.serve(async (req: Request) => {
           .eq("company_id", companyId)
           .order("created_at", { ascending: false })
           .limit(limit);
-        if (error) return json({ error: error.message }, 500);
+        if (error) {
+          console.error("api-v1 delivery-notes query failed", error);
+          return json({ error: "Internal error" }, 500);
+        }
         return json({ data });
       }
       case "stock": {
@@ -96,7 +102,10 @@ Deno.serve(async (req: Request) => {
           .select("id, product_id, category_product_id, condition, quantity")
           .eq("company_id", companyId)
           .limit(limit);
-        if (error) return json({ error: error.message }, 500);
+        if (error) {
+          console.error("api-v1 stock query failed", error);
+          return json({ error: "Internal error" }, 500);
+        }
         return json({ data });
       }
       case "partners": {
@@ -106,7 +115,10 @@ Deno.serve(async (req: Request) => {
           .eq("company_id", companyId)
           .order("name")
           .limit(limit);
-        if (error) return json({ error: error.message }, 500);
+        if (error) {
+          console.error("api-v1 partners query failed", error);
+          return json({ error: "Internal error" }, 500);
+        }
         return json({ data });
       }
       case "transactions": {
@@ -116,14 +128,20 @@ Deno.serve(async (req: Request) => {
           .eq("company_id", companyId)
           .order("transaction_date", { ascending: false })
           .limit(limit);
-        if (error) return json({ error: error.message }, 500);
+        if (error) {
+          console.error("api-v1 transactions query failed", error);
+          return json({ error: "Internal error" }, 500);
+        }
         return json({ data });
       }
       default:
         return json({ error: "Unknown endpoint", available: ["/invoices", "/delivery-notes", "/stock", "/partners", "/transactions", "/openapi.json"] }, 404);
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return json({ error: message }, 500);
+    // Log full error server-side; never leak Postgres/runtime messages
+    // to public API consumers — they can include table names, column
+    // names, and constraint internals.
+    console.error("api-v1 internal error", err);
+    return json({ error: "Internal error" }, 500);
   }
 });

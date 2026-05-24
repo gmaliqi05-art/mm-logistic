@@ -231,7 +231,7 @@ function validateXmlStructure(xml: string, country: "RO" | "PL"): string[] {
   if (!xml.startsWith("<?xml")) errors.push("Missing XML declaration");
   const rootTag = country === "RO" ? "<AuditFile" : "<JPK";
   if (!xml.includes(rootTag)) errors.push(`Missing root element for ${country} SAF-T`);
-  const openTags = (xml.match(/<[A-Za-z][A-Za-z0-9_:]*\b[^\/]*?>/g) || []).length;
+  const openTags = (xml.match(/<[A-Za-z][A-Za-z0-9_:]*\b[^/]*?>/g) || []).length;
   const closeTags = (xml.match(/<\/[A-Za-z][A-Za-z0-9_:]*>/g) || []).length;
   const selfClosing = (xml.match(/<[^>]+\/>/g) || []).length;
   if (openTags - selfClosing !== closeTags) errors.push("Unbalanced tags");

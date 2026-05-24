@@ -148,9 +148,6 @@ export default function CompanyAdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (isPendingPayment) {
-    return <Navigate to="/payment-pending" replace />;
-  }
   const reviewCounts = usePendingReviewCounts(profile?.company_id);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -205,6 +202,10 @@ export default function CompanyAdminLayout() {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  if (isPendingPayment) {
+    return <Navigate to="/payment-pending" replace />;
+  }
 
   async function fetchCompanyInfo() {
     try {

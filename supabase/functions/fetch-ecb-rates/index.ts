@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
     const dateMatch = xml.match(/time=['"](\d{4}-\d{2}-\d{2})['"]/);
     const validFrom = dateMatch ? dateMatch[1] : new Date().toISOString().slice(0, 10);
 
-    const rateRx = /<Cube\s+currency=['"]([A-Z]{3})['"]\s+rate=['"]([\d\.]+)['"]/g;
+    const rateRx = /<Cube\s+currency=['"]([A-Z]{3})['"]\s+rate=['"]([\d.]+)['"]/g;
     const rates: Record<string, number> = {};
     let m: RegExpExecArray | null;
     while ((m = rateRx.exec(xml))) {
