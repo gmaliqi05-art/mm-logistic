@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,6 +46,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+
+  // Cron-only endpoint (pg_cron via http_post with service-role bearer).
+  if (!isServiceRoleCall(req)) return forbidden(corsHeaders, "Service-role required");
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";

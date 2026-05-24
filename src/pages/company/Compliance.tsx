@@ -173,10 +173,12 @@ export default function Compliance() {
     setCheckMessage(null);
     try {
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-compliance-expirations`;
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ companyId: profile?.company_id ?? null }),

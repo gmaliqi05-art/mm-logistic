@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -191,6 +192,8 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  // Cron-only (pg_cron via http_post with service-role bearer).
+  if (!isServiceRoleCall(req)) return forbidden(corsHeaders, "Service-role required");
   try {
     const payload = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const deliveryId = payload?.delivery_note_id as string | undefined;

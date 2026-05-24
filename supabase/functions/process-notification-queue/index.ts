@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +18,9 @@ Deno.serve(async (req: Request) => {
     });
 
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+
+  // Cron-only endpoint. pg_cron calls with service-role bearer.
+  if (!isServiceRoleCall(req)) return forbidden(corsHeaders, "Service-role required");
 
   try {
     const nowIso = new Date().toISOString();
