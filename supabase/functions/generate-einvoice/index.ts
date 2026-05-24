@@ -1,4 +1,3 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { assertOwnCompany, requireCaller } from "../_shared/requireCaller.ts";
 import { PDFDocument, PDFName, PDFRawStream, PDFHexString } from "npm:pdf-lib@1.17.1";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";

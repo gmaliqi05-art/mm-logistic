@@ -23,7 +23,7 @@ export async function applyScanToDeliveryNote(opts: ApplyOptions): Promise<numbe
   const products = (prodsRes.data as ProductLike[] | null) ?? [];
   const categories = (catsRes.data as CategoryLike[] | null) ?? [];
 
-  let items = opts.lineItems && opts.lineItems.length > 0
+  const items = opts.lineItems && opts.lineItems.length > 0
     ? opts.lineItems
     : parseLineItemsFromNotes(opts.notesFallback);
 

@@ -139,7 +139,7 @@ Deno.serve(async (req: Request) => {
   try {
     const input = (await req.json()) as DispatchInput;
 
-    let queueId = input.queueId ?? null;
+    const queueId = input.queueId ?? null;
     let channelCode = input.channelCode ?? "system.broadcast";
     let title = input.title ?? "";
     let body = input.body ?? "";

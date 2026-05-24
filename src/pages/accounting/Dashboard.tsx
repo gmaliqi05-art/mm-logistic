@@ -45,7 +45,7 @@ interface DashboardStats {
   openSentTotal: number;
 }
 
-interface TransactionRow extends AccTransaction {}
+type TransactionRow = AccTransaction;
 
 interface InvoiceRow {
   id: string;
@@ -57,7 +57,7 @@ interface InvoiceRow {
   contact?: { name: string } | null;
 }
 
-interface LowStockProduct extends AccProduct {}
+type LowStockProduct = AccProduct;
 
 interface UnbilledNote {
   id: string;

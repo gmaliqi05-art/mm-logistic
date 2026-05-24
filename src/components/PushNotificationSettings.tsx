@@ -35,7 +35,7 @@ export default function PushNotificationSettings() {
           setMessage({ type: 'error', text: 'Gabim gjatë aktivizimit të njoftimeve' });
         }
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage({ type: 'error', text: 'Ndodhi një gabim' });
     } finally {
       setUpdating(false);

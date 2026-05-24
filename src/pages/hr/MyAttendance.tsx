@@ -70,7 +70,7 @@ export default function MyAttendance() {
         navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
       );
       location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    } catch {}
+    } catch { /* geolocation unavailable */ }
 
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toISOString();
