@@ -127,6 +127,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setProfile(null);
     setSession(null);
+    // Purge tenant- and user-scoped localStorage keys. Supabase
+    // clears its own session token (mm-logistic-auth); these are
+    // application-side keys that would otherwise leak between
+    // accounts on a shared device. We deliberately keep cross-user
+    // preferences (ep_language, ep_consent, install/push dismissals).
+    if (typeof window !== 'undefined') {
+      try {
+        const KEYS_TO_CLEAR = [
+          'driver_tracking_enabled',
+          'driver_tracking_overtime_until',
+          'mml.nav.openGroups',
+          'mml.depotNav.openGroups',
+          'mml.driverNav.openGroups',
+          'acc_default_currency',
+          'acc_default_payment_days',
+          'acc_default_bank_account',
+        ];
+        for (const k of KEYS_TO_CLEAR) window.localStorage.removeItem(k);
+      } catch { /* localStorage may be blocked */ }
+    }
   };
 
   const refreshProfile = async () => {
