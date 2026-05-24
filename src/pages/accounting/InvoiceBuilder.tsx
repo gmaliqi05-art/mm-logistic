@@ -841,25 +841,25 @@ export default function InvoiceBuilder() {
       {/* Top bar */}
       <div className="flex items-center justify-between gap-3 print:hidden">
         <Link to={listPath} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
-          <ArrowLeft className="w-4 h-4" /> Kthehu
+          <ArrowLeft className="w-4 h-4" /> {t('common.back')}
         </Link>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {savedAt && !dirtyRef.current && (
             <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Ruajtur {new Date(savedAt).toLocaleTimeString()}
+              <CheckCircle2 className="w-3.5 h-3.5" /> {t('accounting.invoiceBuilder.saved')} {new Date(savedAt).toLocaleTimeString()}
             </span>
           )}
           <button onClick={() => save()} disabled={saving} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Ruaj draft
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {t('accounting.invoiceBuilder.saveDraft')}
           </button>
           <button onClick={() => setShowPreview(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">
-            <Eye className="w-4 h-4" /> Preview
+            <Eye className="w-4 h-4" /> {t('accounting.invoiceBuilder.preview')}
           </button>
           <button onClick={printPreview} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">
-            <Printer className="w-4 h-4" /> Printo
+            <Printer className="w-4 h-4" /> {t('accounting.invoiceBuilder.print')}
           </button>
           <button onClick={finalizeAndSend} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-bold hover:bg-teal-700">
-            <Send className="w-4 h-4" /> Finalizo
+            <Send className="w-4 h-4" /> {t('accounting.invoiceBuilder.finalize')}
           </button>
         </div>
       </div>
@@ -875,28 +875,28 @@ export default function InvoiceBuilder() {
         <div className="space-y-5 print:hidden">
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
             <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-teal-600" /> Cilesimet themelore
+              <Building2 className="w-4 h-4 text-teal-600" /> {t('accounting.invoiceBuilder.sectionBasic')}
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Lloji">
+              <Field label={t('accounting.invoiceBuilder.docType')}>
                 <select value={invoiceType} onChange={(e) => setInvoiceType(e.target.value as 'invoice' | 'credit_note' | 'proforma')} className={selectCls}>
-                  <option value="invoice">Fatura</option>
-                  <option value="credit_note">Notes krediti</option>
-                  <option value="proforma">Proforma</option>
+                  <option value="invoice">{t('accounting.invoiceBuilder.docTypeInvoice')}</option>
+                  <option value="credit_note">{t('accounting.invoiceBuilder.docTypeCreditNote')}</option>
+                  <option value="proforma">{t('accounting.invoiceBuilder.docTypeProforma')}</option>
                 </select>
               </Field>
-              <Field label="Nr. i fatures">
+              <Field label={t('accounting.invoiceBuilder.invoiceNumber')}>
                 <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className={inputCls} />
               </Field>
-              <Field label="Data"><input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className={inputCls} /></Field>
-              <Field label="Afati i pageses"><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputCls} /></Field>
-              <Field label="Data e furnizimit"><input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className={inputCls} /></Field>
-              <Field label="Monedha">
+              <Field label={t('accounting.invoiceBuilder.date')}><input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className={inputCls} /></Field>
+              <Field label={t('accounting.invoiceBuilder.dueDate')}><input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputCls} /></Field>
+              <Field label={t('accounting.invoiceBuilder.supplyDate')}><input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className={inputCls} /></Field>
+              <Field label={t('accounting.invoiceBuilder.currency')}>
                 <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={selectCls}>
                   {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
-              <Field label={<><Languages className="w-3 h-3 inline" /> Gjuha</>}>
+              <Field label={<><Languages className="w-3 h-3 inline" /> {t('accounting.invoiceBuilder.language')}</>}>
                 <select value={language} onChange={(e) => setLanguage(e.target.value as Lang)} className={selectCls}>
                   <option value="en">English</option>
                   <option value="de">Deutsch</option>
@@ -904,7 +904,7 @@ export default function InvoiceBuilder() {
                   <option value="sq">Shqip</option>
                 </select>
               </Field>
-              <Field label="Dite pageses">
+              <Field label={t('accounting.invoiceBuilder.paymentTermsDays')}>
                 <input type="number" min={0} value={paymentTermsDays} onChange={(e) => setPaymentTermsDays(Number(e.target.value))} className={inputCls} />
               </Field>
             </div>
@@ -926,12 +926,12 @@ export default function InvoiceBuilder() {
               <div className="rounded-lg bg-teal-50 border border-teal-200 p-3 space-y-1">
                 <div className="flex items-center gap-2 text-sm text-teal-900">
                   <FileText className="w-4 h-4 text-teal-600 flex-shrink-0" />
-                  <span>Fletedergesa <span className="font-bold text-teal-800">#{deliveryNoteNumber || '-'}</span></span>
+                  <span>{t('accounting.invoiceBuilder.deliveryNote')} <span className="font-bold text-teal-800">#{deliveryNoteNumber || '-'}</span></span>
                 </div>
                 {(deliveryNotePartner || deliveryNoteDate) && (
                   <div className="flex items-center gap-3 text-xs text-teal-700 pl-6">
-                    {deliveryNotePartner && <span>Partneri: <span className="font-semibold">{deliveryNotePartner}</span></span>}
-                    {deliveryNoteDate && <span>Data: <span className="font-semibold">{deliveryNoteDate}</span></span>}
+                    {deliveryNotePartner && <span>{t('accounting.invoiceBuilder.partner')}: <span className="font-semibold">{deliveryNotePartner}</span></span>}
+                    {deliveryNoteDate && <span>{t('accounting.invoiceBuilder.date')}: <span className="font-semibold">{deliveryNoteDate}</span></span>}
                   </div>
                 )}
               </div>
@@ -946,7 +946,7 @@ export default function InvoiceBuilder() {
                     searchDeliveryNotes(v);
                   }}
                   onFocus={() => setDeliveryNoteSearchOpen(true)}
-                  placeholder="Kerko fletedergesen (nr., partner)"
+                  placeholder={t('accounting.invoiceBuilder.searchDeliveryNote')}
                   className={inputCls}
                 />
                 {deliveryNoteSearchOpen && deliveryNoteResults.length > 0 && (
@@ -965,14 +965,14 @@ export default function InvoiceBuilder() {
                       >
                         <div className="text-sm font-semibold text-slate-900">#{r.note_number}</div>
                         <div className="text-xs text-slate-500">
-                          {r.partner_name || 'Pa partner'} • {r.type === 'pickup' ? 'Marrje' : 'Dergese'}
+                          {r.partner_name || t('accounting.invoiceBuilder.noPartner')} • {r.type === 'pickup' ? t('accounting.invoiceBuilder.pickup') : t('accounting.invoiceBuilder.delivery')}
                           {r.delivered_at ? ` • ${String(r.delivered_at).slice(0, 10)}` : ''}
                         </div>
                       </button>
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-slate-500 mt-1">Opsionale — selektimi plotesoi automatikisht kontaktin dhe artikujt.</p>
+                <p className="text-xs text-slate-500 mt-1">{t('accounting.invoiceBuilder.deliveryNoteOptional')}</p>
               </div>
             )}
           </section>
@@ -981,31 +981,31 @@ export default function InvoiceBuilder() {
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-teal-600" /> Kompania jone (Shitesi)
+                <Building2 className="w-4 h-4 text-teal-600" /> {t('accounting.invoiceBuilder.sellerSection')}
               </h3>
               <Link to="/company/settings" className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-teal-700">
-                <Pencil className="w-3 h-3" /> Edito
+                <Pencil className="w-3 h-3" /> {t('common.edit')}
               </Link>
             </div>
             {company && (
               <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                <InfoRow label="Emri" value={company.name} />
-                {company.address && <InfoRow label="Adresa" value={`${company.address}${company.postal_code ? ', ' + company.postal_code : ''} ${company.city || ''}`} />}
-                {company.country && <InfoRow label="Shteti" value={company.country} />}
-                {company.vat_number && <InfoRow label="Nr. TVSH" value={company.vat_number} />}
-                {company.tax_number && <InfoRow label="Nr. Tatimor" value={company.tax_number} />}
-                {company.legal_form && <InfoRow label="Forma juridike" value={company.legal_form} />}
-                {company.commercial_register && <InfoRow label="Regjistri tregtar" value={company.commercial_register} />}
+                <InfoRow label={t('accounting.invoiceBuilder.companyName')} value={company.name} />
+                {company.address && <InfoRow label={t('accounting.invoiceBuilder.companyAddress')} value={`${company.address}${company.postal_code ? ', ' + company.postal_code : ''} ${company.city || ''}`} />}
+                {company.country && <InfoRow label={t('accounting.invoiceBuilder.country')} value={company.country} />}
+                {company.vat_number && <InfoRow label={t('accounting.invoiceBuilder.vatNumber')} value={company.vat_number} />}
+                {company.tax_number && <InfoRow label={t('accounting.invoiceBuilder.taxNumber')} value={company.tax_number} />}
+                {company.legal_form && <InfoRow label={t('accounting.invoiceBuilder.legalForm')} value={company.legal_form} />}
+                {company.commercial_register && <InfoRow label={t('accounting.invoiceBuilder.commercialRegister')} value={company.commercial_register} />}
                 {company.email && <InfoRow label="Email" value={company.email} />}
-                {company.phone && <InfoRow label="Telefon" value={company.phone} />}
+                {company.phone && <InfoRow label={t('accounting.invoiceBuilder.phone')} value={company.phone} />}
                 {bank && <InfoRow label="IBAN" value={bank.iban} />}
                 {bank && bank.bic && <InfoRow label="BIC" value={bank.bic} />}
-                {bank && bank.bank_name && <InfoRow label="Banka" value={bank.bank_name} />}
+                {bank && bank.bank_name && <InfoRow label={t('accounting.invoiceBuilder.bankName')} value={bank.bank_name} />}
               </div>
             )}
             {company && !company.vat_number && (
               <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                <AlertCircle className="w-3.5 h-3.5" /> Plotesoni numrin e TVSH-se ne cilesimet e kompanise.
+                <AlertCircle className="w-3.5 h-3.5" /> {t('accounting.invoiceBuilder.missingVat')}
               </div>
             )}
           </section>
@@ -1013,18 +1013,18 @@ export default function InvoiceBuilder() {
           {/* Buyer section */}
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 text-sm">Klienti (Bleresi)</h3>
+              <h3 className="font-bold text-slate-800 text-sm">{t('accounting.invoiceBuilder.buyerSection')}</h3>
               {contact && !editingContact && (
                 <button onClick={() => { setEditingContact(true); setNewContactForm(contact as any); }} className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-teal-700">
-                  <Pencil className="w-3 h-3" /> Edito
+                  <Pencil className="w-3 h-3" /> {t('common.edit')}
                 </button>
               )}
             </div>
 
             {/* Contact selector */}
-            <Field label="Kontakti">
+            <Field label={t('accounting.invoiceBuilder.contact')}>
               <select value={contactId} onChange={(e) => { setContactId(e.target.value); setEditingContact(false); }} className={selectCls}>
-                <option value="">Zgjidh kontakt...</option>
+                <option value="">{t('accounting.invoiceBuilder.pickContact')}</option>
                 {contacts.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}{c.country ? ` — ${c.country}` : ''}</option>
                 ))}
@@ -1034,15 +1034,15 @@ export default function InvoiceBuilder() {
             {/* Existing contact - full data card */}
             {contact && !editingContact && (
               <div className="rounded-lg bg-slate-50 border border-slate-100 p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                <InfoRow label="Emri" value={contact.name} />
-                {contact.address && <InfoRow label="Adresa" value={`${contact.address}${contact.postal_code ? ', ' + contact.postal_code : ''} ${contact.city || ''}`} />}
-                {contact.country && <InfoRow label="Shteti" value={contact.country} />}
-                {contact.vat_number && <InfoRow label="Nr. TVSH" value={contact.vat_number} />}
-                {contact.tax_number && <InfoRow label="Nr. Tatimor" value={contact.tax_number} />}
+                <InfoRow label={t('accounting.invoiceBuilder.companyName')} value={contact.name} />
+                {contact.address && <InfoRow label={t('accounting.invoiceBuilder.companyAddress')} value={`${contact.address}${contact.postal_code ? ', ' + contact.postal_code : ''} ${contact.city || ''}`} />}
+                {contact.country && <InfoRow label={t('accounting.invoiceBuilder.country')} value={contact.country} />}
+                {contact.vat_number && <InfoRow label={t('accounting.invoiceBuilder.vatNumber')} value={contact.vat_number} />}
+                {contact.tax_number && <InfoRow label={t('accounting.invoiceBuilder.taxNumber')} value={contact.tax_number} />}
                 {contact.email && <InfoRow label="Email" value={contact.email} />}
-                {contact.phone && <InfoRow label="Telefon" value={contact.phone} />}
+                {contact.phone && <InfoRow label={t('accounting.invoiceBuilder.phone')} value={contact.phone} />}
                 {contact.iban && <InfoRow label="IBAN" value={contact.iban} />}
-                {contact.payment_days && <InfoRow label="Dite pagese" value={`${contact.payment_days} dite`} />}
+                {contact.payment_days && <InfoRow label={t('accounting.invoiceBuilder.paymentDays')} value={`${contact.payment_days} ${t('accounting.invoiceBuilder.days')}`} />}
               </div>
             )}
 
@@ -1050,20 +1050,20 @@ export default function InvoiceBuilder() {
             {contact && editingContact && (
               <div className="rounded-lg border border-teal-200 bg-teal-50/30 p-3 space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <Field label="Emri"><input value={newContactForm.name || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, name: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Shteti"><input value={newContactForm.country || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, country: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Adresa"><input value={newContactForm.address || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, address: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Qyteti"><input value={newContactForm.city || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, city: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Kodi Postar"><input value={newContactForm.postal_code || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, postal_code: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Nr. TVSH"><input value={newContactForm.vat_number || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, vat_number: e.target.value.toUpperCase() }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.companyName')}><input value={newContactForm.name || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, name: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.country')}><input value={newContactForm.country || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, country: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.companyAddress')}><input value={newContactForm.address || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, address: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.city')}><input value={newContactForm.city || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, city: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.postalCode')}><input value={newContactForm.postal_code || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, postal_code: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.vatNumber')}><input value={newContactForm.vat_number || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, vat_number: e.target.value.toUpperCase() }))} className={inputCls} /></Field>
                   <Field label="Email"><input type="email" value={newContactForm.email || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, email: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Telefon"><input value={newContactForm.phone || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, phone: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.phone')}><input value={newContactForm.phone || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, phone: e.target.value }))} className={inputCls} /></Field>
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   <button onClick={() => updateExistingContact(newContactForm)} disabled={savingContact} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 disabled:opacity-60">
-                    {savingContact ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Ruaj ndryshimet
+                    {savingContact ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} {t('accounting.invoiceBuilder.saveChanges')}
                   </button>
-                  <button onClick={() => setEditingContact(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Anulo</button>
+                  <button onClick={() => setEditingContact(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">{t('common.cancel')}</button>
                 </div>
               </div>
             )}
@@ -1074,36 +1074,36 @@ export default function InvoiceBuilder() {
                 onClick={() => { setEditingContact(true); setNewContactForm({ name: '', contact_type: 'customer' }); }}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-50 w-full justify-center"
               >
-                <UserPlus className="w-3.5 h-3.5" /> Regjistro klient te ri
+                <UserPlus className="w-3.5 h-3.5" /> {t('accounting.invoiceBuilder.registerNewClient')}
               </button>
             )}
 
             {/* New contact registration form */}
             {!contactId && editingContact && (
               <div className="rounded-lg border border-sky-200 bg-sky-50/30 p-3 space-y-2">
-                <p className="text-xs font-semibold text-slate-700">Regjistro klient te ri</p>
+                <p className="text-xs font-semibold text-slate-700">{t('accounting.invoiceBuilder.registerNewClient')}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Field label="Emri *"><input value={newContactForm.name || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, name: e.target.value }))} placeholder="Emri i kompanise" className={inputCls} /></Field>
-                  <Field label="Shteti"><input value={newContactForm.country || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, country: e.target.value }))} placeholder="DE" className={inputCls} /></Field>
-                  <Field label="Adresa"><input value={newContactForm.address || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, address: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Qyteti"><input value={newContactForm.city || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, city: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Kodi Postar"><input value={newContactForm.postal_code || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, postal_code: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Nr. TVSH"><input value={newContactForm.vat_number || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, vat_number: e.target.value.toUpperCase() }))} placeholder="DE123456789" className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.companyNameRequired')}><input value={newContactForm.name || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, name: e.target.value }))} placeholder={t('accounting.invoiceBuilder.companyNamePlaceholder')} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.country')}><input value={newContactForm.country || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, country: e.target.value }))} placeholder="DE" className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.companyAddress')}><input value={newContactForm.address || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, address: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.city')}><input value={newContactForm.city || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, city: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.postalCode')}><input value={newContactForm.postal_code || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, postal_code: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.vatNumber')}><input value={newContactForm.vat_number || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, vat_number: e.target.value.toUpperCase() }))} placeholder="DE123456789" className={inputCls} /></Field>
                   <Field label="Email"><input type="email" value={newContactForm.email || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, email: e.target.value }))} className={inputCls} /></Field>
-                  <Field label="Telefon"><input value={newContactForm.phone || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, phone: e.target.value }))} className={inputCls} /></Field>
+                  <Field label={t('accounting.invoiceBuilder.phone')}><input value={newContactForm.phone || ''} onChange={(e) => setNewContactForm((p) => ({ ...p, phone: e.target.value }))} className={inputCls} /></Field>
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   <button onClick={saveNewContact} disabled={savingContact || !newContactForm.name.trim()} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-semibold hover:bg-sky-700 disabled:opacity-60">
-                    {savingContact ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />} Ruaj klientin
+                    {savingContact ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />} {t('accounting.invoiceBuilder.saveClient')}
                   </button>
-                  <button onClick={() => setEditingContact(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">Anulo</button>
+                  <button onClick={() => setEditingContact(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">{t('common.cancel')}</button>
                 </div>
               </div>
             )}
 
             {/* VAT override */}
             <div className="grid grid-cols-[1fr_auto] gap-2 items-end">
-              <Field label="Nr. TVSH i bleresit">
+              <Field label={t('accounting.invoiceBuilder.buyerVat')}>
                 <input
                   value={buyerVatOverride}
                   onChange={(e) => { setBuyerVatOverride(e.target.value.toUpperCase()); setViesStatus('idle'); }}
@@ -1113,7 +1113,7 @@ export default function InvoiceBuilder() {
                 />
               </Field>
               <button onClick={validateViesNow} className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold hover:bg-slate-50">
-                <ShieldCheck className="w-3.5 h-3.5" /> Verifiko
+                <ShieldCheck className="w-3.5 h-3.5" /> {t('accounting.invoiceBuilder.verify')}
               </button>
             </div>
             {buyerVat && (
@@ -1131,7 +1131,7 @@ export default function InvoiceBuilder() {
             )}
             <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <div className="font-semibold text-slate-700">Regjimi i TVSH-se</div>
+                <div className="font-semibold text-slate-700">{t('accounting.invoiceBuilder.vatRegime')}</div>
                 <RegimeBadge regime={regime.regime} />
               </div>
               {vatOverride === 'auto' && autoRegime.regime !== 'domestic' && autoRegime.regime !== 'not_applicable' && (
@@ -1144,10 +1144,10 @@ export default function InvoiceBuilder() {
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] uppercase tracking-wider text-slate-500 mr-1">Manuali:</span>
-                <VatOverrideBtn current={vatOverride} value="auto"   label="Auto"        onClick={setVatOverride} />
-                <VatOverrideBtn current={vatOverride} value="apply"  label="Apliko TVSH" onClick={setVatOverride} />
-                <VatOverrideBtn current={vatOverride} value="exempt" label="Pa TVSH"     onClick={setVatOverride} />
+                <span className="text-[10px] uppercase tracking-wider text-slate-500 mr-1">{t('accounting.invoiceBuilder.manual')}:</span>
+                <VatOverrideBtn current={vatOverride} value="auto"   label={t('accounting.invoiceBuilder.vatAuto')}      onClick={setVatOverride} />
+                <VatOverrideBtn current={vatOverride} value="apply"  label={t('accounting.invoiceBuilder.vatApply')}     onClick={setVatOverride} />
+                <VatOverrideBtn current={vatOverride} value="exempt" label={t('accounting.invoiceBuilder.vatExempt')}    onClick={setVatOverride} />
               </div>
               {regime.legalText[language] && (
                 <div className="italic text-[11px] mt-1">{regime.legalText[language]}</div>
@@ -1157,13 +1157,13 @@ export default function InvoiceBuilder() {
 
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 text-sm">Artikujt</h3>
+              <h3 className="font-bold text-slate-800 text-sm">{t('accounting.invoiceBuilder.items')}</h3>
               <div className="flex items-center gap-2">
                 <button onClick={addTransportLine} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold hover:bg-sky-100">
-                  <Truck className="w-3.5 h-3.5" /> Kosto transporti
+                  <Truck className="w-3.5 h-3.5" /> {t('accounting.invoiceBuilder.transportCost')}
                 </button>
                 <button onClick={addItem} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700">
-                  <Plus className="w-3.5 h-3.5" /> Shto
+                  <Plus className="w-3.5 h-3.5" /> {t('accounting.invoiceBuilder.addItem')}
                 </button>
               </div>
             </div>
@@ -1174,7 +1174,7 @@ export default function InvoiceBuilder() {
                   <div key={it.id} className="rounded-lg border border-slate-200 p-3 bg-slate-50/50 space-y-2">
                     <div className="grid grid-cols-12 gap-2">
                       <div className="col-span-12">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Pershkrimi</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.description')}</span>
                         <ProductAutocomplete
                           value={it.description}
                           catalog={catalog}
@@ -1186,21 +1186,21 @@ export default function InvoiceBuilder() {
                     </div>
                     <div className="grid grid-cols-12 gap-2">
                       <div className="col-span-3">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Kodi</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.code')}</span>
                         <input value={it.product_code} onChange={(e) => updateItem(it.id, { product_code: e.target.value })} className={inputCls} />
                       </div>
                       <div className="col-span-2">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Sasia</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.quantity')}</span>
                         <input type="number" step="0.001" value={it.quantity} onChange={(e) => updateItem(it.id, { quantity: Number(e.target.value) })} className={inputCls} />
                       </div>
                       <div className="col-span-2">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Njesia</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.unit')}</span>
                         <select value={it.unit_code} onChange={(e) => updateItem(it.id, { unit_code: e.target.value })} className={selectCls}>
                           {UN_ECE_UNITS.map((u) => <option key={u.code} value={u.code}>{u.code}</option>)}
                         </select>
                       </div>
                       <div className="col-span-3">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Cmimi neto</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.netPrice')}</span>
                         <input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(it.id, { unit_price: Number(e.target.value) })} className={inputCls} />
                       </div>
                       <div className="col-span-2">
@@ -1212,28 +1212,28 @@ export default function InvoiceBuilder() {
                     </div>
                     <div className="grid grid-cols-12 gap-2">
                       <div className="col-span-4">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Kategoria TVSH</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.vatCategory')}</span>
                         <select value={it.vat_category} onChange={(e) => updateItem(it.id, { vat_category: e.target.value })} className={selectCls}>
                           {VAT_CATEGORIES.map((c) => <option key={c.code} value={c.code}>{c.code} · {c.label}</option>)}
                         </select>
                       </div>
                       <div className="col-span-3">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Zbritje</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.discount')}</span>
                         <input type="number" step="0.01" value={it.discount_amount} onChange={(e) => updateItem(it.id, { discount_amount: Number(e.target.value) })} className={inputCls} />
                       </div>
                       <div className="col-span-3">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5 text-right">Totali</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5 text-right">{t('accounting.invoiceBuilder.total')}</span>
                         <div className="flex items-center justify-end h-[34px] text-sm font-bold text-slate-800">
                           {lineTotal.toFixed(2)} {currency}
                         </div>
                       </div>
                       <div className="col-span-2 flex flex-col items-end">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">Veprime</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.invoiceBuilder.actions')}</span>
                         <div className="flex items-center gap-1 h-[34px]">
-                          <button onClick={() => duplicateItem(it.id)} title="Dyfisho" className="p-1.5 rounded hover:bg-slate-200 text-slate-500">
+                          <button onClick={() => duplicateItem(it.id)} title={t('accounting.invoiceBuilder.duplicate')} className="p-1.5 rounded hover:bg-slate-200 text-slate-500">
                             <Copy className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => removeItem(it.id)} title="Fshij" className="p-1.5 rounded hover:bg-red-100 text-red-500 disabled:opacity-30" disabled={items.length === 1}>
+                          <button onClick={() => removeItem(it.id)} title={t('common.delete')} className="p-1.5 rounded hover:bg-red-100 text-red-500 disabled:opacity-30" disabled={items.length === 1}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -1246,23 +1246,23 @@ export default function InvoiceBuilder() {
           </section>
 
           <section className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-            <h3 className="font-bold text-slate-800 text-sm">Pagesa dhe shenime</h3>
+            <h3 className="font-bold text-slate-800 text-sm">{t('accounting.invoiceBuilder.paymentSection')}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Llogaria bankare">
+              <Field label={t('accounting.invoiceBuilder.bankAccount')}>
                 <select value={bankId} onChange={(e) => setBankId(e.target.value)} className={selectCls}>
-                  <option value="">Pa llogari</option>
+                  <option value="">{t('accounting.invoiceBuilder.noAccount')}</option>
                   {banks.map((b) => <option key={b.id} value={b.id}>{b.name} — {b.iban}</option>)}
                 </select>
               </Field>
-              <Field label="Referenca e pageses">
+              <Field label={t('accounting.invoiceBuilder.paymentReference')}>
                 <input value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} className={inputCls} />
               </Field>
-              <Field label="Shenime" full>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${inputCls} resize-none`} placeholder="Shenime shtese per klientin..." />
+              <Field label={t('accounting.invoiceBuilder.notes')} full>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${inputCls} resize-none`} placeholder={t('accounting.invoiceBuilder.notesPlaceholder')} />
                 {deliveryNoteId && deliveryNoteNumber && (
                   <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1">
                     <FileText className="w-3 h-3" />
-                    Referenca: Fletedergesa Nr. <span className="font-semibold">{deliveryNoteNumber}</span>
+                    {t('accounting.invoiceBuilder.referenceDeliveryNote')} <span className="font-semibold">{deliveryNoteNumber}</span>
                     {deliveryNoteDate && <span> ({deliveryNoteDate})</span>}
                   </p>
                 )}
@@ -1274,11 +1274,11 @@ export default function InvoiceBuilder() {
 
         {/* Totals summary (visible in form) */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-sm print:hidden">
-          <div>Subtotal: <span className="font-bold text-slate-900">{totals.subtotal.toFixed(2)} {currency}</span></div>
-          <div>TVSH: <span className="font-bold text-slate-900">{totals.vat_total.toFixed(2)} {currency}</span></div>
-          <div>Totali: <span className="font-bold text-emerald-700 text-base">{totals.total.toFixed(2)} {currency}</span></div>
+          <div>{t('accounting.invoiceBuilder.subtotal')}: <span className="font-bold text-slate-900">{totals.subtotal.toFixed(2)} {currency}</span></div>
+          <div>{t('accounting.invoiceBuilder.vat')}: <span className="font-bold text-slate-900">{totals.vat_total.toFixed(2)} {currency}</span></div>
+          <div>{t('accounting.invoiceBuilder.total')}: <span className="font-bold text-emerald-700 text-base">{totals.total.toFixed(2)} {currency}</span></div>
           <button onClick={() => setShowPreview(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-bold hover:bg-teal-700">
-            <Eye className="w-4 h-4" /> Shiko Preview
+            <Eye className="w-4 h-4" /> {t('accounting.invoiceBuilder.preview')}
           </button>
         </div>
       </div>
@@ -1291,21 +1291,21 @@ export default function InvoiceBuilder() {
             <div className="p-5 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Send className="w-5 h-5 text-teal-600" />
-                Dergo faturen me Email
+                {t('accounting.invoiceBuilder.sendByEmail')}
               </h3>
-              <p className="text-sm text-gray-500 mt-1">Fatura do te dergohet si PDF me email</p>
+              <p className="text-sm text-gray-500 mt-1">{t('accounting.invoiceBuilder.sendByEmailHint')}</p>
             </div>
             <div className="p-5 space-y-4">
               {emailSent ? (
                 <div className="text-center py-6">
                   <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                  <p className="text-lg font-semibold text-gray-900">Email u dergua me sukses!</p>
-                  <p className="text-sm text-gray-500 mt-1">Fatura PDF u dergua te {emailRecipient}</p>
+                  <p className="text-lg font-semibold text-gray-900">{t('accounting.invoiceBuilder.emailSent')}</p>
+                  <p className="text-sm text-gray-500 mt-1">{t('accounting.invoiceBuilder.emailSentTo')} {emailRecipient}</p>
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email i klientit *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.clientEmail')} *</label>
                     <input
                       type="email"
                       value={emailRecipient}
@@ -1315,7 +1315,7 @@ export default function InvoiceBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">CC (opsionale)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.ccOptional')}</label>
                     <input
                       type="text"
                       value={emailCc}
@@ -1325,15 +1325,15 @@ export default function InvoiceBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Gjuha e email-it</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.emailLanguage')}</label>
                     <select
                       value={emailLocale}
                       onChange={(e) => setEmailLocale(e.target.value as 'sq' | 'de' | 'en')}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="sq">Shqip</option>
-                      <option value="de">Gjermanisht</option>
-                      <option value="en">Anglisht</option>
+                      <option value="de">Deutsch</option>
+                      <option value="en">English</option>
                     </select>
                   </div>
                 </>
@@ -1346,13 +1346,13 @@ export default function InvoiceBuilder() {
                     onClick={() => { setShowEmailDialog(false); setShowPreview(true); }}
                     className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
-                    Shiko faturen
+                    {t('accounting.invoiceBuilder.viewInvoice')}
                   </button>
                   <button
                     onClick={() => navigate(listPath)}
                     className="px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700"
                   >
-                    Shko te lista
+                    {t('accounting.invoiceBuilder.goToList')}
                   </button>
                 </>
               ) : (
@@ -1361,7 +1361,7 @@ export default function InvoiceBuilder() {
                     onClick={() => { setShowEmailDialog(false); setShowPreview(true); }}
                     className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
                   >
-                    Kalo (mos dergo)
+                    {t('accounting.invoiceBuilder.skipSend')}
                   </button>
                   <button
                     onClick={async () => {
@@ -1401,7 +1401,7 @@ export default function InvoiceBuilder() {
                     className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50"
                   >
                     {emailSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    Dergo me PDF
+                    {t('accounting.invoiceBuilder.sendPdf')}
                   </button>
                 </>
               )}
@@ -1419,23 +1419,23 @@ export default function InvoiceBuilder() {
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-bold text-slate-900 truncate">
-                  {finalized ? 'Fatura u krijua' : 'Parashikimi i fatures'}
+                  {finalized ? t('accounting.invoiceBuilder.invoiceCreated') : t('accounting.invoiceBuilder.preview')}
                 </div>
                 <div className="text-xs text-slate-500 truncate">{invoiceNumber}</div>
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-end">
               <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">
-                <Printer className="w-4 h-4" /> Printo
+                <Printer className="w-4 h-4" /> {t('accounting.invoiceBuilder.print')}
               </button>
               {finalized && (
                 <button onClick={() => navigate(listPath)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-bold hover:bg-teal-700">
-                  Shko te lista
+                  {t('accounting.invoiceBuilder.goToList')}
                 </button>
               )}
               <button
                 onClick={() => setShowPreview(false)}
-                aria-label="Mbyll"
+                aria-label={t('common.close')}
                 className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
