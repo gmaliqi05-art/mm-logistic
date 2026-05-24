@@ -27,7 +27,14 @@ const COLOR_KEYS = [
 
 export default function EmailSettings() {
   const [values, setValues] = useState<Record<string, string>>({});
-  const [cron, setCron] = useState<{ project_url: string; service_role_key: string; enabled: boolean } | null>(null);
+  // Note: service_role_key is NEVER fetched into client state. The
+  // DB column stores it for pg_cron to read server-side, but pulling
+  // it back into the React app meant an XSS / browser-extension /
+  // screen-recorder leak would compromise the entire platform (all
+  // tenants). We only know whether the column is non-empty, and we
+  // only write a new value if the user explicitly types one.
+  const [cron, setCron] = useState<{ project_url: string; enabled: boolean; keyConfigured: boolean } | null>(null);
+  const [newServiceKey, setNewServiceKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; message: string } | null>(null);
@@ -45,14 +52,24 @@ export default function EmailSettings() {
     COLOR_KEYS.forEach((c) => { if (!map[c.key]) map[c.key] = c.default; });
     setValues(map);
 
+    // Read only the safe columns + whether the key is set, not the
+    // key itself.
     const { data: cr } = await supabase
       .from("email_cron_config")
-      .select("project_url, service_role_key, enabled")
+      .select("project_url, enabled, service_role_key")
       .eq("id", 1)
       .maybeSingle();
-    setCron(cr as { project_url: string; service_role_key: string; enabled: boolean } | null ?? {
-      project_url: "", service_role_key: "", enabled: false,
-    });
+    if (cr) {
+      const row = cr as { project_url: string | null; enabled: boolean; service_role_key: string | null };
+      setCron({
+        project_url: row.project_url ?? '',
+        enabled: !!row.enabled,
+        keyConfigured: !!(row.service_role_key && row.service_role_key.length > 0),
+      });
+    } else {
+      setCron({ project_url: '', enabled: false, keyConfigured: false });
+    }
+    setNewServiceKey('');
     setLoading(false);
   }
 
@@ -67,10 +84,25 @@ export default function EmailSettings() {
         if (error) throw error;
       }
       if (cron) {
+        // Only send service_role_key when the operator typed a new
+        // value in this session — keeps the existing key untouched
+        // on every other save, and prevents an empty-string clear
+        // by accident.
+        const payload: Record<string, unknown> = {
+          id: 1,
+          project_url: cron.project_url,
+          enabled: cron.enabled,
+          updated_at: new Date().toISOString(),
+        };
+        if (newServiceKey.trim()) payload.service_role_key = newServiceKey.trim();
         const { error } = await supabase
           .from("email_cron_config")
-          .upsert({ id: 1, ...cron, updated_at: new Date().toISOString() }, { onConflict: "id" });
+          .upsert(payload, { onConflict: "id" });
         if (error) throw error;
+        if (newServiceKey.trim()) {
+          setCron({ ...cron, keyConfigured: true });
+          setNewServiceKey('');
+        }
       }
       setToast({ ok: true, message: "Parametrat u ruajten." });
     } catch (e) {
@@ -207,15 +239,25 @@ export default function EmailSettings() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-700">Service Role Key</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-700">
+                    Service Role Key
+                    {cron.keyConfigured && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                        I KONFIGURUAR
+                      </span>
+                    )}
+                  </label>
                   <input
                     type="password"
-                    value={cron.service_role_key}
-                    onChange={(e) => setCron({ ...cron, service_role_key: e.target.value })}
-                    placeholder="eyJ..."
+                    value={newServiceKey}
+                    onChange={(e) => setNewServiceKey(e.target.value)}
+                    autoComplete="new-password"
+                    placeholder={cron.keyConfigured ? '••• shkruaje vlere te re per ta nderruar •••' : 'eyJ...'}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
                   />
-                  <p className="mt-1 text-xs text-slate-500">Nevojitet per thirrjet e brendshme HTTP nga pg_cron.</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Nevojitet per thirrjet e brendshme HTTP nga pg_cron. Per arsye sigurie, celesi i ruajtur nuk shfaqet ne ekran — shkruaje vetem nese deshiron ta nderrosh.
+                  </p>
                 </div>
               </div>
             )}
