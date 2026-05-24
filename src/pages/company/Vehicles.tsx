@@ -274,18 +274,18 @@ export default function CompanyVehicles() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Flota</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('company.vehicles.pageTitle')}</h1>
           <p className="text-gray-500 mt-1 text-sm">
-            Menaxhimi i kamioneve (LKW) dhe rimorkiove (Anhanger) sipas ligjit gjerman (StVZO, § 29 StVZO per HU).
+            {t('company.vehicles.pageSubtitle')}
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowScanner(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 font-medium">
-            <ScanLine className="w-4 h-4" /> Skano Zulassung
+            <ScanLine className="w-4 h-4" /> {t('company.vehicles.scanRegistration')}
           </button>
           <button onClick={() => openAdd(tab)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
             <Plus className="w-4 h-4" />
-            {tab === 'truck' ? 'Shto Kamion' : 'Shto Rimorkio'}
+            {tab === 'truck' ? t('company.vehicles.addTruck') : t('company.vehicles.addTrailer')}
           </button>
         </div>
       </div>
@@ -294,10 +294,10 @@ export default function CompanyVehicles() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
           <ShieldCheck className="w-5 h-5 text-amber-600" />
           <div className="flex-1 text-sm text-amber-900">
-            <span className="font-semibold">{criticalCount}</span> mjete kane afate qe skadojne ne 30 ditet e ardhshme.
+            <span className="font-semibold">{criticalCount}</span> {t('company.vehicles.criticalAlertSuffix')}
           </div>
           <Link to="/company/compliance" className="text-sm font-semibold text-amber-800 hover:text-amber-950">
-            Shiko te gjitha
+            {t('company.vehicles.seeAll')}
           </Link>
         </div>
       )}
@@ -316,14 +316,14 @@ export default function CompanyVehicles() {
             className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
               tab === 'truck' ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}>
-            <Truck className="w-4 h-4" /> Kamionet (LKW)
+            <Truck className="w-4 h-4" /> {t('company.vehicles.tabTrucks')}
             <span className="ml-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs">{truckCount}</span>
           </button>
           <button onClick={() => setTab('trailer')}
             className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
               tab === 'trailer' ? 'border-teal-600 text-teal-700' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}>
-            <Container className="w-4 h-4" /> Rimorkiot (Anhanger)
+            <Container className="w-4 h-4" /> {t('company.vehicles.tabTrailers')}
             <span className="ml-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs">{trailerCount}</span>
           </button>
         </div>
@@ -340,12 +340,12 @@ export default function CompanyVehicles() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Targa</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Marka / Modeli</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('company.vehicles.colPlate')}</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('company.vehicles.colBrandModel')}</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">VIN</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">HU/TUV</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">Sigurimi</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">Statusi</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">{t('company.vehicles.colInsurance')}</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">{t('company.vehicles.colStatus')}</th>
                 <th className="w-10" />
               </tr>
             </thead>
@@ -398,7 +398,7 @@ export default function CompanyVehicles() {
                           v.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
                           v.status === 'in_repair' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'
                         }`}>
-                          {v.status === 'active' ? 'Aktiv' : v.status === 'in_repair' ? 'Ne riparim' : v.status === 'inactive' ? 'Jo aktiv' : 'Shitur'}
+                          {v.status === 'active' ? t('company.vehicles.statusActive') : v.status === 'in_repair' ? t('company.vehicles.statusInRepair') : v.status === 'inactive' ? t('company.vehicles.statusInactive') : t('company.vehicles.statusSold')}
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -421,32 +421,32 @@ export default function CompanyVehicles() {
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900">
-                {form.vehicle_type === 'truck' ? 'Shto Kamion (LKW)' : 'Shto Rimorkio (Anhanger)'}
+                {form.vehicle_type === 'truck' ? t('company.vehicles.modalAddTruck') : t('company.vehicles.modalAddTrailer')}
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Te dhenat bazike</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('company.vehicles.sectionBasic')}</h3>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Targa (Kennzeichen) *" value={form.license_plate} onChange={(v) => setForm({ ...form, license_plate: v })} placeholder="B-XX 1234" />
-                  <Field label="VIN (FIN)" value={form.vin} onChange={(v) => setForm({ ...form, vin: v })} placeholder="WDB9634031L123456" />
-                  <Field label="Marka *" value={form.brand} onChange={(v) => setForm({ ...form, brand: v })} placeholder="Mercedes-Benz" />
-                  <Field label="Modeli" value={form.model} onChange={(v) => setForm({ ...form, model: v })} placeholder="Actros 1845" />
-                  <Field label="Data e pare e regjistrimit" type="date" value={form.first_registration} onChange={(v) => setForm({ ...form, first_registration: v })} />
-                  <Field label="Klasa Euro" value={form.euro_emission} onChange={(v) => setForm({ ...form, euro_emission: v })} placeholder="Euro 6" />
+                  <Field label={t('company.vehicles.fieldPlate')} value={form.license_plate} onChange={(v) => setForm({ ...form, license_plate: v })} placeholder="B-XX 1234" />
+                  <Field label={t('company.vehicles.fieldVin')} value={form.vin} onChange={(v) => setForm({ ...form, vin: v })} placeholder="WDB9634031L123456" />
+                  <Field label={t('company.vehicles.fieldBrand')} value={form.brand} onChange={(v) => setForm({ ...form, brand: v })} placeholder="Mercedes-Benz" />
+                  <Field label={t('company.vehicles.fieldModel')} value={form.model} onChange={(v) => setForm({ ...form, model: v })} placeholder="Actros 1845" />
+                  <Field label={t('company.vehicles.fieldFirstRegistration')} type="date" value={form.first_registration} onChange={(v) => setForm({ ...form, first_registration: v })} />
+                  <Field label={t('company.vehicles.fieldEuroClass')} value={form.euro_emission} onChange={(v) => setForm({ ...form, euro_emission: v })} placeholder="Euro 6" />
                   <Field label="ZB I Nummer" value={form.zb1_number} onChange={(v) => setForm({ ...form, zb1_number: v })} />
                   <Field label="ZB II Nummer" value={form.zb2_number} onChange={(v) => setForm({ ...form, zb2_number: v })} />
-                  <Field label="Pesha max (kg)" type="number" value={form.max_weight_kg} onChange={(v) => setForm({ ...form, max_weight_kg: v })} />
-                  <Field label="Ngarkesa (kg)" type="number" value={form.payload_kg} onChange={(v) => setForm({ ...form, payload_kg: v })} />
-                  <Field label="Numri i akseve" type="number" value={form.axles} onChange={(v) => setForm({ ...form, axles: v })} />
-                  <Field label="Karburanti" value={form.fuel_type} onChange={(v) => setForm({ ...form, fuel_type: v })} placeholder="Diesel" />
+                  <Field label={t('company.vehicles.fieldMaxWeight')} type="number" value={form.max_weight_kg} onChange={(v) => setForm({ ...form, max_weight_kg: v })} />
+                  <Field label={t('company.vehicles.fieldPayload')} type="number" value={form.payload_kg} onChange={(v) => setForm({ ...form, payload_kg: v })} />
+                  <Field label={t('company.vehicles.fieldAxles')} type="number" value={form.axles} onChange={(v) => setForm({ ...form, axles: v })} />
+                  <Field label={t('company.vehicles.fieldFuel')} value={form.fuel_type} onChange={(v) => setForm({ ...form, fuel_type: v })} placeholder="Diesel" />
                   {form.vehicle_type === 'truck' && (
-                    <Field label="Fuqia (kW)" type="number" value={form.engine_power_kw} onChange={(v) => setForm({ ...form, engine_power_kw: v })} />
+                    <Field label={t('company.vehicles.fieldEnginePower')} type="number" value={form.engine_power_kw} onChange={(v) => setForm({ ...form, engine_power_kw: v })} />
                   )}
-                  <Field label="Ngjyra" value={form.color} onChange={(v) => setForm({ ...form, color: v })} />
+                  <Field label={t('company.vehicles.fieldColor')} value={form.color} onChange={(v) => setForm({ ...form, color: v })} />
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Depo</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldDepot')}</label>
                     <select value={form.depot_id} onChange={(e) => setForm({ ...form, depot_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
                       <option value="">—</option>
@@ -457,18 +457,18 @@ export default function CompanyVehicles() {
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Dimensionet dhe ADR (per planifikim rrugesh HGV)</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('company.vehicles.sectionDimensionsAdr')}</h3>
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <Field label="Gjatesia (mm)" type="number" value={form.length_mm} onChange={(v) => setForm({ ...form, length_mm: v })} placeholder="13000" />
-                  <Field label="Gjeresia (mm)" type="number" value={form.width_mm} onChange={(v) => setForm({ ...form, width_mm: v })} placeholder="2550" />
-                  <Field label="Lartesia (mm)" type="number" value={form.height_mm} onChange={(v) => setForm({ ...form, height_mm: v })} placeholder="4000" />
+                  <Field label={t('company.vehicles.fieldLength')} type="number" value={form.length_mm} onChange={(v) => setForm({ ...form, length_mm: v })} placeholder="13000" />
+                  <Field label={t('company.vehicles.fieldWidth')} type="number" value={form.width_mm} onChange={(v) => setForm({ ...form, width_mm: v })} placeholder="2550" />
+                  <Field label={t('company.vehicles.fieldHeight')} type="number" value={form.height_mm} onChange={(v) => setForm({ ...form, height_mm: v })} placeholder="4000" />
                   {form.vehicle_type === 'truck' && (
-                    <Field label="Ngarkesa max ne nje akse (kg)" type="number" value={form.axle_load_kg} onChange={(v) => setForm({ ...form, axle_load_kg: v })} placeholder="11500" />
+                    <Field label={t('company.vehicles.fieldAxleLoad')} type="number" value={form.axle_load_kg} onChange={(v) => setForm({ ...form, axle_load_kg: v })} placeholder="11500" />
                   )}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Klasa ADR</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldAdrClass')}</label>
                     <select value={form.adr_class} onChange={(e) => setForm({ ...form, adr_class: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-                      <option value="none">Pa ADR</option>
+                      <option value="none">{t('company.vehicles.adrNone')}</option>
                       <option value="1">1 - Eksplozive</option>
                       <option value="2">2 - Gazra</option>
                       <option value="3">3 - Lengje te ndezshme</option>
@@ -485,7 +485,7 @@ export default function CompanyVehicles() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1.5">Kategoria e tunelit</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldTunnel')}</label>
                     <select value={form.tunnel_category} onChange={(e) => setForm({ ...form, tunnel_category: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
                       <option value="">—</option>
                       <option value="A">A</option>
@@ -499,11 +499,11 @@ export default function CompanyVehicles() {
                     <>
                       <div className="flex items-center gap-2 pt-6">
                         <input id="has_tacho" type="checkbox" checked={form.has_tachograph} onChange={(e) => setForm({ ...form, has_tachograph: e.target.checked })} className="rounded" />
-                        <label htmlFor="has_tacho" className="text-sm text-gray-700">Ka tachograph</label>
+                        <label htmlFor="has_tacho" className="text-sm text-gray-700">{t('company.vehicles.hasTachograph')}</label>
                       </div>
                       {form.has_tachograph && (
                         <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1.5">Lloji i tachograph-it</label>
+                          <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldTachoType')}</label>
                           <select value={form.tachograph_type} onChange={(e) => setForm({ ...form, tachograph_type: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
                             <option value="">—</option>
                             <option value="analog">Analog</option>
@@ -519,39 +519,39 @@ export default function CompanyVehicles() {
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Inspektimet (HU/TUV, AU, SP, Tacho)</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('company.vehicles.sectionInspections')}</h3>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="HU/TUV skadon me" type="date" value={form.hu_tuv_expiry} onChange={(v) => setForm({ ...form, hu_tuv_expiry: v })} />
-                  <Field label="AU (emisionet) skadon" type="date" value={form.au_expiry} onChange={(v) => setForm({ ...form, au_expiry: v })} />
+                  <Field label={t('company.vehicles.fieldHuExpiry')} type="date" value={form.hu_tuv_expiry} onChange={(v) => setForm({ ...form, hu_tuv_expiry: v })} />
+                  <Field label={t('company.vehicles.fieldAuExpiry')} type="date" value={form.au_expiry} onChange={(v) => setForm({ ...form, au_expiry: v })} />
                   {form.vehicle_type === 'trailer' && (
                     <Field label="SP (Sicherheitsprufung)" type="date" value={form.sp_expiry} onChange={(v) => setForm({ ...form, sp_expiry: v })} />
                   )}
                   {form.vehicle_type === 'truck' && (
-                    <Field label="Tachograph kalibrim" type="date" value={form.tacho_expiry} onChange={(v) => setForm({ ...form, tacho_expiry: v })} />
+                    <Field label={t('company.vehicles.fieldTachoCalibration')} type="date" value={form.tacho_expiry} onChange={(v) => setForm({ ...form, tacho_expiry: v })} />
                   )}
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Sigurimi (Haftpflicht, Vollkasko)</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('company.vehicles.sectionInsurance')}</h3>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Haftpflicht ofruesi" value={form.haftpflicht_provider} onChange={(v) => setForm({ ...form, haftpflicht_provider: v })} placeholder="HUK-Coburg, Allianz..." />
-                  <Field label="Haftpflicht skadon" type="date" value={form.haftpflicht_expiry} onChange={(v) => setForm({ ...form, haftpflicht_expiry: v })} />
-                  <Field label="Vollkasko skadon" type="date" value={form.vollkasko_expiry} onChange={(v) => setForm({ ...form, vollkasko_expiry: v })} />
+                  <Field label={t('company.vehicles.fieldHaftpflichtProvider')} value={form.haftpflicht_provider} onChange={(v) => setForm({ ...form, haftpflicht_provider: v })} placeholder="HUK-Coburg, Allianz..." />
+                  <Field label={t('company.vehicles.fieldHaftpflichtExpiry')} type="date" value={form.haftpflicht_expiry} onChange={(v) => setForm({ ...form, haftpflicht_expiry: v })} />
+                  <Field label={t('company.vehicles.fieldVollkaskoExpiry')} type="date" value={form.vollkasko_expiry} onChange={(v) => setForm({ ...form, vollkasko_expiry: v })} />
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Kfz-Steuer (Taksa e mjetit)</h3>
-                <Field label="Data e skadimit" type="date" value={form.kfz_steuer_due} onChange={(v) => setForm({ ...form, kfz_steuer_due: v })} />
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('company.vehicles.sectionKfzSteuer')}</h3>
+                <Field label={t('company.vehicles.fieldKfzDue')} type="date" value={form.kfz_steuer_due} onChange={(v) => setForm({ ...form, kfz_steuer_due: v })} />
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Anulo</button>
+              <button onClick={() => setShowModal(false)} className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">{t('common.cancel')}</button>
               <button onClick={handleSave} disabled={saving}
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Ruaj
+                {t('common.save')}
               </button>
             </div>
           </div>
