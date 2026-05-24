@@ -1,33 +1,58 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef, type ReactNode } from 'react';
 import { sq } from './sq';
-import { en } from './en';
-import { de } from './de';
-import { fr } from './fr';
 import { legalTranslations } from './legal';
 
 export type Language = 'sq' | 'en' | 'de' | 'fr';
 
 export type Translations = typeof sq;
 
-// Base translations as-loaded from each language file.
-const baseTranslations: Record<Language, Translations> = { sq, en, de, fr };
-
-// Merge `legal` block into each language at module load time.
-// `legalTranslations` is imported from ./legal/index.ts and contains
-// all 8 legal documents (impressum, terms, cookies, privacy, dpa,
-// subprocessors, aup, refund) plus common labels.
-const translations: Record<Language, Translations> = {
-  sq: { ...baseTranslations.sq, legal: legalTranslations.sq } as unknown as Translations,
-  en: { ...baseTranslations.en, legal: legalTranslations.en } as unknown as Translations,
-  de: { ...baseTranslations.de, legal: legalTranslations.de } as unknown as Translations,
-  fr: { ...baseTranslations.fr, legal: legalTranslations.fr } as unknown as Translations,
+// Default-language translations are eager (sq is the source of truth
+// and the fallback). en/de/fr are dynamically imported the first time
+// the user switches to that language — keeps the initial bundle small
+// (~200 KB instead of ~830 KB) since most users never switch away
+// from their default.
+const loaders: Record<Exclude<Language, 'sq'>, () => Promise<{ [k: string]: Translations }>> = {
+  en: () => import('./en') as Promise<{ [k: string]: Translations }>,
+  de: () => import('./de') as Promise<{ [k: string]: Translations }>,
+  fr: () => import('./fr') as Promise<{ [k: string]: Translations }>,
 };
+
+const localeKey: Record<Exclude<Language, 'sq'>, string> = {
+  en: 'en',
+  de: 'de',
+  fr: 'fr',
+};
+
+function withLegal(base: Translations, lang: Language): Translations {
+  return { ...base, legal: legalTranslations[lang] } as unknown as Translations;
+}
+
+// Map of already-loaded language tables. sq is preloaded; the others
+// are filled on first use.
+const cache: Record<Language, Translations | undefined> = {
+  sq: withLegal(sq, 'sq'),
+  en: undefined,
+  de: undefined,
+  fr: undefined,
+};
+
+async function ensureLoaded(lang: Language): Promise<Translations> {
+  const existing = cache[lang];
+  if (existing) return existing;
+  if (lang === 'sq') return cache.sq!;
+  const mod = await loaders[lang]();
+  // Modules export their language as the named binding ('en' for ./en.ts).
+  const base = (mod[localeKey[lang]] ?? mod.default) as Translations;
+  const full = withLegal(base, lang);
+  cache[lang] = full;
+  return full;
+}
 
 export const languageNames: Record<Language, string> = {
   sq: 'Shqip',
   en: 'English',
   de: 'Deutsch',
-  fr: 'Fran\u00e7ais',
+  fr: 'Français',
 };
 
 export const languageFlags: Record<Language, string> = {
@@ -58,30 +83,49 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('ep_language');
-    if (saved && saved in translations) return saved as Language;
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('ep_language') : null;
+    if (saved === 'sq' || saved === 'en' || saved === 'de' || saved === 'fr') return saved;
     return 'sq';
   });
+  // Force re-render once a lazy locale finishes loading.
+  const [, setLoadedTick] = useState(0);
+  const loadingRef = useRef<Language | null>(null);
+
+  useEffect(() => {
+    if (cache[language]) return;
+    loadingRef.current = language;
+    ensureLoaded(language)
+      .then(() => {
+        if (loadingRef.current === language) setLoadedTick((n) => n + 1);
+      })
+      .catch(() => { /* fall back to sq silently */ });
+  }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('ep_language', lang);
-    document.documentElement.lang = lang;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ep_language', lang);
+      document.documentElement.lang = lang;
+    }
   }, []);
 
+  // While the requested language is loading, fall back to sq so the
+  // app doesn't render raw translation keys.
+  const active: Translations = cache[language] ?? cache.sq!;
+
   const t = useCallback((key: string): string => {
-    return getNestedValue(translations[language] as unknown as Record<string, unknown>, key);
-  }, [language]);
+    return getNestedValue(active as unknown as Record<string, unknown>, key);
+  }, [active]);
 
   const tRaw = useCallback((key: string): unknown => {
     const keys = key.split('.');
-    let current: unknown = translations[language];
+    let current: unknown = active;
     for (const k of keys) {
       if (current === undefined || current === null) return undefined;
       current = (current as Record<string, unknown>)[k];
     }
     return current;
-  }, [language]);
+  }, [active]);
 
   const value = useMemo(() => ({ language, setLanguage, t, tRaw }), [language, setLanguage, t, tRaw]);
 
