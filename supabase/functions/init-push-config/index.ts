@@ -1,15 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireSetupToken } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, X-Setup-Token",
 };
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+
+  // Bootstrap-only endpoint: writes service-role key into app_config.
+  // Disabled by default; enable by setting SETUP_TOKEN env var.
+  const tokenErr = requireSetupToken(req, corsHeaders);
+  if (tokenErr) return tokenErr;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

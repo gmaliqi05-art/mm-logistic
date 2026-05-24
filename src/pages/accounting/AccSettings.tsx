@@ -241,10 +241,12 @@ export default function AccSettings() {
     setRatesMessage(null);
     try {
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-ecb-rates`;
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
         },
       });

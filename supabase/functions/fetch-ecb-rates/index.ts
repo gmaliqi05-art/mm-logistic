@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +18,12 @@ const FALLBACK: Record<string, number> = {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+
+  // Cron uses service-role bearer; manual "refresh rates" button uses session.
+  if (!isServiceRoleCall(req)) {
+    const caller = await requireCaller(req, { corsHeaders });
+    if (!caller.ok) return caller.response;
+  }
 
   try {
     const admin = createClient(
