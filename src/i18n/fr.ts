@@ -410,6 +410,11 @@ export const fr: typeof sq = {
     addressLabel: 'Adresse',
     websiteLabel: 'Site web',
   },
+  register: {
+    pickBusinessType: 'Choisissez votre type d\'activité',
+    changePlanLater: 'Vous pourrez changer de plan plus tard dans les paramètres',
+    pickLegalForm: 'Choisissez une forme juridique',
+  },
   payment: {
     verifying: 'Verification du paiement...',
     pleaseWait: 'Veuillez patienter pendant que nous confirmons votre paiement.',
@@ -1671,6 +1676,9 @@ export const fr: typeof sq = {
       documentsTitle: 'Mes documents',
       baseSaved: 'Base enregistrée',
       noStoredCoordinates: 'Aucune coordonnée enregistrée',
+      baseLocation: 'Lieu de base',
+      baseLocationHint: 'Lorsqu\'aucune destination n\'est définie, le système affichera automatiquement l\'itinéraire vers le lieu de base.',
+      baseAddressPlaceholder: 'p. ex. Rue Marubi 8, Shkoder',
     },
     tracking: {
       tabTracking: 'Suivi',
@@ -2517,6 +2525,11 @@ export const fr: typeof sq = {
     invoices: {
       title: 'Factures',
       create: 'Créer',
+      createDeliveryNotePrompt: 'Créer un bon de livraison ?',
+      invoiceSavedPrefix: 'La facture',
+      invoiceSavedSuffix: 'a été enregistrée avec succès.',
+      pickAccount: 'Choisissez un compte',
+      pickProductOrType: 'Choisissez un produit ou saisissez',
       subtitle: 'Gerer les factures sortantes',
       createInvoice: 'Creer une facture',
       editInvoice: 'Modifier la facture',

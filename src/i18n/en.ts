@@ -410,6 +410,11 @@ export const en: typeof sq = {
     addressLabel: 'Address',
     websiteLabel: 'Website',
   },
+  register: {
+    pickBusinessType: 'Pick your business type',
+    changePlanLater: 'You can change the plan later in settings',
+    pickLegalForm: 'Pick a legal form',
+  },
   payment: {
     verifying: 'Verifying payment...',
     pleaseWait: 'Please wait while we confirm your payment.',
@@ -1674,6 +1679,9 @@ export const en: typeof sq = {
       documentsTitle: 'My documents',
       baseSaved: 'Base saved',
       noStoredCoordinates: 'No stored coordinates',
+      baseLocation: 'Home base location',
+      baseLocationHint: 'When no destination is set, the system will automatically display the route to your home base.',
+      baseAddressPlaceholder: 'e.g. Marubi St. 8, Shkoder',
     },
     tracking: {
       tabTracking: 'Tracking',
@@ -2521,6 +2529,11 @@ export const en: typeof sq = {
       title: 'Invoices',
       subtitle: 'Manage outgoing invoices',
       create: 'Create',
+      createDeliveryNotePrompt: 'Create Delivery Note?',
+      invoiceSavedPrefix: 'Invoice',
+      invoiceSavedSuffix: 'was saved successfully.',
+      pickAccount: 'Pick an account',
+      pickProductOrType: 'Pick a product or type',
       createInvoice: 'Create Invoice',
       editInvoice: 'Edit Invoice',
       noInvoices: 'No invoices',

@@ -408,6 +408,11 @@ export const sq = {
     addressLabel: 'Adresa',
     websiteLabel: 'Website',
   },
+  register: {
+    pickBusinessType: 'Zgjidhni llojin e biznesit',
+    changePlanLater: 'Mund ta ndryshoni planin me vone nga cilesimet',
+    pickLegalForm: 'Zgjidh formën ligjore',
+  },
   payment: {
     verifying: 'Duke verifikuar pagesen...',
     pleaseWait: 'Ju lutem prisni ndersa konfirmojme pagesen tuaj.',
@@ -1669,6 +1674,9 @@ export const sq = {
       documentsTitle: 'Dokumentet e mia',
       baseSaved: 'Baza u ruajt',
       noStoredCoordinates: 'Asnje koordinate e ruajtur',
+      baseLocation: 'Lokacioni i bazes',
+      baseLocationHint: 'Kur nuk ka destinacion te caktuar, sistemi do te shfaqe automatikisht rrugen per ne baze.',
+      baseAddressPlaceholder: 'P.sh. Rr. Marubi 8, Shkoder',
     },
     tracking: {
       tabTracking: 'Gjurmimi',
@@ -2517,6 +2525,11 @@ export const sq = {
       subtitle: 'Menaxho faturat dalese',
       create: 'Krijo',
       createInvoice: 'Krijo Fature',
+      createDeliveryNotePrompt: 'Krijo Fletedergese?',
+      invoiceSavedPrefix: 'Fatura',
+      invoiceSavedSuffix: 'u ruajt me sukses.',
+      pickAccount: 'Zgjidhni llogarine',
+      pickProductOrType: 'Zgjidhni produktin ose shkruani',
       editInvoice: 'Ndrysho Faturen',
       noInvoices: 'Nuk ka fatura',
       noInvoicesHint: 'Krijoni faturen e pare per te filluar gjurmimin e te ardhurave dhe te dergoni faturat tek klientet.',

@@ -537,6 +537,7 @@ export default function RegisterPage() {
 }
 
 function BusinessTypeSelector({ businessType, onChange }: { businessType: BusinessType; onChange: (t: BusinessType) => void }) {
+  const { t } = useTranslation();
   const options: { type: BusinessType; icon: typeof Truck; title: string; desc: string }[] = [
     {
       type: 'logistics',
@@ -560,8 +561,8 @@ function BusinessTypeSelector({ businessType, onChange }: { businessType: Busine
 
   return (
     <div className="mb-8">
-      <h2 className="text-center text-lg font-bold text-slate-800 mb-1">Zgjidhni llojin e biznesit</h2>
-      <p className="text-center text-sm text-slate-500 mb-5">Mund ta ndryshoni planin me vone nga cilesimet</p>
+      <h2 className="text-center text-lg font-bold text-slate-800 mb-1">{t('register.pickBusinessType')}</h2>
+      <p className="text-center text-sm text-slate-500 mb-5">{t('register.changePlanLater')}</p>
       <div className="grid sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
         {options.map(({ type, icon: Icon, title, desc }) => {
           const isActive = businessType === type;
@@ -865,7 +866,7 @@ function StepInfo({
                       onChange={(e) => updateForm('legalForm', e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
                     >
-                      <option value="">Zgjidh formën ligjore</option>
+                      <option value="">{t('register.pickLegalForm')}</option>
                       {profile.legalForms.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
