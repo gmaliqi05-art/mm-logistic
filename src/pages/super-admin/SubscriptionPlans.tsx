@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Check, ToggleLeft, ToggleRight, GripVertical } from 'lucide-react';
+import { Star, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Check, ToggleLeft, ToggleRight, GripVertical, ChevronUp, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
@@ -111,6 +111,28 @@ export default function SubscriptionPlans() {
       ...prev,
       features: (prev.features as string[]).filter((_, i) => i !== idx),
     }));
+  }
+
+  function moveFeature(idx: number, direction: -1 | 1) {
+    setFormData((prev) => {
+      const arr = [...(prev.features as string[])];
+      const target = idx + direction;
+      if (target < 0 || target >= arr.length) return prev;
+      [arr[idx], arr[target]] = [arr[target], arr[idx]];
+      return { ...prev, features: arr };
+    });
+  }
+
+  async function swapSortOrder(planA: SubscriptionPlan, planB: SubscriptionPlan) {
+    try {
+      const orderA = planA.sort_order;
+      const orderB = planB.sort_order;
+      await supabase.from('subscription_plans').update({ sort_order: orderB, updated_at: new Date().toISOString() }).eq('id', planA.id);
+      await supabase.from('subscription_plans').update({ sort_order: orderA, updated_at: new Date().toISOString() }).eq('id', planB.id);
+      await fetchPlans();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Gabim gjate ndryshimit te renditjes');
+    }
   }
 
   async function handleSave() {
@@ -249,9 +271,11 @@ export default function SubscriptionPlans() {
       </div>
 
       <div className="grid gap-6">
-        {plans.filter((p) => filterType === 'all' || p.product_type === filterType).map((plan) => {
+        {plans.filter((p) => filterType === 'all' || p.product_type === filterType).map((plan, planIdx, filteredArr) => {
           const PlanIcon = getPlanIconShared(plan);
           const productMeta = PRODUCT_TYPE_META[plan.product_type ?? 'logistics'];
+          const prevPlan = planIdx > 0 ? filteredArr[planIdx - 1] : null;
+          const nextPlan = planIdx < filteredArr.length - 1 ? filteredArr[planIdx + 1] : null;
           return (
             <div
               key={plan.id}
@@ -261,11 +285,28 @@ export default function SubscriptionPlans() {
             >
               <div className="p-6">
                 <div className="flex flex-col md:flex-row md:items-start gap-6">
-                  <div className="flex items-start gap-4 flex-1 min-w-0">
-                    <div className="p-3 bg-teal-50 rounded-xl flex-shrink-0">
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-1">
+                    <button
+                      onClick={() => prevPlan && swapSortOrder(plan, prevPlan)}
+                      disabled={!prevPlan}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-teal-50 hover:text-teal-600 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                      title="Leviz lart"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <div className="p-3 bg-teal-50 rounded-xl">
                       <PlanIcon className="w-6 h-6 text-teal-600" />
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <button
+                      onClick={() => nextPlan && swapSortOrder(plan, nextPlan)}
+                      disabled={!nextPlan}
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-teal-50 hover:text-teal-600 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                      title="Leviz poshte"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-3 flex-wrap">
                         <h3 className="text-lg font-bold text-gray-900">{plan.display_name}</h3>
                         {!plan.is_active && (
@@ -284,6 +325,7 @@ export default function SubscriptionPlans() {
                           <productMeta.icon className="w-3 h-3" />
                           {productMeta.label}
                         </span>
+                        <span className="text-xs text-gray-400 font-mono">#{plan.sort_order}</span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
 
@@ -323,9 +365,6 @@ export default function SubscriptionPlans() {
                             </div>
                           </>
                         )}
-                        <div className="text-sm text-gray-400">
-                          <GripVertical className="w-4 h-4 inline" /> #{plan.sort_order}
-                        </div>
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -340,7 +379,6 @@ export default function SubscriptionPlans() {
                         ))}
                       </div>
                     </div>
-                  </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
@@ -668,12 +706,32 @@ export default function SubscriptionPlans() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   {t('superAdmin.plans.features')}
                 </label>
-                <div className="space-y-2 mb-3">
+                <div className="space-y-1.5 mb-3">
                   {(formData.features as string[]).map((feature, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg group"
+                      className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100"
                     >
+                      <div className="flex flex-col flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => moveFeature(idx, -1)}
+                          disabled={idx === 0}
+                          className="p-0.5 text-gray-400 hover:text-teal-600 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                          title="Leviz lart"
+                        >
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveFeature(idx, 1)}
+                          disabled={idx === (formData.features as string[]).length - 1}
+                          className="p-0.5 text-gray-400 hover:text-teal-600 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                          title="Leviz poshte"
+                        >
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
+                      </div>
                       <Check className="w-4 h-4 text-teal-500 flex-shrink-0" />
                       <input
                         type="text"
@@ -691,7 +749,8 @@ export default function SubscriptionPlans() {
                       <button
                         type="button"
                         onClick={() => removeFeature(idx)}
-                        className="text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                        title="Fshi vecorine"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -710,13 +769,13 @@ export default function SubscriptionPlans() {
                         addFeature();
                       }
                     }}
-                    placeholder={`Shto vecorite...`}
+                    placeholder="Shto vecorite..."
                     className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                   />
                   <button
                     type="button"
                     onClick={addFeature}
-                    className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="px-4 py-2.5 bg-teal-50 text-teal-700 rounded-lg hover:bg-teal-100 transition-colors font-medium"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
