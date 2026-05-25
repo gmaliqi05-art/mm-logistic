@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Loader2, Tag, Package, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { formatCurrency } from '../../types/accounting';
 
 interface CatalogProduct {
   id: string;
@@ -205,7 +206,7 @@ export default function ClientPricesModal({ contactId, contactName, companyId, o
                               </div>
                             </td>
                             <td className="px-4 py-3 text-right text-gray-500">
-                              {product ? `${product.price_net.toFixed(2)} EUR` : '-'}
+                              {product ? formatCurrency(product.price_net, 'EUR') : '-'}
                             </td>
                             <td className="px-4 py-3 text-right">
                               <input
@@ -258,7 +259,7 @@ export default function ClientPricesModal({ contactId, contactName, companyId, o
                         <option value=":">-- Zgjedh produktin --</option>
                         {availableProducts.map(p => (
                           <option key={`${p.source}:${p.id}`} value={`${p.source}:${p.id}`}>
-                            {p.name} {p.sku ? `(${p.sku})` : ''} - {p.price_net.toFixed(2)} EUR [{p.source === 'accounting' ? 'Kont.' : 'Stok'}]
+                            {p.name} {p.sku ? `(${p.sku})` : ''} - {formatCurrency(p.price_net, 'EUR')} [{p.source === 'accounting' ? 'Kont.' : 'Stok'}]
                           </option>
                         ))}
                       </select>

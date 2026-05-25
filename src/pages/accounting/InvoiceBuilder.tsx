@@ -14,6 +14,7 @@ import {
   UN_ECE_UNITS, VAT_CATEGORIES, validateVatFormat,
   type EuCountry, type EuVatRate,
 } from '../../utils/euCompliance';
+import { formatCurrency, type AccCurrency } from '../../types/accounting';
 
 type Lang = 'en' | 'de' | 'fr' | 'sq';
 
@@ -1224,7 +1225,7 @@ export default function InvoiceBuilder() {
                       <div className="col-span-3">
                         <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5 text-right">{t('accounting.invoiceBuilder.total')}</span>
                         <div className="flex items-center justify-end h-[34px] text-sm font-bold text-slate-800">
-                          {lineTotal.toFixed(2)} {currency}
+                          {formatCurrency(lineTotal, currency as AccCurrency)}
                         </div>
                       </div>
                       <div className="col-span-2 flex flex-col items-end">
@@ -1274,9 +1275,9 @@ export default function InvoiceBuilder() {
 
         {/* Totals summary (visible in form) */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-sm print:hidden">
-          <div>{t('accounting.invoiceBuilder.subtotal')}: <span className="font-bold text-slate-900">{totals.subtotal.toFixed(2)} {currency}</span></div>
-          <div>{t('accounting.invoiceBuilder.vat')}: <span className="font-bold text-slate-900">{totals.vat_total.toFixed(2)} {currency}</span></div>
-          <div>{t('accounting.invoiceBuilder.total')}: <span className="font-bold text-emerald-700 text-base">{totals.total.toFixed(2)} {currency}</span></div>
+          <div>{t('accounting.invoiceBuilder.subtotal')}: <span className="font-bold text-slate-900">{formatCurrency(totals.subtotal, currency as AccCurrency)}</span></div>
+          <div>{t('accounting.invoiceBuilder.vat')}: <span className="font-bold text-slate-900">{formatCurrency(totals.vat_total, currency as AccCurrency)}</span></div>
+          <div>{t('accounting.invoiceBuilder.total')}: <span className="font-bold text-emerald-700 text-base">{formatCurrency(totals.total, currency as AccCurrency)}</span></div>
           <button onClick={() => setShowPreview(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-bold hover:bg-teal-700">
             <Eye className="w-4 h-4" /> {t('accounting.invoiceBuilder.preview')}
           </button>
@@ -1601,7 +1602,7 @@ function ProductAutocomplete({ value, onChange, onSelect, catalog, inputCls }: {
                 )}
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="text-sm font-bold text-slate-800">{p.price_net.toFixed(2)}</div>
+                <div className="text-sm font-bold text-slate-800">{formatCurrency(p.price_net, 'EUR')}</div>
                 <div className="text-[10px] text-slate-500">{p.unit ?? 'pc'} · TVSH {p.vat_rate}%</div>
               </div>
             </button>

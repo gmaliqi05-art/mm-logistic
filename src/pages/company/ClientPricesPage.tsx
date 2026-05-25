@@ -3,6 +3,7 @@ import { Search, Plus, Trash2, Loader2, Tag, Package, Filter, Users } from 'luci
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { formatCurrency, formatNumber } from '../../types/accounting';
 
 interface Contact {
   id: string;
@@ -270,7 +271,7 @@ export default function ClientPricesPage() {
                 <option value="">-- Zgjedh produktin --</option>
                 {catalog.map(p => (
                   <option key={`${p.source}:${p.id}`} value={`${p.source}:${p.id}`}>
-                    {p.name} - {p.price_net.toFixed(2)} EUR
+                    {p.name} - {formatCurrency(p.price_net, 'EUR')}
                   </option>
                 ))}
               </select>
@@ -368,7 +369,7 @@ export default function ClientPricesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-gray-500">
-                        {stdPrice.toFixed(2)} EUR
+                        {formatCurrency(stdPrice, 'EUR')}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <input
@@ -383,7 +384,7 @@ export default function ClientPricesPage() {
                         <span className={`text-xs font-medium ${
                           diff < 0 ? 'text-emerald-600' : diff > 0 ? 'text-red-600' : 'text-gray-400'
                         }`}>
-                          {diff > 0 ? '+' : ''}{diff.toFixed(2)} ({diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%)
+                          {diff > 0 ? '+' : ''}{formatNumber(diff)} ({diffPct > 0 ? '+' : ''}{diffPct.toFixed(1)}%)
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500 max-w-[120px] truncate">
