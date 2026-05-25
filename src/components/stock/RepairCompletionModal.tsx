@@ -184,7 +184,7 @@ export default function RepairCompletionModal({ stockId, onClose, onApplied }: P
                 onChange={(e) => setTargetProductId(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                <option value="">Zgjidhni produktin...</option>
+                <option value="">{t('stock.repairModal.pickProductOption')}</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -198,7 +198,7 @@ export default function RepairCompletionModal({ stockId, onClose, onApplied }: P
                 onChange={(e) => setReparatorId(e.target.value)}
                 className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                <option value="">Zgjidhni reparatorin...</option>
+                <option value="">{t('stock.repairModal.pickReparatorOption')}</option>
                 {reparatures.map((w) => (
                   <option key={w.id} value={w.id}>{w.full_name}</option>
                 ))}

@@ -264,6 +264,7 @@ interface FormProps {
 }
 
 function IdentityDocForm({ docType, driverId, companyId, capturedFront, capturedBack, onCapturePhotos, onClose, onSaved }: FormProps) {
+  const { t } = useTranslation();
   const meta = DOC_META[docType];
   const [number, setNumber] = useState('');
   const [country, setCountry] = useState('');
@@ -313,7 +314,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
       <div className="bg-white rounded-2xl w-full max-w-lg my-4">
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Shto dokument</div>
+            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">{t('fleet.driverIdentity.addDocument')}</div>
             <h3 className="font-bold text-gray-900">{meta.label}</h3>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 text-sm">Mbyll</button>

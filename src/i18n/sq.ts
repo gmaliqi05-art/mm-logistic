@@ -1650,6 +1650,8 @@ export const sq = {
       totalExceeds: 'Totali tejkalon stokun defekt',
       pickProduct: 'Zgjidhni produktin e synuar per paletat e riparuara',
       pickReparator: 'Zgjidhni reparatorin qe e ka kryer punen',
+      pickProductOption: 'Zgjidhni produktin...',
+      pickReparatorOption: 'Zgjidhni reparatorin...',
     },
   },
   driver: {
@@ -2336,6 +2338,8 @@ export const sq = {
   accounting: {
     imports: {
       searchPlaceholder: 'Kerko sipas numrit, furnitorit ose vendit...',
+      empty: 'Nuk ka importe te regjistruara.',
+      saveImport: 'Ruaj importin',
     },
     dashboard: {
       title: 'Kontabiliteti',
@@ -2671,6 +2675,9 @@ export const sq = {
       previewSubtotal: 'Nëntotali',
       previewVat: 'TVSH',
       previewTotal: 'Totali',
+    },
+    scanReview: {
+      confirmDocument: 'Konfirmo dokumentin',
     },
     scanModal: {
       uploadFirst: 'Ju lutem ngarkoni nje dokument para se te skanoni.',
@@ -3301,6 +3308,12 @@ export const sq = {
       pickDriver: 'Ju lutem zgjidhni shoferin',
       expiryDateRequired: 'Data e skadimit eshte e detyrueshme',
       fileTooLarge: 'Skedari eshte shume i madh (max 15 MB).',
+      pickDocType: 'Zgjidh llojin e dokumentit qe po skanoni:',
+      scanBackTitle: 'Skano anen e pasme te dokumentit',
+      scanBackHint: 'Kthejeni dokumentin dhe skanoni anen e pasme',
+    },
+    driverIdentity: {
+      addDocument: 'Shto dokument',
     },
     filter: {
       all: 'Te gjitha',

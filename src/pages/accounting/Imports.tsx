@@ -316,7 +316,7 @@ export default function Imports() {
         ) : filtered.length === 0 ? (
           <div className="py-12 text-center">
             <Ship className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">Nuk ka importe te regjistruara.</p>
+            <p className="text-gray-500">{t('accounting.imports.empty')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -560,9 +560,9 @@ export default function Imports() {
             </div>
 
             <div className="flex justify-end gap-2 p-4 border-t border-gray-200 sticky bottom-0 bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50">Anulo</button>
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50">{t('common.cancel')}</button>
               <button onClick={save} className="px-4 py-2 bg-emerald-600 text-white rounded text-sm hover:bg-emerald-700 flex items-center gap-1">
-                <FileDown className="w-4 h-4" /> Ruaj importin
+                <FileDown className="w-4 h-4" /> {t('accounting.imports.saveImport')}
               </button>
             </div>
           </div>

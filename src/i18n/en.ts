@@ -1655,6 +1655,8 @@ export const en: typeof sq = {
       totalExceeds: 'Total exceeds damaged stock',
       pickProduct: 'Pick the target product for repaired pallets',
       pickReparator: 'Pick the reparator who did the work',
+      pickProductOption: 'Pick a product...',
+      pickReparatorOption: 'Pick a reparator...',
     },
   },
   driver: {
@@ -2341,6 +2343,8 @@ export const en: typeof sq = {
   accounting: {
     imports: {
       searchPlaceholder: 'Search by number, supplier or origin...',
+      empty: 'No imports registered.',
+      saveImport: 'Save import',
     },
     dashboard: {
       title: 'Accounting',
@@ -2676,6 +2680,9 @@ export const en: typeof sq = {
       previewSubtotal: 'Subtotal',
       previewVat: 'VAT',
       previewTotal: 'Total',
+    },
+    scanReview: {
+      confirmDocument: 'Confirm document',
     },
     scanModal: {
       uploadFirst: 'Please upload a document before scanning.',
@@ -3306,6 +3313,12 @@ export const en: typeof sq = {
       pickDriver: 'Please select the driver',
       expiryDateRequired: 'Expiry date is required',
       fileTooLarge: 'File is too large (max 15 MB).',
+      pickDocType: 'Pick the document type you are scanning:',
+      scanBackTitle: 'Scan the back side of the document',
+      scanBackHint: 'Flip the document and scan the back side',
+    },
+    driverIdentity: {
+      addDocument: 'Add document',
     },
     filter: {
       all: 'All',

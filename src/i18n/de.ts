@@ -1652,6 +1652,8 @@ export const de: typeof sq = {
       totalExceeds: 'Summe übersteigt defekten Bestand',
       pickProduct: 'Zielprodukt für reparierte Paletten auswählen',
       pickReparator: 'Reparateur auswählen, der die Arbeit ausgeführt hat',
+      pickProductOption: 'Produkt auswählen...',
+      pickReparatorOption: 'Reparateur auswählen...',
     },
   },
   driver: {
@@ -2338,6 +2340,8 @@ export const de: typeof sq = {
   accounting: {
     imports: {
       searchPlaceholder: 'Suche nach Nummer, Lieferant oder Ort...',
+      empty: 'Keine Importe erfasst.',
+      saveImport: 'Import speichern',
     },
     dashboard: {
       title: 'Dashboard',
@@ -2673,6 +2677,9 @@ export const de: typeof sq = {
       previewSubtotal: 'Zwischensumme',
       previewVat: 'MwSt',
       previewTotal: 'Gesamt',
+    },
+    scanReview: {
+      confirmDocument: 'Dokument bestätigen',
     },
     scanModal: {
       uploadFirst: 'Bitte laden Sie ein Dokument hoch, bevor Sie scannen.',
@@ -3303,6 +3310,12 @@ export const de: typeof sq = {
       pickDriver: 'Bitte Fahrer auswaehlen',
       expiryDateRequired: 'Ablaufdatum ist erforderlich',
       fileTooLarge: 'Datei ist zu groß (max. 15 MB).',
+      pickDocType: 'Wählen Sie die Art des Dokuments, das Sie scannen:',
+      scanBackTitle: 'Rückseite des Dokuments scannen',
+      scanBackHint: 'Drehen Sie das Dokument um und scannen Sie die Rückseite',
+    },
+    driverIdentity: {
+      addDocument: 'Dokument hinzufügen',
     },
     filter: {
       all: 'Alle',
