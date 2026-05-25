@@ -277,7 +277,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
 
           {step === 'category' && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">Zgjidh llojin e dokumentit qe po skanoni:</p>
+              <p className="text-sm text-slate-600">{t('fleet.docScanner.pickDocType')}</p>
               <div className="grid sm:grid-cols-2 gap-2">
                 {categories.map((c) => (
                   <button
@@ -339,8 +339,8 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
           {step === 'choose_back' && (
             <div className="space-y-4">
               <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
-                <p className="text-sm font-semibold text-teal-900">Skano anen e pasme te dokumentit</p>
-                <p className="text-xs text-teal-700 mt-0.5">Kthejeni dokumentin dhe skanoni anen e pasme</p>
+                <p className="text-sm font-semibold text-teal-900">{t('fleet.docScanner.scanBackTitle')}</p>
+                <p className="text-xs text-teal-700 mt-0.5">{t('fleet.docScanner.scanBackHint')}</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <button

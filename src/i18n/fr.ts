@@ -1652,6 +1652,8 @@ export const fr: typeof sq = {
       totalExceeds: 'Le total d\u00e9passe le stock d\u00e9fectueux',
       pickProduct: 'Choisissez le produit cible pour les palettes r\u00e9par\u00e9es',
       pickReparator: 'Choisissez le r\u00e9parateur qui a effectu\u00e9 le travail',
+      pickProductOption: 'Choisissez un produit...',
+      pickReparatorOption: 'Choisissez un r\u00e9parateur...',
     },
   },
   driver: {
@@ -2338,6 +2340,8 @@ export const fr: typeof sq = {
   accounting: {
     imports: {
       searchPlaceholder: 'Rechercher par numéro, fournisseur ou origine...',
+      empty: 'Aucun import enregistré.',
+      saveImport: 'Enregistrer l\'import',
     },
     dashboard: {
       title: 'Tableau de bord',
@@ -2673,6 +2677,9 @@ export const fr: typeof sq = {
       previewSubtotal: 'Sous-total',
       previewVat: 'TVA',
       previewTotal: 'Total',
+    },
+    scanReview: {
+      confirmDocument: 'Confirmer le document',
     },
     scanModal: {
       uploadFirst: 'Veuillez téléverser un document avant de scanner.',
@@ -3303,6 +3310,12 @@ export const fr: typeof sq = {
       pickDriver: 'Veuillez sélectionner le chauffeur',
       expiryDateRequired: 'La date d\'expiration est obligatoire',
       fileTooLarge: 'Le fichier est trop volumineux (max 15 Mo).',
+      pickDocType: 'Choisissez le type de document que vous scannez :',
+      scanBackTitle: 'Scanner le verso du document',
+      scanBackHint: 'Retournez le document et scannez le verso',
+    },
+    driverIdentity: {
+      addDocument: 'Ajouter un document',
     },
     filter: {
       all: 'Tous',

@@ -264,7 +264,7 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
       <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
         <div className="flex items-start justify-between p-5 border-b border-slate-200">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Konfirmo dokumentin</h2>
+            <h2 className="text-lg font-bold text-slate-900">{t('accounting.scanReview.confirmDocument')}</h2>
             <p className="text-sm text-slate-500 mt-0.5 truncate max-w-md">{scan.file_name}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
