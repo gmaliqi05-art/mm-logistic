@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FileText, Plus, CreditCard as Edit3, Save, X, Loader2, AlertTriangle, Check, Globe as Globe2, Trash2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 interface LegalDocument {
   id: string;
   slug: string;
@@ -158,9 +159,7 @@ export default function LegalPages() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-10 h-10 animate-spin text-teal-600" />
-      </div>
+      <PageSkeleton rows={6} cols={4} showStats={false} />
     );
   }
 

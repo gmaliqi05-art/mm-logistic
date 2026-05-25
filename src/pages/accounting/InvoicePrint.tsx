@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, Loader2, FileCode2, FileText, Download, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { logger } from '../../utils/logger';
 import { supabase } from '../../lib/supabase';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import InvoiceTemplate, { type InvoicePreviewData } from '../../components/accounting/InvoiceTemplate';
 import { buildVatBreakdown } from '../../utils/euCompliance';
@@ -121,9 +122,7 @@ export default function InvoicePrint() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-12 h-12 text-gray-400 animate-spin" />
-      </div>
+      <PageSkeleton rows={6} cols={4} showStats={false} />
     );
   }
 

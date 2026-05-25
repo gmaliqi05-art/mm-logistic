@@ -3,6 +3,7 @@ import { Clock, Plus, Loader2, ChevronLeft, ChevronRight, Save } from 'lucide-re
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import BackButton from '../../components/BackButton';
 
 interface WorkHourEntry {
@@ -93,9 +94,7 @@ export default function MyWorkHours() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-      </div>
+      <PageSkeleton rows={6} cols={4} showStats={false} />
     );
   }
 
