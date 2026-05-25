@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
+import { formatCurrency, formatNumber } from '../../types/accounting';
 import RouteMapPicker, { reverseGeocode, type Point } from '../../components/fleet/RouteMapPicker';
 
 interface CountrySegment {
@@ -403,9 +404,9 @@ export default function CompanyRoutePlanner() {
               const v = vehicles.find((x) => x.id === vehicleId);
               if (!v) return null;
               const parts: string[] = [];
-              if (v.length_mm) parts.push(`${(v.length_mm / 1000).toFixed(2)} m gjat.`);
-              if (v.width_mm) parts.push(`${(v.width_mm / 1000).toFixed(2)} m gjer.`);
-              if (v.height_mm) parts.push(`${(v.height_mm / 1000).toFixed(2)} m lart.`);
+              if (v.length_mm) parts.push(`${formatNumber(v.length_mm / 1000)} m gjat.`);
+              if (v.width_mm) parts.push(`${formatNumber(v.width_mm / 1000)} m gjer.`);
+              if (v.height_mm) parts.push(`${formatNumber(v.height_mm / 1000)} m lart.`);
               if (v.max_weight_kg) parts.push(`${(v.max_weight_kg / 1000).toFixed(1)} t`);
               if (v.axle_load_kg) parts.push(`${(v.axle_load_kg / 1000).toFixed(1)} t/akse`);
               if (v.adr_class && v.adr_class !== 'none') parts.push(`ADR ${v.adr_class}`);
@@ -496,11 +497,11 @@ export default function CompanyRoutePlanner() {
                   <div className="mt-3 space-y-1.5 text-sm">
                     <div className="flex justify-between"><span className="text-slate-500">Distanca</span><span className="font-semibold">{opt.distance_km} km</span></div>
                     <div className="flex justify-between"><span className="text-slate-500">Koha</span><span className="font-semibold">{hours}h {mins}min</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Taksa</span><span className="font-semibold">{opt.toll_eur.toFixed(2)} EUR</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Karburant</span><span className="font-semibold">{opt.fuel_eur.toFixed(2)} EUR</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Taksa</span><span className="font-semibold">{formatCurrency(opt.toll_eur, "EUR")}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Karburant</span><span className="font-semibold">{formatCurrency(opt.fuel_eur, "EUR")}</span></div>
                     <div className="flex justify-between pt-1.5 border-t border-slate-200">
                       <span className="text-slate-700 font-semibold">Total</span>
-                      <span className="font-bold text-teal-700">{opt.total_eur.toFixed(2)} EUR</span>
+                      <span className="font-bold text-teal-700">{formatCurrency(opt.total_eur, "EUR")}</span>
                     </div>
                   </div>
                 </button>
@@ -519,7 +520,7 @@ export default function CompanyRoutePlanner() {
                     <span className="font-medium text-slate-800">{c.country_name} <span className="text-xs text-slate-500">({c.country_code})</span></span>
                     <div className="flex items-center gap-4 text-slate-600">
                       <span>{c.km} km</span>
-                      <span className="font-semibold text-slate-900">{c.toll_eur.toFixed(2)} EUR</span>
+                      <span className="font-semibold text-slate-900">{formatCurrency(c.toll_eur, "EUR")}</span>
                     </div>
                   </div>
                 ))}

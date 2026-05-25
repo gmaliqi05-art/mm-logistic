@@ -214,8 +214,17 @@ export default function GermanFinancials() {
   const isDE = isCountry(ctx, 'DE');
 
   const formatMoney = (n: number) => {
+    // Caller's locale (sq/en/de/fr), not a hardcoded de-DE.
+    // For DE-specific country compliance (GoBD output, etc.) the
+    // currency-symbol / digits are unchanged — only the thousands
+    // and decimal separators follow the operator's UI language.
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('ep_language') : null;
+    const tag = saved === 'sq' ? 'sq-AL'
+      : saved === 'en' ? 'en-GB'
+      : saved === 'fr' ? 'fr-FR'
+      : 'de-DE';
     try {
-      return new Intl.NumberFormat('de-DE', {
+      return new Intl.NumberFormat(tag, {
         style: 'currency',
         currency: curr.code,
         minimumFractionDigits: 2,

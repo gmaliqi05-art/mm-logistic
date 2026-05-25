@@ -20,6 +20,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
+import { formatCurrency, formatNumber, type AccCurrency } from '../../types/accounting';
 
 interface Contact {
   id: string;
@@ -308,7 +309,7 @@ export default function ClientInvoices() {
                         {stats.count}
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-slate-900 text-right hidden sm:table-cell">
-                        {stats.total.toFixed(2)}
+                        {formatNumber(stats.total)}
                       </td>
                       <td className="px-3 py-4">
                         <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -398,7 +399,7 @@ export default function ClientInvoices() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-base font-bold text-slate-900">{inv.total.toFixed(2)} {inv.currency}</p>
+                            <p className="text-base font-bold text-slate-900">{formatCurrency(inv.total, inv.currency as AccCurrency)}</p>
                             <button
                               onClick={() => openPreview(inv)}
                               className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-900"
@@ -496,9 +497,9 @@ export default function ClientInvoices() {
                               <tr key={it.id}>
                                 <td className="px-2 py-2">{it.description}</td>
                                 <td className="px-2 py-2 text-right">{it.quantity} {it.unit || ''}</td>
-                                <td className="px-2 py-2 text-right">{Number(it.unit_price).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-right">{formatNumber(Number(it.unit_price))}</td>
                                 <td className="px-2 py-2 text-right">{Number(it.vat_rate).toFixed(0)}%</td>
-                                <td className="px-2 py-2 text-right font-medium">{Number(it.line_total).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-right font-medium">{formatNumber(Number(it.line_total))}</td>
                               </tr>
                             ))}
                             {previewItems.length === 0 && (
@@ -515,15 +516,15 @@ export default function ClientInvoices() {
                           <div className="w-64 space-y-1 text-sm">
                             <div className="flex justify-between text-slate-600">
                               <span>{t('clientInvoices.subtotal')}</span>
-                              <span>{Number(previewInvoice.subtotal).toFixed(2)} {previewInvoice.currency}</span>
+                              <span>{formatCurrency(Number(previewInvoice.subtotal), previewInvoice.currency as AccCurrency)}</span>
                             </div>
                             <div className="flex justify-between text-slate-600">
                               <span>{t('clientInvoices.vat')}</span>
-                              <span>{Number(previewInvoice.vat_amount).toFixed(2)} {previewInvoice.currency}</span>
+                              <span>{formatCurrency(Number(previewInvoice.vat_amount), previewInvoice.currency as AccCurrency)}</span>
                             </div>
                             <div className="flex justify-between text-base font-bold border-t pt-1">
                               <span>{t('clientInvoices.total')}</span>
-                              <span>{Number(previewInvoice.total).toFixed(2)} {previewInvoice.currency}</span>
+                              <span>{formatCurrency(Number(previewInvoice.total), previewInvoice.currency as AccCurrency)}</span>
                             </div>
                           </div>
                         </div>
