@@ -2,26 +2,11 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import webpush from "npm:web-push@3.6.7";
 import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
-const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-function buildCorsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allowOrigin =
-    ALLOWED_ORIGINS.length === 0
-      ? "*"
-      : ALLOWED_ORIGINS.includes(origin)
-        ? origin
-        : ALLOWED_ORIGINS[0];
-  return {
-    "Access-Control-Allow-Origin": allowOrigin,
-    "Vary": "Origin",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-  };
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
 
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
@@ -45,7 +30,6 @@ interface PushPayload {
 }
 
 Deno.serve(async (req: Request) => {
-  const corsHeaders = buildCorsHeaders(req);
   const jsonResponse = (payload: unknown, status = 200): Response =>
     new Response(JSON.stringify(payload), {
       status,
