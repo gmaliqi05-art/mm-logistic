@@ -1596,7 +1596,7 @@ export default function Invoices() {
                       const resp = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
-                          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
                           'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({

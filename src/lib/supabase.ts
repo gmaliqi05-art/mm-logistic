@@ -18,3 +18,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storageKey: 'mm-logistic-auth',
   },
 });
+
+export async function edgeFnHeaders(): Promise<Record<string, string>> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token ?? supabaseAnonKey;
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    apikey: supabaseAnonKey,
+  };
+}

@@ -1,3 +1,5 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -13,6 +15,19 @@ const VAT_REGEX: Record<string, RegExp> = {
   PL: /^PL\d{10}$/, PT: /^PT\d{9}$/, RO: /^RO\d{2,10}$/, SK: /^SK\d{10}$/,
   SI: /^SI\d{8}$/, ES: /^ES[A-Z0-9]\d{7}[A-Z0-9]$/, SE: /^SE\d{12}$/,
 };
+
+const ipBuckets = new Map<string, { count: number; reset: number }>();
+
+function rateLimitByIp(ip: string, maxPerMin: number): boolean {
+  const now = Date.now();
+  const bucket = ipBuckets.get(ip);
+  if (!bucket || now > bucket.reset) {
+    ipBuckets.set(ip, { count: 1, reset: now + 60_000 });
+    return true;
+  }
+  bucket.count++;
+  return bucket.count <= maxPerMin;
+}
 
 function normalize(v: string): string {
   return (v || "").toUpperCase().replace(/[\s.-]/g, "");
@@ -50,6 +65,14 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!rateLimitByIp(ip, 20)) {
+      return new Response(JSON.stringify({ error: "rate_limited" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { vat } = await req.json();
     const norm = normalize(vat);
     if (norm.length < 4) {
@@ -74,8 +97,8 @@ Deno.serve(async (req: Request) => {
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
-    return new Response(JSON.stringify({ valid: false, error: String(e) }), {
+  } catch {
+    return new Response(JSON.stringify({ valid: false, error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

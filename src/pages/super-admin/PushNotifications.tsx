@@ -324,7 +324,7 @@ function ComposeTab() {
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dispatch-notification`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ queueId: data.id }),

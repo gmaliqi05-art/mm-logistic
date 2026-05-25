@@ -23,7 +23,7 @@ export default function EmailPreviewPane({ templateCode, locale, sampleData, deb
       try {
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`;
         const { data: session } = await supabase.auth.getSession();
-        const token = session.session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const token = session.session?.access_token ?? '';
         const resp = await fetch(url, {
           method: "POST",
           headers: {
