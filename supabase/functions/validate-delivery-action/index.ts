@@ -47,6 +47,15 @@ Deno.serve(async (req: Request) => {
     }
     const scopeCompanyId = isSuperAdmin && body.company_id ? body.company_id : callerCompanyId;
 
+    // Hard requirement: the validator must run in a single,
+    // explicit tenant scope. A NULL scopeCompanyId would let the
+    // .in('category_product_id', ids) query span every tenant
+    // (the eq('company_id', ...) filter is skipped at line 58
+    // when scopeCompanyId is null). Reject upfront.
+    if (!scopeCompanyId) {
+      return forbidden(corsHeaders, 'Missing tenant scope');
+    }
+
     if (body.action === 'create' && body.type === 'delivery') {
       const items = body.items ?? [];
       const ids = items.map((i) => i.category_product_id).filter(Boolean) as string[];
