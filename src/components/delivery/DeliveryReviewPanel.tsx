@@ -156,6 +156,7 @@ interface DeliveryReviewPanelProps {
 
 export default function DeliveryReviewPanel({ role, typeFilter, hideChrome, emptyMessage }: DeliveryReviewPanelProps) {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [notes, setNotes] = useState<ReviewNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ReviewNote | null>(null);
@@ -213,7 +214,7 @@ export default function DeliveryReviewPanel({ role, typeFilter, hideChrome, empt
       return (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white py-10 text-center">
           <CheckCircle2 className="w-9 h-9 text-emerald-300 mx-auto mb-2" />
-          <p className="text-sm font-medium text-gray-700">{emptyMessage || 'Nuk ka asgje per shqyrtim'}</p>
+          <p className="text-sm font-medium text-gray-700">{emptyMessage || t('review.cta.allClearTitle')}</p>
         </div>
       );
     }
@@ -1410,7 +1411,7 @@ function ReviewModal({
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-teal-600 hover:text-teal-700 text-xs font-semibold"
                     >
-                      <Download className="w-3.5 h-3.5" /> Hap origjinalin
+                      <Download className="w-3.5 h-3.5" /> {t('review.openOriginal')}
                     </a>
                     {role === 'company_admin' && (
                       <div className="flex items-center gap-1.5">
@@ -1545,7 +1546,7 @@ function ReviewModal({
                   onClick={addNewItem}
                   className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-sky-700 bg-sky-50 border border-sky-100 rounded-lg hover:bg-sky-100 transition-colors"
                 >
-                  <Plus className="w-3 h-3" /> Shto artikull
+                  <Plus className="w-3 h-3" /> {t('review.addItem')}
                 </button>
               </div>
             </div>
@@ -1676,10 +1677,10 @@ function ReviewModal({
             >
               {saving === 'complete' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               {role === 'depot_worker' && allSortingItems()
-                ? 'Konfirmo dhe Dergo per Sortim'
+                ? t('review.confirmAndSendToSorting')
                 : role === 'depot_worker' && hasSortingItems()
-                  ? 'Konfirmo (Stok + Sortim)'
-                  : 'Regjistro ne stok'}
+                  ? t('review.confirmStockPlusSorting')
+                  : t('review.registerToStock')}
             </button>
           )}
         </div>
@@ -2004,6 +2005,7 @@ function ItemGroupBlock({
   onCreateCategory: (name: string, sourceDescription?: string) => Promise<Category>;
   onCreateProduct: (name: string, categoryId: string, sourceDescription?: string) => Promise<Product>;
 }) {
+  const { t } = useTranslation();
   const sumQty = useMemo(() => group.rows.reduce((s, r) => s + (r.quantity || 0), 0), [group.rows]);
   const hasSource = group.sourceQuantity > 0;
   const diff = group.sourceQuantity - sumQty;
@@ -2065,7 +2067,7 @@ function ItemGroupBlock({
           onClick={onAddSplit}
           className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-lg hover:bg-teal-100 transition-colors"
         >
-          <Plus className="w-3 h-3" /> Shto ndarje
+          <Plus className="w-3 h-3" /> {t('review.addSplit')}
         </button>
       </div>
     </div>
@@ -2095,6 +2097,7 @@ function SplitRow({
   onCreateCategory: (name: string, sourceDescription?: string) => Promise<Category>;
   onCreateProduct: (name: string, categoryId: string, sourceDescription?: string) => Promise<Product>;
 }) {
+  const { t } = useTranslation();
   const productsForCategory = useMemo(
     () => (row.category_id ? products.filter((p) => p.category_id === row.category_id) : []),
     [products, row.category_id],
@@ -2214,7 +2217,7 @@ function SplitRow({
           disabled={!row.category_id}
           className="col-span-5 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50 disabled:text-gray-400"
         >
-          <option value="">{row.category_id ? '-- Produkti --' : 'Zgjidh kategorine'}</option>
+          <option value="">{row.category_id ? t('review.productPlaceholder') : t('review.pickCategoryFirst')}</option>
           {productsForCategory.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
