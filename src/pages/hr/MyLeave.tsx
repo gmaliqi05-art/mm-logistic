@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Plus, Clock, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar, Plus, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import LeaveRequestModal from '../../components/hr/LeaveRequestModal';
 import BackButton from '../../components/BackButton';
 
@@ -81,9 +82,7 @@ export default function MyLeave() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-      </div>
+      <PageSkeleton rows={6} cols={4} showStats={false} />
     );
   }
 

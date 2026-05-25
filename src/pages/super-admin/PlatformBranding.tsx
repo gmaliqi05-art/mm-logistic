@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon, Upload, Save, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 
 type LogoVariant = 'light' | 'social';
 
@@ -140,9 +141,7 @@ export default function PlatformBranding() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-      </div>
+      <PageSkeleton rows={6} cols={4} showStats={false} />
     );
   }
 

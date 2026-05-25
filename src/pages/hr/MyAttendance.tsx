@@ -3,6 +3,7 @@ import { Clock, MapPin, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 import BackButton from '../../components/BackButton';
 
 interface AttendanceRecord {
@@ -114,9 +115,7 @@ export default function MyAttendance() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-      </div>
+      <PageSkeleton rows={6} cols={4} showStats={false} />
     );
   }
 

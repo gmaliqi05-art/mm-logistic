@@ -5,7 +5,6 @@ import {
   Send,
   Search,
   X,
-  Loader2,
   AlertTriangle,
   FileText,
   User,
@@ -21,6 +20,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 
 type Tab = 'completed' | 'received' | 'sent';
 
@@ -212,9 +212,7 @@ export default function DriverDocuments() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center h-48">
-          <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-        </div>
+        <PageSkeleton rows={6} cols={4} showStats={false} />
       ) : filtered.length === 0 ? (
         <EmptyState tab={tab} t={t} noteDateFn={noteDate} />
       ) : (

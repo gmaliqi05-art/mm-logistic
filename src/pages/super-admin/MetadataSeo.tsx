@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
+import { PageSkeleton } from '../../components/ui/Skeleton';
 
 interface SeoEntry {
   id: string;
@@ -86,7 +87,7 @@ export default function MetadataSeo() {
   const showModal = creating || editing !== null;
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-teal-600" /></div>;
+    return <PageSkeleton rows={6} cols={4} showStats={false} />;
   }
 
   return (

@@ -278,9 +278,7 @@ export default function BankAccounts() {
             <h2 className="font-semibold text-gray-900">Transaksionet e Llogarise</h2>
           </div>
           {loadingTx ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-            </div>
+            <PageSkeleton rows={6} cols={4} showStats={false} />
           ) : accountTransactions.length === 0 ? (
             <div className="py-16 text-center">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />
