@@ -35,7 +35,7 @@ interface DeliveryNoteSource {
   id: string;
   partner_name?: string | null;
   counterparty_name?: string | null;
-  delivery_date?: string | null;
+  delivered_at?: string | null;
   type?: string | null;
 }
 
@@ -148,7 +148,7 @@ export default function DepotSorting() {
           creator:profiles!pallet_sorting_batches_created_by_fkey(full_name),
           completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name),
           source_delivery_note:delivery_notes!pallet_sorting_batches_source_delivery_note_id_fkey(
-            id, partner_name, counterparty_name, delivery_date, type
+            id, partner_name, counterparty_name, delivered_at, type
           )
         `)
         .eq('company_id', companyId)
@@ -507,7 +507,7 @@ export default function DepotSorting() {
               const sorted = b.items.reduce((s, i) => s + i.quantity, 0);
               const pct = b.total_received > 0 ? Math.min(100, Math.round((sorted / b.total_received) * 100)) : 0;
               const partner = partnerLabel(b);
-              const deliveryDate = b.source_delivery_note?.delivery_date;
+              const deliveryDate = b.source_delivery_note?.delivered_at;
               const bd = computeBreakdown(b.items, productNameById);
               return (
                 <button

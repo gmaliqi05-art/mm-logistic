@@ -95,7 +95,7 @@ export default function ContactAutocomplete({
       .insert({
         company_id: profile.company_id,
         name: partnerText.trim(),
-        contact_type: 'partner',
+        contact_type: 'customer',
         is_active: true,
       })
       .select('id, name, contact_type, email')
