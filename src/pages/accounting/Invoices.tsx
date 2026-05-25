@@ -1161,8 +1161,8 @@ export default function Invoices() {
                   <Truck className="w-6 h-6 text-teal-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Krijo Fletedergese?</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Fatura {deliveryPrompt.invoice_number} u ruajt me sukses.</p>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('accounting.invoices.createDeliveryNotePrompt')}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('accounting.invoices.invoiceSavedPrefix')} {deliveryPrompt.invoice_number} {t('accounting.invoices.invoiceSavedSuffix')}</p>
                 </div>
               </div>
               <p className="text-sm text-gray-700 leading-relaxed">
@@ -1249,7 +1249,7 @@ export default function Invoices() {
                       onChange={(e) => setForm({ ...form, bank_account_id: e.target.value })}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                     >
-                      <option value="">Zgjidhni llogarine</option>
+                      <option value="">{t('accounting.invoices.pickAccount')}</option>
                       {bankAccounts.map((ba) => (
                         <option key={ba.id} value={ba.id}>
                           {ba.name} ({ba.iban})
@@ -1347,7 +1347,7 @@ export default function Invoices() {
                                 }}
                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                               >
-                                <option value="">Zgjidhni produktin ose shkruani</option>
+                                <option value="">{t('accounting.invoices.pickProductOrType')}</option>
                                 {products.map((p) => (
                                   <option key={p.id} value={p.id}>
                                     {p.image_url ? '📦 ' : ''}{p.name} - {formatCurrency(p.price_net)}

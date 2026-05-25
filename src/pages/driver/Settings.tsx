@@ -232,17 +232,17 @@ export default function DriverSettings() {
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div className="flex items-center gap-2 mb-3">
           <MapPin className="w-5 h-5 text-teal-600" />
-          <h3 className="text-base font-bold text-gray-900">Lokacioni i bazes</h3>
+          <h3 className="text-base font-bold text-gray-900">{t('driver.settings.baseLocation')}</h3>
         </div>
         <p className="text-sm text-gray-500 mb-3">
-          Kur nuk ka destinacion te caktuar, sistemi do te shfaqe automatikisht rrugen per ne baze.
+          {t('driver.settings.baseLocationHint')}
         </p>
         <div className="space-y-2">
           <input
             type="text"
             value={baseAddress}
             onChange={(e) => setBaseAddress(e.target.value)}
-            placeholder="P.sh. Rr. Marubi 8, Shkoder"
+            placeholder={t('driver.settings.baseAddressPlaceholder')}
             className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-teal-500 outline-none"
           />
           <div className="flex items-center justify-between gap-2">
@@ -262,7 +262,7 @@ export default function DriverSettings() {
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
-              Ruaj
+              {t('common.save')}
             </button>
           </div>
         </div>
