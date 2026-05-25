@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -162,6 +163,15 @@ Deno.serve(async (req: Request) => {
     );
     const { data: userData } = await userClient.auth.getUser();
     if (!userData.user) throw new Error("Unauthorized");
+
+    // Rate-limit per user — the CAMT/MT940 parser regex-walks the
+    // full payload (up to 500 KB) and bulk-inserts in one tx, so a
+    // malicious paid tenant could spin up parallel imports and DoS
+    // edge-function CPU/memory shared across all tenants.
+    const rl = await checkRateLimit(`bank-import:user=${userData.user.id}`, 5, 60_000);
+    if (!rl.allowed) {
+      return rateLimitResponse(rl, corsHeaders);
+    }
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
