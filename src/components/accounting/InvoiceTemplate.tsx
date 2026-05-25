@@ -103,17 +103,27 @@ const I18N: Record<string, Record<string, string>> = {
   },
 };
 
-function formatMoney(value: number, currency: string) {
+function localeTagFor(lang: 'en' | 'de' | 'fr' | 'sq'): string {
+  switch (lang) {
+    case 'sq': return 'sq-AL';
+    case 'en': return 'en-GB';
+    case 'fr': return 'fr-FR';
+    case 'de':
+    default:   return 'de-DE';
+  }
+}
+
+function formatMoney(value: number, currency: string, lang: 'en' | 'de' | 'fr' | 'sq' = 'de') {
   const safe = Number.isFinite(value) ? value : 0;
   try {
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(safe);
+    return new Intl.NumberFormat(localeTagFor(lang), { style: 'currency', currency }).format(safe);
   } catch {
     return `${safe.toFixed(2)} ${currency}`;
   }
 }
 
-function formatQty(value: number) {
-  return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
+function formatQty(value: number, lang: 'en' | 'de' | 'fr' | 'sq' = 'de') {
+  return new Intl.NumberFormat(localeTagFor(lang), { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
 }
 
 export default function InvoiceTemplate({ data }: { data: InvoicePreviewData }) {
@@ -219,11 +229,11 @@ export default function InvoiceTemplate({ data }: { data: InvoicePreviewData }) 
                 <span className="font-medium">{it.description || '—'}</span>
                 {it.product_code && <span className="block text-[8.5px] text-gray-400">{it.product_code}</span>}
               </td>
-              <td className="py-2 pr-2 text-right tabular-nums align-top">{formatQty(it.quantity)}</td>
+              <td className="py-2 pr-2 text-right tabular-nums align-top">{formatQty(it.quantity, data.language)}</td>
               <td className="py-2 pr-2 text-gray-600 align-top">{it.unit_code}</td>
-              <td className="py-2 pr-2 text-right tabular-nums align-top">{formatMoney(it.unit_price, data.invoice.currency)}</td>
+              <td className="py-2 pr-2 text-right tabular-nums align-top">{formatMoney(it.unit_price, data.invoice.currency, data.language)}</td>
               <td className="py-2 pr-2 text-right tabular-nums align-top">{it.vat_rate}%</td>
-              <td className="py-2 text-right tabular-nums font-medium align-top">{formatMoney(it.line_total, data.invoice.currency)}</td>
+              <td className="py-2 text-right tabular-nums font-medium align-top">{formatMoney(it.line_total, data.invoice.currency, data.language)}</td>
             </tr>
           ))}
           {data.items.length === 0 && (
@@ -237,23 +247,23 @@ export default function InvoiceTemplate({ data }: { data: InvoicePreviewData }) 
         <div className="w-[250px] text-[11px]">
           <div className="flex justify-between py-1">
             <span className="text-gray-600">{t.subtotal}:</span>
-            <span className="tabular-nums">{formatMoney(data.totals.subtotal, data.invoice.currency)}</span>
+            <span className="tabular-nums">{formatMoney(data.totals.subtotal, data.invoice.currency, data.language)}</span>
           </div>
           {data.totals.discount > 0 && (
             <div className="flex justify-between py-1">
               <span className="text-gray-600">{t.discount}:</span>
-              <span className="tabular-nums">- {formatMoney(data.totals.discount, data.invoice.currency)}</span>
+              <span className="tabular-nums">- {formatMoney(data.totals.discount, data.invoice.currency, data.language)}</span>
             </div>
           )}
           {data.totals.vat_breakdown.map((b, i) => (
             <div key={i} className="flex justify-between py-1">
               <span className="text-gray-600">{t.vatAmount} {b.rate}%:</span>
-              <span className="tabular-nums">{formatMoney(b.vat, data.invoice.currency)}</span>
+              <span className="tabular-nums">{formatMoney(b.vat, data.invoice.currency, data.language)}</span>
             </div>
           ))}
           <div className="flex justify-between py-2 border-t-2 border-gray-900 mt-1 font-bold text-[12px]">
             <span>{t.grandTotal}:</span>
-            <span className="tabular-nums">{formatMoney(data.totals.total, data.invoice.currency)}</span>
+            <span className="tabular-nums">{formatMoney(data.totals.total, data.invoice.currency, data.language)}</span>
           </div>
         </div>
       </div>

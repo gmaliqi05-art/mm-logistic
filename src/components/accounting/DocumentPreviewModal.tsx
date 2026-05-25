@@ -1,4 +1,5 @@
 import { X, FileText, Printer, Download, ExternalLink } from 'lucide-react';
+import { formatNumber } from '../../types/accounting';
 
 export interface PreviewField {
   label: string;
@@ -144,13 +145,13 @@ export default function DocumentPreviewModal({
                           {it.quantity !== undefined ? `${it.quantity} ${it.unit || ''}` : '-'}
                         </td>
                         <td className="px-3 py-2 text-right text-slate-700">
-                          {it.unit_price !== undefined ? it.unit_price.toFixed(2) : '-'}
+                          {it.unit_price !== undefined ? formatNumber(it.unit_price) : "-"}
                         </td>
                         <td className="px-3 py-2 text-right text-slate-700">
                           {it.vat_rate !== undefined ? `${it.vat_rate}%` : '-'}
                         </td>
                         <td className="px-3 py-2 text-right font-medium text-slate-900">
-                          {it.line_total !== undefined ? it.line_total.toFixed(2) : '-'}
+                          {it.line_total !== undefined ? formatNumber(it.line_total) : "-"}
                         </td>
                       </tr>
                     ))}

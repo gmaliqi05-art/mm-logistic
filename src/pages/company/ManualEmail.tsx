@@ -154,8 +154,13 @@ export default function ManualEmail() {
 
   function formatCurrency(val: number | null, currency?: string) {
     const n = Number(val ?? 0);
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('ep_language') : null;
+    const tag = saved === 'sq' ? 'sq-AL'
+      : saved === 'en' ? 'en-GB'
+      : saved === 'fr' ? 'fr-FR'
+      : 'de-DE';
     try {
-      return new Intl.NumberFormat('de-DE', { style: 'currency', currency: currency || 'EUR' }).format(n);
+      return new Intl.NumberFormat(tag, { style: 'currency', currency: currency || 'EUR' }).format(n);
     } catch {
       return `${n.toFixed(2)} ${currency || 'EUR'}`;
     }

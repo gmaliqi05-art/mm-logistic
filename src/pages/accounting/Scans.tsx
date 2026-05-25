@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, ScanLine, FileText, CheckCircle2, XCircle, Clock, RefreshCw, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { formatCurrency, type AccCurrency } from '../../types/accounting';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import ScanReviewModal from '../../components/accounting/ScanReviewModal';
 
@@ -160,7 +161,7 @@ export default function Scans() {
                       </td>
                       <td className="px-4 py-3 text-slate-700 truncate max-w-xs">{supplier}</td>
                       <td className="px-4 py-3 text-right text-slate-900 font-medium tabular-nums">
-                        {total > 0 ? `${total.toFixed(2)} ${currency}` : '-'}
+                        {total > 0 ? formatCurrency(total, currency as AccCurrency) : '-'}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium ${st.cls}`}>
