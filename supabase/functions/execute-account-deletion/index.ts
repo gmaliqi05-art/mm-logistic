@@ -42,8 +42,21 @@ Deno.serve(async (req: Request) => {
 
     let companiesDeleted = 0;
     let profilesDeleted = 0;
+    // GDPR compliance: track every failure so we never report
+    // "deleted" while data lingers. If any per-table delete fails
+    // we keep going for the remaining tables (best-effort), but
+    // surface the failures in the response and SKIP the final
+    // auth.users wipe + companies.delete so the cron can retry
+    // and the operator can clean up the orphans.
+    const failures: Array<{ scope: string; table?: string; id: string; error: string }> = [];
+    const noteFailure = (scope: string, id: string, error: unknown, table?: string) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      failures.push({ scope, table, id, error: msg });
+      console.error(`execute-account-deletion ${scope} ${table ?? ''} ${id}`, msg);
+    };
 
     for (const company of companies ?? []) {
+      const initialFailureCount = failures.length;
       // Get all user IDs for this company
       const { data: members } = await adminClient
         .from("profiles")
@@ -123,39 +136,51 @@ Deno.serve(async (req: Request) => {
       ];
 
       for (const table of companyTables) {
-        try {
-          await adminClient.from(table).delete().eq("company_id", company.id);
-        } catch {
-          // Some tables may not exist or have different column names
-        }
+        const { error } = await adminClient.from(table).delete().eq("company_id", company.id);
+        if (error) noteFailure("company-table", company.id, error, table);
       }
 
       // Delete user-scoped data
       for (const table of ["push_subscriptions", "device_tokens", "notification_preferences"]) {
-        try {
-          if (memberIds.length > 0) {
-            await adminClient.from(table).delete().in("user_id", memberIds);
-          }
-        } catch { /* skip */ }
+        if (memberIds.length > 0) {
+          const { error } = await adminClient.from(table).delete().in("user_id", memberIds);
+          if (error) noteFailure("user-table", company.id, error, table);
+        }
+      }
+
+      // If anything above failed, do NOT proceed to delete auth.users
+      // or the companies row — the operator needs to clean up the
+      // orphans first. The cron will retry on the next tick.
+      if (failures.length > initialFailureCount) {
+        console.warn(`execute-account-deletion: skipping company ${company.id} cleanup due to ${failures.length - initialFailureCount} prior failures`);
+        continue;
       }
 
       // Deactivate and delete auth users
       for (const memberId of memberIds) {
+        const { error: deactErr } = await adminClient
+          .from("profiles")
+          .update({ is_active: false })
+          .eq("id", memberId);
+        if (deactErr) {
+          noteFailure("profile-deactivate", memberId, deactErr);
+          continue;
+        }
         try {
-          await adminClient
-            .from("profiles")
-            .update({ is_active: false })
-            .eq("id", memberId);
           await adminClient.auth.admin.deleteUser(memberId);
           profilesDeleted++;
-        } catch { /* continue with next */ }
+        } catch (authErr) {
+          noteFailure("auth-delete", memberId, authErr);
+        }
       }
 
       // Delete company itself
-      try {
-        await adminClient.from("companies").delete().eq("id", company.id);
+      const { error: coErr } = await adminClient.from("companies").delete().eq("id", company.id);
+      if (coErr) {
+        noteFailure("company-delete", company.id, coErr);
+      } else {
         companiesDeleted++;
-      } catch { /* log but continue */ }
+      }
     }
 
     // Find individual profiles scheduled for deletion (non-company-admin)
@@ -167,42 +192,58 @@ Deno.serve(async (req: Request) => {
       .neq("role", "company_admin");
 
     for (const prof of profiles ?? []) {
+      const initialProfFailures = failures.length;
+      // Delete user-scoped data
+      for (const table of ["notifications", "push_subscriptions", "device_tokens", "notification_preferences", "driver_locations", "driver_route_plans", "shift_sessions"]) {
+        const { error } = await adminClient.from(table).delete().eq("user_id", prof.id);
+        if (error) noteFailure("profile-user-table", prof.id, error, table);
+      }
+
+      // For drivers, clear driver_id references
+      if (prof.role === "driver") {
+        const { error } = await adminClient
+          .from("delivery_notes")
+          .update({ driver_id: null })
+          .eq("driver_id", prof.id);
+        if (error) noteFailure("profile-driver-clear", prof.id, error, "delivery_notes");
+      }
+
+      // Skip auth.users wipe if any prerequisite cleanup failed.
+      if (failures.length > initialProfFailures) continue;
+
+      const { error: deactErr } = await adminClient
+        .from("profiles")
+        .update({ is_active: false })
+        .eq("id", prof.id);
+      if (deactErr) {
+        noteFailure("profile-deactivate", prof.id, deactErr);
+        continue;
+      }
+
       try {
-        // Delete user-scoped data
-        for (const table of ["notifications", "push_subscriptions", "device_tokens", "notification_preferences", "driver_locations", "driver_route_plans", "shift_sessions"]) {
-          try {
-            await adminClient.from(table).delete().eq("user_id", prof.id);
-          } catch { /* skip */ }
-        }
-
-        // For drivers, clear driver_id references
-        if (prof.role === "driver") {
-          try {
-            await adminClient
-              .from("delivery_notes")
-              .update({ driver_id: null })
-              .eq("driver_id", prof.id);
-          } catch { /* skip */ }
-        }
-
-        await adminClient
-          .from("profiles")
-          .update({ is_active: false })
-          .eq("id", prof.id);
-
         await adminClient.auth.admin.deleteUser(prof.id);
         profilesDeleted++;
-      } catch { /* continue */ }
+      } catch (authErr) {
+        noteFailure("auth-delete", prof.id, authErr);
+      }
     }
 
+    // Cron uses status === 200 + success === true as "this row was
+    // fully cleaned up". Surface partial-failure as success: false
+    // so the next cron tick retries the un-deleted rows.
+    const success = failures.length === 0;
     return new Response(
       JSON.stringify({
-        success: true,
+        success,
         companies_deleted: companiesDeleted,
         profiles_deleted: profilesDeleted,
+        failures: failures.length === 0 ? undefined : failures,
         executed_at: now,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: success ? 200 : 207, // 207 Multi-Status when partial
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (e) {
     return new Response(

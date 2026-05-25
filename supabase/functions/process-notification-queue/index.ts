@@ -67,9 +67,14 @@ Deno.serve(async (req: Request) => {
         if (dispatchRes.ok) {
           results.push({ id: item.id, ok: true });
         } else {
-          // 5xx / network = transient, retry with backoff.
-          // 4xx (e.g. malformed payload) = permanent, go to DLQ.
-          const transient = dispatchRes.status >= 500;
+          // 5xx / network / rate-limit / timeout = transient, retry with backoff.
+          // Other 4xx (e.g. malformed payload) = permanent, go to DLQ.
+          // 408 Request Timeout, 425 Too Early, 429 Too Many Requests
+          // are all temporary even though they're 4xx.
+          const transient = dispatchRes.status >= 500
+            || dispatchRes.status === 408
+            || dispatchRes.status === 425
+            || dispatchRes.status === 429;
           const errBody = await dispatchRes.text().catch(() => `HTTP ${dispatchRes.status}`);
           await markFailed(item.id, errBody, transient);
           results.push({ id: item.id, ok: false });
