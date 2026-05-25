@@ -16,6 +16,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { formatCurrency, type AccCurrency } from '../../types/accounting';
 
 type DocKind = 'purchase' | 'expense' | 'investment' | 'sale';
 type RoutingDecision = 'auto_saved' | 'pending_confirmation' | 'new_company_required';
@@ -297,8 +298,8 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
             <Stat label="Numri" value={invoiceNumber || '-'} />
             <Stat label="Data" value={invoiceDate || '-'} />
-            <Stat label="Totali" value={total > 0 ? `${total.toFixed(2)} ${currency}` : '-'} strong />
-            <Stat label="TVSH" value={vatAmount > 0 ? `${vatAmount.toFixed(2)} ${currency}` : '-'} />
+            <Stat label="Totali" value={total > 0 ? formatCurrency(total, currency as AccCurrency) : '-'} strong />
+            <Stat label="TVSH" value={vatAmount > 0 ? formatCurrency(vatAmount, currency as AccCurrency) : '-'} />
           </div>
 
           {routing.candidates && routing.candidates.length > 0 && (

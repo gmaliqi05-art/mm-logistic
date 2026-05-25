@@ -97,8 +97,14 @@ export default function FinanceSnapshot({ companyId }: Props) {
     );
   }
 
-  const fmt = (v: number) =>
-    new Intl.NumberFormat('de-DE', { style: 'currency', currency: data.currency, maximumFractionDigits: 0 }).format(v);
+  const fmt = (v: number) => {
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('ep_language') : null;
+    const tag = saved === 'sq' ? 'sq-AL'
+      : saved === 'en' ? 'en-GB'
+      : saved === 'fr' ? 'fr-FR'
+      : 'de-DE';
+    return new Intl.NumberFormat(tag, { style: 'currency', currency: data.currency, maximumFractionDigits: 0 }).format(v);
+  };
 
   const cards: Array<{
     key: string;
