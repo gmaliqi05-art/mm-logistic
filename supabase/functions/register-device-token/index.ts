@@ -71,6 +71,21 @@ Deno.serve(async (req: Request) => {
       return jsonRes({ error: "Invalid FCM token format" }, 400);
     }
 
+    // Token-takeover guard: device_tokens has UNIQUE(token), so an upsert
+    // with onConflict: "token" would silently rewrite an existing row's
+    // user_id if someone obtained another user's APNs/FCM token (debug
+    // log leak, MITM, etc.) and registered it under their own account.
+    // That would hijack push delivery for the original device. If the
+    // token is already bound to a different user, reject with 409.
+    const { data: existing } = await serviceClient
+      .from("device_tokens")
+      .select("user_id")
+      .eq("token", input.token)
+      .maybeSingle();
+    if (existing && existing.user_id !== userId) {
+      return jsonRes({ error: "Token already registered to another account" }, 409);
+    }
+
     const { data, error } = await serviceClient
       .from("device_tokens")
       .upsert(
