@@ -1305,8 +1305,9 @@ export default function InvoiceBuilder() {
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.clientEmail')} *</label>
+                    <label htmlFor="invoice-email-client" className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.clientEmail')} *</label>
                     <input
+                      id="invoice-email-client"
                       type="email"
                       value={emailRecipient}
                       onChange={(e) => setEmailRecipient(e.target.value)}
@@ -1315,8 +1316,9 @@ export default function InvoiceBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.ccOptional')}</label>
+                    <label htmlFor="invoice-email-cc" className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.ccOptional')}</label>
                     <input
+                      id="invoice-email-cc"
                       type="text"
                       value={emailCc}
                       onChange={(e) => setEmailCc(e.target.value)}
@@ -1325,8 +1327,9 @@ export default function InvoiceBuilder() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.emailLanguage')}</label>
+                    <label htmlFor="invoice-email-locale" className="block text-sm font-medium text-gray-700 mb-1">{t('accounting.invoiceBuilder.emailLanguage')}</label>
                     <select
+                      id="invoice-email-locale"
                       value={emailLocale}
                       onChange={(e) => setEmailLocale(e.target.value as 'sq' | 'de' | 'en')}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"

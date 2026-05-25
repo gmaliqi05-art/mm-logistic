@@ -190,6 +190,7 @@ export default function DriverSettings() {
                 ref={fileRef}
                 type="file"
                 accept="image/*"
+                aria-label={profile?.avatar_url ? t('driver.settings.changePhoto') : t('driver.settings.uploadPhoto')}
                 className="hidden"
                 onChange={handlePhotoUpload}
               />
@@ -239,10 +240,12 @@ export default function DriverSettings() {
         </p>
         <div className="space-y-2">
           <input
+            id="driver-base-address"
             type="text"
             value={baseAddress}
             onChange={(e) => setBaseAddress(e.target.value)}
             placeholder={t('driver.settings.baseAddressPlaceholder')}
+            aria-label={t('driver.settings.baseLocation')}
             className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-teal-500 outline-none"
           />
           <div className="flex items-center justify-between gap-2">
