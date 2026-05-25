@@ -7,11 +7,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../i18n';
 
 type Step = 'info' | 'confirm' | 'password' | 'success';
 
 export default function AccountDeletion() {
   const { profile, signOut } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('info');
   const [password, setPassword] = useState('');
@@ -72,19 +74,19 @@ export default function AccountDeletion() {
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error || 'Eksporti deshtoi');
+        throw new Error(err.error || t('accountDeletion.errorExportFailed'));
       }
 
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `eksport_te_dhenat_${new Date().toISOString().split('T')[0]}.zip`;
+      a.download = `account_data_export_${new Date().toISOString().split('T')[0]}.zip`;
       a.click();
       URL.revokeObjectURL(url);
       setExportDone(true);
     } catch (e: any) {
-      setError(e.message || 'Gabim gjate eksportit');
+      setError(e.message || t('accountDeletion.errorExport'));
     } finally {
       setExporting(false);
     }
@@ -107,13 +109,13 @@ export default function AccountDeletion() {
 
       const result = await resp.json();
       if (!resp.ok) {
-        throw new Error(result.error || 'Kerkesa deshtoi');
+        throw new Error(result.error || t('accountDeletion.errorRequestFailed'));
       }
 
       setScheduledDate(result.scheduled_for);
       setStep('success');
     } catch (e: any) {
-      setError(e.message || 'Gabim i papritur');
+      setError(e.message || t('accountDeletion.errorUnexpected'));
     } finally {
       setLoading(false);
     }
@@ -136,12 +138,12 @@ export default function AccountDeletion() {
 
       const result = await resp.json();
       if (!resp.ok) {
-        throw new Error(result.error || 'Anullimi deshtoi');
+        throw new Error(result.error || t('accountDeletion.errorCancelFailed'));
       }
 
       setPendingDeletion(null);
     } catch (e: any) {
-      setError(e.message || 'Gabim');
+      setError(e.message || t('common.error'));
     } finally {
       setCancelling(false);
     }
@@ -167,7 +169,7 @@ export default function AccountDeletion() {
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Kthehu mbrapa
+          {t('common.back')}
         </button>
 
         {/* Header */}
@@ -176,9 +178,9 @@ export default function AccountDeletion() {
             <UserX className="w-6 h-6 text-red-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Fshirja e llogarise</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('accountDeletion.title')}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Menaxhoni fshirjen e llogarise suaj sipas te drejtes tuaj ligjore (GDPR Neni 17)
+              {t('accountDeletion.subtitle')}
             </p>
           </div>
         </div>
@@ -190,11 +192,11 @@ export default function AccountDeletion() {
               <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-sm font-bold text-amber-900">
-                  Llogaria juaj eshte planifikuar per fshirje
+                  {t('accountDeletion.pendingTitle')}
                 </h3>
                 <p className="text-sm text-amber-800 mt-1">
-                  Te gjitha te dhenat do te fshihen me <strong>{formatDate(pendingDeletion)}</strong> ({daysRemaining(pendingDeletion)} dite te mbetura).
-                  Pas kesaj date, veprimi eshte i pakthyeshem.
+                  {t('accountDeletion.pendingBodyPrefix')} <strong>{formatDate(pendingDeletion)}</strong> ({daysRemaining(pendingDeletion)} {t('accountDeletion.daysRemaining')}).
+                  {' '}{t('accountDeletion.pendingBodySuffix')}
                 </p>
               </div>
             </div>
@@ -205,7 +207,7 @@ export default function AccountDeletion() {
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 font-medium text-sm transition-colors"
               >
                 {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                Anulo fshirjen
+                {t('accountDeletion.cancelDeletion')}
               </button>
               <button
                 onClick={handleExportData}
@@ -213,7 +215,7 @@ export default function AccountDeletion() {
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors"
               >
                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                Shkarko te dhenat
+                {t('accountDeletion.exportShort')}
               </button>
             </div>
           </div>
@@ -229,10 +231,9 @@ export default function AccountDeletion() {
                   <div className="flex gap-3">
                     <ShieldAlert className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-red-900">Kujdes - Veprim i rende</p>
+                      <p className="text-sm font-bold text-red-900">{t('accountDeletion.warningTitle')}</p>
                       <p className="text-sm text-red-800 mt-1">
-                        Fshirja e llogarise eshte veprim i pakthyeshem. Pas periudhes se pritjes prej 30 ditesh,
-                        te gjitha te dhenat tuaja do te fshihen pergjithmone nga serverat tona.
+                        {t('accountDeletion.warningBody')}
                       </p>
                     </div>
                   </div>
@@ -240,15 +241,15 @@ export default function AccountDeletion() {
 
                 {/* What gets deleted */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-                  <h3 className="text-base font-semibold text-gray-900">Cfare fshihet:</h3>
+                  <h3 className="text-base font-semibold text-gray-900">{t('accountDeletion.whatGetsDeletedTitle')}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <DeleteItem icon={UserX} label="Profili dhe te dhenat personale" />
-                    <DeleteItem icon={CreditCard} label="Faturat dhe transaksionet" />
-                    <DeleteItem icon={FileText} label="Fletengarkesat dhe dergimiet" />
-                    <DeleteItem icon={Package} label="Stoku dhe levizjet e inventarit" />
-                    <DeleteItem icon={Database} label="Dokumentet e ngarkuara" />
+                    <DeleteItem icon={UserX} label={t('accountDeletion.itemProfile')} />
+                    <DeleteItem icon={CreditCard} label={t('accountDeletion.itemInvoices')} />
+                    <DeleteItem icon={FileText} label={t('accountDeletion.itemDeliveries')} />
+                    <DeleteItem icon={Package} label={t('accountDeletion.itemStock')} />
+                    <DeleteItem icon={Database} label={t('accountDeletion.itemDocuments')} />
                     {isAdmin && (
-                      <DeleteItem icon={Truck} label="Llogarite e shofereve/punonjesve" highlight />
+                      <DeleteItem icon={Truck} label={t('accountDeletion.itemEmployees')} highlight />
                     )}
                   </div>
                 </div>
@@ -259,11 +260,9 @@ export default function AccountDeletion() {
                     <div className="flex gap-3">
                       <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm font-bold text-orange-900">Si admin i kompanise</p>
+                        <p className="text-sm font-bold text-orange-900">{t('accountDeletion.adminCascadeTitle')}</p>
                         <p className="text-sm text-orange-800 mt-1">
-                          Fshirja e llogarise suaj do te fshije automatikisht edhe te gjitha llogarite qe keni
-                          krijuar (shoferet, punonjesit e depose, kontabilistet). Te gjithe keta perdorues
-                          do te humbasin aksesin ne sistem.
+                          {t('accountDeletion.adminCascadeBody')}
                         </p>
                       </div>
                     </div>
@@ -272,11 +271,11 @@ export default function AccountDeletion() {
 
                 {/* How it works */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-                  <h3 className="text-base font-semibold text-gray-900">Si funksionon:</h3>
+                  <h3 className="text-base font-semibold text-gray-900">{t('accountDeletion.howItWorksTitle')}</h3>
                   <div className="space-y-3">
-                    <ProcessStep num={1} text="Kerkoni fshirjen e llogarise duke konfirmuar me fjalekalimin tuaj" />
-                    <ProcessStep num={2} text="Fillon periudha e pritjes prej 30 ditesh ku mund ta anulloni vendimin" />
-                    <ProcessStep num={3} text="Pas 30 ditesh, te gjitha te dhenat fshihen automatikisht dhe perfundimisht" />
+                    <ProcessStep num={1} text={t('accountDeletion.step1')} />
+                    <ProcessStep num={2} text={t('accountDeletion.step2')} />
+                    <ProcessStep num={3} text={t('accountDeletion.step3')} />
                   </div>
                 </div>
 
@@ -285,10 +284,9 @@ export default function AccountDeletion() {
                   <div className="flex gap-3">
                     <Download className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-blue-900">Rekomandim: Shkarkoni te dhenat tuaja</p>
+                      <p className="text-sm font-bold text-blue-900">{t('accountDeletion.exportTitle')}</p>
                       <p className="text-sm text-blue-800 mt-1">
-                        Para se te fshini llogarine, ju rekomandojme te shkarkoni nje kopje te te gjitha te dhenave
-                        tuaja (faturat, transaksionet, kontaktet, etj.) ne format ZIP.
+                        {t('accountDeletion.exportBody')}
                       </p>
                       <button
                         onClick={handleExportData}
@@ -302,7 +300,7 @@ export default function AccountDeletion() {
                         ) : (
                           <Download className="w-4 h-4" />
                         )}
-                        {exporting ? 'Duke shkarkuar...' : exportDone ? 'Shkarkuar me sukses!' : 'Shkarko te dhenat (ZIP)'}
+                        {exporting ? t('accountDeletion.exportingProgress') : exportDone ? t('accountDeletion.exportSuccess') : t('accountDeletion.exportButton')}
                       </button>
                     </div>
                   </div>
@@ -310,15 +308,16 @@ export default function AccountDeletion() {
 
                 {/* Reason (optional) */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Arsyeja e fshirjes (opsionale)
+                  <label htmlFor="deletion-reason" className="block text-sm font-medium text-gray-700">
+                    {t('accountDeletion.reasonLabel')}
                   </label>
                   <textarea
+                    id="deletion-reason"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                    placeholder="Na tregoni pse deshironi te fshini llogarine (opsionale)..."
+                    placeholder={t('accountDeletion.reasonPlaceholder')}
                   />
                 </div>
 
@@ -329,7 +328,7 @@ export default function AccountDeletion() {
                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-red-600 text-white rounded-xl hover:bg-red-700 font-semibold text-sm transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Fshi Llogarine
+                    {t('accountDeletion.deleteButton')}
                   </button>
                 </div>
               </div>
@@ -340,15 +339,14 @@ export default function AccountDeletion() {
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-lg">
                 <div className="px-6 py-5 bg-red-50 border-b border-red-100 flex items-center gap-3">
                   <AlertTriangle className="w-5 h-5 text-red-600" />
-                  <h2 className="text-lg font-bold text-red-900">A jeni te sigurt?</h2>
+                  <h2 className="text-lg font-bold text-red-900">{t('accountDeletion.confirmTitle')}</h2>
                 </div>
                 <div className="p-6 space-y-4">
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Duke vazhduar, llogaria juaj {isAdmin && 'dhe te gjitha llogarite e lidhura (shoferet, punonjesit) '}
-                    do te planifikohen per fshirje. Pas <strong>30 ditesh</strong>, te gjitha te dhenat fshihen perfundimisht.
+                    {isAdmin ? t('accountDeletion.confirmBodyAdmin') : t('accountDeletion.confirmBody')}
                   </p>
                   <p className="text-sm text-gray-700 leading-relaxed">
-                    Gjate periudhes se pritjes, ju mund ta anulloni vendimin ne cdo kohe.
+                    {t('accountDeletion.confirmBodyCancel')}
                   </p>
 
                   <div className="flex items-center gap-3 pt-3">
@@ -356,13 +354,13 @@ export default function AccountDeletion() {
                       onClick={() => setStep('info')}
                       className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors"
                     >
-                      Jo, kthehu mbrapa
+                      {t('accountDeletion.confirmNo')}
                     </button>
                     <button
                       onClick={() => setStep('password')}
                       className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm transition-colors"
                     >
-                      Po, vazhdo
+                      {t('accountDeletion.confirmYes')}
                     </button>
                   </div>
                 </div>
@@ -375,7 +373,7 @@ export default function AccountDeletion() {
                 <div className="px-6 py-5 bg-red-50 border-b border-red-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <ShieldAlert className="w-5 h-5 text-red-600" />
-                    <h2 className="text-lg font-bold text-red-900">Konfirmoni me fjalekalimin</h2>
+                    <h2 className="text-lg font-bold text-red-900">{t('accountDeletion.passwordTitle')}</h2>
                   </div>
                   <button
                     onClick={() => { setStep('info'); setError(null); }}
@@ -386,7 +384,7 @@ export default function AccountDeletion() {
                 </div>
                 <div className="p-6 space-y-5">
                   <p className="text-sm text-gray-700">
-                    Per siguri, ju lutem shkruani fjalekalimin e llogarise suaj per te konfirmuar fshirjen.
+                    {t('accountDeletion.passwordBody')}
                   </p>
 
                   {error && (
@@ -397,16 +395,17 @@ export default function AccountDeletion() {
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                      Fjalekalimi i llogarise
+                    <label htmlFor="deletion-password" className="block text-xs font-medium text-gray-600 mb-1.5">
+                      {t('accountDeletion.passwordLabel')}
                     </label>
                     <div className="relative">
                       <input
+                        id="deletion-password"
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                        placeholder="Shkruani fjalekalimin tuaj..."
+                        placeholder={t('accountDeletion.passwordPlaceholder')}
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && password.trim()) handleRequestDeletion();
@@ -427,7 +426,7 @@ export default function AccountDeletion() {
                       onClick={() => { setStep('info'); setError(null); setPassword(''); }}
                       className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors"
                     >
-                      Anulo
+                      {t('common.cancel')}
                     </button>
                     <button
                       onClick={handleRequestDeletion}
@@ -435,7 +434,7 @@ export default function AccountDeletion() {
                       className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm transition-colors disabled:opacity-50"
                     >
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                      Konfirmo fshirjen
+                      {t('accountDeletion.passwordConfirm')}
                     </button>
                   </div>
                 </div>
@@ -447,23 +446,22 @@ export default function AccountDeletion() {
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-lg">
                 <div className="px-6 py-5 bg-amber-50 border-b border-amber-100 flex items-center gap-3">
                   <Clock className="w-5 h-5 text-amber-600" />
-                  <h2 className="text-lg font-bold text-amber-900">Fshirja u planifikua</h2>
+                  <h2 className="text-lg font-bold text-amber-900">{t('accountDeletion.successTitle')}</h2>
                 </div>
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-lg border border-amber-200">
                     <CheckCircle2 className="w-5 h-5 text-amber-600 flex-shrink-0" />
                     <p className="text-sm text-amber-900 font-medium">
-                      Llogaria juaj do te fshihet me {scheduledDate ? formatDate(scheduledDate) : '30 dite'}.
+                      {t('accountDeletion.successBodyPrefix')} {scheduledDate ? formatDate(scheduledDate) : t('accountDeletion.in30Days')}.
                     </p>
                   </div>
 
                   <p className="text-sm text-gray-600">
-                    Keni 30 dite per ta anulluar vendimin. Pas ketij afati, te gjitha te dhenat fshihen
-                    perfundimisht dhe nuk mund te rikuperohen.
+                    {t('accountDeletion.success30Days')}
                   </p>
 
                   <p className="text-sm text-gray-600">
-                    Mund te vazhdoni te perdorni platformen normalisht gjate periudhes se pritjes.
+                    {t('accountDeletion.successUsage')}
                   </p>
 
                   <div className="flex items-center gap-3 pt-3">
@@ -471,13 +469,13 @@ export default function AccountDeletion() {
                       onClick={() => navigate(-1)}
                       className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition-colors"
                     >
-                      Kthehu ne dashboard
+                      {t('accountDeletion.backToDashboard')}
                     </button>
                     <button
                       onClick={() => { signOut(); navigate('/login'); }}
                       className="flex-1 px-4 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium text-sm transition-colors"
                     >
-                      Dil nga llogaria
+                      {t('common.logout')}
                     </button>
                   </div>
                 </div>
@@ -496,8 +494,8 @@ export default function AccountDeletion() {
 
         {/* Legal note */}
         <div className="text-center text-xs text-gray-400 pt-4 pb-8">
-          <p>Sipas Rregullores se Pergjithshme per Mbrojtjen e te Dhenave (GDPR), Neni 17,</p>
-          <p>ju keni te drejten e fshirjes se te dhenave personale.</p>
+          <p>{t('accountDeletion.legalLine1')}</p>
+          <p>{t('accountDeletion.legalLine2')}</p>
         </div>
       </div>
     </div>
