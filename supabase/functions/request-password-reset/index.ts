@@ -57,11 +57,21 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Find user by email
-    const { data: userData } = await supabase.auth.admin.listUsers();
-    const user = userData?.users?.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail
-    );
+    // Find user by email. We resolve via the profiles table (indexed
+    // on email) instead of auth.admin.listUsers() which has no filter
+    // and loads every user into memory on each call — O(N) on a hot
+    // path and a DoS amplification vector at scale.
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
+    let user: { id: string } | null = null;
+    if (profileRow?.id) {
+      const { data: byId } = await supabase.auth.admin.getUserById(profileRow.id);
+      if (byId?.user) user = { id: byId.user.id };
+    }
 
     // Always return success to prevent email enumeration
     if (!user) {

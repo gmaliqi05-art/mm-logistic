@@ -134,9 +134,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // preferences (ep_language, ep_consent, install/push dismissals).
     if (typeof window !== 'undefined') {
       try {
+        // Explicit allowlist of every user/tenant-scoped key the app
+        // writes. Kept manually rather than prefix-purging to avoid
+        // wiping cross-user preferences (ep_language, ep_consent,
+        // PWA install/push dismissals).
         const KEYS_TO_CLEAR = [
           'driver_tracking_enabled',
           'driver_tracking_overtime_until',
+          'driver_perms_asked_v1',
           'mml.nav.openGroups',
           'mml.depotNav.openGroups',
           'mml.driverNav.openGroups',

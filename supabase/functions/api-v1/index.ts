@@ -58,6 +58,11 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!apiKey || apiKey.revoked_at) return json({ error: "Invalid or revoked API key" }, 401);
+    // Defensive: if a key row ever sits with company_id NULL the
+    // subsequent .eq("company_id", null) becomes "IS NULL" semantics
+    // and returns every-tenant rows where the column is null.
+    // Reject outright.
+    if (!apiKey.company_id) return json({ error: "Invalid API key" }, 401);
 
     const rl = await checkRateLimit(`api-v1:${apiKey.id}`, 60, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
