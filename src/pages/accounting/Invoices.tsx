@@ -705,24 +705,24 @@ export default function Invoices() {
   function getStatusActions(status: AccInvoiceStatus): { label: string; value: AccInvoiceStatus }[] {
     switch (status) {
       case 'draft':
-        return [{ label: 'Dergo', value: 'sent' }];
+        return [{ label: t('accounting.invoices.actions.send'), value: 'sent' }];
       case 'sent':
         return [
-          { label: 'Sheno si Paguar', value: 'paid' },
-          { label: 'Pjeserisht', value: 'partial' },
-          { label: 'Vonuar', value: 'overdue' },
-          { label: 'Anulo', value: 'cancelled' },
+          { label: t('accounting.invoices.actions.markPaid'), value: 'paid' },
+          { label: t('accounting.invoices.actions.partial'), value: 'partial' },
+          { label: t('accounting.invoices.actions.overdue'), value: 'overdue' },
+          { label: t('accounting.invoices.actions.cancel'), value: 'cancelled' },
         ];
       case 'partial':
         return [
-          { label: 'Sheno si Paguar', value: 'paid' },
-          { label: 'Vonuar', value: 'overdue' },
-          { label: 'Anulo', value: 'cancelled' },
+          { label: t('accounting.invoices.actions.markPaid'), value: 'paid' },
+          { label: t('accounting.invoices.actions.overdue'), value: 'overdue' },
+          { label: t('accounting.invoices.actions.cancel'), value: 'cancelled' },
         ];
       case 'overdue':
         return [
-          { label: 'Sheno si Paguar', value: 'paid' },
-          { label: 'Anulo', value: 'cancelled' },
+          { label: t('accounting.invoices.actions.markPaid'), value: 'paid' },
+          { label: t('accounting.invoices.actions.cancel'), value: 'cancelled' },
         ];
       default:
         return [];
@@ -1584,7 +1584,7 @@ export default function Invoices() {
                 onClick={() => setEmailInvoice(null)}
                 className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
               >
-                {emailSent ? 'Mbyll' : 'Anulo'}
+                {emailSent ? t('common.close') : t('common.cancel')}
               </button>
               {!emailSent && (
                 <button

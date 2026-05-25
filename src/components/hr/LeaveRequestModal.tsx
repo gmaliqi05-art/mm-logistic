@@ -177,14 +177,15 @@ export default function LeaveRequestModal({ onClose, onSuccess, adminMode = fals
 
           {adminMode && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Employee</label>
+              <label htmlFor="leave-employee" className="block text-sm font-medium text-gray-700 mb-1.5">{t('hr.leave.employee')}</label>
               <select
+                id="leave-employee"
                 value={selectedEmployee}
                 onChange={(e) => setSelectedEmployee(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
               >
-                <option value="">-- Select employee --</option>
+                <option value="">{t('hr.leave.selectEmployee')}</option>
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>{emp.full_name}</option>
                 ))}
@@ -253,7 +254,7 @@ export default function LeaveRequestModal({ onClose, onSuccess, adminMode = fals
           {totalDays > 0 && (
             <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl">
               <span className="text-sm font-medium text-teal-800">
-                {t('hr.leave.totalDays')}: <strong>{totalDays}</strong> {totalDays === 1 ? 'day' : 'days'}
+                {t('hr.leave.totalDays')}: <strong>{totalDays}</strong> {totalDays === 1 ? t('common.day') : t('common.days')}
               </span>
             </div>
           )}
@@ -264,7 +265,7 @@ export default function LeaveRequestModal({ onClose, onSuccess, adminMode = fals
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
-              placeholder="..."
+              placeholder={t('hr.leave.reasonPlaceholder')}
               className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
             />
           </div>
