@@ -181,6 +181,21 @@ Deno.serve(async (req: Request) => {
     const payload: Payload = await req.json();
     if (!payload.bank_account_id || !payload.content) throw new Error("Missing fields");
 
+    // Tenant gate: verify the bank_account_id from the body actually
+    // belongs to the caller's company before stamping rows with the
+    // caller's company_id. Without this, a company_admin of tenant A
+    // could post statements / lines tagged with tenant B's
+    // bank_account_id (FK would not catch it — it's just a UUID
+    // reference).
+    const { data: ba, error: baErr } = await admin
+      .from("acc_bank_accounts")
+      .select("id, company_id")
+      .eq("id", payload.bank_account_id)
+      .maybeSingle();
+    if (baErr || !ba || ba.company_id !== profile.company_id) {
+      throw new Error("Bank account not found");
+    }
+
     const trimmed = payload.content.trim();
     const parsed: ParsedStatement = trimmed.startsWith("<")
       ? parseCamt053(trimmed)

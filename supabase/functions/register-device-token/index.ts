@@ -59,6 +59,17 @@ Deno.serve(async (req: Request) => {
     if (!input.token || typeof input.token !== "string" || input.token.length > 500) {
       return jsonRes({ error: "Invalid token" }, 400);
     }
+    // Per-platform shape check. iOS APNs tokens are 64-hex chars
+    // (legacy) or up to 200 hex chars (modern); FCM Android tokens
+    // are base64url-ish (letters, digits, _-:.). This blocks
+    // log-injection and clearly-malformed strings from being
+    // persisted and later replayed to APNs/FCM.
+    if (input.platform === "ios" && !/^[A-Fa-f0-9]{32,200}$/.test(input.token)) {
+      return jsonRes({ error: "Invalid APNs token format" }, 400);
+    }
+    if (input.platform === "android" && !/^[A-Za-z0-9_\-:.]{20,500}$/.test(input.token)) {
+      return jsonRes({ error: "Invalid FCM token format" }, 400);
+    }
 
     const { data, error } = await serviceClient
       .from("device_tokens")
