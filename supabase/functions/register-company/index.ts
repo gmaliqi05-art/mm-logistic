@@ -39,7 +39,8 @@ interface RegisterPayload {
   adminName: string;
   adminEmail: string;
   adminPassword: string;
-  planName: string;
+  planId?: string;
+  planName?: string;
   businessType?: "logistics" | "accounting";
   accountingEnabled?: boolean;
 }
@@ -73,13 +74,14 @@ Deno.serve(async (req: Request) => {
       adminName,
       adminEmail,
       adminPassword,
+      planId,
       planName,
     } = payload;
     const businessType = payload.businessType === "accounting" ? "accounting" : "logistics";
     const accountingEnabled = payload.accountingEnabled === true;
     const primaryRole = businessType === "accounting" ? "accountant" : "company_admin";
 
-    if (!companyName || !adminEmail || !adminPassword || !planName) {
+    if (!companyName || !adminEmail || !adminPassword || (!planId && !planName)) {
       throw new Error("Fushat e detyrueshme mungojne");
     }
 
@@ -93,7 +95,12 @@ Deno.serve(async (req: Request) => {
     if (typeof companyName !== "string" || companyName.trim().length === 0 || companyName.length > 200) {
       throw new Error("Emri i kompanise i pavlefshem");
     }
-    if (typeof planName !== "string" || planName.length > 100) {
+    if (planId) {
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (typeof planId !== "string" || !uuidRe.test(planId)) {
+        throw new Error("Plani i pavlefshem");
+      }
+    } else if (typeof planName !== "string" || planName.length > 100) {
       throw new Error("Plani i pavlefshem");
     }
     const optionalStringMax = (v: unknown, max: number, label: string) => {
@@ -190,11 +197,15 @@ Deno.serve(async (req: Request) => {
       throw new Error(updateProfileError.message);
     }
 
-    const { data: planData, error: planError } = await supabaseAdmin
+    let planQuery = supabaseAdmin
       .from("subscription_plans")
-      .select("id, name, trial_days")
-      .eq("name", planName)
-      .maybeSingle();
+      .select("id, name, trial_days, price_monthly");
+    if (planId) {
+      planQuery = planQuery.eq("id", planId);
+    } else {
+      planQuery = planQuery.eq("name", planName!);
+    }
+    const { data: planData, error: planError } = await planQuery.maybeSingle();
 
     if (planError || !planData) {
       await supabaseAdmin.from("profiles").delete().eq("id", userId);
@@ -204,13 +215,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const now = new Date();
-    const isTrial = planData.name === "free_trial" || planData.name === "acc_free_trial";
+    const isTrial = planData.trial_days > 0 || Number(planData.price_monthly) === 0;
     const periodEnd = new Date(
       now.getTime() +
-        (isTrial ? planData.trial_days : 30) * 24 * 60 * 60 * 1000
+        (isTrial ? (planData.trial_days || 30) : 30) * 24 * 60 * 60 * 1000
     );
 
-    const isPaidPlan = !isTrial && planData.name !== "free_trial" && planData.name !== "acc_free_trial";
+    const isPaidPlan = !isTrial;
 
     const { error: subError } = await supabaseAdmin
       .from("company_subscriptions")
