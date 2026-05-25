@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Truck, Search, Plus, AlertTriangle, X, Loader2, ChevronRight, Container, ShieldCheck, ScanLine } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -446,8 +446,8 @@ export default function CompanyVehicles() {
                   )}
                   <Field label={t('company.vehicles.fieldColor')} value={form.color} onChange={(v) => setForm({ ...form, color: v })} />
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldDepot')}</label>
-                    <select value={form.depot_id} onChange={(e) => setForm({ ...form, depot_id: e.target.value })}
+                    <label htmlFor="vehicle-depot" className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldDepot')}</label>
+                    <select id="vehicle-depot" value={form.depot_id} onChange={(e) => setForm({ ...form, depot_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
                       <option value="">—</option>
                       {depots.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -466,8 +466,8 @@ export default function CompanyVehicles() {
                     <Field label={t('company.vehicles.fieldAxleLoad')} type="number" value={form.axle_load_kg} onChange={(v) => setForm({ ...form, axle_load_kg: v })} placeholder="11500" />
                   )}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldAdrClass')}</label>
-                    <select value={form.adr_class} onChange={(e) => setForm({ ...form, adr_class: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                    <label htmlFor="vehicle-adr-class" className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldAdrClass')}</label>
+                    <select id="vehicle-adr-class" value={form.adr_class} onChange={(e) => setForm({ ...form, adr_class: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
                       <option value="none">{t('company.vehicles.adrNone')}</option>
                       <option value="1">1 - Eksplozive</option>
                       <option value="2">2 - Gazra</option>
@@ -485,8 +485,8 @@ export default function CompanyVehicles() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldTunnel')}</label>
-                    <select value={form.tunnel_category} onChange={(e) => setForm({ ...form, tunnel_category: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                    <label htmlFor="vehicle-tunnel-cat" className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldTunnel')}</label>
+                    <select id="vehicle-tunnel-cat" value={form.tunnel_category} onChange={(e) => setForm({ ...form, tunnel_category: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
                       <option value="">—</option>
                       <option value="A">A</option>
                       <option value="B">B</option>
@@ -503,8 +503,8 @@ export default function CompanyVehicles() {
                       </div>
                       {form.has_tachograph && (
                         <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldTachoType')}</label>
-                          <select value={form.tachograph_type} onChange={(e) => setForm({ ...form, tachograph_type: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                          <label htmlFor="vehicle-tacho-type" className="block text-xs font-medium text-gray-700 mb-1.5">{t('company.vehicles.fieldTachoType')}</label>
+                          <select id="vehicle-tacho-type" value={form.tachograph_type} onChange={(e) => setForm({ ...form, tachograph_type: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
                             <option value="">—</option>
                             <option value="analog">Analog</option>
                             <option value="digital">Digital</option>
@@ -573,10 +573,11 @@ export default function CompanyVehicles() {
 function Field({
   label, value, onChange, type = 'text', placeholder,
 }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
+  const id = useId();
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-700 mb-1.5">{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+      <label htmlFor={id} className="block text-xs font-medium text-gray-700 mb-1.5">{label}</label>
+      <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
     </div>
   );
