@@ -276,33 +276,40 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
+      if (!selectedPlan?.stripe_price_id) {
+        setCurrentStep(3);
+        return;
+      }
+
+      // Sign in temporarily only to obtain a token for the Stripe checkout call.
+      // We sign out immediately after to prevent dashboard access before payment.
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: form.companyEmail,
         password: form.adminPassword,
       });
 
       if (signInError || !signInData.session) {
-        navigate('/payment-pending');
+        setCurrentStep(3);
         return;
       }
 
-      if (!selectedPlan?.stripe_price_id) {
-        navigate('/payment-pending');
-        return;
-      }
+      const accessToken = signInData.session.access_token;
+
+      // Sign out immediately so the user cannot access the dashboard while payment is pending
+      await supabase.auth.signOut();
 
       const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
       const checkoutRes = await fetch(checkoutUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${signInData.session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           planId: selectedPlan.id,
           successUrl: `${window.location.origin}/payment-success`,
-          cancelUrl: `${window.location.origin}/payment-pending`,
+          cancelUrl: `${window.location.origin}/payment-cancel`,
           isUpgrade: false,
         }),
       });
@@ -314,7 +321,7 @@ export default function RegisterPage() {
         return;
       }
 
-      navigate('/payment-pending');
+      setCurrentStep(3);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Gabim gjate regjistrimit';
       setError(message);

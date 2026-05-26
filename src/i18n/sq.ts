@@ -485,6 +485,7 @@ export const sq = {
     pendingExplanation: 'Llogaria juaj eshte krijuar por abonimi do te aktivizohet vetem pas perfundimit te pageses. Ju lutem perfundoni pagesen per te aksesuar te gjitha funksionet e platformes.',
     completePayment: 'Perfundo Pagesen',
     checkStatus: 'Kam paguar tashme - kontrollo statusin',
+    loginToComplete: 'Hyni ne llogari per te perfunduar pagesen dhe aktivizuar abonimin tuaj.',
   },
   resetPassword: {
     forgotTitle: 'Keni harruar fjalekalimin?',

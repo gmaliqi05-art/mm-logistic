@@ -487,6 +487,7 @@ export const en: typeof sq = {
     pendingExplanation: 'Your account has been created but your subscription will only be activated after completing the payment. Please complete the payment to access all platform features.',
     completePayment: 'Complete Payment',
     checkStatus: 'I already paid - check status',
+    loginToComplete: 'Sign in to your account to complete payment and activate your subscription.',
   },
   resetPassword: {
     forgotTitle: 'Forgot your password?',

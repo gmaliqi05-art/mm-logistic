@@ -17,7 +17,7 @@ function lazyWithRetry<T extends ComponentType<unknown>>(factory: () => Promise<
 }
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
 import { LanguageProvider } from './i18n';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -200,13 +200,18 @@ function LoadingScreen() {
 
 function ProtectedRoute({ children, roles, workerCategories }: { children: ReactNode; roles?: string[]; workerCategories?: string[] }) {
   const { session, profile, loading } = useAuth();
+  const { isPendingPayment, loading: subLoading } = useSubscription();
 
-  if (loading) return <LoadingScreen />;
+  if (loading || subLoading) return <LoadingScreen />;
   if (!session || !profile) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(profile.role)) return <Navigate to="/login" replace />;
-  // depot_workers can be further partitioned by worker_category (depoist vs
-  // reparature). Reparature accounts exist only so the depoist can attribute
-  // their work — they should not see the depot dashboard.
+
+  // Block users whose subscription is pending payment (paid plan chosen but
+  // payment not completed). Super admins bypass this check.
+  if (isPendingPayment && profile.role !== 'super_admin') {
+    return <Navigate to="/payment-pending" replace />;
+  }
+
   if (workerCategories && profile.role === 'depot_worker'
       && !workerCategories.includes(profile.worker_category ?? '')) {
     return <Navigate to="/no-access" replace />;

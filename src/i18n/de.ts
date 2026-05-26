@@ -487,6 +487,7 @@ export const de: typeof sq = {
     pendingExplanation: 'Ihr Konto wurde erstellt, aber Ihr Abonnement wird erst nach Abschluss der Zahlung aktiviert. Bitte schliessen Sie die Zahlung ab, um auf alle Plattformfunktionen zuzugreifen.',
     completePayment: 'Zahlung Abschliessen',
     checkStatus: 'Ich habe bereits bezahlt - Status prufen',
+    loginToComplete: 'Melden Sie sich an, um die Zahlung abzuschliessen und Ihr Abonnement zu aktivieren.',
   },
   resetPassword: {
     forgotTitle: 'Passwort vergessen?',

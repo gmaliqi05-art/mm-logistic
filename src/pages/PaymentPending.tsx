@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CreditCard, Clock, AlertTriangle, ArrowRight, Loader2, LogOut } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { CreditCard, Clock, AlertTriangle, ArrowRight, Loader2, LogOut, LogIn } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -8,13 +8,15 @@ import { useTranslation } from '../i18n';
 
 export default function PaymentPending() {
   const navigate = useNavigate();
-  const { profile, signOut } = useAuth();
+  const { profile, session, signOut } = useAuth();
   const { subscription, plan, isPendingPayment, refreshSubscription } = useSubscription();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
 
-  if (!isPendingPayment) {
+  const isLoggedIn = Boolean(session && profile);
+
+  if (isLoggedIn && !isPendingPayment) {
     navigate('/company', { replace: true });
     return null;
   }
@@ -23,8 +25,8 @@ export default function PaymentPending() {
     if (!profile || !subscription?.plan_id) return;
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
         navigate('/login');
         return;
       }
@@ -35,7 +37,7 @@ export default function PaymentPending() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${currentSession.access_token}`,
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
@@ -86,7 +88,7 @@ export default function PaymentPending() {
               </div>
             </div>
 
-            {plan && (
+            {isLoggedIn && plan && (
               <div className="p-4 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-500">{t('auth.plan')}</span>
@@ -100,32 +102,50 @@ export default function PaymentPending() {
             )}
 
             <div className="space-y-3">
-              <button
-                onClick={handleRetryPayment}
-                disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/25 disabled:opacity-60"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
-                {t('payment.completePayment')}
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {isLoggedIn ? (
+                <>
+                  <button
+                    onClick={handleRetryPayment}
+                    disabled={loading}
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/25 disabled:opacity-60"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
+                    {t('payment.completePayment')}
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
 
-              <button
-                onClick={handleCheckStatus}
-                disabled={checking}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-all disabled:opacity-60"
-              >
-                {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {t('payment.checkStatus')}
-              </button>
+                  <button
+                    onClick={handleCheckStatus}
+                    disabled={checking}
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-600 font-medium rounded-xl hover:bg-slate-50 transition-all disabled:opacity-60"
+                  >
+                    {checking ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    {t('payment.checkStatus')}
+                  </button>
 
-              <button
-                onClick={() => signOut()}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 text-slate-400 text-sm hover:text-slate-600 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                {t('common.logout')}
-              </button>
+                  <button
+                    onClick={() => signOut()}
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 text-slate-400 text-sm hover:text-slate-600 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {t('common.logout')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-500 text-center">
+                    {t('payment.loginToComplete')}
+                  </p>
+                  <Link
+                    to="/login"
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/25"
+                  >
+                    <LogIn className="w-5 h-5" />
+                    {t('common.login')}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
