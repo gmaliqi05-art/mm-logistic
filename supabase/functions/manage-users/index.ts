@@ -309,7 +309,11 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({ error: "Body JSON i pavlefshem" }, 400);
       }
 
-      const { user_id } = body;
+      const { user_id, hard_delete, delete_company } = body as {
+        user_id?: string;
+        hard_delete?: boolean;
+        delete_company?: boolean;
+      };
 
       if (!user_id) {
         return jsonResponse({ error: "user_id eshte i detyrueshem" }, 400);
@@ -329,19 +333,319 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      await supabaseAdmin
+      const { data: targetProfile } = await supabaseAdmin
         .from("profiles")
-        .update({ is_active: false })
-        .eq("id", user_id);
+        .select("id, email, full_name, role, company_id")
+        .eq("id", user_id)
+        .maybeSingle();
 
-      const { error: deleteError } =
-        await supabaseAdmin.auth.admin.deleteUser(user_id);
-
-      if (deleteError) {
-        return jsonResponse({ error: deleteError.message }, 400);
+      if (!targetProfile) {
+        return jsonResponse({ error: "Perdoruesi nuk u gjet" }, 404);
       }
 
-      return jsonResponse({ success: true }, 200);
+      if (!hard_delete) {
+        // Soft delete: deactivate + remove auth (original behaviour)
+        await supabaseAdmin
+          .from("profiles")
+          .update({ is_active: false })
+          .eq("id", user_id);
+
+        const { error: deleteError } =
+          await supabaseAdmin.auth.admin.deleteUser(user_id);
+
+        if (deleteError) {
+          return jsonResponse({ error: deleteError.message }, 400);
+        }
+
+        return jsonResponse({ success: true }, 200);
+      }
+
+      // --- Hard delete path ---
+      let tablesCleaned = 0;
+      const errors: string[] = [];
+      const companyId = targetProfile.company_id;
+      let deletedCompanyName = "";
+
+      async function cleanTable(table: string, column: string, value: string) {
+        const { error } = await supabaseAdmin.from(table).delete().eq(column, value);
+        if (error) {
+          errors.push(`${table}: ${error.message}`);
+        } else {
+          tablesCleaned++;
+        }
+      }
+
+      if (delete_company && companyId) {
+        // Fetch company name for audit log
+        const { data: company } = await supabaseAdmin
+          .from("companies")
+          .select("name")
+          .eq("id", companyId)
+          .maybeSingle();
+        deletedCompanyName = company?.name ?? "";
+
+        // Fetch all members of this company (including the target user)
+        const { data: members } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("company_id", companyId);
+        const memberIds = (members || []).map((m: { id: string }) => m.id);
+
+        // --- Clean all company-scoped tables ---
+        // Notifications & push
+        for (const mid of memberIds) {
+          await cleanTable("notifications", "user_id", mid);
+          await cleanTable("push_subscriptions", "user_id", mid);
+          await cleanTable("notification_preferences", "user_id", mid);
+          await cleanTable("scan_events", "user_id", mid);
+          await cleanTable("unsubscribe_tokens", "user_id", mid);
+        }
+
+        // HR
+        await cleanTable("work_hours_log", "company_id", companyId);
+        await cleanTable("work_schedules", "company_id", companyId);
+        await cleanTable("attendance_records", "company_id", companyId);
+        await cleanTable("employee_leave_balances", "company_id", companyId);
+        await cleanTable("leave_requests", "company_id", companyId);
+        await cleanTable("hr_notifications", "company_id", companyId);
+
+        // Email
+        await cleanTable("email_deliveries", "company_id", companyId);
+        await cleanTable("email_campaign_recipients", "company_id", companyId);
+        await cleanTable("email_campaigns", "company_id", companyId);
+
+        // Audit & logs
+        await cleanTable("audit_logs", "company_id", companyId);
+        await cleanTable("stock_alerts", "company_id", companyId);
+        await cleanTable("scanner_perf_logs", "company_id", companyId);
+
+        // Partners & flows
+        await cleanTable("partner_flow_events", "company_id", companyId);
+
+        // API & webhooks
+        await cleanTable("webhook_events", "company_id", companyId);
+        await cleanTable("webhooks", "company_id", companyId);
+        await cleanTable("company_api_keys", "company_id", companyId);
+
+        // Pallet accounts
+        await cleanTable("pallet_account_transactions", "company_id", companyId);
+        await cleanTable("pallet_accounts", "company_id", companyId);
+
+        // Held stock
+        await cleanTable("held_stock_movements", "company_id", companyId);
+        await cleanTable("held_stock", "company_id", companyId);
+
+        // Delivery proofs
+        const { data: dns } = await supabaseAdmin
+          .from("delivery_notes")
+          .select("id")
+          .eq("company_id", companyId);
+        if (dns) {
+          for (const dn of dns) {
+            await cleanTable("delivery_proofs", "delivery_note_id", dn.id);
+          }
+        }
+
+        // Delivery note items
+        if (dns) {
+          for (const dn of dns) {
+            await cleanTable("delivery_note_items", "delivery_note_id", dn.id);
+          }
+        }
+
+        // Accounting
+        await cleanTable("acc_bank_statement_lines", "company_id", companyId);
+        await cleanTable("acc_bank_statements", "company_id", companyId);
+        await cleanTable("acc_bank_accounts", "company_id", companyId);
+        await cleanTable("acc_transactions", "company_id", companyId);
+        await cleanTable("acc_journal_entries", "company_id", companyId);
+        await cleanTable("acc_scanned_documents", "company_id", companyId);
+        await cleanTable("acc_invoice_sequences", "company_id", companyId);
+        await cleanTable("acc_client_prices", "company_id", companyId);
+        await cleanTable("acc_fixed_assets", "company_id", companyId);
+        await cleanTable("acc_expense_categories", "company_id", companyId);
+        await cleanTable("acc_imports", "company_id", companyId);
+        await cleanTable("acc_stock_movements", "company_id", companyId);
+        await cleanTable("acc_delivery_notes", "company_id", companyId);
+        await cleanTable("acc_purchases", "company_id", companyId);
+        await cleanTable("acc_invoices", "company_id", companyId);
+        await cleanTable("acc_contacts", "company_id", companyId);
+        await cleanTable("acc_products", "company_id", companyId);
+        await cleanTable("acc_product_categories", "company_id", companyId);
+        await cleanTable("acc_chart_of_accounts", "company_id", companyId);
+        await cleanTable("acc_company_settings", "company_id", companyId);
+
+        // Fleet
+        await cleanTable("fleet_scanned_documents", "company_id", companyId);
+        await cleanTable("compliance_reminders", "company_id", companyId);
+        await cleanTable("vehicle_assignments", "company_id", companyId);
+        await cleanTable("vehicle_taxes", "company_id", companyId);
+        await cleanTable("vehicle_insurance", "company_id", companyId);
+        await cleanTable("vehicle_inspections", "company_id", companyId);
+        await cleanTable("vehicles", "company_id", companyId);
+
+        // Driver data
+        for (const mid of memberIds) {
+          await cleanTable("driver_identity_documents", "driver_id", mid);
+          await cleanTable("driver_licenses", "driver_id", mid);
+          await cleanTable("driver_medical", "driver_id", mid);
+          await cleanTable("driver_qualifications", "driver_id", mid);
+          await cleanTable("driver_locations", "driver_id", mid);
+          await cleanTable("driver_route_plans", "driver_id", mid);
+          await cleanTable("shift_sessions", "driver_id", mid);
+          await cleanTable("route_extension_requests", "driver_id", mid);
+          await cleanTable("route_traffic_alerts", "driver_id", mid);
+          await cleanTable("tracking_prompts", "driver_id", mid);
+          await cleanTable("vehicle_assignments", "driver_id", mid);
+        }
+
+        // Trailer loads
+        await cleanTable("trailer_loads", "company_id", companyId);
+
+        // Depot repairs & stock damage
+        await cleanTable("stock_damage_reports", "company_id", companyId);
+        await cleanTable("depot_repair_reports", "company_id", companyId);
+        await cleanTable("depot_repairs", "company_id", companyId);
+
+        // Stock
+        await cleanTable("stock_movements", "company_id", companyId);
+        await cleanTable("stock", "company_id", companyId);
+
+        // Delivery notes
+        await cleanTable("delivery_notes", "company_id", companyId);
+
+        // Sorting
+        await cleanTable("pallet_sorting_batch_items", "company_id", companyId);
+        await cleanTable("pallet_sorting_batches", "company_id", companyId);
+
+        // Products & categories
+        await cleanTable("category_products", "company_id", companyId);
+        await cleanTable("product_categories", "company_id", companyId);
+
+        // Documents
+        await cleanTable("document_recipients", "company_id", companyId);
+        await cleanTable("documents", "company_id", companyId);
+
+        // Chat
+        const { data: rooms } = await supabaseAdmin
+          .from("chat_rooms")
+          .select("id")
+          .eq("company_id", companyId);
+        if (rooms) {
+          for (const room of rooms) {
+            await cleanTable("chat_messages", "room_id", room.id);
+            await cleanTable("chat_participants", "room_id", room.id);
+          }
+        }
+        await cleanTable("chat_rooms", "company_id", companyId);
+
+        // Support
+        const { data: tickets } = await supabaseAdmin
+          .from("support_tickets")
+          .select("id")
+          .eq("company_id", companyId);
+        if (tickets) {
+          for (const t of tickets) {
+            await cleanTable("support_messages", "ticket_id", t.id);
+          }
+        }
+        await cleanTable("support_tickets", "company_id", companyId);
+
+        // Legal documents
+        await cleanTable("legal_documents", "company_id", companyId);
+
+        // Company settings and features
+        await cleanTable("company_email_settings", "company_id", companyId);
+        await cleanTable("company_features", "company_id", companyId);
+        await cleanTable("company_accounting_sync_log", "company_id", companyId);
+
+        // Subscriptions & payments
+        await cleanTable("payment_transactions", "company_id", companyId);
+        await cleanTable("subscription_checkout_sessions", "company_id", companyId);
+        await cleanTable("company_subscriptions", "company_id", companyId);
+
+        // Depots
+        await cleanTable("depots", "company_id", companyId);
+
+        // Password reset codes for all members
+        for (const mid of memberIds) {
+          await cleanTable("password_reset_codes", "user_id", mid);
+        }
+
+        // Delete all member profiles and auth users
+        for (const mid of memberIds) {
+          if (mid === user_id) continue; // delete target last
+          await supabaseAdmin.from("profiles").delete().eq("id", mid);
+          await supabaseAdmin.auth.admin.deleteUser(mid).catch(() => {});
+        }
+
+        // Delete the company
+        await cleanTable("companies", "id", companyId);
+      } else {
+        // Hard delete user only — clean user-specific data
+        // FK constraints with ON DELETE CASCADE handle most,
+        // but clean explicitly to be thorough
+        await cleanTable("notifications", "user_id", user_id);
+        await cleanTable("push_subscriptions", "user_id", user_id);
+        await cleanTable("notification_preferences", "user_id", user_id);
+        await cleanTable("scan_events", "user_id", user_id);
+        await cleanTable("unsubscribe_tokens", "user_id", user_id);
+        await cleanTable("password_reset_codes", "user_id", user_id);
+        await cleanTable("driver_locations", "driver_id", user_id);
+        await cleanTable("driver_route_plans", "driver_id", user_id);
+        await cleanTable("shift_sessions", "driver_id", user_id);
+        await cleanTable("route_extension_requests", "driver_id", user_id);
+        await cleanTable("route_traffic_alerts", "driver_id", user_id);
+        await cleanTable("tracking_prompts", "driver_id", user_id);
+        await cleanTable("driver_identity_documents", "driver_id", user_id);
+        await cleanTable("driver_licenses", "driver_id", user_id);
+        await cleanTable("driver_medical", "driver_id", user_id);
+        await cleanTable("driver_qualifications", "driver_id", user_id);
+        await cleanTable("vehicle_assignments", "driver_id", user_id);
+      }
+
+      // Delete the target profile
+      const { error: profileDelErr } = await supabaseAdmin
+        .from("profiles")
+        .delete()
+        .eq("id", user_id);
+      if (profileDelErr) {
+        errors.push(`profiles: ${profileDelErr.message}`);
+      } else {
+        tablesCleaned++;
+      }
+
+      // Delete from auth.users
+      const { error: authDelErr } =
+        await supabaseAdmin.auth.admin.deleteUser(user_id);
+      if (authDelErr) {
+        errors.push(`auth.users: ${authDelErr.message}`);
+      }
+
+      // Write audit log
+      await supabaseAdmin.from("admin_deletion_log").insert({
+        deleted_by: caller.id,
+        deleted_user_id: user_id,
+        deleted_user_email: targetProfile.email,
+        deleted_user_name: targetProfile.full_name,
+        deleted_user_role: targetProfile.role,
+        deleted_company_id: delete_company ? companyId : null,
+        deleted_company_name: delete_company ? deletedCompanyName : null,
+        deletion_type: delete_company ? "user_and_company" : "user_only",
+        tables_cleaned: tablesCleaned,
+        details: errors.length > 0 ? { errors } : {},
+      });
+
+      if (errors.length > 0) {
+        return jsonResponse({
+          success: true,
+          partial: true,
+          tables_cleaned: tablesCleaned,
+          errors,
+        }, 207);
+      }
+
+      return jsonResponse({ success: true, tables_cleaned: tablesCleaned }, 200);
     }
 
     return jsonResponse({ error: "Metoda nuk suportohet" }, 405);
