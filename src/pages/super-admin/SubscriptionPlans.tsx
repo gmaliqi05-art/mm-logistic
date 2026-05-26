@@ -21,8 +21,8 @@ const emptyPlan: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'> = {
   is_addon: false,
   price_addon_monthly: null,
   stripe_price_id: null,
-  price_yearly: null,
   stripe_price_id_yearly: null,
+  price_yearly: null,
 };
 
 export default function SubscriptionPlans() {
@@ -88,6 +88,8 @@ export default function SubscriptionPlans() {
       is_addon: plan.is_addon ?? false,
       price_addon_monthly: plan.price_addon_monthly ?? null,
       stripe_price_id: plan.stripe_price_id ?? null,
+      stripe_price_id_yearly: plan.stripe_price_id_yearly ?? null,
+      price_yearly: plan.price_yearly ?? null,
     });
     setNewFeature('');
   }
@@ -711,42 +713,6 @@ export default function SubscriptionPlans() {
                     </span>
                   </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Stripe Price ID
-                </label>
-                <input
-                  type="text"
-                  value={formData.stripe_price_id ?? ''}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, stripe_price_id: e.target.value || null }))
-                  }
-                  placeholder="price_1Abc123..."
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-mono"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  ID nga Stripe Dashboard &gt; Products &gt; Price (mujor). Lere bosh per plane falas.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Stripe Price ID (Vjetor)
-                </label>
-                <input
-                  type="text"
-                  value={formData.stripe_price_id_yearly ?? ''}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, stripe_price_id_yearly: e.target.value || null }))
-                  }
-                  placeholder="price_1Xyz789..."
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-mono"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  ID nga Stripe Dashboard &gt; Products &gt; Price (vjetor). Lere bosh nese nuk ka opsion vjetor.
-                </p>
               </div>
 
               <div>
