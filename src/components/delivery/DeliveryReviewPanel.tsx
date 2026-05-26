@@ -1319,7 +1319,7 @@ function ReviewModal({
             </div>
             <p className="text-xs text-gray-500 mt-0.5">
               {isPickup ? 'Fletemarrje' : 'Fletedergese'}
-              {note.partner_name ? ` - ${note.partner_name}` : ''}
+              {(note.counterparty_name || note.partner_name) ? ` - ${note.counterparty_name || note.partner_name}` : ''}
             </p>
           </div>
           <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
@@ -1331,6 +1331,16 @@ function ReviewModal({
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+            </div>
+          )}
+
+          {(note as any).auto_reviewed && (
+            <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 flex items-center gap-2 text-sm text-sky-800">
+              <Sparkles className="w-4 h-4 flex-shrink-0 text-sky-600" />
+              <div>
+                <p className="font-semibold text-sky-900">Shqyrtim automatik</p>
+                <p className="text-xs text-sky-700 mt-0.5">Ky dokument u miratua automatikisht sepse partneri eshte i njohur. Mund te editoni te dhenat nese nevojitet.</p>
+              </div>
             </div>
           )}
 
@@ -1350,49 +1360,52 @@ function ReviewModal({
             </div>
           )}
 
-          {profile?.company_id && role === 'company_admin' && (
-            <FlowRoleSelector
-              ownCompanyId={profile.company_id}
-              noteId={note.id}
-              noteType={note.type}
-              onRoleChange={(r) => setCurrentFlowRole(r)}
-              onChanged={onDone}
-              initial={{
-                flow_role: note.flow_role ?? (note.type === 'pickup' ? 'receiver' : 'sender'),
-                counterparty_company_id: note.counterparty_company_id ?? null,
-                counterparty_contact_id: note.counterparty_contact_id ?? null,
-                counterparty_name: note.counterparty_name ?? note.partner_name ?? null,
-                counterparty_vat: note.counterparty_vat ?? null,
-                counterparty_email: note.counterparty_email ?? null,
-                counterparty_phone: note.counterparty_phone ?? null,
-                counterparty_address: (note.type === 'pickup' ? (note as any).pickup_address : (note as any).delivery_address) ?? null,
-                reference_number: (note as any).reference_number ?? null,
-                partner_id: note.partner_id ?? null,
-                auto_register_partner: note.auto_register_partner ?? null,
-              }}
-              aiSnapshot={(() => {
-                const e = (note.ai_extracted_json as any) || {};
-                const pickFromConsignor = shouldPickConsignor(note, e, note.type === 'pickup');
-                return pickFromConsignor
-                  ? {
-                      name: e.consignor_name || null,
-                      vat: e.consignor_vat || null,
-                      email: e.consignor_email || null,
-                      phone: e.consignor_phone || null,
-                      address: e.consignor_address || null,
-                      order_number: e.document_number || e.invoice_number || e.order_number || e.reference_number || null,
-                    }
-                  : {
-                      name: e.consignee_name || null,
-                      vat: e.consignee_vat || null,
-                      email: e.consignee_email || null,
-                      phone: e.consignee_phone || null,
-                      address: e.consignee_address || null,
-                      order_number: e.document_number || e.invoice_number || e.order_number || e.reference_number || null,
-                    };
-              })()}
-            />
-          )}
+          {profile?.company_id && role === 'company_admin' && (() => {
+              const e = (note.ai_extracted_json as any) || {};
+              const pickFromConsignor = shouldPickConsignor(note, e, note.type === 'pickup');
+              const aiSnap = pickFromConsignor
+                ? {
+                    name: e.consignor_name || null,
+                    vat: e.consignor_vat || null,
+                    email: e.consignor_email || null,
+                    phone: e.consignor_phone || null,
+                    address: e.consignor_address || null,
+                    order_number: e.document_number || e.invoice_number || e.order_number || e.reference_number || null,
+                  }
+                : {
+                    name: e.consignee_name || null,
+                    vat: e.consignee_vat || null,
+                    email: e.consignee_email || null,
+                    phone: e.consignee_phone || null,
+                    address: e.consignee_address || null,
+                    order_number: e.document_number || e.invoice_number || e.order_number || e.reference_number || null,
+                  };
+              const routing = e._routing || e.routing;
+              const routingOverride = routing?.partner_to_register && aiSnap.name;
+              return (
+                <FlowRoleSelector
+                  ownCompanyId={profile.company_id}
+                  noteId={note.id}
+                  noteType={note.type}
+                  onRoleChange={(r) => setCurrentFlowRole(r)}
+                  onChanged={onDone}
+                  initial={{
+                    flow_role: note.flow_role ?? (note.type === 'pickup' ? 'receiver' : 'sender'),
+                    counterparty_company_id: note.counterparty_company_id ?? null,
+                    counterparty_contact_id: note.counterparty_contact_id ?? null,
+                    counterparty_name: routingOverride ? aiSnap.name : (note.counterparty_name ?? note.partner_name ?? null),
+                    counterparty_vat: routingOverride ? (aiSnap.vat || note.counterparty_vat || null) : (note.counterparty_vat ?? null),
+                    counterparty_email: routingOverride ? (aiSnap.email || note.counterparty_email || null) : (note.counterparty_email ?? null),
+                    counterparty_phone: routingOverride ? (aiSnap.phone || note.counterparty_phone || null) : (note.counterparty_phone ?? null),
+                    counterparty_address: routingOverride ? (aiSnap.address || null) : ((note.type === 'pickup' ? (note as any).pickup_address : (note as any).delivery_address) ?? null),
+                    reference_number: (note as any).reference_number ?? null,
+                    partner_id: note.partner_id ?? null,
+                    auto_register_partner: note.auto_register_partner ?? null,
+                  }}
+                  aiSnapshot={aiSnap}
+                />
+              );
+          })()}
 
           <div className="grid lg:grid-cols-2 gap-4">
             <div>
@@ -1486,6 +1499,20 @@ function ReviewModal({
                 ex={ex}
                 isPickup={isPickup}
                 partnerIsOwnCompany={partnerIsOwnCompany}
+                ownCompanyName={ownCompany.name}
+                ownCompanyVat={ownCompany.vat}
+                onSelectPartner={async (data) => {
+                  await supabase.from('delivery_notes').update({
+                    counterparty_name: data.name || null,
+                    counterparty_vat: data.vat || null,
+                    counterparty_email: data.email || null,
+                    counterparty_phone: data.phone || null,
+                    partner_name: data.name || null,
+                    auto_register_partner: true,
+                    updated_at: new Date().toISOString(),
+                  }).eq('id', note.id);
+                  onDone();
+                }}
               />
               <DataRow label="Nr. dokumenti" value={ex.document_number || ex.invoice_number || note.reference_number || '-'} />
               <DataRow label="Data" value={ex.document_date || ex.invoice_date || '-'} />
@@ -1853,41 +1880,46 @@ function PartnerSnapshot({
   ex,
   isPickup,
   partnerIsOwnCompany,
+  ownCompanyName,
+  ownCompanyVat,
+  onSelectPartner,
 }: {
   note: ReviewNote;
   ex: any;
   isPickup: boolean;
   partnerIsOwnCompany: boolean;
+  ownCompanyName?: string;
+  ownCompanyVat?: string;
+  onSelectPartner?: (data: { name: string; vat: string; email: string; phone: string; address: string }) => void;
 }) {
   const { t } = useTranslation();
   const routing = ex._routing || ex.routing;
   const pickConsignor = shouldPickConsignor(note, ex, isPickup);
 
   const partnerName =
-    note.counterparty_name ||
     (pickConsignor ? ex.consignor_name : ex.consignee_name) ||
+    note.counterparty_name ||
     note.partner_name ||
     '';
   const partnerVat =
-    note.counterparty_vat ||
     (pickConsignor ? ex.consignor_vat : ex.consignee_vat) ||
+    note.counterparty_vat ||
     '';
   const partnerAddress =
     (pickConsignor ? ex.consignor_address : ex.consignee_address) ||
     (isPickup ? note.pickup_address : note.delivery_address) ||
     '';
   const partnerEmail =
-    note.counterparty_email ||
     (pickConsignor ? ex.consignor_email : ex.consignee_email) ||
+    note.counterparty_email ||
     '';
   const partnerPhone =
-    note.counterparty_phone ||
     (pickConsignor ? ex.consignor_phone : ex.consignee_phone) ||
+    note.counterparty_phone ||
     '';
 
-  const otherName = pickConsignor ? (ex.consignee_name || '') : (ex.consignor_name || '');
-  const otherAddress = pickConsignor ? (ex.consignee_address || '') : (ex.consignor_address || '');
   const carrierName = ex.carrier_name || '';
+  const carrierIsOwnCompany = !!(ownCompanyName && isOwnCompanyName(carrierName, null, ownCompanyName, ownCompanyVat));
 
   const isLinked = !!(note.counterparty_contact_id || note.partner_id || note.counterparty_company_id);
   const isNew = !!note.auto_register_partner && !isLinked;
@@ -1908,9 +1940,18 @@ function PartnerSnapshot({
     return <DataRow label="Partner" value="-" />;
   }
 
+  const canClick = !!onSelectPartner && !isLinked;
+
   return (
     <div className="space-y-2">
-      <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-sky-50/40 to-white p-3">
+      <button
+        type="button"
+        disabled={!canClick}
+        onClick={() => canClick && onSelectPartner?.({ name: partnerName, vat: partnerVat, email: partnerEmail, phone: partnerPhone, address: partnerAddress })}
+        className={`w-full text-left rounded-xl border border-gray-200 bg-gradient-to-br from-sky-50/40 to-white p-3 transition-all ${
+          canClick ? 'cursor-pointer hover:border-teal-400 hover:shadow-sm active:scale-[0.99]' : ''
+        }`}
+      >
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{roleLabel}</p>
@@ -1947,23 +1988,13 @@ function PartnerSnapshot({
         <p className="mt-2 text-[10px] text-gray-500">
           {isLinked
             ? 'Te dhenat e mbushura nga skanimi. Ndryshoji te seksioni Partneri me lart.'
-            : isNew
-              ? 'Ky partner do te regjistrohet automatikisht kur ta dergoni ne stok. Mund ta editoni te seksioni Partneri.'
-              : 'Lidhni nje partner ekzistues ose aktivizoni regjistrimin automatik te seksioni Partneri.'}
+            : canClick
+              ? 'Kliko per te vendosur kete partner automatikisht.'
+              : 'Ky partner do te regjistrohet automatikisht kur ta dergoni ne stok.'}
         </p>
-      </div>
+      </button>
 
-      {otherName && otherName !== partnerName && (
-        <div className="rounded-lg border border-gray-150 bg-gray-50/50 p-2.5">
-          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
-            {pickConsignor ? t('common.scanner.endRecipient') : t('common.scanner.sender')}
-          </p>
-          <p className="text-xs font-semibold text-gray-800 break-words">{otherName}</p>
-          {otherAddress && <p className="text-[11px] text-gray-500 break-words mt-0.5">{otherAddress}</p>}
-        </div>
-      )}
-
-      {carrierName && (
+      {carrierName && !carrierIsOwnCompany && (
         <div className="rounded-lg border border-gray-150 bg-gray-50/50 p-2.5">
           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
             {t('common.scanner.carrier')}

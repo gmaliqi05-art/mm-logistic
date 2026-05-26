@@ -2411,6 +2411,10 @@ export const sq = {
         title: 'Dergese e skanuar per shqyrtim',
         body: '{number} u skanua/ngarkua nga shoferi dhe pret miratim.',
       },
+      deliveryAutoApproved: {
+        title: 'Dergese e miratuar automatikisht',
+        body: '{number} u miratua automatikisht (partner i njohur).',
+      },
       quickDraftAssigned: {
         title: 'Dokument fizik per skanim',
         body: 'Te eshte caktuar porosia "{{noteNumber}}". Skano dokumentin kur ta marresh.',

@@ -1153,11 +1153,21 @@ export function TaskDetailSheet({
         update.reference_number = docNumber;
       }
 
+      const hasKnownPartner = !!(update.counterparty_contact_id || update.partner_id);
+      const routingConfident = (routing?.confidence ?? 0) >= 0.8 && !routing?.ambiguity_flag;
+      const autoApprove = hasKnownPartner && hasLineItems && routingConfident && update.flow_role !== 'internal_transfer';
+
+      if (autoApprove) {
+        update.status = 'pending_stock_confirmation';
+        update.company_reviewed_at = new Date().toISOString();
+        update.auto_reviewed = true;
+      }
+
       const extraNotes: string[] = [];
       if (docDate) extraNotes.push(`Data: ${docDate}`);
       if (docNumber) extraNotes.push(`Nr. dok: ${docNumber}`);
       if (ex.line_items && ex.line_items.length > 0) {
-        const lines = ex.line_items.slice(0, 8).map((li) => {
+        const lines = ex.line_items.slice(0, 8).map((li: any) => {
           const qty = li.quantity ? `${li.quantity}${li.unit ? ' ' + li.unit : ''} x ` : '';
           return `- ${qty}${li.description}`;
         });
@@ -1194,12 +1204,20 @@ export function TaskDetailSheet({
           await notifyUsers({
             userIds: admins.map((a) => a.id),
             type: 'delivery',
-            titleKey: 'notifications.templates.deliveryScannedPendingReview.title',
-            messageKey: 'notifications.templates.deliveryScannedPendingReview.body',
+            titleKey: autoApprove
+              ? 'notifications.templates.deliveryAutoApproved.title'
+              : 'notifications.templates.deliveryScannedPendingReview.title',
+            messageKey: autoApprove
+              ? 'notifications.templates.deliveryAutoApproved.body'
+              : 'notifications.templates.deliveryScannedPendingReview.body',
             params: { number: note.note_number },
             referenceId: note.id,
-            fallbackTitle: 'Dergese e skanuar per shqyrtim',
-            fallbackMessage: `${note.note_number} u skanua/ngarkua nga shoferi dhe pret miratim.`,
+            fallbackTitle: autoApprove
+              ? 'Dergese e miratuar automatikisht'
+              : 'Dergese e skanuar per shqyrtim',
+            fallbackMessage: autoApprove
+              ? `${note.note_number} u miratua automatikisht (partner i njohur).`
+              : `${note.note_number} u skanua/ngarkua nga shoferi dhe pret miratim.`,
           });
         }
       }

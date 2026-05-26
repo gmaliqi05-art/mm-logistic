@@ -2416,6 +2416,10 @@ export const en: typeof sq = {
         title: 'Delivery scanned for review',
         body: '{number} was scanned/uploaded by the driver and awaits approval.',
       },
+      deliveryAutoApproved: {
+        title: 'Delivery auto-approved',
+        body: '{number} was auto-approved (known partner).',
+      },
       quickDraftAssigned: {
         title: 'Physical document to scan',
         body: 'Order "{{noteNumber}}" was assigned to you. Scan the document when received.',

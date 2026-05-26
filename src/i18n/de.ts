@@ -2413,6 +2413,10 @@ export const de: typeof sq = {
         title: 'Lieferung zur Prüfung gescannt',
         body: '{number} wurde vom Fahrer gescannt/hochgeladen und wartet auf Freigabe.',
       },
+      deliveryAutoApproved: {
+        title: 'Lieferung automatisch genehmigt',
+        body: '{number} wurde automatisch genehmigt (bekannter Partner).',
+      },
       quickDraftAssigned: {
         title: 'Physisches Dokument zum Scannen',
         body: 'Auftrag "{{noteNumber}}" wurde Ihnen zugewiesen. Scannen Sie das Dokument bei Erhalt.',

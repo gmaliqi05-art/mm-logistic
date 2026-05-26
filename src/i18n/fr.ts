@@ -2413,6 +2413,10 @@ export const fr: typeof sq = {
         title: 'Livraison scann\u00e9e en attente de v\u00e9rification',
         body: '{number} a \u00e9t\u00e9 scann\u00e9e/t\u00e9l\u00e9vers\u00e9e par le chauffeur et attend approbation.',
       },
+      deliveryAutoApproved: {
+        title: 'Livraison approuv\u00e9e automatiquement',
+        body: '{number} a \u00e9t\u00e9 approuv\u00e9e automatiquement (partenaire connu).',
+      },
       quickDraftAssigned: {
         title: 'Document physique \u00e0 scanner',
         body: 'La commande "{{noteNumber}}" vous a \u00e9t\u00e9 attribu\u00e9e. Scannez le document \u00e0 la r\u00e9ception.',
