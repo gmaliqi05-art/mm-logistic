@@ -3112,7 +3112,18 @@ export const sq = {
         delivery_out: 'Fletedalje',
         delivery_in: 'Fletepranim',
         carrier_service: 'Sherbim transporti',
+        pending_review: 'Ne pritje per aprovim',
         unknown: 'I paklasifikuar',
+      },
+      ambiguity: {
+        title: 'Drejtimi i mallit eshte i paqarte',
+        subtitle: 'Kompania juaj nuk gjendet ne dokument. Zgjidhni drejtimin e mallit manualisht.',
+        incoming: 'Hyrje malli',
+        incomingDesc: 'Malli erdhi ne depon tone',
+        outgoing: 'Dalje malli',
+        outgoingDesc: 'Malli doli nga depoja jone',
+        transport: 'Vetem transport',
+        transportDesc: 'E cojme mallin diku tjeter',
       },
       camera: {
         title: 'Skano me kamere',

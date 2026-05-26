@@ -3114,7 +3114,18 @@ export const de: typeof sq = {
         delivery_out: 'Lieferschein (aus)',
         delivery_in: 'Wareneingang',
         carrier_service: 'Transportdienst',
+        pending_review: 'Überprüfung ausstehend',
         unknown: 'Nicht klassifiziert',
+      },
+      ambiguity: {
+        title: 'Warenrichtung ist unklar',
+        subtitle: 'Ihr Unternehmen wurde im Dokument nicht gefunden. Bitte wählen Sie die Warenrichtung manuell.',
+        incoming: 'Wareneingang',
+        incomingDesc: 'Ware kam in unserem Depot an',
+        outgoing: 'Warenausgang',
+        outgoingDesc: 'Ware verließ unser Depot',
+        transport: 'Nur Transport',
+        transportDesc: 'Wir transportieren die Ware woanders hin',
       },
       camera: {
         title: 'Mit Kamera scannen',

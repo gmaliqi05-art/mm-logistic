@@ -29,7 +29,7 @@ interface ScanPayload {
 type OurRole = "consignor" | "carrier" | "consignee" | "custodian_in" | "custodian_out" | "internal_transfer" | "unknown";
 
 interface Routing {
-  suggested_kind: "purchase" | "expense" | "investment" | "sale" | "delivery_out" | "delivery_in" | "carrier_service" | "custody_service" | "internal_transfer" | "unknown";
+  suggested_kind: "purchase" | "expense" | "investment" | "sale" | "delivery_out" | "delivery_in" | "carrier_service" | "custody_service" | "internal_transfer" | "pending_review" | "unknown";
   our_role: OurRole;
   partner_to_register: "consignor" | "consignee" | "goods_owner" | "none";
   matched_contact_id: string | null;
@@ -37,6 +37,10 @@ interface Routing {
   matched_contact_type: string | null;
   match_reason: string;
   confidence: number;
+  ambiguity_flag: boolean;
+  direction_confidence: number;
+  consignor_is_known_contact: boolean;
+  consignee_is_known_contact: boolean;
   three_parties: {
     consignor: { name: string; vat: string; matched_company: boolean; matched_contact_id: string | null };
     carrier: { name: string; vat: string; matched_company: boolean; matched_contact_id: string | null };
@@ -245,6 +249,14 @@ GERMAN DOCUMENT KEYWORDS:
 CARRIER DETECTION HINTS:
 Company names containing "TRANS", "CARGO", "SPEDITION", "LOGISTIK", "TRANSPORT", "FREIGHT" are likely carriers unless they appear in the document header/letterhead.
 
+GOODS FLOW DIRECTION HINTS:
+Look for keywords that indicate the physical direction of goods movement:
+- OUTBOUND (goods leaving): "Warenausgang", "Ausgang", "Auslieferung", "Versand", "Abgang", "Ausgangslager", "Dispatch", "Shipment out"
+- INBOUND (goods arriving): "Wareneingang", "Eingang", "Anlieferung", "Empfang", "Eingangslager", "Receiving", "Goods in"
+- PICKUP (goods collected from): "Abholung", "Abgeholt", "Pick-up", "Collected from", "Terheqje"
+- DELIVERY (goods delivered to): "Zustellung", "Zugestellt", "Delivered to", "Geliefert an", "Dorzim"
+Set document_nature_guess accordingly: if outbound from consignor perspective = "sale", if inbound to consignee = "purchase".
+
 CRITICAL for document_number: Extract the delivery note / consignment note number as the primary document identifier. Look for these labels in ANY language:
 - German: "Lieferschein Nr.", "LS Nr.", "LS-Nr.", "Lieferschein-Nr."
 - English: "Delivery Note No.", "DN No.", "Consignment No.", "Packing Slip No."
@@ -388,54 +400,72 @@ async function decideRouting(
     partner_to_register = "consignor";
   } else {
     // None of the 3 parties match us directly.
-    // This happens when our company provides a service (sorting, repair,
-    // storage, transport coordination) for one of the parties and the
-    // document was issued between two external companies.
-    // Strategy: the document issuer (consignor / letterhead company) is
-    // most likely our client/partner. The consignee is their customer.
-    // Check if any extracted party is already a known contact.
+    // Scenarios:
+    //   A) We received goods from partner's client -> brought to our depot (incoming)
+    //   B) We took goods from our depot -> delivered to partner's client (outgoing)
+    //   C) We picked up from partner's client -> delivered to our partner (transport)
+    //   D) Document is ambiguous -- direction unclear
     const consignorIsKnown = consignorMatch && consignorMatch.score >= 0.55;
     const consigneeIsKnown = consigneeMatch && consigneeMatch.score >= 0.55;
 
-    if (consignorIsKnown) {
-      // Consignor is already our partner/client
-      our_role = "unknown";
-      suggested_kind = "delivery_in";
+    our_role = "unknown";
+
+    if (consignorIsKnown && consigneeIsKnown) {
+      // Both parties are known contacts -- ambiguous: could be in either direction
       partner_to_register = "consignor";
+      suggested_kind = "pending_review";
+    } else if (consignorIsKnown) {
+      partner_to_register = "consignor";
+      suggested_kind = "pending_review";
     } else if (consigneeIsKnown) {
-      // Consignee is already our partner/client
-      our_role = "unknown";
-      suggested_kind = "delivery_in";
       partner_to_register = "consignee";
+      suggested_kind = "pending_review";
     } else if (ex.consignor_name) {
-      // Neither party known yet; register the document issuer (consignor)
-      // as our new partner since they originated the shipment
-      our_role = "unknown";
-      suggested_kind = "delivery_in";
+      // Neither party known: register the document issuer (consignor)
       partner_to_register = "consignor";
+      suggested_kind = "pending_review";
     } else {
-      our_role = "unknown";
       suggested_kind = "unknown";
       partner_to_register = "none";
     }
   }
 
+  // Track whether the direction is ambiguous (our company not on document)
+  let ambiguity_flag = our_role === "unknown" && suggested_kind === "pending_review";
+  let direction_confidence = our_role !== "unknown" ? 0.9 : 0.3;
+
   // Override by explicit driver/depot context: physical movement always wins
   // over accounting nature (sale/purchase) when the user is a driver or the
   // delivery direction is provided. The partner_to_register is preserved
   // from the role detection above.
-  if (docDirection === "in" || (role === "depot" && !docDirection)) {
+  if (docDirection === "in") {
     suggested_kind = "delivery_in";
+    ambiguity_flag = false;
+    direction_confidence = 1.0;
     if (our_role === "unknown") {
       our_role = "consignee";
-      partner_to_register = "consignor";
+      if (partner_to_register === "none" && ex.consignor_name) {
+        partner_to_register = "consignor";
+      }
     }
-  } else if (docDirection === "out" || (role === "driver" && !docDirection)) {
+  } else if (docDirection === "out") {
     suggested_kind = "delivery_out";
+    ambiguity_flag = false;
+    direction_confidence = 1.0;
     if (our_role === "unknown") {
       our_role = "consignor";
-      partner_to_register = "consignee";
+      if (partner_to_register === "none" && ex.consignee_name) {
+        partner_to_register = "consignee";
+      }
     }
+  } else if (role === "depot" && !docDirection && ambiguity_flag) {
+    // Depot without explicit direction: likely incoming but flag for review
+    suggested_kind = "pending_review";
+    direction_confidence = 0.5;
+  } else if (role === "driver" && !docDirection && ambiguity_flag) {
+    // Driver without explicit direction: could be pickup or delivery
+    suggested_kind = "pending_review";
+    direction_confidence = 0.4;
   }
 
   // Pick the partner to register based on partner_to_register
@@ -457,7 +487,9 @@ async function decideRouting(
   else if (our_role === "carrier") reasonParts.push("Kompania jone eshte vetem spedicion (carrier)");
   else if (our_role === "internal_transfer") reasonParts.push("Transfer i brendshem mes depove tona");
   else {
-    if (partner_to_register !== "none") {
+    if (ambiguity_flag) {
+      reasonParts.push("Kompania jone nuk gjendet ne dokument — drejtimi i mallit eshte i paqarte. Nevojitet konfirmim manual");
+    } else if (partner_to_register !== "none") {
       reasonParts.push("Kompania jone nuk gjendet ne dokument — dokumenti eshte mes paleve te treta. Pala A (derguesi) regjistrohet si partner/klient");
     } else {
       reasonParts.push("Rolet nuk u njohen automatikisht");
@@ -473,10 +505,14 @@ async function decideRouting(
   }
 
   let routingDecision: Routing["routing_decision"];
-  if (bestContact && bestContact.score >= 0.8) routingDecision = "auto_saved";
+  if (ambiguity_flag) routingDecision = "pending_confirmation";
+  else if (bestContact && bestContact.score >= 0.8) routingDecision = "auto_saved";
   else if (topCandidates.length > 0) routingDecision = "pending_confirmation";
   else if (partner_to_register === "none") routingDecision = "auto_saved";
   else routingDecision = "new_company_required";
+
+  const consignorIsKnownContact = !!(consignorMatch && consignorMatch.score >= 0.55);
+  const consigneeIsKnownContact = !!(consigneeMatch && consigneeMatch.score >= 0.55);
 
   return {
     suggested_kind,
@@ -487,6 +523,10 @@ async function decideRouting(
     matched_contact_type: bestContact?.type ?? null,
     match_reason: reasonParts.join(". "),
     confidence: Math.min(1, (ex.confidence || 0.5) + (bestContact ? 0.15 : 0) + (our_role !== "unknown" ? 0.1 : 0)),
+    ambiguity_flag,
+    direction_confidence,
+    consignor_is_known_contact: consignorIsKnownContact,
+    consignee_is_known_contact: consigneeIsKnownContact,
     three_parties: {
       consignor: {
         name: ex.consignor_name,

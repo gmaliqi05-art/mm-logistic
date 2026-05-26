@@ -3114,7 +3114,18 @@ export const fr: typeof sq = {
         delivery_out: 'Bon de livraison (sortie)',
         delivery_in: 'Bon de reception (entree)',
         carrier_service: 'Service de transport',
+        pending_review: 'En attente de vérification',
         unknown: 'Non classifie',
+      },
+      ambiguity: {
+        title: 'Direction des marchandises incertaine',
+        subtitle: 'Votre entreprise n\'a pas été trouvée dans le document. Veuillez sélectionner la direction manuellement.',
+        incoming: 'Entrée de marchandises',
+        incomingDesc: 'Les marchandises sont arrivées à notre dépôt',
+        outgoing: 'Sortie de marchandises',
+        outgoingDesc: 'Les marchandises ont quitté notre dépôt',
+        transport: 'Transport uniquement',
+        transportDesc: 'Nous transportons les marchandises ailleurs',
       },
       camera: {
         title: 'Scanner avec camera',

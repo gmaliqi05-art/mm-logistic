@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Upload, Loader2, Sparkles, AlertTriangle, FileText, Camera, Check, RefreshCw } from 'lucide-react';
+import { X, Upload, Loader2, Sparkles, AlertTriangle, FileText, Camera, Check, RefreshCw, ArrowDownCircle, ArrowUpCircle, Truck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -15,6 +15,7 @@ export type DocKind =
   | 'carrier_service'
   | 'custody_service'
   | 'internal_transfer'
+  | 'pending_review'
   | 'unknown';
 
 export interface SmartScanResult {
@@ -63,6 +64,10 @@ export interface SmartScanResult {
     matched_contact_name: string | null;
     match_reason: string;
     confidence: number;
+    ambiguity_flag?: boolean;
+    direction_confidence?: number;
+    consignor_is_known_contact?: boolean;
+    consignee_is_known_contact?: boolean;
     three_parties?: {
       consignor: { name: string; vat: string; matched_company: boolean; matched_contact_id: string | null };
       carrier: { name: string; vat: string; matched_company: boolean; matched_contact_id: string | null };
@@ -90,10 +95,13 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
   const [step, setStep] = useState<Step>('choose');
   const [error, setError] = useState('');
   const [result, setResult] = useState<SmartScanResult | null>(null);
+  const [manualDirection, setManualDirection] = useState<'delivery_in' | 'delivery_out' | 'carrier_service' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const headerTitle = title || t('common.scanner.title');
   const headerSubtitle = subtitle || t('common.scanner.subtitle');
+
+  const isAmbiguous = !!(result?.routing?.ambiguity_flag && result.routing.suggested_kind === 'pending_review');
 
   async function processFile(file: File) {
     setError('');
@@ -163,22 +171,50 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
 
   function handleConfirm() {
     if (!result) return;
-    if (allowedKinds && result.routing) {
-      const kind = result.routing.suggested_kind;
-      if (kind !== 'unknown' && !allowedKinds.includes(kind)) {
+
+    let finalResult = result;
+    // Apply manual direction override for ambiguous scans
+    if (manualDirection && result.routing) {
+      const updatedRouting = { ...result.routing, suggested_kind: manualDirection as DocKind, ambiguity_flag: false };
+      if (manualDirection === 'delivery_in') {
+        updatedRouting.our_role = 'consignee';
+        if (!updatedRouting.partner_to_register || updatedRouting.partner_to_register === 'none') {
+          updatedRouting.partner_to_register = 'consignor';
+        }
+      } else if (manualDirection === 'delivery_out') {
+        updatedRouting.our_role = 'consignor';
+        if (!updatedRouting.partner_to_register || updatedRouting.partner_to_register === 'none') {
+          updatedRouting.partner_to_register = 'consignee';
+        }
+      } else if (manualDirection === 'carrier_service') {
+        updatedRouting.our_role = 'carrier';
+        if (!updatedRouting.partner_to_register || updatedRouting.partner_to_register === 'none') {
+          updatedRouting.partner_to_register = 'consignor';
+        }
+      }
+      finalResult = { ...result, routing: updatedRouting };
+    }
+
+    if (allowedKinds && finalResult.routing) {
+      const kind = finalResult.routing.suggested_kind;
+      if (kind !== 'unknown' && kind !== 'pending_review' && !allowedKinds.includes(kind)) {
         setError(t('common.scanner.notAllowed'));
         return;
       }
     }
-    onConfirm(result);
+    onConfirm(finalResult);
   }
 
+  const effectiveKind = manualDirection || result?.routing?.suggested_kind;
   const disallowed = !!(
     result?.routing &&
     allowedKinds &&
-    result.routing.suggested_kind !== 'unknown' &&
-    !allowedKinds.includes(result.routing.suggested_kind)
+    effectiveKind &&
+    effectiveKind !== 'unknown' &&
+    effectiveKind !== 'pending_review' &&
+    !allowedKinds.includes(effectiveKind as DocKind)
   );
+  const needsDirectionChoice = isAmbiguous && !manualDirection;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
@@ -284,6 +320,62 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                   </span>
                 )}
               </div>
+
+              {isAmbiguous && (
+                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50">
+                  <div className="flex items-start gap-2 mb-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900">{t('common.scanner.ambiguity.title')}</p>
+                      <p className="text-xs text-amber-700 mt-0.5">{t('common.scanner.ambiguity.subtitle')}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setManualDirection('delivery_in')}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-center transition-all ${
+                        manualDirection === 'delivery_in'
+                          ? 'border-teal-600 bg-teal-50 ring-1 ring-teal-600'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <ArrowDownCircle className={`w-5 h-5 ${manualDirection === 'delivery_in' ? 'text-teal-600' : 'text-slate-500'}`} />
+                      <span className={`text-xs font-semibold ${manualDirection === 'delivery_in' ? 'text-teal-700' : 'text-slate-700'}`}>
+                        {t('common.scanner.ambiguity.incoming')}
+                      </span>
+                      <span className="text-[10px] text-slate-500 leading-tight">{t('common.scanner.ambiguity.incomingDesc')}</span>
+                    </button>
+                    <button
+                      onClick={() => setManualDirection('delivery_out')}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-center transition-all ${
+                        manualDirection === 'delivery_out'
+                          ? 'border-teal-600 bg-teal-50 ring-1 ring-teal-600'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <ArrowUpCircle className={`w-5 h-5 ${manualDirection === 'delivery_out' ? 'text-teal-600' : 'text-slate-500'}`} />
+                      <span className={`text-xs font-semibold ${manualDirection === 'delivery_out' ? 'text-teal-700' : 'text-slate-700'}`}>
+                        {t('common.scanner.ambiguity.outgoing')}
+                      </span>
+                      <span className="text-[10px] text-slate-500 leading-tight">{t('common.scanner.ambiguity.outgoingDesc')}</span>
+                    </button>
+                    <button
+                      onClick={() => setManualDirection('carrier_service')}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-center transition-all ${
+                        manualDirection === 'carrier_service'
+                          ? 'border-teal-600 bg-teal-50 ring-1 ring-teal-600'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <Truck className={`w-5 h-5 ${manualDirection === 'carrier_service' ? 'text-teal-600' : 'text-slate-500'}`} />
+                      <span className={`text-xs font-semibold ${manualDirection === 'carrier_service' ? 'text-teal-700' : 'text-slate-700'}`}>
+                        {t('common.scanner.ambiguity.transport')}
+                      </span>
+                      <span className="text-[10px] text-slate-500 leading-tight">{t('common.scanner.ambiguity.transportDesc')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
@@ -402,7 +494,7 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
         <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
           {step === 'review' && (
             <button
-              onClick={() => { setResult(null); setStep('choose'); setError(''); }}
+              onClick={() => { setResult(null); setStep('choose'); setError(''); setManualDirection(null); }}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100"
             >
               <RefreshCw className="w-4 h-4" /> {t('common.scanner.restart')}
@@ -418,7 +510,7 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
             {step === 'review' && result && (
               <button
                 onClick={handleConfirm}
-                disabled={disallowed}
+                disabled={disallowed || needsDirectionChoice}
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Check className="w-4 h-4" /> {t('common.scanner.useData')}

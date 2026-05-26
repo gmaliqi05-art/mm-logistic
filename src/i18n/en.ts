@@ -3117,7 +3117,18 @@ export const en: typeof sq = {
         delivery_out: 'Delivery note (out)',
         delivery_in: 'Receiving note (in)',
         carrier_service: 'Transport service',
+        pending_review: 'Pending review',
         unknown: 'Unclassified',
+      },
+      ambiguity: {
+        title: 'Goods direction is unclear',
+        subtitle: 'Your company was not found on the document. Please select the goods direction manually.',
+        incoming: 'Incoming goods',
+        incomingDesc: 'Goods arrived at our depot',
+        outgoing: 'Outgoing goods',
+        outgoingDesc: 'Goods left our depot',
+        transport: 'Transport only',
+        transportDesc: 'We transport goods elsewhere',
       },
       camera: {
         title: 'Scan with camera',
