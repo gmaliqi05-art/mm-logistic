@@ -231,23 +231,37 @@ CRITICAL: European transport documents have THREE distinct parties:
 
 Extract ALL THREE parties even if some are missing. Do NOT confuse them.
 
-CRITICAL - LETTERHEAD / HEADER DETECTION:
-The company whose name, logo, address and contact details appear in the HEADER or LETTERHEAD of the document is ALWAYS the CONSIGNOR (the party that issued/sent the document and the goods). This is true even when there is no explicit "Absender" or "From" label. The header company is the document issuer = the sender of goods.
+CRITICAL - LETTERHEAD / HEADER DETECTION (read carefully):
+On a typical European delivery note (Lieferschein), the LAYOUT is:
+- TOP-RIGHT or TOP area: The company LOGO, company name in large/bold font, full address block with phone/fax/email/IBAN/website. This is the CONSIGNOR (document issuer = the sender of goods).
+- LEFT or CENTER-LEFT, below the logo area: A postal address block (often in a window envelope format) with a company name and address. This is the CONSIGNEE (receiver of goods). It may be preceded by "An:", "Lieferschein an:", or have no label at all.
 
-The name/address block that appears BELOW the header (often preceded by "An:", "Lieferschein an:", "Empfänger:", or simply written as the postal address recipient) is the CONSIGNEE (receiver of goods).
+IMPORTANT: Do NOT confuse the postal recipient address (left side, consignee) with the header company (top/right side, consignor). The company that has a LOGO, website URL, IBAN, bank details, or "Geschäftsführer" line is the document ISSUER = CONSIGNOR. The company that appears in the simple address block without these details is the CONSIGNEE.
+
+If a company name appears BOTH in the logo/header AND as the "Warenempfänger" / recipient signature area at the bottom, it is still the CONSIGNEE at the bottom (confirming receipt).
 
 GERMAN DOCUMENT KEYWORDS:
-- "Lieferschein" = Delivery Note (the header company is the sender)
-- "Lieferschein an:" / "An:" = the CONSIGNEE (receiver), NOT the sender
+- "Lieferschein" = Delivery Note (the header/logo company is the sender)
+- "Lieferschein an:" / "An:" / "Warenempfänger:" = the CONSIGNEE (receiver), NOT the sender
 - "Auftraggeber" = the ordering party (usually the CONSIGNOR or goods owner)
 - "Empfänger" / "Warenempfänger" = CONSIGNEE (receiver)
 - "Absender" = CONSIGNOR (sender)
 - "Anlieferung erfolgt durch:" / "Im Auftrag von:" / "Spedition:" / "Frachtführer:" = CARRIER (transporter)
 - "KFZ-Kennzeichen" / "Anhänger" = vehicle/trailer plate = belongs to CARRIER
 - "Besteller" / "Bestellnr." = ordering party reference
+- "Warenübernahme unter Vorbehalt" / "Firmenstempel" = receipt confirmation area (the company signing here is the CONSIGNEE confirming receipt)
 
 CARRIER DETECTION HINTS:
 Company names containing "TRANS", "CARGO", "SPEDITION", "LOGISTIK", "TRANSPORT", "FREIGHT" are likely carriers unless they appear in the document header/letterhead.
+
+CRITICAL - COMPANY NAME COMPLETENESS:
+Always extract the FULL legal company name including its legal form suffix. European company names often end with legal form abbreviations that are part of the official name:
+- Polish: "SP Z O O" (= Sp. z o.o.), "SPÓŁKA KOMANDYTOWA" (= S.K.), "SPÓŁKA AKCYJNA" (= S.A.)
+- German: "GmbH", "GmbH & Co. KG", "AG", "e.K.", "OHG", "KG"
+- French: "SARL", "SAS", "SA", "EURL"
+- Italian: "S.R.L.", "S.P.A."
+- Albanian: "SHPK", "SH.A."
+If a company is "TRANS CARGO GROUP SP Z O O SPÓŁKA KOMANDYTOWA", that is ONE company name, not two separate companies. Never split a company name at its legal form suffix.
 
 GOODS FLOW DIRECTION HINTS:
 Look for keywords that indicate the physical direction of goods movement:
