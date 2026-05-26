@@ -169,6 +169,10 @@ export default function RegisterPage() {
           setVerificationError(t('auth.emailAlreadyRegistered'));
         } else if (data.error === 'too_many_requests') {
           setVerificationError(t('auth.codeExpired'));
+        } else if (data.error === 'email_send_failed') {
+          setVerificationError(data.detail || t('auth.genericError'));
+        } else if (data.error === 'email_service_unavailable') {
+          setVerificationError(t('auth.genericError'));
         } else {
           setVerificationError(data.error || t('auth.genericError'));
         }
