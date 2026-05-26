@@ -112,6 +112,44 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Check if email was verified via the verification code flow
+    const normalizedEmail = adminEmail.trim().toLowerCase();
+    const { data: verifiedCode } = await supabaseAdmin
+      .from("email_verification_codes")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .not("verified_at", "is", null)
+      .gte("expires_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
+      .order("verified_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!verifiedCode) {
+      throw new Error("Emaili nuk eshte verifikuar. Ju lutem verifikoni emailin tuaj perpara regjistrimit.");
+    }
+
+    // Check if email already exists in profiles (duplicate guard)
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
+    if (existingProfile) {
+      throw new Error("Ky email eshte i regjistruar tashme");
+    }
+
+    // Check if email already used as company email
+    const { data: existingCompany } = await supabaseAdmin
+      .from("companies")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
+    if (existingCompany) {
+      throw new Error("Ky email eshte i regjistruar tashme");
+    }
+
     const { data: authData, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
         email: adminEmail,

@@ -22,6 +22,9 @@ import {
   CheckCircle,
   Truck,
   Calculator,
+  ShieldCheck,
+  Send,
+  RefreshCw,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { usePlatformSettings } from '../hooks/usePlatformSettings';
@@ -76,6 +79,19 @@ export default function RegisterPage() {
     postalCode: PostalCode | null;
   }>({ country: null, city: null, postalCode: null });
   const [showPassword, setShowPassword] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerificationInput, setShowVerificationInput] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+  const [verificationSuccess, setVerificationSuccess] = useState('');
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   const steps = [
     { label: t('auth.stepInfo'), icon: Building2 },
@@ -125,6 +141,81 @@ export default function RegisterPage() {
   function updateForm(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
     setError('');
+    if (key === 'companyEmail') {
+      setEmailVerified(false);
+      setShowVerificationInput(false);
+      setVerificationCode('');
+      setVerificationError('');
+      setVerificationSuccess('');
+    }
+  }
+
+  async function sendVerificationCode() {
+    const email = form.companyEmail.trim();
+    if (!email) return;
+    setVerificationLoading(true);
+    setVerificationError('');
+    setVerificationSuccess('');
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-verification-code`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email, locale: document.documentElement.lang || 'sq' }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error === 'email_already_registered') {
+          setVerificationError(t('auth.emailAlreadyRegistered'));
+        } else if (data.error === 'too_many_requests') {
+          setVerificationError(t('auth.codeExpired'));
+        } else {
+          setVerificationError(data.error || t('auth.genericError'));
+        }
+        return;
+      }
+      setShowVerificationInput(true);
+      setVerificationSuccess(t('auth.codeSent'));
+      setResendCountdown(60);
+    } catch {
+      setVerificationError(t('auth.genericError'));
+    } finally {
+      setVerificationLoading(false);
+    }
+  }
+
+  async function handleVerifyCode() {
+    const email = form.companyEmail.trim();
+    const code = verificationCode.trim();
+    if (!email || !code || code.length !== 6) return;
+    setVerificationLoading(true);
+    setVerificationError('');
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-email-code`;
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error === 'code_expired') {
+          setVerificationError(t('auth.codeExpired'));
+        } else if (data.error === 'invalid_code') {
+          setVerificationError(t('auth.invalidVerificationCode'));
+        } else {
+          setVerificationError(data.error || t('auth.genericError'));
+        }
+        return;
+      }
+      setEmailVerified(true);
+      setVerificationSuccess(t('auth.emailVerified'));
+      setVerificationError('');
+    } catch {
+      setVerificationError(t('auth.genericError'));
+    } finally {
+      setVerificationLoading(false);
+    }
   }
 
   function handleCountryChange(country: Country | null) {
@@ -184,6 +275,7 @@ export default function RegisterPage() {
   function validateStep0() {
     if (!form.companyName.trim()) return t('auth.requiredFields');
     if (!form.companyEmail.trim()) return t('auth.requiredFields');
+    if (!emailVerified) return t('auth.emailNotVerified');
     if (!form.adminName.trim()) return t('auth.requiredFields');
     if (!form.adminPassword.trim()) return t('auth.requiredFields');
     if (form.adminPassword.length < 8) return t('auth.passwordError');
@@ -430,6 +522,16 @@ export default function RegisterPage() {
               onCountryChange={handleCountryChange}
               onCityChange={handleCityChange}
               onPostalCodeLookup={handlePostalCodeLookup}
+              emailVerified={emailVerified}
+              showVerificationInput={showVerificationInput}
+              verificationCode={verificationCode}
+              setVerificationCode={setVerificationCode}
+              verificationLoading={verificationLoading}
+              verificationError={verificationError}
+              verificationSuccess={verificationSuccess}
+              resendCountdown={resendCountdown}
+              onSendVerificationCode={sendVerificationCode}
+              onVerifyCode={handleVerifyCode}
             />
           </>
         )}
@@ -579,6 +681,16 @@ function StepInfo({
   onCountryChange,
   onCityChange,
   onPostalCodeLookup,
+  emailVerified,
+  showVerificationInput,
+  verificationCode,
+  setVerificationCode,
+  verificationLoading,
+  verificationError,
+  verificationSuccess,
+  resendCountdown,
+  onSendVerificationCode,
+  onVerifyCode,
 }: {
   form: Record<string, string>;
   updateForm: (key: string, value: string) => void;
@@ -590,6 +702,16 @@ function StepInfo({
   onCountryChange: (country: Country | null) => void;
   onCityChange: (city: City | null) => void;
   onPostalCodeLookup: (code: string) => void;
+  emailVerified: boolean;
+  showVerificationInput: boolean;
+  verificationCode: string;
+  setVerificationCode: (v: string) => void;
+  verificationLoading: boolean;
+  verificationError: string;
+  verificationSuccess: string;
+  resendCountdown: number;
+  onSendVerificationCode: () => void;
+  onVerifyCode: () => void;
 }) {
   const adminLabel = businessType === 'accounting' ? t('auth.accountantInfoTitle') : t('auth.adminInfo');
   return (
@@ -618,22 +740,110 @@ function StepInfo({
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               {t('auth.companyEmail')} *
+              {emailVerified && (
+                <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {t('auth.emailVerified')}
+                </span>
+              )}
             </label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="email"
-                value={form.companyEmail}
-                onChange={(e) => updateForm('companyEmail', e.target.value)}
-                placeholder="info@mm-logistic.eu"
-                autoCapitalize="none"
-                autoCorrect="off"
-                autoComplete="email"
-                inputMode="email"
-                className="w-full pl-11 pr-4 py-3 text-base sm:text-sm rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="email"
+                  value={form.companyEmail}
+                  onChange={(e) => updateForm('companyEmail', e.target.value)}
+                  placeholder="info@mm-logistic.eu"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="email"
+                  inputMode="email"
+                  disabled={emailVerified}
+                  className={`w-full pl-11 pr-4 py-3 text-base sm:text-sm rounded-xl border bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
+                    emailVerified
+                      ? 'border-emerald-300 bg-emerald-50/50 text-emerald-800'
+                      : 'border-slate-300'
+                  } disabled:cursor-not-allowed`}
+                />
+              </div>
+              {!emailVerified && !showVerificationInput && (
+                <button
+                  type="button"
+                  onClick={onSendVerificationCode}
+                  disabled={verificationLoading || !form.companyEmail.trim()}
+                  className="flex items-center gap-1.5 px-4 py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {verificationLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                  {t('auth.verifyEmailButton')}
+                </button>
+              )}
             </div>
-            <p className="mt-1 text-xs text-slate-400">{t('auth.companyEmailHint')}</p>
+            {!emailVerified && !showVerificationInput && (
+              <p className="mt-1 text-xs text-slate-400">{t('auth.companyEmailHint')}</p>
+            )}
+
+            {verificationError && (
+              <div className="mt-2 flex items-center gap-2 p-2.5 rounded-lg bg-red-50 border border-red-200">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <p className="text-xs text-red-700">{verificationError}</p>
+              </div>
+            )}
+
+            {verificationSuccess && !emailVerified && (
+              <div className="mt-2 flex items-center gap-2 p-2.5 rounded-lg bg-teal-50 border border-teal-200">
+                <CheckCircle className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                <p className="text-xs text-teal-700">{verificationSuccess}</p>
+              </div>
+            )}
+
+            {showVerificationInput && !emailVerified && (
+              <div className="mt-3 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <p className="text-sm text-slate-600">{t('auth.enterVerificationCode')}</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setVerificationCode(v);
+                    }}
+                    placeholder="000000"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="flex-1 px-4 py-3 text-center text-xl font-mono font-bold tracking-[0.5em] rounded-xl border border-slate-300 bg-white text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={onVerifyCode}
+                    disabled={verificationLoading || verificationCode.length !== 6}
+                    className="flex items-center gap-1.5 px-5 py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {verificationLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                    {t('auth.verifyEmail')}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={onSendVerificationCode}
+                  disabled={resendCountdown > 0 || verificationLoading}
+                  className="flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium disabled:text-slate-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  {resendCountdown > 0
+                    ? `${t('auth.resendIn')} ${resendCountdown}s`
+                    : t('auth.verifyEmailButton')}
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('common.phone')}</label>
