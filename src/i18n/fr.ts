@@ -387,6 +387,7 @@ export const fr: typeof sq = {
     fieldRequired: 'Le champ "{field}" est obligatoire pour {country}',
     securePayment: 'Paiement securise via Stripe',
     stripeRedirectNotice: 'Apres avoir clique sur "Terminer l\'inscription", vous serez redirige vers notre partenaire de paiement securise Stripe pour finaliser votre abonnement. Vos donnees de paiement ne sont jamais stockees sur nos serveurs.',
+    stripeNotConfigured: 'Le paiement n\'est pas configure pour ce plan. Veuillez contacter l\'administrateur.',
     step: '\u00c9tape',
     stepInfo: 'Informations',
     stepPlan: 'Plan',

@@ -290,8 +290,7 @@ export default function RegisterPage() {
       if (!data.success) throw new Error(data.error);
 
       if (!selectedPlan?.stripe_price_id) {
-        setCurrentStep(3);
-        return;
+        throw new Error(t('auth.stripeNotConfigured'));
       }
 
       const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;

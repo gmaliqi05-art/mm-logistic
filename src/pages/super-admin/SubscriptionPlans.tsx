@@ -363,6 +363,16 @@ export default function SubscriptionPlans() {
                             <span className="text-xs text-emerald-600 ml-1">addon</span>
                           </div>
                         )}
+                        {Number(plan.price_monthly) > 0 && (
+                          <div className={`text-sm flex items-center gap-1.5 ${
+                            plan.stripe_price_id ? 'text-green-600' : 'text-amber-600'
+                          }`}>
+                            <Star className={`w-3.5 h-3.5 ${plan.stripe_price_id ? 'text-green-500' : 'text-amber-500'}`} />
+                            <span className="font-medium">
+                              {plan.stripe_price_id ? 'Stripe OK' : 'Stripe mungon'}
+                            </span>
+                          </div>
+                        )}
                         {plan.product_type !== 'accounting' && (
                           <>
                             <div className="text-sm text-gray-600">
@@ -677,6 +687,51 @@ export default function SubscriptionPlans() {
                   )}
                 </div>
               )}
+
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Star className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm font-semibold text-slate-700">Stripe Integration</span>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Stripe Price ID (Mujor)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.stripe_price_id ?? ''}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, stripe_price_id: e.target.value || null }))
+                      }
+                      placeholder="price_xxxxxxxxxxxxxxxx"
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Stripe Price ID (Vjetor)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.stripe_price_id_yearly ?? ''}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, stripe_price_id_yearly: e.target.value || null }))
+                      }
+                      placeholder="price_xxxxxxxxxxxxxxxx"
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-mono"
+                    />
+                  </div>
+                </div>
+                {Number(formData.price_monthly) > 0 && !formData.stripe_price_id && (
+                  <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                    <p className="text-xs">
+                      Ky plan ka cmim por nuk ka Stripe Price ID. Pagesa nuk do te funksionoje derisa te vendoset.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
