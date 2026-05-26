@@ -88,25 +88,37 @@ export default function RegisterPage() {
   }, []);
 
   async function fetchPlans() {
-    const { data } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .eq('is_active', true)
-      .order('sort_order');
-    const loaded = (data ?? []) as SubscriptionPlan[];
-    setPlans(loaded);
-    setPlansLoading(false);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
 
-    const urlPlanSlug = searchParams.get('plan');
-    if (urlPlanSlug) {
-      const match = loaded.find((p) => p.name === urlPlanSlug);
-      if (match) {
-        setSelectedPlanId(match.id);
-        return;
+      if (error) {
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+          continue;
+        }
       }
+
+      const loaded = (data ?? []) as SubscriptionPlan[];
+      setPlans(loaded);
+      setPlansLoading(false);
+
+      const urlPlanSlug = searchParams.get('plan');
+      if (urlPlanSlug) {
+        const match = loaded.find((p) => p.name === urlPlanSlug);
+        if (match) {
+          setSelectedPlanId(match.id);
+          return;
+        }
+      }
+      const productType = initialType === 'accounting' ? 'accounting' : 'logistics';
+      setSelectedPlanId(findDefaultPlan(loaded, productType));
+      return;
     }
-    const productType = initialType === 'accounting' ? 'accounting' : 'logistics';
-    setSelectedPlanId(findDefaultPlan(loaded, productType));
+    setPlansLoading(false);
   }
 
   function updateForm(key: string, value: string) {
@@ -448,6 +460,7 @@ export default function RegisterPage() {
             setSelectedPlanId={setSelectedPlanId}
             businessType={businessType}
             accountingAddonPlan={accountingAddonPlan}
+            onRetry={() => { setPlansLoading(true); fetchPlans(); }}
             t={t}
           />
         )}
@@ -776,6 +789,7 @@ function StepPlan({
   setSelectedPlanId,
   businessType,
   accountingAddonPlan,
+  onRetry,
   t,
 }: {
   plans: SubscriptionPlan[];
@@ -784,6 +798,7 @@ function StepPlan({
   setSelectedPlanId: (v: string) => void;
   businessType: BusinessType;
   accountingAddonPlan: SubscriptionPlan | null | undefined;
+  onRetry: () => void;
   t: (key: string) => string;
 }) {
   if (plansLoading) {
@@ -800,6 +815,13 @@ function StepPlan({
         <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-700">Nuk ka plane te disponueshme</h3>
         <p className="mt-2 text-sm text-slate-500">Kontaktoni administratorin per me shume informacion.</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+        >
+          Provo perseri
+        </button>
       </div>
     );
   }
