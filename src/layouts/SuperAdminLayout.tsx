@@ -47,9 +47,10 @@ const navSections: NavSection[] = [
     items: [
       { to: '/super-admin', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true },
       { to: '/super-admin/companies', icon: Building2, labelKey: 'nav.companies', end: false },
+      { to: '/super-admin/company-payments', icon: CreditCard, labelKey: 'nav.companyPayments', end: false, badgeKey: 'common.new' },
       { to: '/super-admin/plans', icon: Star, labelKey: 'nav.plans', end: false },
       { to: '/super-admin/reports', icon: DollarSign, labelKey: 'nav.revenue', end: false },
-      { to: '/super-admin/payment-settings', icon: CreditCard, labelKey: 'nav.payments', end: false },
+      { to: '/super-admin/payment-settings', icon: Settings, labelKey: 'nav.paymentSettings', end: false },
       { to: '/super-admin/users', icon: Users, labelKey: 'nav.users', end: false },
       { to: '/super-admin/chat', icon: HelpCircle, labelKey: 'nav.support', end: false },
     ],

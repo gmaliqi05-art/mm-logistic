@@ -295,6 +295,12 @@ async function handleCheckoutCompleted(
     });
   }
 
+  // Always activate the company when payment succeeds
+  await supabase
+    .from("companies")
+    .update({ is_active: true })
+    .eq("id", companyId);
+
   if (isAddon) {
     await supabase
       .from("companies")

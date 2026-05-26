@@ -75,6 +75,7 @@ const SuperAdminEmailCampaignNew = lazyWithRetry(() => import('./pages/super-adm
 const SuperAdminEmailCampaignDetail = lazyWithRetry(() => import('./pages/super-admin/EmailCampaignDetail'));
 const SuperAdminEmailLog = lazyWithRetry(() => import('./pages/super-admin/EmailLog'));
 const SuperAdminEmailSettings = lazyWithRetry(() => import('./pages/super-admin/EmailSettings'));
+const SuperAdminCompanyPayments = lazy(() => import('./pages/super-admin/CompanyPayments'));
 
 const CompanyDashboard = lazy(() => import('./pages/company/Dashboard'));
 const CompanyDepots = lazy(() => import('./pages/company/Depots'));
@@ -256,6 +257,7 @@ function AppRoutes() {
         }>
           <Route index element={<SuperAdminDashboard />} />
           <Route path="companies" element={<SuperAdminCompanies />} />
+          <Route path="company-payments" element={<SuperAdminCompanyPayments />} />
           <Route path="plans" element={<SuperAdminSubscriptionPlans />} />
           <Route path="reports" element={<SuperAdminReports />} />
           <Route path="payment-settings" element={<SuperAdminPaymentSettings />} />
