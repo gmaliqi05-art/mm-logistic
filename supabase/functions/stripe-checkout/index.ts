@@ -22,16 +22,24 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    let stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+    if (!stripeKey) {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "stripe_secret_key")
+        .maybeSingle();
+      if (data?.value) stripeKey = data.value;
+    }
     if (!stripeKey) {
       return jsonRes({ error: "Stripe is not configured" }, 503);
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body = await req.json();
     const {

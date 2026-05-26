@@ -12,6 +12,30 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+async function getStripeSecrets(
+  supabase: ReturnType<typeof createClient>,
+): Promise<{ stripeKey: string; webhookSecret: string } | null> {
+  let stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+  let webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
+
+  if (!stripeKey || !webhookSecret) {
+    const { data } = await supabase
+      .from("platform_settings")
+      .select("key, value")
+      .in("key", ["stripe_secret_key", "stripe_webhook_secret"]);
+
+    if (data) {
+      for (const row of data) {
+        if (row.key === "stripe_secret_key" && row.value) stripeKey = row.value;
+        if (row.key === "stripe_webhook_secret" && row.value) webhookSecret = row.value;
+      }
+    }
+  }
+
+  if (!stripeKey || !webhookSecret) return null;
+  return { stripeKey, webhookSecret };
+}
+
 async function notifySuperAdmins(
   companyName: string,
   planName: string,
@@ -73,18 +97,17 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    const secrets = await getStripeSecrets(supabase);
 
-    if (!stripeKey || !webhookSecret) {
+    if (!secrets) {
       return new Response(
         JSON.stringify({ error: "Stripe not configured" }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    const stripe = new Stripe(secrets.stripeKey, { apiVersion: "2024-04-10" });
 
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
@@ -98,7 +121,7 @@ Deno.serve(async (req: Request) => {
 
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+      event = stripe.webhooks.constructEvent(body, sig, secrets.webhookSecret);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid signature";
       return new Response(
