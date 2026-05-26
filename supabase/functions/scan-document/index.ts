@@ -227,6 +227,24 @@ CRITICAL: European transport documents have THREE distinct parties:
 
 Extract ALL THREE parties even if some are missing. Do NOT confuse them.
 
+CRITICAL - LETTERHEAD / HEADER DETECTION:
+The company whose name, logo, address and contact details appear in the HEADER or LETTERHEAD of the document is ALWAYS the CONSIGNOR (the party that issued/sent the document and the goods). This is true even when there is no explicit "Absender" or "From" label. The header company is the document issuer = the sender of goods.
+
+The name/address block that appears BELOW the header (often preceded by "An:", "Lieferschein an:", "Empfänger:", or simply written as the postal address recipient) is the CONSIGNEE (receiver of goods).
+
+GERMAN DOCUMENT KEYWORDS:
+- "Lieferschein" = Delivery Note (the header company is the sender)
+- "Lieferschein an:" / "An:" = the CONSIGNEE (receiver), NOT the sender
+- "Auftraggeber" = the ordering party (usually the CONSIGNOR or goods owner)
+- "Empfänger" / "Warenempfänger" = CONSIGNEE (receiver)
+- "Absender" = CONSIGNOR (sender)
+- "Anlieferung erfolgt durch:" / "Im Auftrag von:" / "Spedition:" / "Frachtführer:" = CARRIER (transporter)
+- "KFZ-Kennzeichen" / "Anhänger" = vehicle/trailer plate = belongs to CARRIER
+- "Besteller" / "Bestellnr." = ordering party reference
+
+CARRIER DETECTION HINTS:
+Company names containing "TRANS", "CARGO", "SPEDITION", "LOGISTIK", "TRANSPORT", "FREIGHT" are likely carriers unless they appear in the document header/letterhead.
+
 CRITICAL for document_number: Extract the delivery note / consignment note number as the primary document identifier. Look for these labels in ANY language:
 - German: "Lieferschein Nr.", "LS Nr.", "LS-Nr.", "Lieferschein-Nr."
 - English: "Delivery Note No.", "DN No.", "Consignment No.", "Packing Slip No."
@@ -306,6 +324,26 @@ async function decideRouting(
   const carrierName = stripOwn(ex.carrier_name, ourName, ourVat);
   const consigneeName = stripOwn(ex.consignee_name, ourName, ourVat);
 
+  // Match each party against existing contacts (needed by role detection)
+  const matchContact = (name: string, vat: string): { id: string; name: string; type: string; score: number; vat_number: string | null } | null => {
+    if (!name && !vat) return null;
+    let best: { id: string; name: string; type: string; score: number; vat_number: string | null } | null = null;
+    for (const c of contacts) {
+      let score = similarity(name, c.name);
+      if (vat && c.vat_number && normalize(vat) === normalize(c.vat_number)) {
+        score = Math.max(score, 0.95);
+      }
+      if (!best || score > best.score) {
+        best = { id: c.id, name: c.name, type: c.contact_type, score, vat_number: c.vat_number };
+      }
+    }
+    return best && best.score >= 0.55 ? best : null;
+  };
+
+  const consignorMatch = matchContact(ex.consignor_name, ex.consignor_vat);
+  const carrierMatch = matchContact(ex.carrier_name, ex.carrier_vat);
+  const consigneeMatch = matchContact(ex.consignee_name, ex.consignee_vat);
+
   // Detect which role(s) we play
   const weAreConsignor =
     (!consignorName && !!ex.consignor_name) ||
@@ -349,10 +387,37 @@ async function decideRouting(
     suggested_kind = "carrier_service";
     partner_to_register = "consignor";
   } else {
-    // None of the 3 parties match us - external document
-    our_role = "unknown";
-    suggested_kind = "unknown";
-    partner_to_register = "none";
+    // None of the 3 parties match us directly.
+    // This happens when our company provides a service (sorting, repair,
+    // storage, transport coordination) for one of the parties and the
+    // document was issued between two external companies.
+    // Strategy: the document issuer (consignor / letterhead company) is
+    // most likely our client/partner. The consignee is their customer.
+    // Check if any extracted party is already a known contact.
+    const consignorIsKnown = consignorMatch && consignorMatch.score >= 0.55;
+    const consigneeIsKnown = consigneeMatch && consigneeMatch.score >= 0.55;
+
+    if (consignorIsKnown) {
+      // Consignor is already our partner/client
+      our_role = "unknown";
+      suggested_kind = "delivery_in";
+      partner_to_register = "consignor";
+    } else if (consigneeIsKnown) {
+      // Consignee is already our partner/client
+      our_role = "unknown";
+      suggested_kind = "delivery_in";
+      partner_to_register = "consignee";
+    } else if (ex.consignor_name) {
+      // Neither party known yet; register the document issuer (consignor)
+      // as our new partner since they originated the shipment
+      our_role = "unknown";
+      suggested_kind = "delivery_in";
+      partner_to_register = "consignor";
+    } else {
+      our_role = "unknown";
+      suggested_kind = "unknown";
+      partner_to_register = "none";
+    }
   }
 
   // Override by explicit driver/depot context: physical movement always wins
@@ -373,26 +438,6 @@ async function decideRouting(
     }
   }
 
-  // Match each party against existing contacts
-  const matchContact = (name: string, vat: string): { id: string; name: string; type: string; score: number; vat_number: string | null } | null => {
-    if (!name && !vat) return null;
-    let best: { id: string; name: string; type: string; score: number; vat_number: string | null } | null = null;
-    for (const c of contacts) {
-      let score = similarity(name, c.name);
-      if (vat && c.vat_number && normalize(vat) === normalize(c.vat_number)) {
-        score = Math.max(score, 0.95);
-      }
-      if (!best || score > best.score) {
-        best = { id: c.id, name: c.name, type: c.contact_type, score, vat_number: c.vat_number };
-      }
-    }
-    return best && best.score >= 0.55 ? best : null;
-  };
-
-  const consignorMatch = matchContact(ex.consignor_name, ex.consignor_vat);
-  const carrierMatch = matchContact(ex.carrier_name, ex.carrier_vat);
-  const consigneeMatch = matchContact(ex.consignee_name, ex.consignee_vat);
-
   // Pick the partner to register based on partner_to_register
   let bestContact: { id: string; name: string; type: string; score: number; vat_number: string | null } | null = null;
   if (partner_to_register === "consignor") bestContact = consignorMatch;
@@ -411,7 +456,13 @@ async function decideRouting(
   else if (our_role === "consignee") reasonParts.push("Kompania jone eshte marresi (consignee)");
   else if (our_role === "carrier") reasonParts.push("Kompania jone eshte vetem spedicion (carrier)");
   else if (our_role === "internal_transfer") reasonParts.push("Transfer i brendshem mes depove tona");
-  else reasonParts.push("Rolet nuk u njohen automatikisht");
+  else {
+    if (partner_to_register !== "none") {
+      reasonParts.push("Kompania jone nuk gjendet ne dokument — dokumenti eshte mes paleve te treta. Pala A (derguesi) regjistrohet si partner/klient");
+    } else {
+      reasonParts.push("Rolet nuk u njohen automatikisht");
+    }
+  }
 
   if (partner_to_register === "consignor" && ex.consignor_name) {
     reasonParts.push(`Partneri per regjistrim: ${ex.consignor_name} (derguesi)`);

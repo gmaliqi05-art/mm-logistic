@@ -122,17 +122,37 @@ export default function DepotReceiving() {
 
     const finalRows = rows.length > 0 ? rows : [createRow()];
 
-    const partnerName = r.extracted.supplier_name || r.extracted.customer_name || '';
+    // Use routing info to determine the correct partner
+    const routing = r.routing;
+    let partnerName = '';
+    let matchedContactId: string | null = null;
 
+    if (routing) {
+      if (routing.partner_to_register === 'consignor') {
+        partnerName = r.extracted.consignor_name || '';
+      } else if (routing.partner_to_register === 'consignee') {
+        partnerName = r.extracted.consignee_name || '';
+      }
+      if (routing.matched_contact_id) {
+        matchedContactId = routing.matched_contact_id;
+        partnerName = routing.matched_contact_name || partnerName;
+      }
+    }
+    if (!partnerName) {
+      partnerName = r.extracted.consignor_name || r.extracted.supplier_name || r.extracted.customer_name || '';
+    }
+
+    const consignorName = r.extracted.consignor_name || r.extracted.supplier_name || '';
+    const docNumber = r.extracted.document_number || r.extracted.invoice_number || '';
     const refNote = [
-      r.extracted.supplier_name ? `Furnitor: ${r.extracted.supplier_name}` : '',
-      r.extracted.invoice_number ? `Ref: ${r.extracted.invoice_number}` : '',
+      consignorName ? `Furnitor: ${consignorName}` : '',
+      docNumber ? `Ref: ${docNumber}` : '',
     ].filter(Boolean).join(' · ');
 
     setReceivingRows(finalRows);
     setReceivingNotes(refNote);
     setSourcePartner(partnerName);
-    setSourceContactId(null);
+    setSourceContactId(matchedContactId);
 
     const unmatched = (r.extracted.line_items || []).length - rows.length;
     const parts = [t('common.scanner.depotScan.aiFilled'), `${rows.length} ${t('common.scanner.depotScan.itemsRecognized')}`];
@@ -372,6 +392,7 @@ export default function DepotReceiving() {
       {showScanner && (
         <SmartDocScanner
           role="depot"
+          docDirection="in"
           title={t('common.scanner.depotScan.title')}
           subtitle={t('common.scanner.depotScan.subtitle')}
           allowedKinds={['delivery_in']}

@@ -304,12 +304,62 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                 <div>
                   <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.scanner.keyData')}</p>
                   <dl className="space-y-2 text-sm">
-                    {(result.extracted.consignor_name || result.extracted.supplier_name) && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.supplier')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignor_name || result.extracted.supplier_name}</dd></div>
-                    )}
-                    {(result.extracted.consignee_name || result.extracted.customer_name) && (
-                      <div><dt className="text-xs text-slate-500">{t('common.scanner.customer')}</dt><dd className="font-medium text-slate-900">{result.extracted.consignee_name || result.extracted.customer_name}</dd></div>
-                    )}
+                    {(() => {
+                      const ourRole = result.routing?.our_role;
+                      const partnerReg = result.routing?.partner_to_register;
+                      const consignorName = result.extracted.consignor_name || result.extracted.supplier_name;
+                      const consigneeName = result.extracted.consignee_name || result.extracted.customer_name;
+                      const carrierName = result.extracted.carrier_name;
+
+                      const consignorLabel = ourRole === 'consignor'
+                        ? t('common.scanner.us')
+                        : ourRole === 'carrier'
+                          ? t('common.scanner.clientOrderer')
+                          : ourRole === 'consignee'
+                            ? t('common.scanner.supplier')
+                            : partnerReg === 'consignor'
+                              ? t('common.scanner.partnerClient')
+                              : t('common.scanner.sender');
+
+                      const consigneeLabel = ourRole === 'consignee'
+                        ? t('common.scanner.us')
+                        : ourRole === 'consignor'
+                          ? t('common.scanner.customer')
+                          : ourRole === 'carrier'
+                            ? t('common.scanner.goodsReceiver')
+                            : partnerReg === 'consignee'
+                              ? t('common.scanner.partnerClient')
+                              : t('common.scanner.receiver');
+
+                      return (
+                        <>
+                          {consignorName && (
+                            <div>
+                              <dt className="text-xs text-slate-500 flex items-center gap-1.5">
+                                {consignorLabel}
+                                {partnerReg === 'consignor' && <span className="text-[10px] px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded-full font-medium">{t('common.scanner.toRegister')}</span>}
+                              </dt>
+                              <dd className="font-medium text-slate-900">{consignorName}</dd>
+                            </div>
+                          )}
+                          {carrierName && (
+                            <div>
+                              <dt className="text-xs text-slate-500">{t('common.scanner.carrier')}</dt>
+                              <dd className="font-medium text-slate-900">{carrierName}</dd>
+                            </div>
+                          )}
+                          {consigneeName && (
+                            <div>
+                              <dt className="text-xs text-slate-500 flex items-center gap-1.5">
+                                {consigneeLabel}
+                                {partnerReg === 'consignee' && <span className="text-[10px] px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded-full font-medium">{t('common.scanner.toRegister')}</span>}
+                              </dt>
+                              <dd className="font-medium text-slate-900">{consigneeName}</dd>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                     {(result.extracted.document_number || result.extracted.invoice_number) && (
                       <div><dt className="text-xs text-slate-500">{t('common.scanner.docNumber')}</dt><dd className="font-mono text-slate-800">{result.extracted.document_number || result.extracted.invoice_number}</dd></div>
                     )}
