@@ -67,12 +67,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { planId, successUrl, cancelUrl, isUpgrade, isAddon } = body as {
+    const { planId, successUrl, cancelUrl, isUpgrade, isAddon, billingInterval } = body as {
       planId: string;
       successUrl: string;
       cancelUrl: string;
       isUpgrade?: boolean;
       isAddon?: boolean;
+      billingInterval?: "monthly" | "yearly";
     };
 
     if (!planId || !successUrl || !cancelUrl) {
@@ -96,7 +97,10 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (!plan.stripe_price_id) {
+    const useYearly = billingInterval === "yearly" && plan.stripe_price_id_yearly;
+    const stripePriceId = useYearly ? plan.stripe_price_id_yearly : plan.stripe_price_id;
+
+    if (!stripePriceId) {
       return new Response(
         JSON.stringify({ error: "This plan has no Stripe price configured. Contact administrator." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -144,7 +148,7 @@ Deno.serve(async (req: Request) => {
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: "subscription",
-      line_items: [{ price: plan.stripe_price_id, quantity: 1 }],
+      line_items: [{ price: stripePriceId, quantity: 1 }],
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       metadata: {
@@ -153,6 +157,7 @@ Deno.serve(async (req: Request) => {
         user_id: user.id,
         is_upgrade: isUpgrade ? "true" : "false",
         is_addon: isAddon ? "true" : "false",
+        billing_interval: useYearly ? "yearly" : "monthly",
       },
       subscription_data: {
         metadata: {

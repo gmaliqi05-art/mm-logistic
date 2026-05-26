@@ -304,6 +304,8 @@ export interface SubscriptionPlan {
   is_addon: boolean;
   price_addon_monthly: number | null;
   stripe_price_id: string | null;
+  price_yearly: number | null;
+  stripe_price_id_yearly: string | null;
   created_at: string;
   updated_at: string;
 }

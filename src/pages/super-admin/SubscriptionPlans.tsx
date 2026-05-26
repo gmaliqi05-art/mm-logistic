@@ -21,6 +21,8 @@ const emptyPlan: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'> = {
   is_addon: false,
   price_addon_monthly: null,
   stripe_price_id: null,
+  price_yearly: null,
+  stripe_price_id_yearly: null,
 };
 
 export default function SubscriptionPlans() {
@@ -161,6 +163,8 @@ export default function SubscriptionPlans() {
         is_addon: formData.is_addon,
         price_addon_monthly: formData.price_addon_monthly ?? 0,
         stripe_price_id: formData.stripe_price_id || null,
+        price_yearly: formData.price_yearly ?? null,
+        stripe_price_id_yearly: formData.stripe_price_id_yearly || null,
         feature_keys: [],
       };
 
@@ -338,6 +342,14 @@ export default function SubscriptionPlans() {
                             <span className="text-sm text-gray-500">/{t('common.month')}</span>
                           )}
                         </div>
+                        {plan.price_yearly != null && (
+                          <div className="bg-teal-50 rounded-lg px-4 py-2">
+                            <span className="text-lg font-bold text-teal-800">
+                              {`${plan.price_yearly}\u20AC`}
+                            </span>
+                            <span className="text-sm text-teal-600">/vit</span>
+                          </div>
+                        )}
                         {plan.trial_days > 0 && (
                           <div className="text-sm text-gray-600">
                             <span className="font-medium">{plan.trial_days}</span> {t('superAdmin.plans.trialDays').toLowerCase()}
@@ -345,7 +357,7 @@ export default function SubscriptionPlans() {
                         )}
                         {plan.is_addon && plan.price_addon_monthly != null && (
                           <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
-                            <span className="text-sm font-bold text-emerald-700">{plan.price_addon_monthly}&euro;</span>
+                            <span className="text-sm font-bold text-emerald-700">{plan.price_addon_monthly}€</span>
                             <span className="text-xs text-emerald-600 ml-1">addon</span>
                           </div>
                         )}
@@ -538,7 +550,7 @@ export default function SubscriptionPlans() {
                 />
               </div>
 
-              <div className={`grid grid-cols-2 ${formData.product_type === 'accounting' ? 'sm:grid-cols-2' : 'sm:grid-cols-4'} gap-4`}>
+              <div className={`grid grid-cols-2 ${formData.product_type === 'accounting' ? 'sm:grid-cols-3' : 'sm:grid-cols-5'} gap-4`}>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     {t('superAdmin.plans.monthlyPrice')}
@@ -551,6 +563,23 @@ export default function SubscriptionPlans() {
                       onChange={(e) =>
                         setFormData((p) => ({ ...p, price_monthly: Number(e.target.value) }))
                       }
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Cmimi Vjetor (€)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.price_yearly ?? ''}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, price_yearly: e.target.value ? Number(e.target.value) : null }))
+                      }
+                      placeholder="Bosh = pa opsion vjetor"
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                     />
                   </div>
@@ -698,7 +727,25 @@ export default function SubscriptionPlans() {
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-mono"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  ID nga Stripe Dashboard &gt; Products &gt; Price. Lere bosh per plane falas.
+                  ID nga Stripe Dashboard &gt; Products &gt; Price (mujor). Lere bosh per plane falas.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Stripe Price ID (Vjetor)
+                </label>
+                <input
+                  type="text"
+                  value={formData.stripe_price_id_yearly ?? ''}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, stripe_price_id_yearly: e.target.value || null }))
+                  }
+                  placeholder="price_1Xyz789..."
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-mono"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ID nga Stripe Dashboard &gt; Products &gt; Price (vjetor). Lere bosh nese nuk ka opsion vjetor.
                 </p>
               </div>
 

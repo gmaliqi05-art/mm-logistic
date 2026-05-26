@@ -52,6 +52,7 @@ export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
   const [loading, setLoading] = useState(false);
   const [plansLoading, setPlansLoading] = useState(true);
   const [error, setError] = useState('');
@@ -320,6 +321,7 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           planId: selectedPlan.id,
+          billingInterval,
           successUrl: `${window.location.origin}/payment-success`,
           cancelUrl: `${window.location.origin}/payment-cancel`,
           isUpgrade: false,
@@ -460,13 +462,15 @@ export default function RegisterPage() {
             setSelectedPlanId={setSelectedPlanId}
             businessType={businessType}
             accountingAddonPlan={accountingAddonPlan}
+            billingInterval={billingInterval}
+            setBillingInterval={setBillingInterval}
             onRetry={() => { setPlansLoading(true); fetchPlans(); }}
             t={t}
           />
         )}
 
         {currentStep === 2 && (
-          <StepPayment currentPlan={selectedPlan} t={t} />
+          <StepPayment currentPlan={selectedPlan} billingInterval={billingInterval} t={t} />
         )}
 
         {currentStep === 3 && (
@@ -789,6 +793,8 @@ function StepPlan({
   setSelectedPlanId,
   businessType,
   accountingAddonPlan,
+  billingInterval,
+  setBillingInterval,
   onRetry,
   t,
 }: {
@@ -798,6 +804,8 @@ function StepPlan({
   setSelectedPlanId: (v: string) => void;
   businessType: BusinessType;
   accountingAddonPlan: SubscriptionPlan | null | undefined;
+  billingInterval: 'monthly' | 'yearly';
+  setBillingInterval: (v: 'monthly' | 'yearly') => void;
   onRetry: () => void;
   t: (key: string) => string;
 }) {
@@ -830,6 +838,27 @@ function StepPlan({
   const popularPlanId = pickPopularPlan(plans);
   const addonPrice = accountingAddonPlan?.price_addon_monthly ?? 0;
   const showPackageTotal = businessType === 'both' && selected && Number(selected.price_monthly) > 0;
+  const hasYearlyOption = plans.some((p) => p.price_yearly != null && Number(p.price_monthly) > 0);
+
+  function getPlanPrice(plan: SubscriptionPlan): string {
+    if (Number(plan.price_monthly) === 0) return t('common.free');
+    if (billingInterval === 'yearly' && plan.price_yearly != null) {
+      return `${plan.price_yearly}\u20AC`;
+    }
+    return `${plan.price_monthly}\u20AC`;
+  }
+
+  function getPlanPeriodLabel(plan: SubscriptionPlan): string {
+    if (Number(plan.price_monthly) === 0) return '';
+    return billingInterval === 'yearly' ? '/vit' : `/${t('common.month')}`;
+  }
+
+  function getYearlySavings(plan: SubscriptionPlan): number | null {
+    if (billingInterval !== 'yearly' || plan.price_yearly == null || Number(plan.price_monthly) === 0) return null;
+    const fullYearlyPrice = Number(plan.price_monthly) * 12;
+    const savings = Math.round(((fullYearlyPrice - Number(plan.price_yearly)) / fullYearlyPrice) * 100);
+    return savings > 0 ? savings : null;
+  }
 
   return (
     <div>
@@ -841,6 +870,42 @@ function StepPlan({
             : t('auth.changePlanAnytime')}
         </p>
       </div>
+
+      {hasYearlyOption && (
+        <div className="flex items-center justify-center mb-8">
+          <div className="bg-white border border-slate-200 rounded-xl p-1 inline-flex shadow-sm">
+            <button
+              type="button"
+              onClick={() => setBillingInterval('monthly')}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                billingInterval === 'monthly'
+                  ? 'bg-teal-600 text-white shadow-md'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              1 Muaj
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingInterval('yearly')}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
+                billingInterval === 'yearly'
+                  ? 'bg-teal-600 text-white shadow-md'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              12 Muaj
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                billingInterval === 'yearly'
+                  ? 'bg-teal-500 text-white'
+                  : 'bg-emerald-100 text-emerald-700'
+              }`}>
+                -17%
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className={`grid gap-6 ${plans.length === 1 ? 'max-w-sm mx-auto' : plans.length === 2 ? 'md:grid-cols-2 max-w-2xl mx-auto' : 'md:grid-cols-3'}`}>
         {plans.map((plan) => {
@@ -884,10 +949,24 @@ function StepPlan({
 
               <div className="mt-4 mb-5">
                 <span className="text-3xl font-extrabold text-slate-900">
-                  {Number(plan.price_monthly) === 0 ? t('common.free') : `${plan.price_monthly}\u20AC`}
+                  {getPlanPrice(plan)}
                 </span>
                 {Number(plan.price_monthly) > 0 && (
-                  <span className="text-sm text-slate-500">/{t('common.month')}</span>
+                  <span className="text-sm text-slate-500">{getPlanPeriodLabel(plan)}</span>
+                )}
+                {(() => {
+                  const savings = getYearlySavings(plan);
+                  if (!savings) return null;
+                  return (
+                    <span className="ml-2 inline-block text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      Kurseni {savings}%
+                    </span>
+                  );
+                })()}
+                {billingInterval === 'yearly' && plan.price_yearly != null && Number(plan.price_monthly) > 0 && (
+                  <div className="text-xs text-slate-400 mt-1 line-through">
+                    {(Number(plan.price_monthly) * 12).toFixed(2)}€/vit
+                  </div>
                 )}
               </div>
 
@@ -910,15 +989,15 @@ function StepPlan({
             <div>
               <h3 className="text-sm font-bold text-teal-800 mb-1">Paketa e Plote: Logjistike + Kontabilitet</h3>
               <div className="flex items-center gap-3 text-sm text-teal-700">
-                <span>{selected!.display_name}: {selected!.price_monthly}&euro;</span>
+                <span>{selected!.display_name}: {selected!.price_monthly}€</span>
                 <span className="text-teal-400">+</span>
-                <span>Kontabilitet: {addonPrice}&euro;</span>
+                <span>Kontabilitet: {addonPrice}€</span>
               </div>
             </div>
             <div className="text-right">
               <p className="text-xs text-teal-600 font-medium">Totali mujor</p>
               <p className="text-2xl font-extrabold text-teal-900">
-                {(Number(selected!.price_monthly) + Number(addonPrice)).toFixed(2)}&euro;
+                {(Number(selected!.price_monthly) + Number(addonPrice)).toFixed(2)}€
               </p>
             </div>
           </div>
@@ -928,7 +1007,11 @@ function StepPlan({
   );
 }
 
-function StepPayment({ currentPlan, t }: { currentPlan?: SubscriptionPlan; t: (key: string) => string }) {
+function StepPayment({ currentPlan, billingInterval, t }: { currentPlan?: SubscriptionPlan; billingInterval: 'monthly' | 'yearly'; t: (key: string) => string }) {
+  const isYearly = billingInterval === 'yearly' && currentPlan?.price_yearly != null;
+  const displayPrice = isYearly ? currentPlan?.price_yearly : currentPlan?.price_monthly;
+  const periodLabel = isYearly ? '/vit' : `/${t('common.month')}`;
+
   return (
     <div className="max-w-lg mx-auto">
       <div className="text-center mb-8">
@@ -936,7 +1019,7 @@ function StepPayment({ currentPlan, t }: { currentPlan?: SubscriptionPlan; t: (k
         <p className="mt-2 text-slate-500">
           {t('auth.plan')}: <span className="font-semibold text-teal-600">{currentPlan?.display_name}</span>
           {' - '}
-          <span className="font-bold">{currentPlan?.price_monthly}\u20AC/{t('common.month')}</span>
+          <span className="font-bold">{displayPrice}€{periodLabel}</span>
         </p>
       </div>
 
@@ -971,8 +1054,8 @@ function StepPayment({ currentPlan, t }: { currentPlan?: SubscriptionPlan; t: (k
             <span className="font-medium text-slate-800">{currentPlan?.display_name}</span>
           </div>
           <div className="flex items-center justify-between text-sm mt-2">
-            <span className="text-slate-500">{t('auth.monthlyPrice')}</span>
-            <span className="font-bold text-slate-900">{currentPlan?.price_monthly}\u20AC</span>
+            <span className="text-slate-500">{isYearly ? 'Cmimi vjetor' : t('auth.monthlyPrice')}</span>
+            <span className="font-bold text-slate-900">{displayPrice}€</span>
           </div>
         </div>
       </div>

@@ -96,7 +96,7 @@ export default function PaymentPending() {
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-sm text-slate-500">{t('auth.monthlyPrice')}</span>
-                  <span className="font-bold text-teal-700">{plan.price_monthly}&euro;/{t('common.month')}</span>
+                  <span className="font-bold text-teal-700">{plan.price_monthly}€/{t('common.month')}</span>
                 </div>
               </div>
             )}
