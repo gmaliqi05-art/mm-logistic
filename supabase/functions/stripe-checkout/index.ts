@@ -155,15 +155,34 @@ Deno.serve(async (req: Request) => {
       return jsonRes({ error: "Plan not found or inactive" }, 404);
     }
 
-    const useYearly = billingInterval === "yearly" && plan.stripe_price_id_yearly;
+    const useYearly = billingInterval === "yearly" && plan.price_yearly != null && Number(plan.price_yearly) > 0;
+    const unitAmount = useYearly
+      ? Math.round(Number(plan.price_yearly) * 100)
+      : Math.round(Number(plan.price_monthly) * 100);
+
+    if (unitAmount <= 0) {
+      return jsonRes({ error: "This plan has no price configured" }, 400);
+    }
+
+    const recurringInterval = useYearly ? "year" : "month";
+
+    // If a pre-created Stripe Price ID exists, use it; otherwise build price_data dynamically
     const stripePriceId = useYearly ? plan.stripe_price_id_yearly : plan.stripe_price_id;
 
-    if (!stripePriceId) {
-      return jsonRes(
-        { error: "This plan has no Stripe price configured. Contact administrator." },
-        400,
-      );
-    }
+    const lineItem: Record<string, unknown> = stripePriceId
+      ? { price: stripePriceId, quantity: 1 }
+      : {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: plan.display_name || plan.name,
+              metadata: { plan_id: plan.id },
+            },
+            unit_amount: unitAmount,
+            recurring: { interval: recurringInterval },
+          },
+          quantity: 1,
+        };
 
     // Get or create Stripe customer
     const { data: existingSub } = await supabase
@@ -193,7 +212,7 @@ Deno.serve(async (req: Request) => {
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: "subscription",
-      line_items: [{ price: stripePriceId, quantity: 1 }],
+      line_items: [lineItem as Stripe.Checkout.SessionCreateParams.LineItem],
       success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       metadata: {

@@ -289,9 +289,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      if (!selectedPlan?.stripe_price_id) {
-        throw new Error(t('auth.stripeNotConfigured'));
-      }
+      if (!selectedPlan) throw new Error('Plani nuk u gjet');
 
       const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
       const checkoutRes = await fetch(checkoutUrl, {

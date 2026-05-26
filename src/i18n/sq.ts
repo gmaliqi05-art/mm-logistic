@@ -385,7 +385,6 @@ export const sq = {
     fieldRequired: 'Fusha "{field}" eshte e detyrueshme per {country}',
     securePayment: 'Pagese e sigurte permes Stripe',
     stripeRedirectNotice: 'Pas klikimit "Perfundo Regjistrimin" do te ridrejtoheni te partneri yne i sigurte i pagesave Stripe per te perfunduar abonimin. Te dhenat tuaja te pageses nuk ruhen kurre ne serverat tona.',
-    stripeNotConfigured: 'Pagesa nuk eshte konfiguruar per kete plan. Ju lutem kontaktoni administratorin.',
     step: 'Hapi',
     stepInfo: 'Informacioni',
     stepPlan: 'Plani',

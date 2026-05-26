@@ -363,16 +363,6 @@ export default function SubscriptionPlans() {
                             <span className="text-xs text-emerald-600 ml-1">addon</span>
                           </div>
                         )}
-                        {Number(plan.price_monthly) > 0 && (
-                          <div className={`text-sm flex items-center gap-1.5 ${
-                            plan.stripe_price_id ? 'text-green-600' : 'text-amber-600'
-                          }`}>
-                            <Star className={`w-3.5 h-3.5 ${plan.stripe_price_id ? 'text-green-500' : 'text-amber-500'}`} />
-                            <span className="font-medium">
-                              {plan.stripe_price_id ? 'Stripe OK' : 'Stripe mungon'}
-                            </span>
-                          </div>
-                        )}
                         {plan.product_type !== 'accounting' && (
                           <>
                             <div className="text-sm text-gray-600">
@@ -723,14 +713,9 @@ export default function SubscriptionPlans() {
                     />
                   </div>
                 </div>
-                {Number(formData.price_monthly) > 0 && !formData.stripe_price_id && (
-                  <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                    <p className="text-xs">
-                      Ky plan ka cmim por nuk ka Stripe Price ID. Pagesa nuk do te funksionoje derisa te vendoset.
-                    </p>
-                  </div>
-                )}
+                <p className="text-xs text-slate-500">
+                  Opsionale. Nese lihen bosh, sistemi krijon cmimin dinamikisht nga databaza.
+                </p>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
