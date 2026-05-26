@@ -148,6 +148,7 @@ export const de: typeof sq = {
       goodsReceiver: 'Warenempfänger',
       partnerClient: 'Unser Partner / Kunde',
       toRegister: 'Zu registrieren',
+      endRecipient: 'Endempfänger',
       vatNumber: 'USt-IdNr.',
       docNumber: 'Belegnummer',
       date: 'Datum',

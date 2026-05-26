@@ -397,8 +397,8 @@ function ReviewModal({
 
   function getAiPartnerName(): string {
     const e = (note.ai_extracted_json as any) || {};
-    const pickFromConsignor = note.type === 'pickup' || note.flow_role === 'receiver' || (note as any).our_role === 'consignee';
-    const fromAi = pickFromConsignor ? e.consignor_name : e.consignee_name;
+    const pickConsignor = shouldPickConsignor(note, e, note.type === 'pickup');
+    const fromAi = pickConsignor ? e.consignor_name : e.consignee_name;
     return ((note.counterparty_name || note.partner_name || fromAi || '') as string).trim();
   }
 
@@ -1372,7 +1372,7 @@ function ReviewModal({
               }}
               aiSnapshot={(() => {
                 const e = (note.ai_extracted_json as any) || {};
-                const pickFromConsignor = note.type === 'pickup' || note.flow_role === 'receiver' || (note as any).our_role === 'consignee';
+                const pickFromConsignor = shouldPickConsignor(note, e, note.type === 'pickup');
                 return pickFromConsignor
                   ? {
                       name: e.consignor_name || null,
@@ -1841,6 +1841,13 @@ function DataRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function shouldPickConsignor(note: ReviewNote, ex: any, isPickup: boolean): boolean {
+  const routing = ex._routing || ex.routing;
+  if (routing?.partner_to_register === 'consignor') return true;
+  if (routing?.partner_to_register === 'consignee') return false;
+  return isPickup || note.flow_role === 'receiver' || (note as any).our_role === 'consignee';
+}
+
 function PartnerSnapshot({
   note,
   ex,
@@ -1852,31 +1859,41 @@ function PartnerSnapshot({
   isPickup: boolean;
   partnerIsOwnCompany: boolean;
 }) {
+  const { t } = useTranslation();
+  const routing = ex._routing || ex.routing;
+  const pickConsignor = shouldPickConsignor(note, ex, isPickup);
+
   const partnerName =
     note.counterparty_name ||
-    (isPickup ? ex.consignor_name : ex.consignee_name) ||
+    (pickConsignor ? ex.consignor_name : ex.consignee_name) ||
     note.partner_name ||
     '';
   const partnerVat =
     note.counterparty_vat ||
-    (isPickup ? ex.consignor_vat : ex.consignee_vat) ||
+    (pickConsignor ? ex.consignor_vat : ex.consignee_vat) ||
     '';
   const partnerAddress =
-    (isPickup ? ex.consignor_address : ex.consignee_address) ||
+    (pickConsignor ? ex.consignor_address : ex.consignee_address) ||
     (isPickup ? note.pickup_address : note.delivery_address) ||
     '';
   const partnerEmail =
     note.counterparty_email ||
-    (isPickup ? ex.consignor_email : ex.consignee_email) ||
+    (pickConsignor ? ex.consignor_email : ex.consignee_email) ||
     '';
   const partnerPhone =
     note.counterparty_phone ||
-    (isPickup ? ex.consignor_phone : ex.consignee_phone) ||
+    (pickConsignor ? ex.consignor_phone : ex.consignee_phone) ||
     '';
+
+  const otherName = pickConsignor ? (ex.consignee_name || '') : (ex.consignor_name || '');
+  const otherAddress = pickConsignor ? (ex.consignee_address || '') : (ex.consignor_address || '');
+  const carrierName = ex.carrier_name || '';
 
   const isLinked = !!(note.counterparty_contact_id || note.partner_id || note.counterparty_company_id);
   const isNew = !!note.auto_register_partner && !isLinked;
-  const role = isPickup ? 'Derguesi' : 'Marresi';
+  const roleLabel = routing?.partner_to_register
+    ? t('common.scanner.partnerClient')
+    : (isPickup ? t('common.scanner.sender') : t('common.scanner.receiver'));
 
   if (partnerIsOwnCompany) {
     return (
@@ -1892,47 +1909,68 @@ function PartnerSnapshot({
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-sky-50/40 to-white p-3">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{role}</p>
-          <p className="text-sm font-bold text-gray-900 break-words">{partnerName}</p>
+    <div className="space-y-2">
+      <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-sky-50/40 to-white p-3">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{roleLabel}</p>
+            <p className="text-sm font-bold text-gray-900 break-words">{partnerName}</p>
+          </div>
+          {isLinked ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
+              <CheckCircle2 className="w-3 h-3" /> Ekziston
+            </span>
+          ) : isNew ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
+              <Sparkles className="w-3 h-3" /> I ri
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200 flex-shrink-0">
+              Pa lidhje
+            </span>
+          )}
         </div>
-        {isLinked ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
-            <CheckCircle2 className="w-3 h-3" /> Ekziston
-          </span>
-        ) : isNew ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
-            <Sparkles className="w-3 h-3" /> I ri
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200 flex-shrink-0">
-            Pa lidhje
-          </span>
-        )}
+        <div className="space-y-1 text-xs text-gray-700">
+          {partnerVat && (
+            <p><span className="text-gray-500">VAT:</span> <span className="font-semibold">{partnerVat}</span></p>
+          )}
+          {partnerAddress && (
+            <p className="break-words"><span className="text-gray-500">Adresa:</span> {partnerAddress}</p>
+          )}
+          {partnerEmail && (
+            <p className="break-words"><span className="text-gray-500">Email:</span> {partnerEmail}</p>
+          )}
+          {partnerPhone && (
+            <p><span className="text-gray-500">Telefoni:</span> {partnerPhone}</p>
+          )}
+        </div>
+        <p className="mt-2 text-[10px] text-gray-500">
+          {isLinked
+            ? 'Te dhenat e mbushura nga skanimi. Ndryshoji te seksioni Partneri me lart.'
+            : isNew
+              ? 'Ky partner do te regjistrohet automatikisht kur ta dergoni ne stok. Mund ta editoni te seksioni Partneri.'
+              : 'Lidhni nje partner ekzistues ose aktivizoni regjistrimin automatik te seksioni Partneri.'}
+        </p>
       </div>
-      <div className="space-y-1 text-xs text-gray-700">
-        {partnerVat && (
-          <p><span className="text-gray-500">VAT:</span> <span className="font-semibold">{partnerVat}</span></p>
-        )}
-        {partnerAddress && (
-          <p className="break-words"><span className="text-gray-500">Adresa:</span> {partnerAddress}</p>
-        )}
-        {partnerEmail && (
-          <p className="break-words"><span className="text-gray-500">Email:</span> {partnerEmail}</p>
-        )}
-        {partnerPhone && (
-          <p><span className="text-gray-500">Telefoni:</span> {partnerPhone}</p>
-        )}
-      </div>
-      <p className="mt-2 text-[10px] text-gray-500">
-        {isLinked
-          ? 'Te dhenat e mbushura nga skanimi. Ndryshoji te seksioni Partneri me lart.'
-          : isNew
-            ? 'Ky partner do te regjistrohet automatikisht kur ta dergoni ne stok. Mund ta editoni te seksioni Partneri.'
-            : 'Lidhni nje partner ekzistues ose aktivizoni regjistrimin automatik te seksioni Partneri.'}
-      </p>
+
+      {otherName && otherName !== partnerName && (
+        <div className="rounded-lg border border-gray-150 bg-gray-50/50 p-2.5">
+          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
+            {pickConsignor ? t('common.scanner.endRecipient') : t('common.scanner.sender')}
+          </p>
+          <p className="text-xs font-semibold text-gray-800 break-words">{otherName}</p>
+          {otherAddress && <p className="text-[11px] text-gray-500 break-words mt-0.5">{otherAddress}</p>}
+        </div>
+      )}
+
+      {carrierName && (
+        <div className="rounded-lg border border-gray-150 bg-gray-50/50 p-2.5">
+          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
+            {t('common.scanner.carrier')}
+          </p>
+          <p className="text-xs font-semibold text-gray-800 break-words">{carrierName}</p>
+        </div>
+      )}
     </div>
   );
 }

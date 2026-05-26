@@ -980,7 +980,7 @@ export function TaskDetailSheet({
         : ourRole === 'consignee'
           ? 'in'
           : (isPickup ? 'in' : 'out');
-      const enrichedJson = { ...ex, _needs_manual_items: !hasLineItems, _scan_direction: scanDirection };
+      const enrichedJson = { ...ex, _needs_manual_items: !hasLineItems, _scan_direction: scanDirection, _routing: routing || null };
       const update: Record<string, any> = {
         scanned_photo_url: publicUrl,
         status: 'pending_company_review',
@@ -1063,12 +1063,29 @@ export function TaskDetailSheet({
         detectedAddress = supplierAddress;
         update.flow_role = 'receiver';
       } else {
-        // Neither side matches own company - AI couldn't identify us. Needs admin review.
-        detectedName = isPickup ? supplierName : customerName;
-        detectedVat = isPickup ? supplierVat : customerVat;
-        detectedEmail = isPickup ? supplierEmail : null;
-        detectedPhone = isPickup ? supplierPhone : null;
-        detectedAddress = isPickup ? supplierAddress : customerAddress;
+        // Neither side matches own company. Use routing.partner_to_register
+        // to decide which party is our partner (e.g. PAKI = consignor)
+        // vs the end recipient (e.g. Kautex = consignee).
+        const pReg = routing?.partner_to_register;
+        if (pReg === 'consignor' && supplierName) {
+          detectedName = supplierName;
+          detectedVat = supplierVat;
+          detectedEmail = supplierEmail;
+          detectedPhone = supplierPhone;
+          detectedAddress = supplierAddress;
+        } else if (pReg === 'consignee' && customerName) {
+          detectedName = customerName;
+          detectedVat = customerVat;
+          detectedEmail = consigneeEmail;
+          detectedPhone = consigneePhone;
+          detectedAddress = customerAddress;
+        } else {
+          detectedName = isPickup ? supplierName : customerName;
+          detectedVat = isPickup ? supplierVat : customerVat;
+          detectedEmail = isPickup ? supplierEmail : null;
+          detectedPhone = isPickup ? supplierPhone : null;
+          detectedAddress = isPickup ? supplierAddress : customerAddress;
+        }
       }
 
       if (update.flow_role !== 'internal_transfer') {

@@ -146,6 +146,7 @@ export const sq = {
       goodsReceiver: 'Marresi i mallit',
       partnerClient: 'Partneri / Klienti yne',
       toRegister: 'Per regjistrim',
+      endRecipient: 'Marresi fundor',
       vatNumber: 'Nr. TVSH-se',
       docNumber: 'Nr. i dokumentit',
       date: 'Data',
