@@ -217,7 +217,7 @@ Deno.serve(async (req: Request) => {
         trial_end: isTrial ? periodEnd.toISOString() : null,
         current_period_start: now.toISOString(),
         current_period_end: isPaidPlan ? null : periodEnd.toISOString(),
-        payment_method: isTrial ? "free" : "pending",
+        payment_method: isPaidPlan ? "stripe" : "free",
       });
 
     if (subError) {
@@ -236,26 +236,12 @@ Deno.serve(async (req: Request) => {
       // Chart of accounts seeding is best-effort; do not fail registration.
     }
 
-    try {
-      const sendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`;
-      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-      await fetch(sendUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${serviceKey}`,
-          apikey: serviceKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          template_code: "welcome_company",
-          to: adminEmail,
-          user_id: userId,
-          company_id: companyData.id,
-          locale: "sq",
-          data: { full_name: adminName || adminEmail, company_name: companyName },
-        }),
-      });
-      if (isTrial) {
+    // For paid plans, the welcome email is sent by the stripe-webhook after
+    // payment is confirmed. Only send it here for free/trial plans.
+    if (!isPaidPlan) {
+      try {
+        const sendUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
         await fetch(sendUrl, {
           method: "POST",
           headers: {
@@ -264,17 +250,35 @@ Deno.serve(async (req: Request) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            template_code: "trial_ending_soon",
+            template_code: "welcome_company",
             to: adminEmail,
             user_id: userId,
             company_id: companyData.id,
             locale: "sq",
-            data: { days_remaining: planData.trial_days },
+            data: { full_name: adminName || adminEmail, company_name: companyName },
           }),
         });
+        if (isTrial) {
+          await fetch(sendUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${serviceKey}`,
+              apikey: serviceKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              template_code: "trial_ending_soon",
+              to: adminEmail,
+              user_id: userId,
+              company_id: companyData.id,
+              locale: "sq",
+              data: { days_remaining: planData.trial_days },
+            }),
+          });
+        }
+      } catch (_e) {
+        // Email is best-effort; do not fail registration if email sending fails.
       }
-    } catch (_e) {
-      // Email is best-effort; do not fail registration if email sending fails.
     }
 
     return new Response(

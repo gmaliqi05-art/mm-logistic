@@ -9,6 +9,64 @@ const corsHeaders = {
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+async function notifySuperAdmins(
+  companyName: string,
+  planName: string,
+  amountEur: number,
+): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/dispatch-notification`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        channelCode: "system.broadcast",
+        title: `Pagese e re: ${companyName}`,
+        body: `Kompania "${companyName}" ka perfunduar pagesen per planin ${planName} (${amountEur.toFixed(2)}\u20AC). Llogaria eshte aktivizuar automatikisht.`,
+        recipientRoles: ["super_admin"],
+        targetPlatforms: ["web", "android", "ios"],
+        data: { type: "payment_completed", company_name: companyName, plan_name: planName },
+        url: "/super-admin/companies",
+      }),
+    });
+  } catch (e) {
+    console.error("Failed to notify super admins about payment", e);
+  }
+}
+
+async function sendWelcomeEmail(
+  userId: string,
+  companyId: string,
+  adminEmail: string,
+  adminName: string,
+  companyName: string,
+): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        template_code: "welcome_company",
+        to: adminEmail,
+        user_id: userId,
+        company_id: companyId,
+        locale: "sq",
+        data: { full_name: adminName || adminEmail, company_name: companyName },
+      }),
+    });
+  } catch (e) {
+    console.error("Failed to send welcome email", e);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -26,9 +84,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2024-04-10" });
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
@@ -51,17 +107,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Idempotency: Stripe retries on 5xx/timeouts and occasionally
-    // re-delivers events. Insert the event id and short-circuit on
-    // duplicate so we don't double-create subscriptions or
-    // payment_transactions.
     const { data: inserted, error: idemErr } = await supabase
       .from("stripe_webhook_events")
       .insert({ event_id: event.id, event_type: event.type })
       .select("event_id")
       .maybeSingle();
     if (idemErr) {
-      // PG unique_violation -> duplicate event
       if ((idemErr as { code?: string }).code === "23505") {
         return new Response(
           JSON.stringify({ received: true, duplicate: true }),
@@ -143,9 +194,6 @@ Deno.serve(async (req: Request) => {
         default:
           break;
       }
-      // Persist audit details so we know which Stripe event caused
-      // which DB change. Best-effort: don't fail the webhook if this
-      // update fails — the side effects have already happened.
       if (details) {
         await supabase
           .from("stripe_webhook_events")
@@ -156,10 +204,6 @@ Deno.serve(async (req: Request) => {
           });
       }
     } catch (handlerErr) {
-      // Roll back the idempotency row so Stripe's automatic retry
-      // gets a fresh chance to process the event. Without this the
-      // event would be marked "processed" but the side effects never
-      // happened.
       await supabase
         .from("stripe_webhook_events")
         .delete()
@@ -193,13 +237,11 @@ async function handleCheckoutCompleted(
 
   if (!companyId || !planId) return;
 
-  // Mark checkout session as completed
   await supabase
     .from("subscription_checkout_sessions")
     .update({ status: "completed", completed_at: new Date().toISOString() })
     .eq("stripe_session_id", session.id);
 
-  // Get subscription details from Stripe
   const stripeSubscription = await stripe.subscriptions.retrieve(
     session.subscription as string
   );
@@ -207,26 +249,52 @@ async function handleCheckoutCompleted(
   const periodStart = new Date(stripeSubscription.current_period_start * 1000).toISOString();
   const periodEnd = new Date(stripeSubscription.current_period_end * 1000).toISOString();
 
-  // Cancel any pending_payment or old active subscription for this company
-  await supabase
+  // Check if there's an existing pending_payment subscription to activate
+  const { data: pendingSub } = await supabase
     .from("company_subscriptions")
-    .update({ status: "cancelled" })
+    .select("id")
     .eq("company_id", companyId)
-    .in("status", ["pending_payment", ...(isUpgrade ? ["active"] : [])]);
+    .eq("status", "pending_payment")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  // Create the new active subscription (payment verified by Stripe)
-  await supabase.from("company_subscriptions").insert({
-    company_id: companyId,
-    plan_id: planId,
-    status: "active",
-    stripe_subscription_id: stripeSubscription.id,
-    stripe_customer_id: session.customer as string,
-    current_period_start: periodStart,
-    current_period_end: periodEnd,
-    payment_method: "stripe",
-  });
+  if (pendingSub) {
+    // Activate the pending subscription (new registration flow)
+    await supabase
+      .from("company_subscriptions")
+      .update({
+        status: "active",
+        plan_id: planId,
+        stripe_subscription_id: stripeSubscription.id,
+        stripe_customer_id: session.customer as string,
+        current_period_start: periodStart,
+        current_period_end: periodEnd,
+        payment_method: "stripe",
+      })
+      .eq("id", pendingSub.id);
+  } else {
+    // Upgrade flow: cancel old active subscription and create new one
+    if (isUpgrade) {
+      await supabase
+        .from("company_subscriptions")
+        .update({ status: "cancelled" })
+        .eq("company_id", companyId)
+        .eq("status", "active");
+    }
 
-  // If it's an accounting addon, also enable accounting
+    await supabase.from("company_subscriptions").insert({
+      company_id: companyId,
+      plan_id: planId,
+      status: "active",
+      stripe_subscription_id: stripeSubscription.id,
+      stripe_customer_id: session.customer as string,
+      current_period_start: periodStart,
+      current_period_end: periodEnd,
+      payment_method: "stripe",
+    });
+  }
+
   if (isAddon) {
     await supabase
       .from("companies")
@@ -234,7 +302,6 @@ async function handleCheckoutCompleted(
       .eq("id", companyId);
   }
 
-  // Record payment transaction
   const amountTotal = session.amount_total ?? 0;
   await supabase.from("payment_transactions").insert({
     company_id: companyId,
@@ -245,6 +312,41 @@ async function handleCheckoutCompleted(
     stripe_payment_id: session.payment_intent as string || session.id,
     description: `Subscription: ${isUpgrade ? "Upgrade" : "New"} plan`,
   });
+
+  // Send welcome email + notify super admins
+  const { data: company } = await supabase
+    .from("companies")
+    .select("id, name, created_by")
+    .eq("id", companyId)
+    .maybeSingle();
+
+  const { data: plan } = await supabase
+    .from("subscription_plans")
+    .select("name, display_name")
+    .eq("id", planId)
+    .maybeSingle();
+
+  const planDisplayName = plan?.display_name || plan?.name || "Standard";
+
+  if (company) {
+    const { data: adminProfile } = await supabase
+      .from("profiles")
+      .select("id, email, full_name")
+      .eq("id", company.created_by)
+      .maybeSingle();
+
+    if (adminProfile) {
+      await sendWelcomeEmail(
+        adminProfile.id,
+        companyId,
+        adminProfile.email,
+        adminProfile.full_name || "",
+        company.name,
+      );
+    }
+
+    await notifySuperAdmins(company.name, planDisplayName, amountTotal / 100);
+  }
 }
 
 async function handleInvoicePaid(
@@ -254,7 +356,6 @@ async function handleInvoicePaid(
   const subscriptionId = invoice.subscription as string;
   if (!subscriptionId) return;
 
-  // Update subscription period
   const { data: sub } = await supabase
     .from("company_subscriptions")
     .select("id, company_id")
@@ -274,7 +375,6 @@ async function handleInvoicePaid(
       .eq("id", sub.id);
   }
 
-  // Record the payment
   await supabase.from("payment_transactions").insert({
     company_id: sub.company_id,
     amount: (invoice.amount_paid ?? 0) / 100,
@@ -301,13 +401,11 @@ async function handlePaymentFailed(
 
   if (!sub) return;
 
-  // Mark subscription as past_due but don't cancel yet
   await supabase
     .from("company_subscriptions")
     .update({ status: "past_due" })
     .eq("id", sub.id);
 
-  // Record failed payment
   await supabase.from("payment_transactions").insert({
     company_id: sub.company_id,
     amount: (invoice.amount_due ?? 0) / 100,

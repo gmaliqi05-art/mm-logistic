@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Loader2, ArrowRight } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useTranslation } from '../i18n';
 
 export default function PaymentSuccess() {
@@ -9,10 +10,47 @@ export default function PaymentSuccess() {
   const { t } = useTranslation();
   const [verified, setVerified] = useState(false);
   const sessionId = searchParams.get('session_id');
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setVerified(true), 2000);
-    return () => clearTimeout(timer);
+    if (!sessionId) {
+      setVerified(true);
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 15;
+
+    async function checkStatus() {
+      attempts++;
+      try {
+        const { data } = await supabase
+          .from('subscription_checkout_sessions')
+          .select('status')
+          .eq('stripe_session_id', sessionId!)
+          .maybeSingle();
+
+        if (data?.status === 'completed') {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          setVerified(true);
+          return;
+        }
+      } catch {
+        // keep polling
+      }
+
+      if (attempts >= maxAttempts) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        setVerified(true);
+      }
+    }
+
+    checkStatus();
+    pollingRef.current = setInterval(checkStatus, 2000);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
   }, [sessionId]);
 
   return (

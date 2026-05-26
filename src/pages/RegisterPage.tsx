@@ -294,32 +294,15 @@ export default function RegisterPage() {
         return;
       }
 
-      // Sign in temporarily only to obtain a token for the Stripe checkout call.
-      // We sign out immediately after to prevent dashboard access before payment.
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: form.companyEmail,
-        password: form.adminPassword,
-      });
-
-      if (signInError || !signInData.session) {
-        setCurrentStep(3);
-        return;
-      }
-
-      const accessToken = signInData.session.access_token;
-
-      // Sign out immediately so the user cannot access the dashboard while payment is pending
-      await supabase.auth.signOut();
-
       const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
       const checkoutRes = await fetch(checkoutUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
+          companyId: data.companyId,
           planId: selectedPlan.id,
           billingInterval,
           successUrl: `${window.location.origin}/payment-success`,
@@ -335,7 +318,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setCurrentStep(3);
+      throw new Error(checkoutData.error || 'Gabim gjate krijimit te sesionit te pageses');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Gabim gjate regjistrimit';
       setError(message);
