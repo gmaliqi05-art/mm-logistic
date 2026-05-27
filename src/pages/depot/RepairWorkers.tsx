@@ -441,7 +441,7 @@ export default function DepotRepairWorkers() {
         .maybeSingle();
 
       if (existingReport) {
-        const { error: updErr, count: updCount } = await supabase
+        const { error: updErr, data: updData } = await supabase
           .from('depot_repair_reports')
           .update({
             total_quantity: total,
@@ -451,11 +451,23 @@ export default function DepotRepairWorkers() {
             sent_to_stock_by: profile!.id,
           })
           .eq('id', existingReport.id)
-          .select('id')
-          .single();
+          .select('id');
         if (updErr) throw updErr;
-        if (!updCount && updCount !== undefined) {
-          throw new Error('Nuk u perditesua raporti. Kontrolloni lejet.');
+        if (!updData || updData.length === 0) {
+          const { error: insErr2 } = await supabase.from('depot_repair_reports').insert({
+            company_id: companyId,
+            depot_id: depotId,
+            worker_id: null,
+            scope: 'company',
+            report_date: today,
+            total_quantity: total,
+            entry_count: entryCount,
+            details: { workers: workersPayload },
+            created_by: profile!.id,
+            sent_to_stock_at: nowIsoReport,
+            sent_to_stock_by: profile!.id,
+          });
+          if (insErr2) throw insErr2;
         }
       } else {
         const { error: insErr } = await supabase.from('depot_repair_reports').insert({
