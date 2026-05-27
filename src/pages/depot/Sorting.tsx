@@ -104,6 +104,12 @@ function computeBreakdown(
   return out;
 }
 
+function errMsg(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'object' && err !== null && 'message' in err) return String((err as { message: unknown }).message);
+  return String(err);
+}
+
 function partnerLabel(b: { source_delivery_note?: DeliveryNoteSource | null }): string | null {
   const note = b.source_delivery_note;
   if (!note) return null;
@@ -183,7 +189,7 @@ export default function DepotSorting() {
       setProducts((prodRes.data ?? []) as CategoryProduct[]);
       setBatches((batchRes.data ?? []) as BatchWithItems[]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errMsg(err));
     } finally {
       setLoading(false);
     }
@@ -224,12 +230,12 @@ export default function DepotSorting() {
       if (item.condition === 'damaged') damagedTotal += item.quantity;
     }
 
+    const hasClassProducts = catProducts.some((p) => primaryRank(p.name) < 3);
+
     const productRows: ItemInput[] = catProducts
       .filter((p) => {
         if (isDefectProduct(p.name)) return false;
-        // In class mode, only keep products that are class grades (A/B/C)
-        // Hide raw product names like "Euro Paletten", "Industrie Paletten"
-        if (isClassMode && primaryRank(p.name) >= 99) return false;
+        if (primaryRank(p.name) >= 99 && (isClassMode || hasClassProducts)) return false;
         return true;
       })
       .map((p) => {
@@ -349,7 +355,7 @@ export default function DepotSorting() {
       setTimeout(() => setSuccess(null), 2500);
       await fetchAll();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errMsg(err));
     } finally {
       setSubmitting(false);
     }
@@ -377,7 +383,7 @@ export default function DepotSorting() {
       closeBatch();
       await fetchAll();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errMsg(err));
     } finally {
       setSubmitting(false);
     }
@@ -395,7 +401,7 @@ export default function DepotSorting() {
       if (activeBatchId === batchId) closeBatch();
       await fetchAll();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errMsg(err));
     } finally {
       setSubmitting(false);
     }
@@ -461,7 +467,7 @@ export default function DepotSorting() {
       setTimeout(() => setSuccess(null), 3000);
       await fetchAll();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errMsg(err));
     } finally {
       setSubmitting(false);
     }
@@ -710,6 +716,22 @@ export default function DepotSorting() {
               </button>
             </div>
 
+            {error && (
+              <div className="mx-4 mt-2 bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <p className="text-red-700 text-xs flex-1">{error}</p>
+                <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            {success && (
+              <div className="mx-4 mt-2 bg-green-50 border border-green-200 rounded-lg p-2.5 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <p className="text-green-800 text-xs flex-1">{success}</p>
+              </div>
+            )}
+
             <div className="px-4 py-3 space-y-3 overflow-y-auto flex-1">
               {currentBatch.source_delivery_note_id && (
                 <div className="bg-sky-50 border border-sky-200 rounded-lg p-2 flex items-center gap-2">
@@ -848,8 +870,10 @@ function SortingItemsGrid({
     );
   }
 
-  const primary = isClassMode ? itemInputs.filter((r) => primaryRank(r.product_name) < 99) : itemInputs;
-  const extras = isClassMode ? itemInputs.filter((r) => primaryRank(r.product_name) >= 99 && r.category_product_id !== DEFEKT_INPUT_ID) : [];
+  const hasClassInputs = itemInputs.some((r) => primaryRank(r.product_name) < 3 && r.category_product_id !== DEFEKT_INPUT_ID);
+  const shouldSplit = isClassMode || hasClassInputs;
+  const primary = shouldSplit ? itemInputs.filter((r) => primaryRank(r.product_name) < 99 || r.category_product_id === DEFEKT_INPUT_ID) : itemInputs;
+  const extras = shouldSplit ? itemInputs.filter((r) => primaryRank(r.product_name) >= 99 && r.category_product_id !== DEFEKT_INPUT_ID) : [];
 
   function updateQty(index: number, next: string) {
     const copy = itemInputs.slice();
@@ -892,37 +916,37 @@ function SortingItemsGrid({
     return (
       <div
         key={row.category_product_id}
-        className={`flex items-center gap-3 p-4 rounded-xl border-2 ${shell}`}
+        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 ${shell}`}
       >
         {showLetter ? (
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${letterTone[rank] ?? 'bg-teal-600 text-white'}`}>
-            <span className="text-xl font-black">{CLASS_LETTERS[rank]}</span>
+          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${letterTone[rank] ?? 'bg-teal-600 text-white'}`}>
+            <span className="text-base font-black">{CLASS_LETTERS[rank]}</span>
           </div>
         ) : isDefect ? (
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-rose-600 text-white">
-            <span className="text-xl font-black">D</span>
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-rose-600 text-white">
+            <span className="text-base font-black">D</span>
           </div>
         ) : (
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-teal-100 text-teal-700">
-            <Package className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-teal-100 text-teal-700">
+            <Package className="w-4 h-4" />
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-base font-bold text-gray-900 truncate">
+          <p className="text-sm font-bold text-gray-900 truncate">
             {showLetter ? row.product_name.replace(/\s*klasse\s*/i, ' Klasse ').trim() : row.product_name}
           </p>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => bump(realIdx, -1)}
-            className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center active:scale-95 transition-transform ${
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center active:scale-95 transition-transform ${
               isDefect
                 ? 'bg-white border-rose-300 text-rose-600 active:bg-rose-100'
                 : 'bg-white border-gray-300 text-gray-700 active:bg-gray-100'
             }`}
           >
-            <Minus className="w-4 h-4" />
+            <Minus className="w-3.5 h-3.5" />
           </button>
           <input
             type="number"
@@ -930,7 +954,7 @@ function SortingItemsGrid({
             inputMode="numeric"
             value={row.quantity}
             onChange={(e) => updateQty(realIdx, e.target.value)}
-            className={`w-20 px-2 py-2.5 border-2 rounded-xl focus:outline-none text-center text-lg font-black ${
+            className={`w-14 px-1 py-1.5 border rounded-lg focus:outline-none text-center text-base font-bold ${
               isDefect
                 ? 'border-rose-300 bg-white text-rose-700 placeholder-rose-300 focus:ring-2 focus:ring-rose-400'
                 : 'border-gray-300 bg-white focus:ring-2 focus:ring-teal-500'
@@ -940,13 +964,13 @@ function SortingItemsGrid({
           <button
             type="button"
             onClick={() => bump(realIdx, 1)}
-            className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center active:scale-95 transition-transform ${
+            className={`w-8 h-8 rounded-lg border flex items-center justify-center active:scale-95 transition-transform ${
               isDefect
                 ? 'bg-white border-rose-300 text-rose-600 active:bg-rose-100'
                 : 'bg-white border-gray-300 text-gray-700 active:bg-gray-100'
             }`}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -1033,22 +1057,22 @@ function ExtraProductSelector({
       {extraItems.map((item, idx) => (
         <div
           key={item.category_product_id}
-          className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50"
+          className="flex items-center gap-2 p-2.5 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50"
         >
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-200 text-slate-600">
-            <Package className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-slate-200 text-slate-600">
+            <Package className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-base font-bold text-gray-900 truncate">{item.product_name}</p>
-            <p className="text-[11px] text-slate-500">{item.category_name}</p>
+            <p className="text-sm font-bold text-gray-900 truncate">{item.product_name}</p>
+            <p className="text-[10px] text-slate-500">{item.category_name}</p>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => bumpExtra(idx, -1)}
-              className="w-10 h-10 rounded-xl border-2 bg-white border-slate-300 text-slate-600 flex items-center justify-center active:scale-95 transition-transform active:bg-slate-100"
+              className="w-8 h-8 rounded-lg border bg-white border-slate-300 text-slate-600 flex items-center justify-center active:scale-95 transition-transform active:bg-slate-100"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-3.5 h-3.5" />
             </button>
             <input
               type="number"
@@ -1056,23 +1080,23 @@ function ExtraProductSelector({
               inputMode="numeric"
               value={item.quantity}
               onChange={(e) => updateExtraQty(idx, e.target.value)}
-              className="w-20 px-2 py-2.5 border-2 border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-center text-lg font-black"
+              className="w-14 px-1 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-center text-base font-bold"
               placeholder="0"
             />
             <button
               type="button"
               onClick={() => bumpExtra(idx, 1)}
-              className="w-10 h-10 rounded-xl border-2 bg-white border-slate-300 text-slate-600 flex items-center justify-center active:scale-95 transition-transform active:bg-slate-100"
+              className="w-8 h-8 rounded-lg border bg-white border-slate-300 text-slate-600 flex items-center justify-center active:scale-95 transition-transform active:bg-slate-100"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
           <button
             type="button"
             onClick={() => removeExtra(idx)}
-            className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       ))}
