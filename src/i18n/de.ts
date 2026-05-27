@@ -1162,6 +1162,7 @@ export const de: typeof sq = {
       visitWebDesc: 'F\u00fcr weitere Informationen \u00fcber unsere Dienstleistungen.',
       dataSafe: 'Ihre Daten sind bei uns sicher.',
       rights: 'Alle Rechte vorbehalten.',
+      createdBy: 'Erstellt von',
     },
   },
   company: {

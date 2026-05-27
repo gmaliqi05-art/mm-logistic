@@ -6,7 +6,6 @@ import {
   Warehouse,
   BarChart3,
   ShieldCheck,
-  Globe,
   UserPlus,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
@@ -68,8 +67,19 @@ export default function HomeAppView({ onSecretClick }: Props) {
         </p>
       </div>
 
+      {/* Login Button (above truck image) */}
+      <div className="mt-6 px-6">
+        <Link
+          to="/login"
+          className="flex items-center justify-between w-full px-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-[15px] transition-all shadow-lg shadow-teal-600/20"
+        >
+          <span>{t('home.app.login')}</span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+
       {/* Hero Image */}
-      <div className="mt-6 px-4">
+      <div className="mt-5 px-4">
         <div className="relative rounded-2xl overflow-hidden">
           <img
             src="/homepage/hero-mobile.webp"
@@ -96,55 +106,46 @@ export default function HomeAppView({ onSecretClick }: Props) {
         </div>
       </div>
 
-      {/* CTA Buttons */}
-      <div className="mt-6 px-4 space-y-3">
-        <Link
-          to="/login"
-          className="flex items-center justify-between w-full px-6 py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-lg transition-all shadow-lg shadow-teal-600/20"
-        >
-          <span>{t('home.app.login')}</span>
-          <ArrowRight className="h-5 w-5" />
-        </Link>
-
+      {/* Register Button */}
+      <div className="mt-5 px-6">
         <Link
           to="/register"
-          className="flex items-center justify-between w-full px-6 py-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] hover:bg-white/[0.08] text-white font-bold text-lg transition-all"
+          className="flex items-center justify-between w-full px-5 py-3 rounded-xl bg-white/[0.04] border border-white/[0.12] hover:bg-white/[0.08] text-white font-bold text-[15px] transition-all"
         >
           <div className="flex items-center gap-3">
-            <UserPlus className="h-5 w-5 text-slate-400" />
+            <UserPlus className="h-4 w-4 text-slate-400" />
             <span>{t('home.app.register')}</span>
           </div>
-          <ArrowRight className="h-5 w-5 text-slate-400" />
+          <ArrowRight className="h-4 w-4 text-slate-400" />
         </Link>
       </div>
 
-      {/* Visit Website Link */}
-      <div className="mt-4 px-4">
+      {/* Website link */}
+      <div className="mt-5 text-center">
         <a
           href="https://www.mm-logistic.eu"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-4 w-full px-5 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] hover:bg-white/[0.05] transition-all"
+          className="text-sm text-teal-400 hover:text-teal-300 transition-colors"
         >
-          <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-            <Globe className="h-5 w-5 text-slate-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-white">{t('home.app.visitWeb')}</div>
-            <div className="text-[11px] text-slate-500">{t('home.app.visitWebDesc')}</div>
-          </div>
-          <ArrowRight className="h-4 w-4 text-slate-500 shrink-0" />
+          mm-logistic.eu
         </a>
       </div>
 
       {/* Minimal Footer */}
       <div className="mt-auto pt-8 pb-8 px-6 text-center">
-        <div className="flex items-center justify-center gap-2 text-[11px] text-slate-600 mb-2">
+        <div className="flex items-center justify-center gap-2 text-[11px] text-slate-600 mb-1">
           <ShieldCheck className="h-3.5 w-3.5" />
           <span>{t('home.app.dataSafe')}</span>
         </div>
         <p className="text-[10px] text-slate-700">
           &copy; {new Date().getFullYear()} {platformName}. {t('home.app.rights')}
+        </p>
+        <p className="text-[10px] text-slate-700 mt-1">
+          {t('home.app.createdBy')}{' '}
+          <Link to="/legal/impressum" className="text-slate-500 hover:text-slate-300 transition-colors">
+            Mar Group
+          </Link>
         </p>
       </div>
     </div>

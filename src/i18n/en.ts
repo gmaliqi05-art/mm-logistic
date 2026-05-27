@@ -1165,6 +1165,7 @@ export const en: typeof sq = {
       visitWebDesc: 'For more information about our services.',
       dataSafe: 'Your data is safe with us.',
       rights: 'All rights reserved.',
+      createdBy: 'Created by',
     },
   },
   company: {

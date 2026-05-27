@@ -1160,6 +1160,7 @@ export const sq = {
       visitWebDesc: 'Per me shume informacione rreth sherbimeve tona.',
       dataSafe: 'Te dhenat tuaja jane te sigurta me ne.',
       rights: 'Te gjitha te drejtat e rezervuara.',
+      createdBy: 'Krijuar nga',
     },
   },
   company: {
