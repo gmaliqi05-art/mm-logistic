@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FileText,
   Plus,
@@ -158,7 +159,13 @@ export default function CompanyDeliveryNotes() {
   const [products, setProducts] = useState<CompanyProduct[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [tabType, setTabType] = useState<'delivery' | 'pickup'>('delivery');
-  const [tabScope, setTabScope] = useState<'all' | 'review' | 'invoiced'>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialScope = useMemo(() => {
+    const s = searchParams.get('scope');
+    if (s === 'uninvoiced' || s === 'review' || s === 'invoiced') return s;
+    return 'all';
+  }, []);
+  const [tabScope, setTabScope] = useState<'all' | 'review' | 'invoiced' | 'uninvoiced'>(initialScope);
   const [sortByPartner, setSortByPartner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -653,6 +660,7 @@ export default function CompanyDeliveryNotes() {
     if (n.type !== tabType) return false;
     if (tabScope === 'review' && !['pending_company_review', 'pending_stock_confirmation'].includes(n.status)) return false;
     if (tabScope === 'invoiced' && !(n as any).acc_invoice_id) return false;
+    if (tabScope === 'uninvoiced' && ((n as any).acc_invoice_id || !['delivered', 'confirmed'].includes(n.status))) return false;
     if (filterStatus && n.status !== filterStatus) return false;
     if (filterDriver && n.assigned_driver_id !== filterDriver) return false;
     if (search) {
@@ -734,12 +742,13 @@ export default function CompanyDeliveryNotes() {
       <div className="flex flex-wrap gap-2">
         {([
           { key: 'all', label: 'Te gjitha' },
+          { key: 'uninvoiced', label: 'Pa fature' },
           { key: 'review', label: 'Per shqyrtim' },
           { key: 'invoiced', label: 'Te faturuara' },
         ] as const).map((s) => (
           <button
             key={s.key}
-            onClick={() => setTabScope(s.key)}
+            onClick={() => { setTabScope(s.key); if (searchParams.has('scope')) { searchParams.delete('scope'); setSearchParams(searchParams, { replace: true }); } }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               tabScope === s.key
                 ? 'bg-teal-600 text-white'

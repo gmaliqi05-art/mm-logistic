@@ -1050,7 +1050,7 @@ export default function CompanyDashboard() {
               <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{stats.accountingSummary.overdueCount} {t('company.dashboard.invoicesUnit')}</p>
             </Link>
             <Link
-              to="/accounting"
+              to="/company/delivery-notes?scope=uninvoiced"
               className={`rounded-lg p-3 border block transition-colors ${
                 stats.accountingSummary.unbilledNotesCount > 0
                   ? 'bg-amber-50 border-amber-200 hover:border-amber-300'
