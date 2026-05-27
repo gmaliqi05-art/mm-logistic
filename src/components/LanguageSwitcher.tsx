@@ -43,10 +43,10 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
     const rect = btnRef.current.getBoundingClientRect();
     const vh = window.innerHeight || document.documentElement.clientHeight;
     const vw = window.innerWidth || document.documentElement.clientWidth;
-    const menuHeight = 220;
-    const menuWidth = 176;
+    const menuHeight = 160;
+    const menuWidth = 130;
     const spaceBelow = vh - rect.bottom;
-    const spaceRight = vw - rect.left;
+    const spaceRight = vw - rect.right;
     setPlacement({
       vertical: spaceBelow < menuHeight && rect.top > menuHeight ? 'up' : 'down',
       horizontal: spaceRight < menuWidth ? 'left' : 'right',
@@ -63,7 +63,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
     <div
       role="menu"
       aria-label="Select language"
-      className={`absolute ${menuVerticalClass} ${menuHorizontalClass} w-44 max-w-[calc(100vw-1rem)] rounded-lg shadow-xl py-1 z-[60] ${menuClass}`}
+      className={`absolute ${menuVerticalClass} ${menuHorizontalClass} w-[7.5rem] max-w-[calc(100vw-1rem)] rounded-lg shadow-xl py-0.5 z-[60] ${menuClass}`}
     >
       {languages.map((lang) => (
         <button
@@ -77,8 +77,8 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
           }}
           className={itemClass(lang === language)}
         >
-          <span className="text-[11px] font-bold w-7 tracking-wide">{languageFlags[lang]}</span>
-          <span className="truncate">{languageNames[lang]}</span>
+          <span className="text-[10px] font-bold w-6 tracking-wide">{languageFlags[lang]}</span>
+          <span className="truncate text-xs">{languageNames[lang]}</span>
         </button>
       ))}
     </div>
@@ -102,7 +102,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
         {open &&
           renderMenu(
             (active) =>
-              `w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors text-left ${
+              `w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-colors text-left ${
                 active ? 'bg-teal-700 text-white' : 'text-teal-200 hover:bg-teal-700 hover:text-white'
               }`,
             'bg-teal-800 border border-teal-700'
@@ -129,7 +129,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
         {open &&
           renderMenu(
             (active) =>
-              `w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-left ${
+              `w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-colors text-left ${
                 active ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
               }`,
             'bg-white border border-gray-200'
@@ -156,7 +156,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
       {open &&
         renderMenu(
           (active) =>
-            `w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-left ${
+            `w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs transition-colors text-left ${
               active ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
             }`,
           'bg-white border border-gray-200'
