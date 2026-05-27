@@ -159,7 +159,7 @@ export default function AccDeliveryNotes() {
       setInvoices(invoicesRes.data ?? []);
       setProducts(productsRes.data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -351,7 +351,7 @@ export default function AccDeliveryNotes() {
       setItems([{ ...emptyItemForm }]);
       await fetchData();
     } catch (err) {
-      setError(err.message || 'Gabim gjate ruajtjes');
+      setError(err instanceof Error ? err.message : 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);
     }
@@ -367,7 +367,7 @@ export default function AccDeliveryNotes() {
       if (err) throw err;
       await fetchData();
     } catch (err) {
-      setError(err.message || 'Gabim gjate ndryshimit te statusit');
+      setError(err instanceof Error ? err.message : 'Gabim gjate ndryshimit te statusit');
     }
   };
 

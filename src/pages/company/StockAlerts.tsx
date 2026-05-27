@@ -60,7 +60,7 @@ function StockAlertsContent() {
       setCategories(catsRes.data ?? []);
       setStocks(stockRes.data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -89,7 +89,7 @@ function StockAlertsContent() {
       setForm(emptyForm);
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -101,7 +101,7 @@ function StockAlertsContent() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -112,7 +112,7 @@ function StockAlertsContent() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 

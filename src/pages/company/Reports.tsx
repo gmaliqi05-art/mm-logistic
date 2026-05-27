@@ -260,7 +260,7 @@ export default function CompanyReports() {
       }
       setScannedRows(scanRows);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }

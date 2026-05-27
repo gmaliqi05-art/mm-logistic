@@ -99,7 +99,7 @@ export default function DriverSettings() {
       if (refreshProfile) await refreshProfile();
       setToast(t("driver.settings.photoSaved"));
     } catch (err) {
-      setPhotoError(err.message || t("driver.settings.errorSaving"));
+      setPhotoError(err instanceof Error ? err.message : String(err));
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';

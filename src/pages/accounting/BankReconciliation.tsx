@@ -75,7 +75,7 @@ export default function BankReconciliation() {
         setTxCache(map);
       }
     } catch (err) {
-      setError(err.message || 'Error');
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function BankReconciliation() {
       if (e2) throw e2;
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Error');
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setBusyId(null);
     }
@@ -114,7 +114,7 @@ export default function BankReconciliation() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Error');
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setBusyId(null);
     }
@@ -130,7 +130,7 @@ export default function BankReconciliation() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Error');
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setBusyId(null);
     }

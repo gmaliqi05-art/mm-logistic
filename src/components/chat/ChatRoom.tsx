@@ -154,7 +154,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       const enriched = await enrichRooms(roomsData ?? []);
       setRooms(enriched);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -191,7 +191,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       const enriched = await enrichRooms(roomsData ?? []);
       setRooms(enriched);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -261,7 +261,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       if (err) throw err;
       setMessages(data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setMessagesLoading(false);
     }
@@ -371,7 +371,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       }
 
     } catch (err) {
-      setError(err.message || t('common.errorSending'));
+      setError(err instanceof Error ? err.message : t('common.errorSending'));
     } finally {
       setSending(false);
     }
@@ -423,7 +423,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       }
 
     } catch (err) {
-      setError(err.message || t('common.errorSending'));
+      setError(err instanceof Error ? err.message : t('common.errorSending'));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -441,7 +441,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       if (err) throw err;
       setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, is_deleted: true } : m)));
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : t('common.error'));
     }
     setShowDeleteConfirm(null);
   }
@@ -506,7 +506,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       setSelectedRoom(newRoom);
       setShowMobileChat(true);
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
       setCreating(false);
     }

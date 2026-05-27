@@ -96,7 +96,7 @@ export default function BankAccounts() {
       if (!json.success) throw new Error(json.error || 'Import failed');
       setImportResult(`${json.line_count} rreshta te importuar, ${json.matches_suggested} sugjerime perputhjeje (${json.format}).`);
     } catch (err) {
-      setError(err.message || 'Import failed');
+      setError(err instanceof Error ? err.message : 'Import failed');
     } finally {
       setImporting(false);
     }
@@ -119,7 +119,7 @@ export default function BankAccounts() {
       if (err) throw err;
       setAccounts(data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -138,7 +138,7 @@ export default function BankAccounts() {
       if (err) throw err;
       setAccountTransactions(data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoadingTx(false);
     }
@@ -213,7 +213,7 @@ export default function BankAccounts() {
       setForm(emptyForm);
       await fetchAccounts();
     } catch (err) {
-      setError(err.message || 'Gabim gjate ruajtjes');
+      setError(err instanceof Error ? err.message : 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);
     }
@@ -234,7 +234,7 @@ export default function BankAccounts() {
       if (err) throw err;
       await fetchAccounts();
     } catch (err) {
-      setError(err.message || 'Gabim');
+      setError(err instanceof Error ? err.message : 'Gabim');
     }
   };
 

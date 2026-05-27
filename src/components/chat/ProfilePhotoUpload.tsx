@@ -56,7 +56,7 @@ export default function ProfilePhotoUpload({ onClose }: ProfilePhotoUploadProps)
       if (refreshProfile) await refreshProfile();
       onClose();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
       setPreview(null);
     } finally {
       setUploading(false);

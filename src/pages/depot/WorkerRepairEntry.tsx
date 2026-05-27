@@ -155,7 +155,7 @@ export default function WorkerRepairEntry() {
       setEntries((entriesRes.data ?? []) as unknown as RepairEntry[]);
       setReports((reportsRes.data ?? []) as RepairReport[]);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -200,7 +200,7 @@ export default function WorkerRepairEntry() {
       quantityRef.current?.focus();
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -213,7 +213,7 @@ export default function WorkerRepairEntry() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -330,7 +330,7 @@ export default function WorkerRepairEntry() {
       setSuccess(t('depot.repairWorkers.finalizedOk'));
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setFinalizing(false);
     }

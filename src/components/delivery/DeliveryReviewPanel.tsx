@@ -450,7 +450,7 @@ function ReviewModal({
 
       setScannedUrl(url);
     } catch (err) {
-      setError(err.message || 'Ngarkimi deshtoi');
+      setError(err instanceof Error ? err.message : 'Ngarkimi deshtoi');
     } finally {
       setUploading(false);
     }
@@ -467,7 +467,7 @@ function ReviewModal({
       if (dbErr) throw dbErr;
       setScannedUrl(null);
     } catch (err) {
-      setError(err.message || 'Heqja deshtoi');
+      setError(err instanceof Error ? err.message : 'Heqja deshtoi');
     } finally {
       setUploading(false);
     }
@@ -942,7 +942,7 @@ function ReviewModal({
       }
       await onDone();
     } catch (err) {
-      setError(err.message || 'Gabim');
+      setError(err instanceof Error ? err.message : 'Gabim');
     } finally {
       setSaving(null);
     }
@@ -1123,7 +1123,7 @@ function ReviewModal({
       }
       await onDone();
     } catch (err) {
-      setError(err.message || 'Gabim');
+      setError(err instanceof Error ? err.message : 'Gabim');
     } finally {
       setSaving(null);
     }
@@ -1311,7 +1311,7 @@ function ReviewModal({
         await onDone();
       }
     } catch (err) {
-      setError(err.message || 'Gabim gjate regjistrimit ne stok');
+      setError(err instanceof Error ? err.message : 'Gabim gjate regjistrimit ne stok');
     } finally {
       setSaving(null);
     }
@@ -1370,7 +1370,7 @@ function ReviewModal({
       }
       await onDone();
     } catch (err) {
-      setError(err.message || 'Gabim');
+      setError(err instanceof Error ? err.message : 'Gabim');
     } finally {
       setSaving(null);
     }
@@ -2312,7 +2312,7 @@ function SplitRow({
       setCreateMode(null);
       onUpdate(row._key, { category_id: cat.id, product_id: null, auto_matched: false });
     } catch (err) {
-      alert(err.message || 'Gabim');
+      alert(err instanceof Error ? err.message : 'Gabim');
     } finally {
       setCreating(false);
     }
@@ -2327,7 +2327,7 @@ function SplitRow({
       setCreateMode(null);
       onUpdate(row._key, { product_id: prod.id, auto_matched: false });
     } catch (err) {
-      alert(err.message || 'Gabim');
+      alert(err instanceof Error ? err.message : 'Gabim');
     } finally {
       setCreating(false);
     }

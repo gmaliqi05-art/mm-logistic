@@ -147,7 +147,7 @@ export default function ProductDetail() {
       setInvoiceItems((invoiceItemsRes.data as InvoiceItemRow[] | null) ?? []);
       setPurchaseItems((purchaseItemsRes.data as PurchaseItemRow[] | null) ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -274,7 +274,7 @@ export default function ProductDetail() {
       const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filePath);
       return urlData.publicUrl;
     } catch (err) {
-      setError(err.message || 'Gabim gjate ngarkimit te imazhit');
+      setError(err instanceof Error ? err.message : 'Gabim gjate ngarkimit te imazhit');
       return null;
     } finally {
       setUploadingImage(false);
@@ -337,7 +337,7 @@ export default function ProductDetail() {
       closeEditModal();
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Gabim gjate ruajtjes');
+      setError(err instanceof Error ? err.message : 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);
     }
@@ -362,7 +362,7 @@ export default function ProductDetail() {
       setNewCategoryName('');
       setShowNewCategory(false);
     } catch (err) {
-      setError(err.message || 'Gabim gjate ruajtjes se kategorise');
+      setError(err instanceof Error ? err.message : 'Gabim gjate ruajtjes se kategorise');
     } finally {
       setSavingCategory(false);
     }
@@ -378,7 +378,7 @@ export default function ProductDetail() {
       if (toggleError) throw toggleError;
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Gabim');
+      setError(err instanceof Error ? err.message : 'Gabim');
     }
   };
 
@@ -431,7 +431,7 @@ export default function ProductDetail() {
       closeAdjustModal();
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Gabim gjate rregullimit');
+      setError(err instanceof Error ? err.message : 'Gabim gjate rregullimit');
     } finally {
       setSavingAdjust(false);
     }

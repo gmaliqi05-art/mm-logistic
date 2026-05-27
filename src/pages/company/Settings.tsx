@@ -76,7 +76,7 @@ export default function CompanySettings() {
         setTrafficApiKey(data.traffic_api_key || '');
       }
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ export default function CompanySettings() {
       setLogoUrl(urlData.publicUrl);
       setSuccess(t('settings.logoUploadedSuccess'));
     } catch (err) {
-      setError(err.message || t('settings.logoUploadFailed'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setUploading(false);
     }
@@ -148,7 +148,7 @@ export default function CompanySettings() {
       setSuccess(t('settings.changesSaved'));
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message || t('settings.saveFailed'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }

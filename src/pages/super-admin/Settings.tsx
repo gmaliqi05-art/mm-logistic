@@ -55,7 +55,7 @@ export default function SuperAdminSettings() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
     } finally {
       setSaving(false);
     }

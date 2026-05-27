@@ -149,7 +149,7 @@ export default function CompanyDepots() {
       setCategories((catsRes.data ?? []) as ProductCategory[]);
       setRepairs((repairsRes.data ?? []) as RepairLog[]);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -207,7 +207,7 @@ export default function CompanyDepots() {
       setDepotForm(emptyDepotForm);
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -223,7 +223,7 @@ export default function CompanyDepots() {
       await logAudit('delete', 'depot', d.id, { name: d.name });
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -236,7 +236,7 @@ export default function CompanyDepots() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -313,7 +313,7 @@ export default function CompanyDepots() {
       setWorkerForm(emptyWorkerForm);
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -328,7 +328,7 @@ export default function CompanyDepots() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -364,7 +364,7 @@ export default function CompanyDepots() {
       setRepairForm(emptyRepairForm);
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -376,7 +376,7 @@ export default function CompanyDepots() {
       if (err) throw err;
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 

@@ -1,7 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14.25.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
-import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 import { requireEnv } from "../_shared/env.ts";
 
 const corsHeaders = {

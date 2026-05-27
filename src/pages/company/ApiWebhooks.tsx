@@ -75,7 +75,7 @@ export default function ApiWebhooks() {
       setKeys(kRes.data ?? []);
       setHooks(wRes.data ?? []);
     } catch (err) {
-      setError(err.message || 'Gabim');
+      setError(err instanceof Error ? err.message : 'Gabim');
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ export default function ApiWebhooks() {
       setNewKeyName('');
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Gabim');
+      setError(err instanceof Error ? err.message : 'Gabim');
     } finally {
       setCreating(false);
     }

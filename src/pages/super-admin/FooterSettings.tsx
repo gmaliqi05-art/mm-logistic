@@ -46,7 +46,7 @@ export default function FooterSettings() {
       (data ?? []).forEach((d) => { map[d.key] = d.value; });
       setSettings(map);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function FooterSettings() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }

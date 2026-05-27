@@ -54,7 +54,7 @@ export default function UserManual() {
       const { data, error: err } = await supabase.from('user_manual_sections').select('*').order('sort_order');
       if (err) throw err;
       setSections(data ?? []);
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setLoading(false); }
   }
 
   function openCreate() { setEditing(null); setForm({ ...emptySection, sort_order: sections.length }); setCreating(true); }
@@ -81,7 +81,7 @@ export default function UserManual() {
       }
       closeModal();
       await fetchSections();
-    } catch (err) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
@@ -90,7 +90,7 @@ export default function UserManual() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchSections();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   }
 
   async function toggleActive(s: ManualSection) {
@@ -98,7 +98,7 @@ export default function UserManual() {
       const { error: err } = await supabase.from('user_manual_sections').update({ is_active: !s.is_active, updated_at: new Date().toISOString() }).eq('id', s.id);
       if (err) throw err;
       await fetchSections();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   }
 
   async function handleReorder(id: string, direction: 'up' | 'down') {
@@ -114,7 +114,7 @@ export default function UserManual() {
         supabase.from('user_manual_sections').update({ sort_order: a.sort_order }).eq('id', b.id),
       ]);
       await fetchSections();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   }
 
   const filtered = filterRole === 'all' ? sections : sections.filter((s) => s.target_role === filterRole || s.target_role === 'all');

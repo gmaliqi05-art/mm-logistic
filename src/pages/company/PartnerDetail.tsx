@@ -204,7 +204,7 @@ export default function PartnerDetail() {
           setLifetime({ salesPaid, salesTotal, salesCount, purchasesPaid, purchasesTotal, purchasesCount, currency });
         }
       } catch (err) {
-        if (!cancelled) setError(err.message || tp('loadError'));
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       } finally {
         if (!cancelled) setLoading(false);
       }

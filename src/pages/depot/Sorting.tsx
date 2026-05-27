@@ -183,7 +183,7 @@ export default function DepotSorting() {
       setProducts((prodRes.data ?? []) as CategoryProduct[]);
       setBatches((batchRes.data ?? []) as BatchWithItems[]);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -349,7 +349,7 @@ export default function DepotSorting() {
       setTimeout(() => setSuccess(null), 2500);
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }
@@ -377,7 +377,7 @@ export default function DepotSorting() {
       closeBatch();
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }
@@ -395,7 +395,7 @@ export default function DepotSorting() {
       if (activeBatchId === batchId) closeBatch();
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }
@@ -461,7 +461,7 @@ export default function DepotSorting() {
       setTimeout(() => setSuccess(null), 3000);
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Gabim gjate dergimit te raportit');
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }

@@ -292,7 +292,7 @@ function RepairReviewModal({
       }
       await onDone();
     } catch (err) {
-      setError(err.message || 'Error');
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setSaving(null);
     }
@@ -327,7 +327,7 @@ function RepairReviewModal({
       }
       await onDone();
     } catch (err) {
-      setError(err.message || 'Error');
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setSaving(null);
     }

@@ -50,7 +50,7 @@ export default function ExpenseCategories() {
       if (err) throw err;
       setCategories(data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ export default function ExpenseCategories() {
       setForm(emptyForm);
       await fetchCategories();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
     } finally {
       setSaving(false);
     }
@@ -136,7 +136,7 @@ export default function ExpenseCategories() {
       if (err) throw err;
       await fetchCategories();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : t('common.error'));
     }
   };
 

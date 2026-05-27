@@ -112,7 +112,7 @@ export default function DriverDashboard() {
       setToast(t('driver.taskDetail.dispatchSuccess'));
     } catch (err) {
       setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, status: 'sent' } : n)));
-      setConfirmErrors((prev) => ({ ...prev, [id]: err.message || t('driver.home.confirmError') }));
+      setConfirmErrors((prev) => ({ ...prev, [id]: err instanceof Error ? err.message : String(err) }));
     } finally {
       setConfirmingId(null);
     }
@@ -197,7 +197,7 @@ export default function DriverDashboard() {
       if (err) throw err;
       setNotes((data as any) ?? []);
     } catch (err) {
-      setError(err.message || t('driver.home.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -857,7 +857,7 @@ export function TaskDetailSheet({
       setEditingNotes(false);
       await onUpdated();
     } catch (err) {
-      setLocalError(err.message || t('driver.taskDetail.errorSaving'));
+      setLocalError(err instanceof Error ? err.message : String(err));
     } finally {
       setSavingNotes(false);
     }
@@ -879,7 +879,7 @@ export function TaskDetailSheet({
       setItems((prev) => prev.map((it) => itemEdits[it.id] ? { ...it, ...itemEdits[it.id] } : it));
       setItemEdits({});
     } catch (err) {
-      setLocalError(err.message || t('driver.taskDetail.errorSaving'));
+      setLocalError(err instanceof Error ? err.message : String(err));
     } finally {
       setSavingItems(false);
     }
@@ -927,7 +927,7 @@ export function TaskDetailSheet({
 
       await onUpdated(t('driver.taskDetail.closeWithoutDocSuccess'));
     } catch (err) {
-      setLocalError(err.message || t('driver.taskDetail.errorSaving'));
+      setLocalError(err instanceof Error ? err.message : String(err));
     } finally {
       setClosingWithout(false);
       setShowCloseConfirm(false);
@@ -954,7 +954,7 @@ export function TaskDetailSheet({
       if (err) throw err;
       await onUpdated(t('driver.taskDetail.dispatchSuccess'));
     } catch (err) {
-      setLocalError(err.message || t('driver.taskDetail.errorGeneric'));
+      setLocalError(err instanceof Error ? err.message : String(err));
     } finally {
       setDispatching(false);
     }
@@ -1241,7 +1241,7 @@ export function TaskDetailSheet({
 
       await onUpdated(t('driver.taskDetail.scanSuccess'));
     } catch (err) {
-      setLocalError(err.message || t('driver.taskDetail.errorSaving'));
+      setLocalError(err instanceof Error ? err.message : String(err));
     } finally {
       setUploading(false);
     }

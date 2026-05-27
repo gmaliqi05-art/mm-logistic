@@ -35,7 +35,7 @@ export default function MetadataSeo() {
       const { data, error: err } = await supabase.from('seo_metadata').select('*').order('page_path');
       if (err) throw err;
       setEntries(data ?? []);
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setLoading(false); }
   }
 
   function openCreate() { setEditing(null); setForm(emptySeo); setCreating(true); }
@@ -62,7 +62,7 @@ export default function MetadataSeo() {
       }
       closeModal();
       await fetchEntries();
-    } catch (err) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
@@ -71,7 +71,7 @@ export default function MetadataSeo() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchEntries();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   }
 
   const showModal = creating || editing !== null;

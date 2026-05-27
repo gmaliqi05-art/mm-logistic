@@ -158,7 +158,7 @@ export default function CompanyStock() {
       setCategories(catRes.data ?? []);
       setProducts(productRes.data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -435,7 +435,7 @@ export default function CompanyStock() {
       setRegForm({ depot_id: '', category_id: '', category_product_id: '', movement_type: 'entry', quantity: '', condition: 'good', notes: '' });
       await fetchAll();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -484,7 +484,7 @@ export default function CompanyStock() {
       setReassignProductId('');
       await fetchAll();
     } catch (err) {
-      setError(err.message || 'Reassignment failed');
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setReassignSaving(false);
     }

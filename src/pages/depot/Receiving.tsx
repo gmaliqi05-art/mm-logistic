@@ -207,7 +207,7 @@ export default function DepotReceiving() {
       setProducts(prodRes.data ?? []);
       setHistory(histRes.data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -330,7 +330,7 @@ export default function DepotReceiving() {
       setSuccess(t('depot.receiving.savedOk') || 'Pranimi u regjistrua me sukses');
       await fetchData();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }

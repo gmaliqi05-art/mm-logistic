@@ -48,7 +48,7 @@ export default function StaticPages() {
       if (err) throw err;
       setPages(data ?? []);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ export default function StaticPages() {
       closeModal();
       await fetchPages();
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -127,7 +127,7 @@ export default function StaticPages() {
       setDeleteConfirm(null);
       await fetchPages();
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -140,7 +140,7 @@ export default function StaticPages() {
       if (err) throw err;
       await fetchPages();
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 

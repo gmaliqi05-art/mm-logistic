@@ -36,7 +36,7 @@ export default function QRCodes() {
       const { data, error: err } = await supabase.from('qr_codes').select('*').order('created_at', { ascending: false });
       if (err) throw err;
       setCodes(data ?? []);
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setLoading(false); }
   }
 
   function openCreate() { setEditing(null); setForm(emptyQR); setCreating(true); }
@@ -57,7 +57,7 @@ export default function QRCodes() {
       }
       closeModal();
       await fetchCodes();
-    } catch (err) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
@@ -66,7 +66,7 @@ export default function QRCodes() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchCodes();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   }
 
   function getQRImageUrl(url: string, size = 200) {

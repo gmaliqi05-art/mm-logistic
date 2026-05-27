@@ -136,7 +136,7 @@ export default function Transactions() {
       setCategories(categoriesRes.data ?? []);
       setBankAccounts(bankRes.data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -251,7 +251,7 @@ export default function Transactions() {
       setForm(emptyForm);
       await fetchData();
     } catch (err) {
-      setError(err.message || 'Gabim gjate ruajtjes');
+      setError(err instanceof Error ? err.message : 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);
     }

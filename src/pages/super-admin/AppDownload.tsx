@@ -39,7 +39,7 @@ export default function AppDownload() {
       const map: Record<string, string> = {};
       (data ?? []).forEach((d) => { map[d.key] = d.value; });
       setSettings(map);
-    } catch (err) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setLoading(false); }
   }
 
   async function handleSave() {
@@ -53,7 +53,7 @@ export default function AppDownload() {
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setSaving(false); }
   }
 
   function getQRImageUrl(url: string, size = 200) {

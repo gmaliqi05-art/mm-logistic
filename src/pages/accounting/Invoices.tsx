@@ -212,7 +212,7 @@ export default function Invoices() {
         setStockStatus({});
       }
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -520,7 +520,7 @@ export default function Invoices() {
         setDeliveryPrompt(insertedInvoice);
       }
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
     } finally {
       setSaving(false);
     }
@@ -584,7 +584,7 @@ export default function Invoices() {
 
       await fetchInvoices();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 
@@ -602,7 +602,7 @@ export default function Invoices() {
       const fullInvoice = { ...invoice, items: (items as AccInvoiceItem[]) ?? [], contact: (contact as AccContact) ?? undefined };
       exportXRechnung(fullInvoice, company ?? { name: 'Company' });
     } catch (err) {
-      setError(err.message || 'Gabim ne eksport XRechnung');
+      setError(err instanceof Error ? err.message : 'Gabim ne eksport XRechnung');
     }
   }
 
@@ -696,7 +696,7 @@ export default function Invoices() {
       setDeliveryPrompt(null);
       navigate(`/accounting/delivery-notes`);
     } catch (err) {
-      setError(err.message || 'Gabim gjate krijimit te fletedergeses');
+      setError(err instanceof Error ? err.message : 'Gabim gjate krijimit te fletedergeses');
     } finally {
       setCreatingDeliveryNote(false);
     }

@@ -46,7 +46,7 @@ export default function FooterLinks() {
       if (err) throw err;
       setLinks(data ?? []);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ export default function FooterLinks() {
       }
       closeModal();
       await fetchLinks();
-    } catch (err) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); } finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
@@ -95,7 +95,7 @@ export default function FooterLinks() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchLinks();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   }
 
   async function toggleActive(link: FooterLink) {
@@ -103,7 +103,7 @@ export default function FooterLinks() {
       const { error: err } = await supabase.from('footer_links').update({ is_active: !link.is_active }).eq('id', link.id);
       if (err) throw err;
       await fetchLinks();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : String(err)); }
   }
 
   const getCatConfig = (cat: string) => categories.find((c) => c.value === cat) || { value: cat, label: cat, color: 'bg-gray-100 text-gray-700' };

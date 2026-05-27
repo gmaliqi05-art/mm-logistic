@@ -16,7 +16,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTranslation } from '../../i18n';
+
 import type { AccProduct, AccProductCategory, AccStockMovement, AccMovementType } from '../../types/accounting';
 import { formatCurrency } from '../../types/accounting';
 import { compareProducts } from '../../utils/productSort';
@@ -31,7 +31,7 @@ type StockFilter = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 
 export default function Stock() {
   const { profile } = useAuth();
-  const { t } = useTranslation();
+
 
   const [products, setProducts] = useState<AccProduct[]>([]);
   const [categories, setCategories] = useState<AccProductCategory[]>([]);
@@ -84,7 +84,7 @@ export default function Stock() {
       setCategories(categoriesRes.data ?? []);
       setMovements(movementsRes.data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -171,7 +171,7 @@ export default function Stock() {
       setAdjustmentModal(null);
       await fetchData();
     } catch (err) {
-      setError(err.message || 'Gabim gjate rregullimit te stokut');
+      setError(err instanceof Error ? err.message : 'Gabim gjate rregullimit te stokut');
     } finally {
       setSaving(false);
     }

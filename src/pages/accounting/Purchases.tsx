@@ -161,7 +161,7 @@ export default function Purchases() {
       setProducts(productsRes.data ?? []);
       setBankAccounts(bankRes.data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -386,7 +386,7 @@ export default function Purchases() {
       closeModal();
       await fetchData();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
     } finally {
       setSaving(false);
     }
@@ -422,7 +422,7 @@ export default function Purchases() {
 
       await fetchData();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 

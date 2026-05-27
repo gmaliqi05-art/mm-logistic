@@ -71,7 +71,7 @@ export default function DepotDocuments() {
 
       setDocs(docsData);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ export default function DepotDocuments() {
         )
       );
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -123,7 +123,7 @@ export default function DepotDocuments() {
         );
       }
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 

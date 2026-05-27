@@ -109,7 +109,7 @@ export default function Contacts() {
       if (err) throw err;
       setContacts(data ?? []);
     } catch (err) {
-      setError(err.message || t('common.errorLoading'));
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -172,7 +172,7 @@ export default function Contacts() {
       setForm(emptyForm);
       await fetchContacts();
     } catch (err) {
-      setError(err.message || t('common.errorSaving'));
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
     } finally {
       setSaving(false);
     }
@@ -188,7 +188,7 @@ export default function Contacts() {
       if (err) throw err;
       await fetchContacts();
     } catch (err) {
-      setError(err.message || t('common.error'));
+      setError(err instanceof Error ? err.message : t('common.error'));
     }
   }
 

@@ -91,7 +91,7 @@ function DataExportContent() {
       downloadCsv(csv, option.filename);
       setExported((prev) => new Set([...prev, option.id]));
     } catch (err) {
-      setError(err.message || t('common.errorExporting'));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setExporting(null);
     }
