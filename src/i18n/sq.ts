@@ -1957,6 +1957,10 @@ export const sq = {
       inProcess: 'NE PROCES',
       inProcessHint: 'Ju keni konfirmuar kete porosi',
     },
+    dashboard: {
+      myLocation: 'Pozicioni im',
+      openInMaps: 'Google Maps',
+    },
     overdue: {
       title: 'Porosite e Vonuara',
       subtitle: 'Detyrat qe kane kaluar daten dhe presin skanim',

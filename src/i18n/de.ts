@@ -1959,6 +1959,10 @@ export const de: typeof sq = {
       inProcess: 'IN BEARBEITUNG',
       inProcessHint: 'Sie haben diesen Auftrag bestätigt',
     },
+    dashboard: {
+      myLocation: 'Mein Standort',
+      openInMaps: 'Google Maps',
+    },
     overdue: {
       title: 'Überfällige Aufträge',
       subtitle: 'Aufgaben nach Fälligkeit, die noch gescannt werden müssen',

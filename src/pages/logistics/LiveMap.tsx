@@ -11,7 +11,7 @@ export default function LogisticsLiveMap() {
         <h1 className="text-2xl font-bold text-slate-900">Live Fleet Map</h1>
         <p className="text-sm text-slate-600 mt-1">Real-time positions of drivers currently on the road.</p>
       </div>
-      <LiveFleetMap companyId={profile.company_id} height="calc(100vh - 200px)" />
+      <LiveFleetMap companyId={profile.company_id} height="calc(100dvh - 260px)" />
     </div>
   );
 }

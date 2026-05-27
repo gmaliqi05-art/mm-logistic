@@ -1959,6 +1959,10 @@ export const fr: typeof sq = {
       inProcess: 'EN COURS',
       inProcessHint: 'Vous avez confirm\u00e9 cette commande',
     },
+    dashboard: {
+      myLocation: 'Ma position',
+      openInMaps: 'Google Maps',
+    },
     overdue: {
       title: 'Commandes en retard',
       subtitle: 'T\u00e2ches pass\u00e9es en attente de scan',

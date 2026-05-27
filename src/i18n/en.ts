@@ -1962,6 +1962,10 @@ export const en: typeof sq = {
       inProcess: 'IN PROCESS',
       inProcessHint: 'You confirmed this order',
     },
+    dashboard: {
+      myLocation: 'My Location',
+      openInMaps: 'Google Maps',
+    },
     overdue: {
       title: 'Overdue orders',
       subtitle: 'Tasks past their date still waiting to be scanned',

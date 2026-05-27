@@ -151,13 +151,22 @@ function MapRefCapture({ onReady }: { onReady: (map: L.Map) => void }) {
   return null;
 }
 
-function FollowDriver({ target }: { target: [number, number] | null }) {
+function FollowDriver({ target, driverId }: { target: [number, number] | null; driverId: string | null }) {
   const map = useMap();
+  const prevDriverRef = useRef<string | null>(null);
   useEffect(() => {
-    if (target) {
+    if (!target) {
+      prevDriverRef.current = null;
+      return;
+    }
+    const isNewFollow = driverId !== prevDriverRef.current;
+    prevDriverRef.current = driverId;
+    if (isNewFollow) {
+      map.flyTo(target, 15, { animate: true, duration: 1.2 });
+    } else {
       map.panTo(target, { animate: true, duration: 0.6 });
     }
-  }, [target, map]);
+  }, [target, driverId, map]);
   return null;
 }
 
@@ -168,8 +177,12 @@ function FitBounds({ drivers, active }: { drivers: DriverPing[]; active: boolean
     if (!active) return;
     if (drivers.length === 0) return;
     if (didInitialFit.current) return;
-    const bounds = L.latLngBounds(drivers.map((d) => [d.lat, d.lng] as [number, number]));
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    if (drivers.length === 1) {
+      map.flyTo([drivers[0].lat, drivers[0].lng], 15, { animate: true, duration: 1.2 });
+    } else {
+      const bounds = L.latLngBounds(drivers.map((d) => [d.lat, d.lng] as [number, number]));
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    }
     didInitialFit.current = true;
   }, [drivers, map, active]);
   return null;
@@ -199,6 +212,50 @@ interface DeliveryRow {
   driver?: { full_name: string; phone: string | null; base_address: string | null; base_lat: number | null; base_lng: number | null } | null;
 }
 
+function MapRotation({ heading, active }: { heading: number | null; active: boolean }) {
+  const map = useMap();
+  const rotationRef = useRef(0);
+  useEffect(() => {
+    const pane = map.getContainer().querySelector('.leaflet-map-pane') as HTMLElement | null;
+    if (!pane) return;
+    if (!active || heading == null) {
+      if (rotationRef.current !== 0) {
+        pane.style.transition = 'transform 0.8s ease';
+        pane.style.transform = '';
+        pane.style.transformOrigin = '';
+        rotationRef.current = 0;
+      }
+      return;
+    }
+    const rot = -heading;
+    rotationRef.current = rot;
+    const container = map.getContainer();
+    const cx = container.clientWidth / 2;
+    const cy = container.clientHeight / 2;
+    pane.style.transition = 'transform 0.8s ease';
+    pane.style.transformOrigin = `${cx}px ${cy}px`;
+    pane.style.transform = `rotate(${rot}deg)`;
+  }, [heading, active, map]);
+  useEffect(() => {
+    if (!active) return;
+    const pane = map.getContainer().querySelector('.leaflet-map-pane') as HTMLElement | null;
+    if (!pane) return;
+    const handler = () => {
+      const container = map.getContainer();
+      const cx = container.clientWidth / 2;
+      const cy = container.clientHeight / 2;
+      pane.style.transformOrigin = `${cx}px ${cy}px`;
+    };
+    map.on('move', handler);
+    map.on('zoom', handler);
+    return () => {
+      map.off('move', handler);
+      map.off('zoom', handler);
+    };
+  }, [active, map]);
+  return null;
+}
+
 function agoLabel(iso: string | null, now: number = Date.now()): string {
   if (!iso) return '';
   const diff = now - new Date(iso).getTime();
@@ -210,7 +267,7 @@ function agoLabel(iso: string | null, now: number = Date.now()): string {
   return `${h}h`;
 }
 
-export default function LiveFleetMap({ companyId, height = '600px', compact = false }: Props) {
+export default function LiveFleetMap({ companyId, height = '520px', compact = false }: Props) {
   const [drivers, setDrivers] = useState<Record<string, DriverPing>>({});
   const [trails, setTrails] = useState<Record<string, [number, number][]>>({});
   const [loading, setLoading] = useState(true);
@@ -636,6 +693,24 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
     return d ? [d.lat, d.lng] : null;
   }, [followId, drivers]);
 
+  const followHeading: number | null = useMemo(() => {
+    if (!followId) return null;
+    const d = drivers[followId];
+    if (!d) return null;
+    if (d.heading_deg != null && !Number.isNaN(d.heading_deg)) return d.heading_deg;
+    const trail = trails[followId];
+    if (trail && trail.length >= 2) {
+      for (let i = trail.length - 1; i > 0; i--) {
+        const [lat2, lng2] = trail[i];
+        const [lat1, lng1] = trail[i - 1];
+        if (haversine(lat1, lng1, lat2, lng2) > 8) {
+          return computeBearing(lat1, lng1, lat2, lng2);
+        }
+      }
+    }
+    return null;
+  }, [followId, drivers, trails]);
+
   const center: [number, number] = list.length > 0 ? [list[0].lat, list[0].lng] : [50.1, 10.3];
 
   async function submitExtension(driver: DriverPing) {
@@ -673,7 +748,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
   }
 
   return (
-    <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white relative" style={{ height }}>
+    <div className="fleet-map-root rounded-xl overflow-hidden border border-slate-200 bg-white relative" style={{ height, minHeight: '280px' }}>
       {trafficAlerts.length > 0 && (
         <div className="absolute top-2 left-2 right-2 z-[8] flex flex-col gap-1.5 pointer-events-none">
           {trafficAlerts.slice(0, 3).map((a) => {
@@ -711,7 +786,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
         </div>
       )}
       {!compact && !loading && (
-        <div className="absolute right-3 bottom-3 z-[7] flex flex-col gap-2">
+        <div className="absolute right-3 bottom-14 z-[7] flex flex-col gap-2">
           <button
             type="button"
             onClick={() => {
@@ -738,7 +813,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
             type="button"
             onClick={() => {
               if (activeDriver) {
-                mapRef.current?.panTo([activeDriver.lat, activeDriver.lng], { animate: true });
+                mapRef.current?.flyTo([activeDriver.lat, activeDriver.lng], 16, { animate: true, duration: 1 });
               } else if (list.length > 0) {
                 const bounds = L.latLngBounds(list.map((d) => [d.lat, d.lng] as [number, number]));
                 mapRef.current?.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
@@ -784,7 +859,8 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <FitBounds drivers={list} active={followId === null} />
-            <FollowDriver target={followTarget} />
+            <FollowDriver target={followTarget} driverId={followId} />
+            <MapRotation heading={followHeading} active={followId !== null} />
             {list.map((d) => {
               const trail = trails[d.driver_id];
               const isActive = activeId === d.driver_id;
@@ -835,10 +911,26 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
             <MapRefCapture onReady={(m) => { mapRef.current = m; }} />
           </MapContainer>
 
+          {followId && followHeading != null && (
+            <div className="absolute top-3 left-3 z-[8] pointer-events-none">
+              <div
+                className="w-10 h-10 rounded-full bg-white/90 backdrop-blur shadow-lg border border-slate-200 flex items-center justify-center"
+                style={{ transform: `rotate(${-followHeading}deg)`, transition: 'transform 0.8s ease' }}
+              >
+                <div className="flex flex-col items-center leading-none">
+                  <span className="text-[9px] font-black text-red-600">N</span>
+                  <svg width="12" height="10" viewBox="0 0 12 10" className="-mt-0.5">
+                    <polygon points="6,0 2,10 6,7 10,10" fill="#dc2626" opacity="0.9" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
           {!compact && list.length > 0 && !activeDriver && (
             <div className="absolute top-3 right-3 z-[6] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-2 max-w-[220px] w-[200px]">
               <div className="text-[11px] font-semibold text-slate-500 uppercase mb-1 px-1">Shoferet aktive</div>
-              <div className="max-h-[200px] overflow-y-auto space-y-1">
+              <div className="max-h-[140px] sm:max-h-[200px] overflow-y-auto space-y-1">
                 {list.map((d) => (
                   <button
                     key={d.driver_id}
@@ -859,7 +951,7 @@ export default function LiveFleetMap({ companyId, height = '600px', compact = fa
           )}
 
           {activeDriver && !compact && (
-            <div className="absolute top-3 right-3 z-[7] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-3 w-[300px] max-w-[calc(100%-1.5rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto">
+            <div className="absolute top-3 right-3 z-[7] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-3 w-[300px] max-w-[calc(100%-1.5rem)] max-h-[50vh] sm:max-h-[calc(100%-1.5rem)] overflow-y-auto">
               <div className="flex items-start gap-2">
                 <MiniTruck initials={deriveInitials(activeDriver.driver_name)} />
                 <div className="flex-1 min-w-0">
