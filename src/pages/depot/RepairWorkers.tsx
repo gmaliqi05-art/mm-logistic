@@ -441,7 +441,7 @@ export default function DepotRepairWorkers() {
         .maybeSingle();
 
       if (existingReport) {
-        const { error: updErr } = await supabase
+        const { error: updErr, count: updCount } = await supabase
           .from('depot_repair_reports')
           .update({
             total_quantity: total,
@@ -450,8 +450,13 @@ export default function DepotRepairWorkers() {
             sent_to_stock_at: nowIsoReport,
             sent_to_stock_by: profile!.id,
           })
-          .eq('id', existingReport.id);
+          .eq('id', existingReport.id)
+          .select('id')
+          .single();
         if (updErr) throw updErr;
+        if (!updCount && updCount !== undefined) {
+          throw new Error('Nuk u perditesua raporti. Kontrolloni lejet.');
+        }
       } else {
         const { error: insErr } = await supabase.from('depot_repair_reports').insert({
           company_id: companyId,
