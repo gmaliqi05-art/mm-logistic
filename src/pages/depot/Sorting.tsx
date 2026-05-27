@@ -70,12 +70,16 @@ function isDefectProduct(name: string) {
   return n.includes('defekt') || n.includes('defect') || n.includes('damaged');
 }
 
-const PRIMARY_ORDER = ['a klasse', 'b klasse', 'c klasse', 'defekt'];
+const CLASS_PATTERNS: Array<[RegExp, number]> = [
+  [/\bklasse\s*a\b|a\s*klasse\b/i, 0],
+  [/\bklasse\s*b\b|b\s*klasse\b/i, 1],
+  [/\bklasse\s*c\b|c\s*klasse\b/i, 2],
+  [/\bdefekt\b|\bdefect\b|\bdamaged\b/i, 3],
+];
 
 function primaryRank(name: string): number {
-  const n = (name || '').toLowerCase();
-  for (let i = 0; i < PRIMARY_ORDER.length; i++) {
-    if (n.includes(PRIMARY_ORDER[i])) return i;
+  for (const [re, rank] of CLASS_PATTERNS) {
+    if (re.test(name)) return rank;
   }
   return 99;
 }
