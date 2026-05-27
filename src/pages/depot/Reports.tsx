@@ -146,7 +146,7 @@ export default function DepotReports() {
           .limit(200),
         supabase.from('product_categories').select('id, name').eq('company_id', companyId),
         supabase.from('category_products').select('id, name').eq('company_id', companyId),
-        supabase.from('profiles').select('id, full_name').eq('company_id', companyId),
+        supabase.from('profiles').select('id, full_name').eq('company_id', companyId).in('role', ['depot_worker', 'company_admin']),
         supabase
           .from('v_depot_repair_productivity')
           .select('repair_date, category_name, product_name, total_in, total_repaired, total_scrapped, worker_full_name, opened_by_full_name')

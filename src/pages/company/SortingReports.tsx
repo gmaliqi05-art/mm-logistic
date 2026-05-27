@@ -84,8 +84,8 @@ export default function SortingReports() {
             id, category_id, total_received, completed_at, reference_number_snapshot, report_sent_at,
             created_by, completed_by,
             category:product_categories!inner(name),
-            creator:profiles!pallet_sorting_batches_created_by_fkey(full_name),
-            completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name),
+            creator:profiles!pallet_sorting_batches_created_by_fkey(full_name, role),
+            completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name, role),
             items:pallet_sorting_items(category_product_id, quantity, condition),
             delivery_note:delivery_notes!pallet_sorting_batches_source_delivery_note_id_fkey(
               counterparty_name, partner_name
@@ -112,7 +112,9 @@ export default function SortingReports() {
         reference_number_snapshot: b.reference_number_snapshot,
         report_sent_at: b.report_sent_at,
         partner_name: (b.delivery_note as any)?.counterparty_name || (b.delivery_note as any)?.partner_name || null,
-        worker_name: (b.completer as any)?.full_name || (b.creator as any)?.full_name || null,
+        worker_name: ((b.completer as any)?.role !== 'driver' ? (b.completer as any)?.full_name : null)
+          || ((b.creator as any)?.role !== 'driver' ? (b.creator as any)?.full_name : null)
+          || null,
         items: (b.items as SortingItem[]) ?? [],
       }));
 

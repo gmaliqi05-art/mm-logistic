@@ -160,8 +160,8 @@ export default function DepotSorting() {
         .from('pallet_sorting_batches')
         .select(`*,
           items:pallet_sorting_items(*),
-          creator:profiles!pallet_sorting_batches_created_by_fkey(full_name),
-          completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name),
+          creator:profiles!pallet_sorting_batches_created_by_fkey(full_name, role),
+          completer:profiles!pallet_sorting_batches_completed_by_fkey(full_name, role),
           source_delivery_note:delivery_notes!pallet_sorting_batches_source_delivery_note_id_fkey(
             id, partner_name, counterparty_name, delivered_at, type
           )
@@ -605,14 +605,19 @@ export default function DepotSorting() {
                       {bd.other > 0 && <span className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Te tjera: {bd.other}</span>}
                     </div>
                   )}
-                  {(b.creator?.full_name || b.completer?.full_name) && (
-                    <p className="text-[11px] text-slate-500 mt-2">
-                      {b.creator?.full_name && <>Krijuar nga: <span className="font-medium">{b.creator.full_name}</span></>}
-                      {b.completer?.full_name && b.completer.full_name !== b.creator?.full_name && (
-                        <> · Mbaruar nga: <span className="font-medium">{b.completer.full_name}</span></>
-                      )}
-                    </p>
-                  )}
+                  {(() => {
+                    const creatorName = b.creator?.role !== 'driver' ? b.creator?.full_name : null;
+                    const completerName = b.completer?.role !== 'driver' ? b.completer?.full_name : null;
+                    if (!creatorName && !completerName) return null;
+                    return (
+                      <p className="text-[11px] text-slate-500 mt-2">
+                        {creatorName && <>Krijuar nga: <span className="font-medium">{creatorName}</span></>}
+                        {completerName && completerName !== creatorName && (
+                          <> · Mbaruar nga: <span className="font-medium">{completerName}</span></>
+                        )}
+                      </p>
+                    );
+                  })()}
                   {b.notes && (
                     <p className="text-xs text-gray-500 mt-1 line-clamp-1">{b.notes}</p>
                   )}

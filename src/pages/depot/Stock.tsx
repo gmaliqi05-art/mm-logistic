@@ -62,9 +62,7 @@ const CONDITIONS: Array<{ key: string; label: string; className: string }> = [
   { key: 'damaged', label: 'Defekt', className: 'bg-rose-100 text-rose-700' },
   { key: 'sorting', label: 'Ne sortim', className: 'bg-teal-100 text-teal-700' },
   { key: 'sorting_pending', label: 'Pritje sortim', className: 'bg-slate-100 text-slate-700' },
-  { key: 'ready_a', label: 'Klasa A', className: 'bg-emerald-100 text-emerald-700' },
-  { key: 'ready_b', label: 'Klasa B', className: 'bg-lime-100 text-lime-700' },
-  { key: 'ready_c', label: 'Klasa C', className: 'bg-yellow-100 text-yellow-700' },
+  { key: 'repaired', label: 'Riparuar', className: 'bg-blue-100 text-blue-700' },
 ];
 
 const conditionConfig: Record<string, { label: string; className: string }> = Object.fromEntries(
