@@ -643,7 +643,8 @@ export default function InvoiceBuilder() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ vat: normalizeVat(buyerVat) }),
       });
@@ -785,6 +786,7 @@ export default function InvoiceBuilder() {
           headers: {
             'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
             'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({
             invoice_id: id,
@@ -1382,6 +1384,7 @@ export default function InvoiceBuilder() {
                           headers: {
                             'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
                             'Content-Type': 'application/json',
+                            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
                           },
                           body: JSON.stringify({
                             invoice_id: invoiceDbIdRef.current,

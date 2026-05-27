@@ -324,8 +324,9 @@ function ComposeTab() {
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dispatch-notification`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
             'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
           body: JSON.stringify({ queueId: data.id }),
         });
@@ -915,7 +916,10 @@ function PlatformTab() {
     const [settingsRes, statusRes] = await Promise.all([
       supabase.from('push_platform_settings').select('*').eq('id', 1).maybeSingle(),
       fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notification-config-status`, {
-        headers: { Authorization: `Bearer ${session?.access_token || ''}` },
+        headers: {
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
       }).then((r) => r.ok ? r.json() : null).catch(() => null),
     ]);
     setSettings(settingsRes.data as PlatformSettings);

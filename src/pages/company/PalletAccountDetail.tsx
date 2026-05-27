@@ -110,8 +110,9 @@ export default function PalletAccountDetail() {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-pallet-statement`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ pallet_account_id: id }),
       });

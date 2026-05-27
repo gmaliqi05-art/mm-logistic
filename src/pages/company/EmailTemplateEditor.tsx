@@ -222,6 +222,7 @@ export default function EmailTemplateEditor() {
         headers: {
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           template_code: data.code || 'invoice_issued',
