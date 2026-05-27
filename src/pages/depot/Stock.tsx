@@ -101,6 +101,7 @@ export default function DepotStock() {
   const [filterCategory, setFilterCategory] = useState<string>('');
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [showDefektPanel, setShowDefektPanel] = useState(false);
 
   useEffect(() => {
     if (profile?.depot_id && profile?.company_id) void fetchAll();
@@ -252,6 +253,23 @@ export default function DepotStock() {
       .map((g) => ({ ...g, products: Array.from(g.products.values()).sort((a, b) => a.productName.localeCompare(b.productName)) }))
       .sort((a, b) => compareCategoriesByPriority(a.categoryName, b.categoryName));
   }, [filtered]);
+
+  const defektByCategory = useMemo(() => {
+    const map = new Map<string, { categoryName: string; total: number; products: Array<{ name: string; qty: number }> }>();
+    for (const r of rows) {
+      if (r.condition !== 'damaged') continue;
+      if (!map.has(r.category_id)) {
+        map.set(r.category_id, { categoryName: r.category_name ?? 'Pa kategori', total: 0, products: [] });
+      }
+      const g = map.get(r.category_id)!;
+      g.total += r.quantity;
+      const pName = r.product_name ?? 'Pa produkt';
+      const existing = g.products.find((p) => p.name === pName);
+      if (existing) existing.qty += r.quantity;
+      else g.products.push({ name: pName, qty: r.quantity });
+    }
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  }, [rows]);
 
   const sortedCategories = useMemo(
     () => categories.slice().sort((a, b) => compareCategoriesByPriority(a.name, b.name)),
@@ -458,26 +476,69 @@ export default function DepotStock() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-3">
-        <KpiCard label="Sasia" value={totals.qty.toLocaleString()} icon={Package} color="bg-teal-500" />
-        <KpiCard label="Te mira" value={(totals.byCond['good'] ?? 0).toLocaleString()} icon={Package} color="bg-emerald-500" />
-        <KpiCard label="Defekt" value={(totals.byCond['damaged'] ?? 0).toLocaleString()} icon={AlertTriangle} color="bg-rose-500" />
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white rounded-xl border border-slate-200 p-2.5">
+          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Sasia</p>
+          <p className="text-xl font-bold text-slate-900 mt-0.5 tabular-nums">{totals.qty.toLocaleString()}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-emerald-200 p-2.5">
+          <p className="text-[10px] font-medium text-emerald-600 uppercase tracking-wide">Te mira</p>
+          <p className="text-xl font-bold text-emerald-700 mt-0.5 tabular-nums">{(totals.byCond['good'] ?? 0).toLocaleString()}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowDefektPanel((p) => !p)}
+          className={`bg-white rounded-xl border p-2.5 text-left transition-colors ${showDefektPanel ? 'border-rose-400 ring-2 ring-rose-200' : 'border-rose-200 hover:border-rose-300'}`}
+        >
+          <p className="text-[10px] font-medium text-rose-600 uppercase tracking-wide">Defekt</p>
+          <p className="text-xl font-bold text-rose-700 mt-0.5 tabular-nums">{(totals.byCond['damaged'] ?? 0).toLocaleString()}</p>
+        </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-col sm:flex-row gap-2">
+      {showDefektPanel && (
+        <div className="bg-rose-50 rounded-xl border border-rose-200 overflow-hidden">
+          <div className="px-3 py-2 border-b border-rose-200 flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-rose-800 uppercase tracking-wide">Detajet e defekteve sipas kategorise</h3>
+            <button onClick={() => setShowDefektPanel(false)} className="text-rose-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
+          </div>
+          {defektByCategory.length === 0 ? (
+            <div className="p-4 text-center text-sm text-rose-400">Nuk ka stok defekt</div>
+          ) : (
+            <div className="divide-y divide-rose-100">
+              {defektByCategory.map((cat) => (
+                <div key={cat.categoryName} className="px-3 py-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-semibold text-rose-900">{cat.categoryName}</p>
+                    <span className="text-sm font-bold text-rose-700 tabular-nums">{cat.total}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {cat.products.map((p) => (
+                      <span key={p.name} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-rose-100 text-rose-700">
+                        {p.name} <span className="font-bold">{p.qty}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl border border-slate-200 p-2.5 flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Kerko produkt ose kategori"
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white"
+          className="px-2 py-1.5 rounded-lg border border-slate-200 text-xs bg-white sm:max-w-[160px]"
         >
           <option value="">Te gjitha kategorite</option>
           {sortedCategories.map((c) => (
@@ -487,7 +548,7 @@ export default function DepotStock() {
         <select
           value={filterCondition}
           onChange={(e) => setFilterCondition(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white"
+          className="px-2 py-1.5 rounded-lg border border-slate-200 text-xs bg-white sm:max-w-[140px]"
         >
           <option value="">Te gjitha gjendjet</option>
           {CONDITIONS.map((c) => (
@@ -778,18 +839,3 @@ export default function DepotStock() {
   );
 }
 
-function KpiCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: typeof Package; color: string }) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-3.5">
-      <div className="flex items-start justify-between">
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide truncate">{label}</p>
-          <p className="text-lg lg:text-xl font-bold text-slate-900 mt-1 truncate">{value}</p>
-        </div>
-        <div className={`${color} p-2 rounded-lg flex-shrink-0`}>
-          <Icon className="w-4 h-4 text-white" />
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -19,7 +19,17 @@ import { useTranslation } from '../../i18n';
 import type { Profile } from '../../types';
 import { compareCategoriesByPriority } from '../../utils/productSort';
 
-const BATCH_SIZE = 15;
+const DEFAULT_BATCH_SIZE = 15;
+
+function getWorkerBatchSize(workerId: string): number {
+  try {
+    const v = localStorage.getItem(`repair_batch_${workerId}`);
+    return v ? Math.max(1, parseInt(v, 10) || DEFAULT_BATCH_SIZE) : DEFAULT_BATCH_SIZE;
+  } catch { return DEFAULT_BATCH_SIZE; }
+}
+function setWorkerBatchSize(workerId: string, size: number) {
+  try { localStorage.setItem(`repair_batch_${workerId}`, String(Math.max(1, size))); } catch {}
+}
 
 interface WorkerRow extends Profile {
   total_today: number;
@@ -142,6 +152,8 @@ export default function DepotRepairWorkers() {
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [justUpdatedId, setJustUpdatedId] = useState<string | null>(null);
+  const [editingBatchWorkerId, setEditingBatchWorkerId] = useState<string | null>(null);
+  const [editingBatchValue, setEditingBatchValue] = useState('');
 
   useEffect(() => {
     if (profile?.company_id) fetchAll();
@@ -283,6 +295,7 @@ export default function DepotRepairWorkers() {
     [products, selectedProductId],
   );
 
+  const batchSize = selectedWorker ? getWorkerBatchSize(selectedWorker.id) : DEFAULT_BATCH_SIZE;
   const canComplete = !!selectedWorker && !!selectedProduct && !saving;
 
   async function handleComplete() {
@@ -291,22 +304,56 @@ export default function DepotRepairWorkers() {
       setSaving(true);
       setError(null);
       const companyId = profile!.company_id!;
-      const { error: insErr } = await supabase.from('depot_repairs').insert({
-        company_id: companyId,
-        depot_id: profile!.depot_id ?? null,
-        worker_id: selectedWorker!.id,
-        category_id: selectedProduct!.category_id,
-        product_name: selectedProduct!.name,
-        quantity_repaired: BATCH_SIZE,
-        quantity_in: 0,
-        quantity_scrapped: 0,
-        notes: '',
-        logged_at: new Date().toISOString(),
+      const depotId = profile!.depot_id ?? null;
+      const qty = getWorkerBatchSize(selectedWorker!.id);
+
+      const { data: damagedRows, error: stockErr } = await supabase
+        .from('stock')
+        .select('id, quantity')
+        .eq('company_id', companyId)
+        .eq('condition', 'damaged')
+        .eq('category_id', selectedProduct!.category_id)
+        .gt('quantity', 0)
+        .order('quantity', { ascending: false })
+        .limit(1);
+      if (stockErr) throw stockErr;
+
+      if (depotId) {
+        const { data: depotRows, error: depotErr } = await supabase
+          .from('stock')
+          .select('id, quantity')
+          .eq('company_id', companyId)
+          .eq('depot_id', depotId)
+          .eq('condition', 'damaged')
+          .eq('category_id', selectedProduct!.category_id)
+          .gt('quantity', 0)
+          .order('quantity', { ascending: false })
+          .limit(1);
+        if (depotErr) throw depotErr;
+        if (depotRows && depotRows.length > 0) {
+          damagedRows?.splice(0, damagedRows.length, ...depotRows);
+        }
+      }
+
+      if (!damagedRows || damagedRows.length === 0) {
+        throw new Error('Nuk ka stok defekt te disponueshem per kete kategori');
+      }
+      const stockRow = damagedRows[0];
+      if (stockRow.quantity < qty) {
+        throw new Error(`Stoku defekt i disponueshem eshte vetem ${stockRow.quantity} cope (kerkuar ${qty})`);
+      }
+
+      const { error: rpcErr } = await supabase.rpc('apply_repair_from_stock', {
+        p_stock_id: stockRow.id,
+        p_repaired_qty: qty,
+        p_scrapped_qty: 0,
+        p_target_category_product_id: selectedProduct!.id,
+        p_worker_id: selectedWorker!.id,
       });
-      if (insErr) throw insErr;
+      if (rpcErr) throw rpcErr;
 
       setSuccess(
-        `${selectedWorker!.full_name} · ${selectedProduct!.name} · +${BATCH_SIZE} paleta`,
+        `${selectedWorker!.full_name} · ${selectedProduct!.name} · +${qty} paleta`,
       );
       setJustUpdatedId(selectedWorker!.id);
       setSelectedWorkerId(null);
@@ -613,35 +660,83 @@ export default function DepotRepairWorkers() {
               {workers.map((w) => {
                 const isSelected = selectedWorkerId === w.id;
                 const flash = justUpdatedId === w.id;
+                const wBatch = getWorkerBatchSize(w.id);
+                const isEditing = editingBatchWorkerId === w.id;
                 return (
-                  <button
-                    key={w.id}
-                    type="button"
-                    onClick={() => setSelectedWorkerId(isSelected ? null : w.id)}
-                    className={`relative px-2.5 py-1.5 rounded-lg border text-left transition-colors ${
-                      isSelected
-                        ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-500'
-                        : flash
-                        ? 'bg-emerald-50 border-emerald-300'
-                        : 'bg-white border-slate-200 hover:border-teal-300 hover:bg-teal-50/40'
-                    }`}
-                  >
-                    {isSelected && (
-                      <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-teal-600 text-white flex items-center justify-center shadow">
-                        <CheckCircle2 className="w-3 h-3" />
-                      </div>
-                    )}
-                    <p
-                      className={`text-sm truncate ${
-                        isSelected ? 'text-teal-900 font-bold' : 'text-slate-900 font-semibold'
+                  <div key={w.id} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedWorkerId(isSelected ? null : w.id)}
+                      className={`w-full px-2.5 py-1.5 rounded-lg border text-left transition-colors ${
+                        isSelected
+                          ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-500'
+                          : flash
+                          ? 'bg-emerald-50 border-emerald-300'
+                          : 'bg-white border-slate-200 hover:border-teal-300 hover:bg-teal-50/40'
                       }`}
                     >
-                      {w.full_name}
-                    </p>
-                    <p className="text-[11px] text-slate-500 leading-tight">
-                      <span className="font-bold text-teal-700">{w.total_today}</span> paleta
-                    </p>
-                  </button>
+                      {isSelected && (
+                        <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-teal-600 text-white flex items-center justify-center shadow z-10">
+                          <CheckCircle2 className="w-3 h-3" />
+                        </div>
+                      )}
+                      <p className={`text-sm truncate ${isSelected ? 'text-teal-900 font-bold' : 'text-slate-900 font-semibold'}`}>
+                        {w.full_name}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] text-slate-500 leading-tight">
+                          <span className="font-bold text-teal-700">{w.total_today}</span> paleta
+                        </p>
+                        <span className="text-[9px] text-slate-400 font-medium">x{wBatch}</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingBatchWorkerId(isEditing ? null : w.id);
+                        setEditingBatchValue(String(wBatch));
+                      }}
+                      className="absolute top-0.5 left-0.5 p-0.5 rounded text-slate-300 hover:text-teal-600 hover:bg-teal-50 transition-colors z-10"
+                      title="Ndrysho sasin per seri"
+                    >
+                      <Settings className="w-2.5 h-2.5" />
+                    </button>
+                    {isEditing && (
+                      <div className="absolute top-full left-0 mt-1 z-20 bg-white rounded-lg border border-slate-200 shadow-lg p-2 w-32" onClick={(e) => e.stopPropagation()}>
+                        <label className="text-[10px] text-slate-500 font-medium block mb-1">Sasia per seri</label>
+                        <div className="flex gap-1">
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            value={editingBatchValue}
+                            onChange={(e) => setEditingBatchValue(e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-slate-200 rounded focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const v = parseInt(editingBatchValue, 10);
+                                if (v > 0) { setWorkerBatchSize(w.id, v); }
+                                setEditingBatchWorkerId(null);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const v = parseInt(editingBatchValue, 10);
+                              if (v > 0) { setWorkerBatchSize(w.id, v); }
+                              setEditingBatchWorkerId(null);
+                            }}
+                            className="px-2 py-1 bg-teal-600 text-white text-xs rounded hover:bg-teal-700"
+                          >
+                            OK
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -734,7 +829,7 @@ export default function DepotRepairWorkers() {
                 {selectedProduct?.name ?? <span className="text-gray-400">Zgjidh produktin</span>}
               </span>
               <span className="text-gray-400 mx-2">·</span>
-              <span className="font-bold text-teal-700">+{BATCH_SIZE} paleta</span>
+              <span className="font-bold text-teal-700">+{batchSize} paleta</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -759,7 +854,7 @@ export default function DepotRepairWorkers() {
               ) : (
                 <CheckCircle2 className="w-4 h-4" />
               )}
-              Perfundo (+{BATCH_SIZE})
+              Perfundo (+{batchSize})
             </button>
           </div>
         </div>
