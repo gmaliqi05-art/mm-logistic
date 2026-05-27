@@ -263,7 +263,7 @@ function DepoistDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-5 gap-2 lg:hidden">
+      <div className="grid grid-cols-3 gap-2 lg:hidden">
         <Link to="/depot/sorting" className="relative flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 shadow-md ring-2 ring-teal-300 active:opacity-90">
           {pendingSorting.length > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{pendingSorting.length}</span>
@@ -273,17 +273,23 @@ function DepoistDashboard() {
           </div>
           <span className="text-[10px] font-bold text-white text-center leading-tight">Sortire</span>
         </Link>
-        <Link to="/depot/repair-workers" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-50 active:bg-amber-100">
-          <div className="p-2 bg-amber-500 rounded-lg">
-            <Wrench className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[10px] font-medium text-amber-700 text-center leading-tight">{t('nav.repairWorkers')}</span>
-        </Link>
         <Link to="/depot/receiving" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-teal-50 active:bg-teal-100">
           <div className="p-2 bg-teal-500 rounded-lg">
             <ArrowUpCircle className="w-5 h-5 text-white" />
           </div>
           <span className="text-[10px] font-medium text-teal-700 text-center leading-tight">{t('depot.dashboard.registerReceiving')}</span>
+        </Link>
+        <Link to="/depot/outgoing" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-rose-50 active:bg-rose-100">
+          <div className="p-2 bg-rose-500 rounded-lg">
+            <ArrowDownCircle className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-[10px] font-medium text-rose-700 text-center leading-tight">{t('depot.dashboard.registerOutgoing') || 'Dalje'}</span>
+        </Link>
+        <Link to="/depot/repair-workers" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-amber-50 active:bg-amber-100">
+          <div className="p-2 bg-amber-500 rounded-lg">
+            <Wrench className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-[10px] font-medium text-amber-700 text-center leading-tight">{t('nav.repairWorkers')}</span>
         </Link>
         <Link to="/depot/stock" className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-emerald-50 active:bg-emerald-100">
           <div className="p-2 bg-emerald-500 rounded-lg">
@@ -429,6 +435,13 @@ function DepoistDashboard() {
                   <span className="text-sm font-bold text-white">Sortire (Selektimi)</span>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/80 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link to="/depot/outgoing" className="flex items-center justify-between p-3 bg-rose-50 rounded-xl hover:bg-rose-100 transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-rose-500 rounded-lg"><ArrowDownCircle className="w-4 h-4 text-white" /></div>
+                  <span className="text-sm font-medium text-rose-900">{t('depot.dashboard.registerOutgoing') || 'Regjistro dalje'}</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-rose-400 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link to="/depot/repair-workers" className="flex items-center justify-between p-3 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group">
                 <div className="flex items-center gap-3">

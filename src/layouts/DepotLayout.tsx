@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Package,
   ArrowLeftRight,
+  ArrowDownCircle,
   Layers,
   Wrench,
   MessageSquare,
@@ -56,6 +57,7 @@ const navEntries: NavEntry[] = [
   { to: '/depot/stock', icon: Package, labelKey: 'nav.stock', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/trailers', icon: Truck, labelKey: 'nav.trailers', end: false, bottomNav: true, categories: ['depoist'] },
   { to: '/depot/receiving', icon: ArrowLeftRight, labelKey: 'nav.receiving', end: false, bottomNav: true, categories: ['depoist'] },
+  { to: '/depot/outgoing', icon: ArrowDownCircle, labelKey: 'nav.outgoing', end: false, bottomNav: true, categories: ['depoist'] },
   { to: '/depot/sorting', icon: Layers, labelKey: 'nav.sorting', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, bottomNav: false, categories: ['depoist'] },
 

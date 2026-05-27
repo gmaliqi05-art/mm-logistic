@@ -120,6 +120,7 @@ const AccountingRoute = lazy(() => import('./components/subscription/AccountingR
 const DepotDashboard = lazy(() => import('./pages/depot/Dashboard'));
 const DepotStock = lazy(() => import('./pages/depot/Stock'));
 const DepotReceiving = lazy(() => import('./pages/depot/Receiving'));
+const DepotOutgoing = lazy(() => import('./pages/depot/Outgoing'));
 const DepotSorting = lazy(() => import('./pages/depot/Sorting'));
 const DepotRepairs = lazy(() => import('./pages/depot/Repairs'));
 const DepotRepairWorkers = lazy(() => import('./pages/depot/RepairWorkers'));
@@ -364,6 +365,7 @@ function AppRoutes() {
           <Route index element={<DepotDashboard />} />
           <Route path="stock" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotStock /></ProtectedRoute>} />
           <Route path="receiving" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotReceiving /></ProtectedRoute>} />
+          <Route path="outgoing" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotOutgoing /></ProtectedRoute>} />
           <Route path="sorting" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotSorting /></ProtectedRoute>} />
           <Route path="delivery-notes" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotDeliveryNotes /></ProtectedRoute>} />
           <Route path="trailers" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotTrailers /></ProtectedRoute>} />
