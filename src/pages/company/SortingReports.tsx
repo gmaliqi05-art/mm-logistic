@@ -118,8 +118,8 @@ export default function SortingReports() {
 
       setBatches(rows);
       setProductNames((prodRes.data ?? []) as ProductName[]);
-    } catch (err: any) {
-      logger.error(err);
+    } catch (err) {
+      logger.error('Failed to load sorting reports', err);
     } finally {
       setLoading(false);
     }

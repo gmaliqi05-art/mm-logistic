@@ -22,10 +22,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    if (!isServiceRoleCall(req)) {
-      const caller = await requireCaller(req, { corsHeaders });
-      if (!caller.ok) return caller.response;
-    }
+    // Allow unauthenticated calls: users returning from Stripe redirect
+    // may not have an active session. The Stripe session_id itself is the
+    // proof of payment — we verify it against Stripe's API below.
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

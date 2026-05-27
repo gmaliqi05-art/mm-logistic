@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Loader2, ArrowRight, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '../i18n';
+import { supabase } from '../lib/supabase';
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -28,12 +29,17 @@ export default function PaymentSuccess() {
       attempts++;
       try {
         const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-checkout-session`;
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        };
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.access_token) {
+          headers['Authorization'] = `Bearer ${sessionData.session.access_token}`;
+        }
         const res = await fetch(apiUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
+          headers,
           body: JSON.stringify({ sessionId }),
         });
 
