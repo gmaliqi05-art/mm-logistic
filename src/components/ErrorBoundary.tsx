@@ -62,7 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-gray-500 mb-6">
             {copy.message}
           </p>
-          {this.state.error?.message && (
+          {import.meta.env.DEV && this.state.error?.message && (
             <p className="text-xs text-gray-400 mb-6 break-words font-mono bg-gray-50 rounded-lg p-3">
               {this.state.error.message}
             </p>

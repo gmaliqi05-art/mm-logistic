@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
     const { data: callerProfile, error: profileFetchError } =
       await supabaseAdmin
         .from("profiles")
-        .select("role, company_id")
+        .select("role, company_id, is_active")
         .eq("id", caller.id)
         .maybeSingle();
 
@@ -64,6 +64,10 @@ Deno.serve(async (req: Request) => {
 
     if (!callerProfile) {
       return jsonResponse({ error: "Profili nuk u gjet" }, 403);
+    }
+
+    if (callerProfile.is_active === false) {
+      return jsonResponse({ error: "Llogaria juaj eshte c'aktivizuar" }, 403);
     }
 
     if (req.method === "POST") {

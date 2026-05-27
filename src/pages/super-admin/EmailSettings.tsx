@@ -56,15 +56,15 @@ export default function EmailSettings() {
     // key itself.
     const { data: cr } = await supabase
       .from("email_cron_config")
-      .select("project_url, enabled, service_role_key")
+      .select("project_url, enabled")
       .eq("id", 1)
       .maybeSingle();
     if (cr) {
-      const row = cr as { project_url: string | null; enabled: boolean; service_role_key: string | null };
+      const row = cr as { project_url: string | null; enabled: boolean };
       setCron({
         project_url: row.project_url ?? '',
         enabled: !!row.enabled,
-        keyConfigured: !!(row.service_role_key && row.service_role_key.length > 0),
+        keyConfigured: !!row.enabled,
       });
     } else {
       setCron({ project_url: '', enabled: false, keyConfigured: false });

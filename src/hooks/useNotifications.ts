@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { logger } from '../utils/logger';
 
 export function useNotifications() {
   const { profile } = useAuth();
@@ -21,14 +22,14 @@ export function useNotifications() {
           .eq('is_read', false);
 
         if (error) {
-          console.error('Failed to fetch notification count:', error);
+          logger.error('Failed to fetch notification count:', error);
           setUnreadCount(0);
           return;
         }
 
         setUnreadCount(count ?? 0);
       } catch (err) {
-        console.error('Unexpected error fetching notifications:', err);
+        logger.error('Unexpected error fetching notifications:', err);
         setUnreadCount(0);
       }
     };
@@ -64,10 +65,10 @@ export function useNotifications() {
         .eq('id', notificationId);
 
       if (error) {
-        console.error('Failed to mark notification as read:', error);
+        logger.error('Failed to mark notification as read:', error);
       }
     } catch (err) {
-      console.error('Unexpected error marking notification as read:', err);
+      logger.error('Unexpected error marking notification as read:', err);
     }
   };
 
@@ -82,13 +83,13 @@ export function useNotifications() {
         .eq('is_read', false);
 
       if (error) {
-        console.error('Failed to mark all notifications as read:', error);
+        logger.error('Failed to mark all notifications as read:', error);
         return;
       }
 
       setUnreadCount(0);
     } catch (err) {
-      console.error('Unexpected error marking all notifications as read:', err);
+      logger.error('Unexpected error marking all notifications as read:', err);
     }
   };
 

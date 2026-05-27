@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { logger } from '../utils/logger';
 
 interface PlatformSettings {
   logo: string;
@@ -85,7 +86,7 @@ export function usePlatformSettings() {
         setSettings(newSettings);
       }
     } catch (error) {
-      console.error('Error loading platform settings:', error);
+      logger.error('Error loading platform settings:', error);
     } finally {
       setLoading(false);
     }

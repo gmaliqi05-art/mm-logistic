@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14.25.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +22,11 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    if (!isServiceRoleCall(req)) {
+      const caller = await requireCaller(req, { corsHeaders });
+      if (!caller.ok) return caller.response;
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);

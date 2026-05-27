@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
 
   // Cron uses service-role bearer; UI "run now" button uses a user session.
   if (!isServiceRoleCall(req)) {
-    const caller = await requireCaller(req, { corsHeaders });
+    const caller = await requireCaller(req, { corsHeaders, roles: ["super_admin", "company_admin"] });
     if (!caller.ok) return caller.response;
   }
 

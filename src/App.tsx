@@ -331,7 +331,7 @@ function AppRoutes() {
           <Route path="data-export" element={<CompanyDataExport />} />
           <Route path="settings" element={<CompanySettings />} />
           <Route path="settings/api-webhooks" element={<CompanyApiWebhooks />} />
-          <Route path="financial-summary" element={<CompanyFinancialSummary />} />
+          <Route path="financial-summary" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><CompanyFinancialSummary /></AccountingRoute></Suspense>} />
           <Route path="hr" element={<HRDashboard />} />
           <Route path="hr/requests" element={<HRLeaveRequests />} />
           <Route path="hr/attendance" element={<HRAttendance />} />
@@ -340,10 +340,10 @@ function AppRoutes() {
           <Route path="hr/settings" element={<HRSettings />} />
           <Route path="hr/leave" element={<HRMyLeave />} />
           <Route path="accounting-upgrade" element={<CompanyAccountingUpgrade />} />
-          <Route path="invoices" element={<AccInvoices />} />
-          <Route path="invoices/new" element={<AccInvoiceBuilder />} />
-          <Route path="invoices/:id/edit" element={<AccInvoiceBuilder />} />
-          <Route path="invoices/:id/print" element={<AccInvoicePrint />} />
+          <Route path="invoices" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoices /></AccountingRoute></Suspense>} />
+          <Route path="invoices/new" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoiceBuilder /></AccountingRoute></Suspense>} />
+          <Route path="invoices/:id/edit" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoiceBuilder /></AccountingRoute></Suspense>} />
+          <Route path="invoices/:id/print" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoicePrint /></AccountingRoute></Suspense>} />
           <Route path="email" element={<EmailAutomationLayout />}>
             <Route index element={<CompanyEmailTemplatesList />} />
             <Route path="templates" element={<CompanyEmailTemplatesList />} />

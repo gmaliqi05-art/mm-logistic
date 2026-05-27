@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   ArrowDownCircle,
-  ArrowUpCircle,
   AlertTriangle,
   X,
   Loader2,
@@ -9,7 +8,6 @@ import {
   Trash2,
   Package,
   Sparkles,
-  FileText,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';

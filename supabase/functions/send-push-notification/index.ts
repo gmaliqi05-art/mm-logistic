@@ -44,9 +44,11 @@ Deno.serve(async (req: Request) => {
   // carry the service-role bearer. Frontend chat / driver UIs carry a
   // user session bearer. Reject anonymous calls so the function can't
   // be used to spam push notifications to any device.
+  let callerCompanyId: string | null = null;
   if (!isServiceRoleCall(req)) {
-    const caller = await requireCaller(req, { corsHeaders });
+    const caller = await requireCaller(req, { corsHeaders, roles: ["super_admin", "company_admin", "logistics_admin"] });
     if (!caller.ok) return caller.response;
+    callerCompanyId = caller.profile?.company_id ?? null;
   }
 
   try {

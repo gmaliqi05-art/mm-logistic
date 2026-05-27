@@ -12,6 +12,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { logger } from '../../utils/logger';
 
 interface TicketInfo {
   id: string;
@@ -97,7 +98,7 @@ export default function SupportTicketChat({
         onStatusChange('in_progress');
       }
     } catch (err) {
-      console.error(err);
+      logger.error('Failed to send support message', err);
     } finally {
       setSending(false);
     }

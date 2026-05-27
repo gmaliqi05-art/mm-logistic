@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { matchFaq, type FaqEntry } from '../../utils/faqMatcher';
+import { logger } from '../../utils/logger';
 
 interface SupportMessage {
   id: string;
@@ -80,13 +81,13 @@ export default function SupportChatWidget({ externalOpen, onExternalClose }: Sup
         .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('Failed to fetch support tickets:', error);
+        logger.error('Failed to fetch support tickets:', error);
         setTickets([]);
       } else {
         setTickets(data ?? []);
       }
     } catch (err) {
-      console.error('Unexpected error fetching tickets:', err);
+      logger.error('Unexpected error fetching tickets:', err);
       setTickets([]);
     }
     setLoading(false);
@@ -101,13 +102,13 @@ export default function SupportChatWidget({ externalOpen, onExternalClose }: Sup
         .order('priority', { ascending: false });
 
       if (error) {
-        console.error('Failed to fetch FAQs:', error);
+        logger.error('Failed to fetch FAQs:', error);
         setFaqs([]);
       } else {
         setFaqs(data ?? []);
       }
     } catch (err) {
-      console.error('Unexpected error fetching FAQs:', err);
+      logger.error('Unexpected error fetching FAQs:', err);
       setFaqs([]);
     }
   }
@@ -122,7 +123,7 @@ export default function SupportChatWidget({ externalOpen, onExternalClose }: Sup
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Failed to fetch messages:', error);
+        logger.error('Failed to fetch messages:', error);
         setMessages([]);
       } else {
         const mapped: SupportMessage[] = (data ?? []).map((m: any) => ({
@@ -135,7 +136,7 @@ export default function SupportChatWidget({ externalOpen, onExternalClose }: Sup
         setMessages(mapped);
       }
     } catch (err) {
-      console.error('Unexpected error fetching messages:', err);
+      logger.error('Unexpected error fetching messages:', err);
       setMessages([]);
     }
     setLoading(false);
@@ -223,7 +224,7 @@ export default function SupportChatWidget({ externalOpen, onExternalClose }: Sup
 
       fetchTickets();
     } catch (err) {
-      console.error(err);
+      logger.error('Failed to create support ticket', err);
     } finally {
       setSending(false);
     }

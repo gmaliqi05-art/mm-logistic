@@ -13,7 +13,6 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronRight,
-  Wrench,
   Minus,
   Send,
   Truck,

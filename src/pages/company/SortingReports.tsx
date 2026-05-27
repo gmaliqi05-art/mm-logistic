@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { logger } from '../../utils/logger';
 
 interface SortingItem {
   category_product_id: string | null;
@@ -118,7 +119,7 @@ export default function SortingReports() {
       setBatches(rows);
       setProductNames((prodRes.data ?? []) as ProductName[]);
     } catch (err: any) {
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }

@@ -915,7 +915,7 @@ function PlatformTab() {
     const [settingsRes, statusRes] = await Promise.all([
       supabase.from('push_platform_settings').select('*').eq('id', 1).maybeSingle(),
       fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notification-config-status`, {
-        headers: { Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+        headers: { Authorization: `Bearer ${session?.access_token || ''}` },
       }).then((r) => r.ok ? r.json() : null).catch(() => null),
     ]);
     setSettings(settingsRes.data as PlatformSettings);

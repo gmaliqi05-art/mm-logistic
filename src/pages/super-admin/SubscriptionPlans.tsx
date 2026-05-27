@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Check, ToggleLeft, ToggleRight, GripVertical, ChevronUp, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Star, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Check, ToggleLeft, ToggleRight, ChevronUp, ChevronDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';

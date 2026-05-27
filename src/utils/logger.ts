@@ -29,28 +29,34 @@ async function initSentry() {
 
 initSentry();
 
-function format(level: string, msg: string, ctx?: LogContext) {
+function normalize(ctx: unknown): LogContext {
+  if (ctx && typeof ctx === 'object' && !Array.isArray(ctx)) return ctx as LogContext;
+  return { error: ctx };
+}
+
+function format(level: string, msg: string, ctx?: unknown) {
   return ctx ? [level, msg, ctx] : [level, msg];
 }
 
 export const logger = {
-  debug(msg: string, ctx?: LogContext) {
+  debug(msg: string, ctx?: unknown) {
     if (isDev) console.debug(...format('[debug]', msg, ctx));
   },
-  info(msg: string, ctx?: LogContext) {
+  info(msg: string, ctx?: unknown) {
     if (isDev) console.info(...format('[info]', msg, ctx));
-    else sentry?.captureMessage(msg, { level: 'info', extra: ctx });
+    else sentry?.captureMessage(msg, { level: 'info', extra: normalize(ctx) });
   },
-  warn(msg: string, ctx?: LogContext) {
+  warn(msg: string, ctx?: unknown) {
     if (isDev) console.warn(...format('[warn]', msg, ctx));
-    else sentry?.captureMessage(msg, { level: 'warning', extra: ctx });
+    else sentry?.captureMessage(msg, { level: 'warning', extra: normalize(ctx) });
   },
-  error(msg: string, ctx?: LogContext) {
+  error(msg: string, ctx?: unknown) {
     if (isDev) console.error(...format('[error]', msg, ctx));
     else {
-      const err = ctx?.error;
-      if (err instanceof Error) sentry?.captureException(err, { extra: { message: msg, ...ctx } });
-      else sentry?.captureMessage(msg, { level: 'error', extra: ctx });
+      const normalized = normalize(ctx);
+      const err = normalized.error;
+      if (err instanceof Error) sentry?.captureException(err, { extra: { message: msg, ...normalized } });
+      else sentry?.captureMessage(msg, { level: 'error', extra: normalized });
     }
   },
 };

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Building2, Search, Filter, Clock, CheckCircle2, XCircle, AlertTriangle,
   CreditCard, X, Loader2, ChevronDown, ChevronUp, RefreshCw, CalendarPlus,
-  Eye, Ban, Zap, Star, Shield, Receipt,
+  Ban, Zap, Star, Shield, Receipt,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';

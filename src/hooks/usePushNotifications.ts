@@ -62,7 +62,7 @@ export function usePushNotifications() {
       const subscription = await registration.pushManager.getSubscription();
       setIsSubscribed(subscription !== null);
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      logger.error('Error checking subscription:', error);
       setIsSubscribed(false);
     }
   }
@@ -73,7 +73,7 @@ export function usePushNotifications() {
     try {
       const vapidKey = await fetchVapidPublicKey();
       if (!vapidKey) {
-        console.error('VAPID public key is not configured');
+        logger.error('VAPID public key is not configured');
         return false;
       }
 
