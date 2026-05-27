@@ -143,7 +143,7 @@ function isGroupActive(group: NavGroup, pathname: string): boolean {
 
 export default function CompanyAdminLayout() {
   const { profile, signOut } = useAuth();
-  const { planTier, accountingEnabled, isPendingPayment } = useSubscription();
+  const { planTier, accountingEnabled, isPendingPayment, isExpired } = useSubscription();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -205,6 +205,10 @@ export default function CompanyAdminLayout() {
 
   if (isPendingPayment) {
     return <Navigate to="/payment-pending" replace />;
+  }
+
+  if (isExpired) {
+    return <Navigate to="/subscription-expired" replace />;
   }
 
   async function fetchCompanyInfo() {

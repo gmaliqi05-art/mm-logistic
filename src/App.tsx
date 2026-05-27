@@ -33,6 +33,7 @@ const PaymentCancel = lazy(() => import('./pages/PaymentCancel'));
 const PaymentPending = lazy(() => import('./pages/PaymentPending'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const SubscriptionExpired = lazy(() => import('./pages/SubscriptionExpired'));
 import InstallPromptBanner from './components/InstallPromptBanner';
 import CookieConsentBanner from './components/CookieConsentBanner';
 import PushAutoSubscribe from './components/PushAutoSubscribe';
@@ -202,16 +203,20 @@ function LoadingScreen() {
 
 function ProtectedRoute({ children, roles, workerCategories }: { children: ReactNode; roles?: string[]; workerCategories?: string[] }) {
   const { session, profile, loading } = useAuth();
-  const { isPendingPayment, loading: subLoading } = useSubscription();
+  const { isPendingPayment, isExpired, loading: subLoading } = useSubscription();
 
   if (loading || subLoading) return <LoadingScreen />;
   if (!session || !profile) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(profile.role)) return <Navigate to="/login" replace />;
 
-  // Block users whose subscription is pending payment (paid plan chosen but
-  // payment not completed). Super admins bypass this check.
-  if (isPendingPayment && profile.role !== 'super_admin') {
-    return <Navigate to="/payment-pending" replace />;
+  // Super admins bypass all subscription checks.
+  if (profile.role !== 'super_admin') {
+    if (isPendingPayment) {
+      return <Navigate to="/payment-pending" replace />;
+    }
+    if (isExpired) {
+      return <Navigate to="/subscription-expired" replace />;
+    }
   }
 
   if (workerCategories && profile.role === 'depot_worker'
@@ -236,6 +241,7 @@ function AppRoutes() {
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/payment-pending" element={<PaymentPending />} />
         <Route path="/payment-cancel" element={<PaymentCancel />} />
+        <Route path="/subscription-expired" element={<Suspense fallback={<LoadingScreen />}><SubscriptionExpired /></Suspense>} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/privacy-policy" element={<Navigate to="/legal/privacy" replace />} />
         <Route path="/legal" element={<LegalPage documentKey="impressum" />} />
