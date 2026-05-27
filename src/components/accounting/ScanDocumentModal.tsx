@@ -580,6 +580,7 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
         ai_extracted_json: extracted ? { ...extracted, _acc_delivery_note_id: accNoteId, _acc_contact_id: contactId } : null,
         ai_confidence: extracted?.confidence ?? null,
         origin: 'scan',
+        document_number: extracted?.document_number || extracted?.invoice_number || formInvoiceNumber || null,
         reference_number: formInvoiceNumber || null,
       })
       .select('id')

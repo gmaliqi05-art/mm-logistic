@@ -449,10 +449,81 @@ function ReviewModal({
       if (dbErr) throw dbErr;
 
       setScannedUrl(url);
+
+      // Trigger AI scan to extract document data (document_number, parties, etc.)
+      triggerAiScan(file, path);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ngarkimi deshtoi');
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function triggerAiScan(file: File, storagePath: string) {
+    try {
+      const companyId = profile?.company_id;
+      if (!companyId) return;
+
+      const scanPath = `scans/${companyId}/${Date.now()}-${file.name}`;
+      const { error: scanUpErr } = await supabase.storage
+        .from('acc-scans')
+        .upload(scanPath, file, { contentType: file.type || 'application/octet-stream', upsert: true });
+      if (scanUpErr) return;
+
+      const { data: scan, error: scanErr } = await supabase
+        .from('acc_scanned_documents')
+        .insert({
+          company_id: companyId,
+          uploaded_by: profile?.id,
+          storage_path: scanPath,
+          file_mime: file.type,
+          file_size: file.size,
+          status: 'uploaded',
+        })
+        .select()
+        .single();
+      if (scanErr || !scan) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scan-document`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ scanId: scan.id, role: 'company_admin' }),
+        },
+      );
+      const json = await res.json();
+      if (!json.success || !json.extracted) return;
+
+      const ex = json.extracted;
+      const docNumber = ex.document_number || ex.invoice_number || '';
+      const updatePayload: Record<string, unknown> = {
+        ai_extracted_json: ex,
+        ai_confidence: ex.confidence ?? null,
+        updated_at: new Date().toISOString(),
+      };
+      if (docNumber) {
+        updatePayload.document_number = docNumber;
+        if (!note.reference_number) {
+          updatePayload.reference_number = docNumber;
+        }
+      }
+
+      await supabase
+        .from('delivery_notes')
+        .update(updatePayload)
+        .eq('id', note.id);
+
+      onDone();
+    } catch {
+      // AI scan is best-effort; the upload already succeeded
     }
   }
 
@@ -1389,7 +1460,10 @@ function ReviewModal({
         <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base font-bold text-gray-900">{note.note_number}</h3>
+              <h3 className="text-base font-bold text-gray-900">{(note as any).document_number || note.note_number}</h3>
+              {(note as any).document_number && (note as any).document_number !== note.note_number && (
+                <span className="text-xs text-gray-400">({note.note_number})</span>
+              )}
               {noScanFlag && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
                   <AlertCircle className="w-3 h-3" /> Pa skanim

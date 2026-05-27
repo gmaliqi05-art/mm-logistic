@@ -1166,8 +1166,11 @@ export function TaskDetailSheet({
 
       const docNumber = ex.document_number || ex.invoice_number;
       const docDate = ex.document_date || ex.invoice_date;
-      if (docNumber && !(note as any).reference_number) {
-        update.reference_number = docNumber;
+      if (docNumber) {
+        update.document_number = docNumber;
+        if (!(note as any).reference_number) {
+          update.reference_number = docNumber;
+        }
       }
 
       const hasKnownPartner = !!(update.counterparty_contact_id || update.partner_id);

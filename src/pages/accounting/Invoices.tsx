@@ -183,7 +183,7 @@ export default function Invoices() {
       setError(null);
       const { data, error: err } = await supabase
         .from('acc_invoices')
-        .select('*, contact:acc_contacts(name), delivery_note:delivery_notes!acc_invoices_delivery_note_fk(id, note_number)')
+        .select('*, contact:acc_contacts(name), delivery_note:delivery_notes!acc_invoices_delivery_note_fk(id, note_number, document_number)')
         .eq('company_id', profile!.company_id!)
         .order('created_at', { ascending: false });
       if (err) throw err;
@@ -877,9 +877,9 @@ export default function Invoices() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        {invoice.delivery_note?.note_number ? (
+                        {(invoice.delivery_note?.document_number || invoice.delivery_note?.note_number) ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-teal-50 text-teal-700 text-xs font-semibold">
-                            #{invoice.delivery_note.note_number}
+                            #{invoice.delivery_note.document_number || invoice.delivery_note.note_number}
                           </span>
                         ) : (
                           <span className="text-xs text-gray-400">-</span>

@@ -101,7 +101,8 @@ export interface AccInvoice {
   dispatched_by?: string | null;
   source_depot_id?: string | null;
   delivery_note_id?: string | null;
-  delivery_note?: { id: string; note_number: string | null } | null;
+  linked_document_number?: string | null;
+  delivery_note?: { id: string; note_number: string | null; document_number?: string | null } | null;
   sent_at?: string | null;
   created_at: string;
   updated_at: string;

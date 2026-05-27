@@ -847,7 +847,10 @@ export default function CompanyDeliveryNotes() {
                   <tr key={note.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       <div className="flex items-center gap-2">
-                        {note.note_number}
+                        {(note as any).document_number || note.note_number}
+                        {(note as any).document_number && (note as any).document_number !== note.note_number && (
+                          <span className="text-xs text-gray-400" title="Titull i porosise">({note.note_number})</span>
+                        )}
                         {(note as any).attachment_url && (
                           <a
                             href={(note as any).attachment_url}
@@ -1346,7 +1349,10 @@ export default function CompanyDeliveryNotes() {
           <div className="relative bg-white w-full max-w-lg shadow-xl overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">{selectedNote.note_number}</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{(selectedNote as any).document_number || selectedNote.note_number}</h2>
+                {(selectedNote as any).document_number && (selectedNote as any).document_number !== selectedNote.note_number && (
+                  <p className="text-xs text-gray-400 mt-0.5">Porosi: {selectedNote.note_number}</p>
+                )}
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeConfig[selectedNote.type]?.className ?? ''}`}>
                     {typeConfig[selectedNote.type]?.label ?? selectedNote.type}

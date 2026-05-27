@@ -295,13 +295,13 @@ export default function InvoiceBuilder() {
   async function prefillFromDeliveryNote(dnId: string) {
     const { data: dn } = await supabase
       .from('delivery_notes')
-      .select('id, note_number, reference_number, partner_id, partner_name, type, delivered_at, notes, acc_invoice_id, ai_extracted_json')
+      .select('id, note_number, document_number, reference_number, partner_id, partner_name, type, delivered_at, notes, acc_invoice_id, ai_extracted_json')
       .eq('id', dnId)
       .maybeSingle();
     if (!dn) return;
     setDeliveryNoteId(dn.id as string);
     const ext = (dn.ai_extracted_json as any) || {};
-    const resolvedDocNumber = ext.document_number || ext.invoice_number || (dn.reference_number as string) || (dn.note_number as string) || '';
+    const resolvedDocNumber = (dn.document_number as string) || ext.document_number || ext.invoice_number || (dn.reference_number as string) || (dn.note_number as string) || '';
     setDeliveryNoteNumber(resolvedDocNumber);
     setDeliveryNotePartner((dn.partner_name as string) || '');
     setDeliveryNoteDate(dn.delivered_at ? String(dn.delivered_at).slice(0, 10) : '');
@@ -445,11 +445,11 @@ export default function InvoiceBuilder() {
         setDeliveryNoteId(dnId);
         const { data: dn } = await supabase
           .from('delivery_notes')
-          .select('note_number, partner_name, delivered_at')
+          .select('note_number, document_number, partner_name, delivered_at')
           .eq('id', dnId)
           .maybeSingle();
         if (dn) {
-          setDeliveryNoteNumber((dn.note_number as string) || '');
+          setDeliveryNoteNumber((dn.document_number as string) || (dn.note_number as string) || '');
           setDeliveryNotePartner((dn.partner_name as string) || '');
           setDeliveryNoteDate(dn.delivered_at ? String(dn.delivered_at).slice(0, 10) : '');
         }
@@ -686,6 +686,7 @@ export default function InvoiceBuilder() {
         discount: totals.discount,
         total: totals.total,
         delivery_note_id: deliveryNoteId,
+        linked_document_number: deliveryNoteNumber || null,
       };
 
       let id = invoiceDbIdRef.current;

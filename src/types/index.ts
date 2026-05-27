@@ -168,6 +168,7 @@ export interface DeliveryNote {
   creator?: Profile;
   partner_name?: string | null;
   reference_number?: string | null;
+  document_number?: string | null;
   ai_extracted_json?: Record<string, unknown> | null;
   ai_confidence?: number | null;
   scheduled_pickup_at?: string | null;
