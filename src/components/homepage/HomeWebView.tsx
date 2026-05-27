@@ -1,26 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  ArrowRight,
-  ChevronUp,
-  ChevronDown,
-  Package,
-  Truck,
-  Ship,
-  Warehouse,
-  Receipt,
-  Cpu,
-  RefreshCw,
-  Eye,
-  HeadphonesIcon,
-  Menu,
-  X,
-  Apple,
-  CheckCircle2,
-  Mail,
-  Phone,
-  MapPin,
-} from 'lucide-react';
+import { ArrowRight, ChevronUp, ChevronDown, Package, Truck, Ship, Warehouse, Receipt, Cpu, RefreshCw, Eye, Headphones as HeadphonesIcon, Menu, X, Apple, CheckCircle2, Mail, Phone, MapPin } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { usePlatformSettings } from '../../hooks/usePlatformSettings';
