@@ -65,6 +65,8 @@ interface ReviewNote {
   partner_id?: string | null;
   acc_invoice_id?: string | null;
   auto_register_partner?: boolean | null;
+  company_reviewed_at?: string | null;
+  company_reviewed_by?: string | null;
 }
 
 interface NoteItem {
@@ -964,13 +966,21 @@ function ReviewModal({
       const sanitizedAi = prevAi
         ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
         : null;
+
+      const allAreSorting = sortingRows.every((r) => r.intended_action === 'sorting');
+      const targetStatus = allAreSorting ? 'confirmed' : 'pending_stock_confirmation';
+
       const updatePayload: Record<string, any> = {
-        status: 'pending_stock_confirmation',
+        status: targetStatus,
         company_reviewed_by: profile!.id,
         company_reviewed_at: new Date().toISOString(),
         ai_extracted_json: sanitizedAi,
         updated_at: new Date().toISOString(),
       };
+      if (allAreSorting) {
+        updatePayload.stock_confirmed_by = profile!.id;
+        updatePayload.stock_confirmed_at = new Date().toISOString();
+      }
       if (partnerIsOwnCompany) {
         updatePayload.auto_register_partner = false;
         updatePayload.partner_id = null;
@@ -983,32 +993,20 @@ function ReviewModal({
       if (scanUrl && !attachUrl) {
         updatePayload.attachment_url = scanUrl;
       }
-      const { error: upErr } = await supabase
-        .from('delivery_notes')
-        .update(updatePayload)
-        .eq('id', note.id);
-      if (upErr) throw upErr;
 
-      // Create sorting batches immediately so depot sees them without extra confirmation
+      // Create sorting batches before status update so trigger finds them via ON CONFLICT
       const { data: persistedItems } = await supabase
         .from('delivery_note_items')
         .select('id, category_id, quantity, intended_action, notes')
         .eq('delivery_note_id', note.id)
         .eq('intended_action', 'sorting');
+      const createdBatchIds: string[] = [];
       if (persistedItems && persistedItems.length > 0) {
         for (const item of persistedItems) {
           if (!item.category_id || !item.quantity) continue;
-          const { data: existing } = await supabase
+          const { data: upserted } = await supabase
             .from('pallet_sorting_batches')
-            .select('id')
-            .eq('source_item_id', item.id)
-            .maybeSingle();
-          if (existing) {
-            await supabase.from('pallet_sorting_batches')
-              .update({ total_received: item.quantity, category_id: item.category_id })
-              .eq('id', existing.id);
-          } else {
-            await supabase.from('pallet_sorting_batches').insert({
+            .upsert({
               company_id: profile!.company_id!,
               depot_id: depotId,
               category_id: item.category_id,
@@ -1019,11 +1017,20 @@ function ReviewModal({
               notes: item.notes || '',
               created_by: profile!.id,
               reference_number_snapshot: (note as any).reference_number || note.note_number || '',
-            });
-          }
+            }, { onConflict: 'source_item_id' })
+            .select('id')
+            .maybeSingle();
+          if (upserted) createdBatchIds.push(upserted.id);
         }
       }
 
+      const { error: upErr } = await supabase
+        .from('delivery_notes')
+        .update(updatePayload)
+        .eq('id', note.id);
+      if (upErr) throw upErr;
+
+      // Notify depot workers with direct link to sorting page
       const { data: depotUsers } = await supabase
         .from('profiles')
         .select('id')
@@ -1031,6 +1038,9 @@ function ReviewModal({
         .eq('role', 'depot_worker')
         .eq('is_active', true);
       if (depotUsers && depotUsers.length > 0) {
+        const sortingUrl = createdBatchIds.length === 1
+          ? `/depot/sorting?batch=${createdBatchIds[0]}`
+          : '/depot/sorting';
         await notifyUsers({
           userIds: depotUsers.map((u) => u.id),
           type: 'delivery',
@@ -1040,6 +1050,7 @@ function ReviewModal({
           referenceId: note.id,
           fallbackTitle: 'Sortim i ri',
           fallbackMessage: `${note.note_number} kerkon sortim ne depo.`,
+          url: sortingUrl,
         });
       }
       await onDone();
@@ -1349,12 +1360,16 @@ function ReviewModal({
               <Layers className={`w-5 h-5 flex-shrink-0 ${allSortingItems() ? 'text-teal-600' : 'text-amber-600'}`} />
               <div>
                 <p className={`text-sm font-bold ${allSortingItems() ? 'text-teal-900' : 'text-amber-900'}`}>
-                  {allSortingItems() ? 'Kjo porosi eshte per SORTIM' : 'Kjo porosi perfshin artikuj per SORTIM dhe STOK'}
+                  {allSortingItems()
+                    ? t('review.sortingBanner.allSortingTitle')
+                    : t('review.sortingBanner.mixedTitle')}
                 </p>
                 <p className="text-xs text-gray-600 mt-0.5">
                   {allSortingItems()
-                    ? 'Pas konfirmimit, artikujt do te dergohen direkt ne sortire.'
-                    : 'Artikujt do te ndahen: disa per stok, disa per sortim, disa per reparim.'}
+                    ? t('review.sortingBanner.allSortingDesc')
+                    : note.company_reviewed_at
+                      ? t('review.sortingBanner.mixedCompanyReviewed')
+                      : t('review.sortingBanner.mixedDesc')}
                 </p>
               </div>
             </div>
@@ -1585,7 +1600,10 @@ function ReviewModal({
               </div>
             ) : (
               <div className="space-y-3">
-                {groupRows(rows).map((group) => (
+                {groupRows(rows).map((group) => {
+                  const isSortingGroup = group.rows.every((r) => r.intended_action === 'sorting');
+                  const depotReadOnly = role === 'depot_worker' && !!note.company_reviewed_at && isSortingGroup;
+                  return (
                   <ItemGroupBlock
                     key={group.key}
                     group={group}
@@ -1596,6 +1614,7 @@ function ReviewModal({
                     onUpdate={updateRow}
                     onRemoveRow={removeRow}
                     onAddSplit={() => addSplit(group.key)}
+                    readOnly={depotReadOnly}
                     onCreateCategory={async (name, sourceDescription) => {
                       const aliases = sourceDescription ? [sourceDescription.trim()].filter(Boolean) : [];
                       const { data, error: e } = await supabase.from('product_categories').insert({
@@ -1620,7 +1639,8 @@ function ReviewModal({
                       return data as Product;
                     }}
                   />
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2062,6 +2082,7 @@ function ItemGroupBlock({
   onAddSplit,
   onCreateCategory,
   onCreateProduct,
+  readOnly = false,
 }: {
   group: Group;
   categories: Category[];
@@ -2073,6 +2094,7 @@ function ItemGroupBlock({
   onAddSplit: () => void;
   onCreateCategory: (name: string, sourceDescription?: string) => Promise<Category>;
   onCreateProduct: (name: string, categoryId: string, sourceDescription?: string) => Promise<Product>;
+  readOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const sumQty = useMemo(() => group.rows.reduce((s, r) => s + (r.quantity || 0), 0), [group.rows]);
@@ -2122,23 +2144,26 @@ function ItemGroupBlock({
             isOutgoing={isOutgoing}
             stockMap={stockMap}
             onUpdate={onUpdate}
-            onRemove={group.rows.length > 1 || !row._persistedId ? () => onRemoveRow(row._key) : null}
+            onRemove={readOnly ? null : (group.rows.length > 1 || !row._persistedId ? () => onRemoveRow(row._key) : null)}
             isFirst={idx === 0}
             onCreateCategory={onCreateCategory}
             onCreateProduct={onCreateProduct}
+            readOnly={readOnly}
           />
         ))}
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={onAddSplit}
-          className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-lg hover:bg-teal-100 transition-colors"
-        >
-          <Plus className="w-3 h-3" /> {t('review.addSplit')}
-        </button>
-      </div>
+      {!readOnly && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onAddSplit}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-lg hover:bg-teal-100 transition-colors"
+          >
+            <Plus className="w-3 h-3" /> {t('review.addSplit')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -2154,6 +2179,7 @@ function SplitRow({
   isFirst,
   onCreateCategory,
   onCreateProduct,
+  readOnly = false,
 }: {
   row: RowState;
   categories: Category[];
@@ -2165,6 +2191,7 @@ function SplitRow({
   isFirst: boolean;
   onCreateCategory: (name: string, sourceDescription?: string) => Promise<Category>;
   onCreateProduct: (name: string, categoryId: string, sourceDescription?: string) => Promise<Product>;
+  readOnly?: boolean;
 }) {
   const { t } = useTranslation();
   const productsForCategory = useMemo(
@@ -2244,6 +2271,24 @@ function SplitRow({
     else if (val === 'sorting') condition = 'sorting';
     else if (condition === 'damaged' || condition === 'sorting') condition = 'good';
     onUpdate(row._key, { intended_action: val, condition });
+  }
+
+  if (readOnly) {
+    const catName = categories.find((c) => c.id === row.category_id)?.name || '-';
+    const prodName = products.find((p) => p.id === row.product_id)?.name || '';
+    const actionLabel = row.intended_action === 'sorting' ? 'Sortim' : row.intended_action === 'repair' ? 'Riparim' : 'Stok';
+    const actionColor = row.intended_action === 'sorting' ? 'bg-teal-100 text-teal-800' : row.intended_action === 'repair' ? 'bg-orange-100 text-orange-800' : 'bg-emerald-100 text-emerald-800';
+    return (
+      <div className={`bg-slate-50 border border-slate-200 rounded-lg p-2.5 ${!isFirst ? 'ml-4 border-l-4 border-l-slate-300' : ''}`}>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-slate-800 truncate">{catName}{prodName ? ` / ${prodName}` : ''}</p>
+          </div>
+          <span className="text-sm font-bold text-slate-900 tabular-nums">{row.quantity}</span>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${actionColor}`}>{actionLabel}</span>
+        </div>
+      </div>
+    );
   }
 
   return (

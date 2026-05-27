@@ -19,6 +19,7 @@ interface NotifyInput {
   referenceId?: string | null;
   fallbackTitle: string;
   fallbackMessage: string;
+  url?: string;
 }
 
 function fill(template: string, params?: Record<string, string | number>): string {
@@ -38,16 +39,19 @@ export async function notifyUsers({
   referenceId,
   fallbackTitle,
   fallbackMessage,
+  url,
 }: NotifyInput): Promise<void> {
   const ids = userIds.filter(Boolean);
   if (ids.length === 0) return;
+  const data: Record<string, unknown> = { titleKey, messageKey, params: params ?? {} };
+  if (url) data.url = url;
   const rows = ids.map((uid) => ({
     user_id: uid,
     type,
     title: fill(fallbackTitle, params),
     message: fill(fallbackMessage, params),
     reference_id: referenceId ?? null,
-    data: { titleKey, messageKey, params: params ?? {} },
+    data,
   }));
   const { error } = await supabase.from('notifications').insert(rows);
   if (error) {

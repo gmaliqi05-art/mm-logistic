@@ -1688,6 +1688,7 @@ export const fr: typeof sq = {
       confirmCancel: 'Annuler ce lot de tri?',
       noProductsForCategory: 'Cette cat\u00e9gorie n\'a pas de produits configur\u00e9s',
       fromNote: 'Du bon de livraison',
+      dataFromCompany: 'Les donn\u00e9es ont \u00e9t\u00e9 d\u00e9finies par l\'entreprise. Vous pouvez ajuster les quantit\u00e9s si re\u00e7u diff\u00e9remment.',
       goesToRepair: 'Va en r\u00e9paration',
       status: {
         in_progress: 'En cours',
@@ -3498,6 +3499,13 @@ export const fr: typeof sq = {
     confirmAndSendToSorting: 'Confirmer et envoyer au tri',
     confirmStockPlusSorting: 'Confirmer (Stock + Tri)',
     registerToStock: 'Enregistrer en stock',
+    sortingBanner: {
+      allSortingTitle: 'Cette commande est pour le TRI',
+      allSortingDesc: 'Apr\u00e8s confirmation, les articles seront envoy\u00e9s directement au tri.',
+      mixedTitle: 'Cette commande comprend des articles pour le TRI et le STOCK',
+      mixedCompanyReviewed: 'Les articles de tri ont \u00e9t\u00e9 d\u00e9finis par l\'entreprise. Seuls les articles de stock n\u00e9cessitent une confirmation.',
+      mixedDesc: 'Les articles seront r\u00e9partis : certains pour le stock, certains pour le tri, certains pour la r\u00e9paration.',
+    },
     tabs: {
       deliveries: 'Livraisons',
       pickups: 'Enl\u00e8vements',

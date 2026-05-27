@@ -1686,6 +1686,7 @@ export const sq = {
       confirmCancel: 'Anulo kete grup selektimi?',
       noProductsForCategory: 'Kjo kategori nuk ka produkte te konfiguruara',
       fromNote: 'Nga fletderga',
+      dataFromCompany: 'Te dhenat jane vendosur nga kompania. Mund t\'i ndryshoni sasine nese keni marre ndryshe.',
       goesToRepair: 'Shkon per reparatur',
       status: {
         in_progress: 'Ne vazhdim',
@@ -3496,6 +3497,13 @@ export const sq = {
     confirmAndSendToSorting: 'Konfirmo dhe Dergo per Sortim',
     confirmStockPlusSorting: 'Konfirmo (Stok + Sortim)',
     registerToStock: 'Regjistro ne stok',
+    sortingBanner: {
+      allSortingTitle: 'Kjo porosi eshte per SORTIM',
+      allSortingDesc: 'Pas konfirmimit, artikujt do te dergohen direkt ne sortire.',
+      mixedTitle: 'Kjo porosi perfshin artikuj per SORTIM dhe STOK',
+      mixedCompanyReviewed: 'Artikujt per sortim jane vendosur nga kompania. Vetem artikujt per stok duhen konfirmuar.',
+      mixedDesc: 'Artikujt do te ndahen: disa per stok, disa per sortim, disa per reparim.',
+    },
     tabs: {
       deliveries: 'Dergesa',
       pickups: 'Te Marra',

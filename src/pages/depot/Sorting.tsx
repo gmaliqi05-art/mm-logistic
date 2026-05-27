@@ -674,6 +674,14 @@ export default function DepotSorting() {
             </div>
 
             <div className="p-5 space-y-4 overflow-y-auto">
+              {currentBatch.source_delivery_note_id && (
+                <div className="bg-sky-50 border border-sky-200 rounded-lg p-2.5 flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-sky-600 flex-shrink-0" />
+                  <p className="text-xs text-sky-800">
+                    {t('depot.sorting.dataFromCompany')}
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-gray-50 rounded-lg p-3">
                   <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1">

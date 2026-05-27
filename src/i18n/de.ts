@@ -1688,6 +1688,7 @@ export const de: typeof sq = {
       confirmCancel: 'Diesen Sortiervorgang abbrechen?',
       noProductsForCategory: 'Diese Kategorie hat keine Produkte',
       fromNote: 'Aus Lieferschein',
+      dataFromCompany: 'Daten wurden vom Unternehmen festgelegt. Sie können die Mengen anpassen, falls abweichend erhalten.',
       goesToRepair: 'Geht in Reparatur',
       status: {
         in_progress: 'Laufend',
@@ -3498,6 +3499,13 @@ export const de: typeof sq = {
     confirmAndSendToSorting: 'Best\u00e4tigen und zum Sortieren senden',
     confirmStockPlusSorting: 'Best\u00e4tigen (Bestand + Sortieren)',
     registerToStock: 'In den Bestand aufnehmen',
+    sortingBanner: {
+      allSortingTitle: 'Dieser Auftrag ist zum SORTIEREN',
+      allSortingDesc: 'Nach Best\u00e4tigung werden die Artikel direkt zum Sortieren geschickt.',
+      mixedTitle: 'Dieser Auftrag enth\u00e4lt Artikel zum SORTIEREN und BESTAND',
+      mixedCompanyReviewed: 'Sortier-Artikel wurden vom Unternehmen festgelegt. Nur Bestandsartikel m\u00fcssen best\u00e4tigt werden.',
+      mixedDesc: 'Artikel werden aufgeteilt: einige f\u00fcr Bestand, einige zum Sortieren, einige zur Reparatur.',
+    },
     tabs: {
       deliveries: 'Lieferungen',
       pickups: 'Abholungen',

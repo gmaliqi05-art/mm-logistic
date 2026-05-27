@@ -1691,6 +1691,7 @@ export const en: typeof sq = {
       confirmCancel: 'Cancel this sorting batch?',
       noProductsForCategory: 'This category has no configured products',
       fromNote: 'From note',
+      dataFromCompany: 'Data was set by the company. You can adjust quantities if you received differently.',
       goesToRepair: 'Goes to repair',
       status: {
         in_progress: 'In progress',
@@ -3501,6 +3502,13 @@ export const en: typeof sq = {
     confirmAndSendToSorting: 'Confirm and send to sorting',
     confirmStockPlusSorting: 'Confirm (Stock + Sorting)',
     registerToStock: 'Register to stock',
+    sortingBanner: {
+      allSortingTitle: 'This order is for SORTING',
+      allSortingDesc: 'After confirmation, items will be sent directly to sorting.',
+      mixedTitle: 'This order includes items for SORTING and STOCK',
+      mixedCompanyReviewed: 'Sorting items were set by the company. Only stock items need confirmation.',
+      mixedDesc: 'Items will be split: some for stock, some for sorting, some for repair.',
+    },
     tabs: {
       deliveries: 'Deliveries',
       pickups: 'Pickups',
