@@ -23,7 +23,7 @@ import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { ProductCategory, PalletSortingBatch, PalletSortingItem } from '../../types';
-import { epalClassRank, isEuroPaletteName, isNewPalletProduct } from '../../utils/productSort';
+import { epalClassRank } from '../../utils/productSort';
 
 interface CategoryProduct {
   id: string;
@@ -69,11 +69,6 @@ const DEFEKT_INPUT_ID = '__defekt__';
 function isDefectProduct(name: string) {
   const n = (name || '').toLowerCase();
   return n.includes('defekt') || n.includes('defect') || n.includes('damaged');
-}
-
-function isClassSortProduct(name: string): boolean {
-  const n = (name || '').toLowerCase();
-  return isEuroPaletteName(n) || isNewPalletProduct(n);
 }
 
 const PRIMARY_ORDER = ['a klasse', 'b klasse', 'c klasse', 'defekt'];
@@ -233,7 +228,9 @@ export default function DepotSorting() {
     const productRows: ItemInput[] = catProducts
       .filter((p) => {
         if (isDefectProduct(p.name)) return false;
-        if (isClassMode && isClassSortProduct(p.name) && primaryRank(p.name) >= 99) return false;
+        // In class mode, only keep products that are class grades (A/B/C)
+        // Hide raw product names like "Euro Paletten", "Industrie Paletten"
+        if (isClassMode && primaryRank(p.name) >= 99) return false;
         return true;
       })
       .map((p) => {
@@ -312,24 +309,33 @@ export default function DepotSorting() {
 
   async function persistExtraItems() {
     if (extraItems.length === 0) return;
-    const depotId = profile?.depot_id ?? null;
+    const depotId = profile?.depot_id;
+    if (!depotId) return;
     const companyId = profile!.company_id!;
 
-    for (const item of extraItems) {
-      const qty = Math.max(0, parseInt(item.quantity || '0', 10) || 0);
-      if (qty <= 0) continue;
-      await supabase.from('stock_movements').insert({
-        company_id: companyId,
-        depot_id: depotId,
-        category_id: item.category_id,
-        category_product_id: item.category_product_id,
-        movement_type: 'entry',
-        quantity: qty,
-        condition: item.condition,
-        performed_by: profile!.id,
-        notes: 'Gjetur gjate sortimit',
-      });
-    }
+    const rows = extraItems
+      .map((item) => {
+        const qty = Math.max(0, parseInt(item.quantity || '0', 10) || 0);
+        if (qty <= 0) return null;
+        const cond = item.condition === 'damaged' ? 'damaged' : 'good';
+        return {
+          company_id: companyId,
+          depot_id: depotId,
+          category_id: item.category_id,
+          category_product_id: item.category_product_id,
+          movement_type: 'entry' as const,
+          quantity: qty,
+          condition_before: cond,
+          condition_after: cond,
+          performed_by: profile!.id,
+          notes: 'Gjetur gjate sortimit',
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+
+    if (rows.length === 0) return;
+    const { error: movErr } = await supabase.from('stock_movements').insert(rows);
+    if (movErr) throw movErr;
   }
 
   async function handleSaveProgress() {
