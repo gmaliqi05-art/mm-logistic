@@ -166,7 +166,7 @@ export const cookies = {
     },
     section10: {
       title: 'Kontakt f\u00fcr Cookie-Fragen',
-      body: 'F\u00fcr Fragen zu dieser Cookie-Richtlinie oder zur Datenverarbeitung durch Cookies kontaktieren Sie uns:\n\nE-Mail: privacy@mm-logistic.eu\nAnschrift: (siehe Impressum)\n\nSie k\u00f6nnen auch unseren Datenschutzbeauftragten (DPO) kontaktieren:\n[dpo@firma.de]\n\nWir haben eine gesetzliche Pflicht, innerhalb von 30 Tagen nach Erhalt Ihrer Anfrage zu antworten.',
+      body: 'F\u00fcr Fragen zu dieser Cookie-Richtlinie oder zur Datenverarbeitung durch Cookies kontaktieren Sie uns:\n\nE-Mail: privacy@mm-logistic.eu\nAnschrift: (siehe Impressum)\n\nSie k\u00f6nnen auch unseren Datenschutzbeauftragten (DPO) kontaktieren:\n[info@mm-logistic.eu]\n\nWir haben eine gesetzliche Pflicht, innerhalb von 30 Tagen nach Erhalt Ihrer Anfrage zu antworten.',
     },
   },
 
