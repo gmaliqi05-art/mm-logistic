@@ -138,7 +138,7 @@ export default function DepotReports() {
       const [flowRes, flowLookup, prodLookup, performerLookup, repRes, sortRes, damRes, damHistRes, damEntryRes] = await Promise.all([
         supabase
           .from('stock_movements')
-          .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner')
+          .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner, notes')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .gte('created_at', since)
@@ -146,7 +146,7 @@ export default function DepotReports() {
           .limit(200),
         supabase.from('product_categories').select('id, name').eq('company_id', companyId),
         supabase.from('category_products').select('id, name').eq('company_id', companyId),
-        supabase.from('profiles').select('id, full_name').eq('company_id', companyId).in('role', ['depot_worker', 'company_admin']),
+        supabase.from('profiles').select('id, full_name, role').eq('company_id', companyId),
         supabase
           .from('v_depot_repair_productivity')
           .select('repair_date, category_name, product_name, total_in, total_repaired, total_scrapped, worker_full_name, opened_by_full_name')
@@ -178,7 +178,7 @@ export default function DepotReports() {
           .limit(200),
         supabase
           .from('stock_movements')
-          .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner')
+          .select('created_at, movement_type, category_id, category_product_id, quantity, performed_by, source_partner, notes')
           .eq('company_id', companyId)
           .eq('depot_id', depotId)
           .eq('condition_after', 'damaged')
@@ -197,7 +197,18 @@ export default function DepotReports() {
       const prodMap = new Map<string, string>();
       (prodLookup.data ?? []).forEach((p: { id: string; name: string }) => prodMap.set(p.id, p.name));
       const perfMap = new Map<string, string>();
-      (performerLookup.data ?? []).forEach((p: { id: string; full_name: string }) => perfMap.set(p.id, p.full_name));
+      const roleMap = new Map<string, string>();
+      (performerLookup.data ?? []).forEach((p: { id: string; full_name: string; role: string }) => {
+        perfMap.set(p.id, p.full_name);
+        roleMap.set(p.id, p.role);
+      });
+      const resolveName = (id: string | null, notes?: string) => {
+        if (!id) return '';
+        const role = roleMap.get(id);
+        const isSortingOrigin = notes && /sorting batch/i.test(notes);
+        if (role === 'driver' && isSortingOrigin) return '';
+        return perfMap.get(id) ?? '';
+      };
       const flowEnriched = (flowRes.data ?? []).map((r: any) => ({
         flow_date: (r.created_at || '').substring(0, 10),
         movement_type: r.movement_type,
@@ -206,7 +217,7 @@ export default function DepotReports() {
         quantity: r.quantity,
         category_name: r.category_id ? catMap.get(r.category_id) ?? '' : '',
         product_name: r.category_product_id ? prodMap.get(r.category_product_id) ?? '' : '',
-        performer_name: r.performed_by ? perfMap.get(r.performed_by) ?? '' : '',
+        performer_name: resolveName(r.performed_by, r.notes),
         source_partner: r.source_partner || '',
       })) as FlowRow[];
 
@@ -216,7 +227,7 @@ export default function DepotReports() {
         category_name: r.category_id ? catMap.get(r.category_id) ?? '' : '',
         product_name: r.category_product_id ? prodMap.get(r.category_product_id) ?? '' : '',
         quantity: r.quantity,
-        performer_name: r.performed_by ? perfMap.get(r.performed_by) ?? '' : '',
+        performer_name: resolveName(r.performed_by, r.notes),
         source_partner: r.source_partner || '',
       })) as DamagedEntryRow[];
 
