@@ -823,17 +823,24 @@ function ReviewModal({
       });
       setRows(autoRouted);
       await persistItems(autoRouted);
+
+      const allAreSorting = autoRouted.every((r) => r.intended_action === 'sorting');
+
       const prevAi = (note.ai_extracted_json as any) || null;
       const sanitizedAi = prevAi
         ? { ...prevAi, line_items: [], _original_line_items: prevAi.line_items ?? prevAi._original_line_items ?? null, _company_reviewed: true }
         : null;
       const updatePayload: Record<string, any> = {
-        status: 'pending_stock_confirmation',
+        status: allAreSorting ? 'confirmed' : 'pending_stock_confirmation',
         company_reviewed_by: profile!.id,
         company_reviewed_at: new Date().toISOString(),
         ai_extracted_json: sanitizedAi,
         updated_at: new Date().toISOString(),
       };
+      if (allAreSorting) {
+        updatePayload.stock_confirmed_by = profile!.id;
+        updatePayload.stock_confirmed_at = new Date().toISOString();
+      }
       if (partnerIsOwnCompany) {
         updatePayload.auto_register_partner = false;
         updatePayload.partner_id = null;
@@ -846,30 +853,91 @@ function ReviewModal({
       if (scanUrl && !attachUrl) {
         updatePayload.attachment_url = scanUrl;
       }
-      const { error: upErr } = await supabase
-        .from('delivery_notes')
-        .update(updatePayload)
-        .eq('id', note.id);
-      if (upErr) throw upErr;
 
-      if (note.assigned_depot_id) {
+      if (allAreSorting && depotId) {
+        const { data: persistedItems } = await supabase
+          .from('delivery_note_items')
+          .select('id, category_id, quantity, intended_action, notes')
+          .eq('delivery_note_id', note.id)
+          .eq('intended_action', 'sorting');
+        const createdBatchIds: string[] = [];
+        if (persistedItems && persistedItems.length > 0) {
+          for (const item of persistedItems) {
+            if (!item.category_id || !item.quantity) continue;
+            const { data: upserted } = await supabase
+              .from('pallet_sorting_batches')
+              .upsert({
+                company_id: profile!.company_id!,
+                depot_id: depotId,
+                category_id: item.category_id,
+                source_delivery_note_id: note.id,
+                source_item_id: item.id,
+                total_received: item.quantity,
+                status: 'in_progress',
+                notes: item.notes || '',
+                created_by: profile!.id,
+                reference_number_snapshot: (note as any).reference_number || note.note_number || '',
+              }, { onConflict: 'source_item_id' })
+              .select('id')
+              .maybeSingle();
+            if (upserted) createdBatchIds.push(upserted.id);
+          }
+        }
+
+        const { error: upErr } = await supabase
+          .from('delivery_notes')
+          .update(updatePayload)
+          .eq('id', note.id);
+        if (upErr) throw upErr;
+
         const { data: depotUsers } = await supabase
           .from('profiles')
           .select('id')
-          .eq('depot_id', note.assigned_depot_id)
+          .eq('depot_id', depotId)
           .eq('role', 'depot_worker')
           .eq('is_active', true);
         if (depotUsers && depotUsers.length > 0) {
+          const sortingUrl = createdBatchIds.length === 1
+            ? `/depot/sorting?batch=${createdBatchIds[0]}`
+            : '/depot/sorting';
           await notifyUsers({
             userIds: depotUsers.map((u) => u.id),
             type: 'delivery',
-            titleKey: 'notifications.templates.deliveryForStock.title',
-            messageKey: 'notifications.templates.deliveryForStock.body',
+            titleKey: 'notifications.templates.sortingRequested.title',
+            messageKey: 'notifications.templates.sortingRequested.body',
             params: { number: note.note_number },
             referenceId: note.id,
-            fallbackTitle: 'Dergese per stok',
-            fallbackMessage: `${note.note_number} u miratua. Verifikoni dhe regjistrojeni ne stok.`,
+            fallbackTitle: 'Sortim i ri',
+            fallbackMessage: `${note.note_number} kerkon sortim ne depo.`,
+            url: sortingUrl,
           });
+        }
+      } else {
+        const { error: upErr } = await supabase
+          .from('delivery_notes')
+          .update(updatePayload)
+          .eq('id', note.id);
+        if (upErr) throw upErr;
+
+        if (note.assigned_depot_id) {
+          const { data: depotUsers } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('depot_id', note.assigned_depot_id)
+            .eq('role', 'depot_worker')
+            .eq('is_active', true);
+          if (depotUsers && depotUsers.length > 0) {
+            await notifyUsers({
+              userIds: depotUsers.map((u) => u.id),
+              type: 'delivery',
+              titleKey: 'notifications.templates.deliveryForStock.title',
+              messageKey: 'notifications.templates.deliveryForStock.body',
+              params: { number: note.note_number },
+              referenceId: note.id,
+              fallbackTitle: 'Dergese per stok',
+              fallbackMessage: `${note.note_number} u miratua. Verifikoni dhe regjistrojeni ne stok.`,
+            });
+          }
         }
       }
       await onDone();
