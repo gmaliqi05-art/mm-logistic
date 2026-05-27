@@ -123,7 +123,7 @@ function partnerLabel(b: { source_delivery_note?: DeliveryNoteSource | null }): 
 export default function DepotSorting() {
   const { profile } = useAuth();
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,7 +145,7 @@ export default function DepotSorting() {
   useEffect(() => {
     const batchId = searchParams.get('batch');
     if (!batchId || batches.length === 0) return;
-    const b = batches.find((x) => x.id === batchId);
+    const b = batches.find((x) => x.id === batchId && x.status === 'in_progress');
     if (b && activeBatchId !== b.id) openBatch(b);
   }, [searchParams, batches]);
 
@@ -275,6 +275,9 @@ export default function DepotSorting() {
     setItemInputs([]);
     setExtraItems([]);
     setEditTotal('');
+    if (searchParams.has('batch')) {
+      setSearchParams((prev) => { prev.delete('batch'); return prev; }, { replace: true });
+    }
   };
 
   async function persistItems(batchId: string) {
@@ -625,67 +628,68 @@ export default function DepotSorting() {
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
             {t('depot.sorting.recent')}
           </h2>
-          <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
-            <ul className="divide-y divide-gray-50">
-              {recent.map((b) => {
-                const cat = categories.find((c) => c.id === b.category_id);
-                const sorted = b.items.reduce((s, i) => s + i.quantity, 0);
-                const partner = partnerLabel(b);
-                const bd = computeBreakdown(b.items, productNameById);
-                return (
-                  <li key={b.id} className="flex items-start gap-3 px-4 py-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {recent.map((b) => {
+              const cat = categories.find((c) => c.id === b.category_id);
+              const sorted = b.items.reduce((s, i) => s + i.quantity, 0);
+              const partner = partnerLabel(b);
+              const bd = computeBreakdown(b.items, productNameById);
+              const isCompleted = b.status === 'completed';
+              return (
+                <div key={b.id} className="bg-white border border-gray-100 rounded-xl p-3 space-y-2">
+                  <div className="flex items-start gap-2.5">
                     <div
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        b.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
                       }`}
                     >
-                      {b.status === 'completed' ? <CheckCircle2 className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                      {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <X className="w-4 h-4" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{cat?.name ?? '-'}</p>
-                      <p className="text-xs text-gray-500">
-                        {partner && <span className="font-medium text-slate-600">{partner} &middot; </span>}
-                        {b.reference_number_snapshot && <span className="text-teal-600">{b.reference_number_snapshot} &middot; </span>}
-                        {sorted} / {b.total_received} &middot;{' '}
-                        {new Date(b.completed_at || b.updated_at).toLocaleDateString()}
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{cat?.name ?? '-'}</p>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                            isCompleted ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {t(`depot.sorting.status.${b.status}`)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {partner && <span className="font-medium text-slate-600">{partner} · </span>}
+                        {b.reference_number_snapshot && <span className="text-teal-600">{b.reference_number_snapshot} · </span>}
+                        {sorted}/{b.total_received} · {new Date(b.completed_at || b.updated_at).toLocaleDateString()}
                       </p>
-                      {b.status === 'completed' && sorted > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {bd.a > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">A: {bd.a}</span>}
-                          {bd.b > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">B: {bd.b}</span>}
-                          {bd.c > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-medium">C: {bd.c}</span>}
-                          {bd.defekt > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">Defekt: {bd.defekt}</span>}
-                          {bd.other > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Te tjera: {bd.other}</span>}
-                        </div>
-                      )}
                     </div>
-                    {b.status === 'completed' && !b.report_sent_at && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleSendReport(b); }}
-                        disabled={submitting}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-50"
-                      >
-                        <Send className="w-3 h-3" /> Dergo raportin
-                      </button>
-                    )}
-                    {b.status === 'completed' && b.report_sent_at && (
-                      <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-teal-50 text-teal-700">
-                        Raporti u dergua
-                      </span>
-                    )}
-                    <span
-                      className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                        b.status === 'completed'
-                          ? 'bg-green-50 text-green-700'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}
+                  </div>
+                  {isCompleted && sorted > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {bd.a > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">A: {bd.a}</span>}
+                      {bd.b > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">B: {bd.b}</span>}
+                      {bd.c > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-medium">C: {bd.c}</span>}
+                      {bd.defekt > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">Defekt: {bd.defekt}</span>}
+                      {bd.other > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Te tjera: {bd.other}</span>}
+                    </div>
+                  )}
+                  {isCompleted && !b.report_sent_at && (
+                    <button
+                      onClick={() => handleSendReport(b)}
+                      disabled={submitting}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-50"
                     >
-                      {t(`depot.sorting.status.${b.status}`)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
+                      <Send className="w-3 h-3" /> Dergo raportin
+                    </button>
+                  )}
+                  {isCompleted && b.report_sent_at && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-teal-700">
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span className="font-medium">Raporti u dergua</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
