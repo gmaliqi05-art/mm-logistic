@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireEnv } from "../_shared/env.ts";
 import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
@@ -97,8 +98,8 @@ Deno.serve(async (req: Request) => {
     if (safeIds.length === 0) return jsonRes({ error: "Invalid recipient ids" }, 400);
     if (!title || !body) return jsonRes({ error: "Title and body required" }, 400);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = requireEnv("SUPABASE_URL");
+    const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
     const idsCsv = safeIds.map((i) => `"${i}"`).join(",");
     const tokenRes = await fetch(

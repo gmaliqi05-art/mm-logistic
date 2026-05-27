@@ -1,19 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  QrCode,
-  Plus,
-  Edit3,
-  Trash2,
-  Save,
-  X,
-  Loader2,
-  AlertTriangle,
-  Eye,
-  EyeOff,
-  ExternalLink,
-  Copy,
-  CheckCircle,
-} from 'lucide-react';
+import { QrCode, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink, Copy, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
 import { PageSkeleton } from '../../components/ui/Skeleton';
@@ -50,7 +36,7 @@ export default function QRCodes() {
       const { data, error: err } = await supabase.from('qr_codes').select('*').order('created_at', { ascending: false });
       if (err) throw err;
       setCodes(data ?? []);
-    } catch (err: any) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) { setError(err.message); } finally { setLoading(false); }
   }
 
   function openCreate() { setEditing(null); setForm(emptyQR); setCreating(true); }
@@ -71,7 +57,7 @@ export default function QRCodes() {
       }
       closeModal();
       await fetchCodes();
-    } catch (err: any) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err.message); } finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
@@ -80,7 +66,7 @@ export default function QRCodes() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchCodes();
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err.message); }
   }
 
   function getQRImageUrl(url: string, size = 200) {

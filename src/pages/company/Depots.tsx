@@ -148,7 +148,7 @@ export default function CompanyDepots() {
       setWorkers((workersRes.data ?? []) as Profile[]);
       setCategories((catsRes.data ?? []) as ProductCategory[]);
       setRepairs((repairsRes.data ?? []) as RepairLog[]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -206,7 +206,7 @@ export default function CompanyDepots() {
       setDepotModal(false);
       setDepotForm(emptyDepotForm);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -222,7 +222,7 @@ export default function CompanyDepots() {
       if (err) throw err;
       await logAudit('delete', 'depot', d.id, { name: d.name });
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }
@@ -235,7 +235,7 @@ export default function CompanyDepots() {
         .eq('id', d.id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }
@@ -312,7 +312,7 @@ export default function CompanyDepots() {
       setWorkerEditing(null);
       setWorkerForm(emptyWorkerForm);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -327,7 +327,7 @@ export default function CompanyDepots() {
         .eq('id', w.id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }
@@ -363,7 +363,7 @@ export default function CompanyDepots() {
       setRepairEditing(null);
       setRepairForm(emptyRepairForm);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -375,7 +375,7 @@ export default function CompanyDepots() {
       const { error: err } = await supabase.from('depot_repairs').delete().eq('id', id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }

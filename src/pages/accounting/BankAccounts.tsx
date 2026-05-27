@@ -95,7 +95,7 @@ export default function BankAccounts() {
       const json = await res.json();
       if (!json.success) throw new Error(json.error || 'Import failed');
       setImportResult(`${json.line_count} rreshta te importuar, ${json.matches_suggested} sugjerime perputhjeje (${json.format}).`);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Import failed');
     } finally {
       setImporting(false);
@@ -118,7 +118,7 @@ export default function BankAccounts() {
         .order('is_default', { ascending: false });
       if (err) throw err;
       setAccounts(data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -137,7 +137,7 @@ export default function BankAccounts() {
         .limit(50);
       if (err) throw err;
       setAccountTransactions(data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoadingTx(false);
@@ -212,7 +212,7 @@ export default function BankAccounts() {
       setEditingId(null);
       setForm(emptyForm);
       await fetchAccounts();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);
@@ -233,7 +233,7 @@ export default function BankAccounts() {
         .eq('id', accountId);
       if (err) throw err;
       await fetchAccounts();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim');
     }
   };

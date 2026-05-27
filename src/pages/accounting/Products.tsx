@@ -95,7 +95,7 @@ export default function Products() {
 
       setProducts(productsRes.data ?? []);
       setCategories(categoriesRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -229,7 +229,7 @@ export default function Products() {
 
       const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filePath);
       return urlData.publicUrl;
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate ngarkimit te imazhit');
       return null;
     } finally {
@@ -314,7 +314,7 @@ export default function Products() {
 
       closeModal();
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);
@@ -329,7 +329,7 @@ export default function Products() {
         .eq('id', product.id);
       if (toggleError) throw toggleError;
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim');
     }
   };
@@ -353,7 +353,7 @@ export default function Products() {
       setFormData((prev) => ({ ...prev, category_id: data.id }));
       setNewCategoryName('');
       setShowNewCategory(false);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate ruajtjes se kategorise');
     } finally {
       setSavingCategory(false);

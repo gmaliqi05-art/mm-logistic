@@ -1,11 +1,19 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+let _admin: SupabaseClient | null = null;
 
-const admin = createClient(supabaseUrl, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+function getAdmin(): SupabaseClient {
+  if (_admin) return _admin;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not configured");
+  }
+  _admin = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  return _admin;
+}
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -21,6 +29,7 @@ export async function checkRateLimit(
   const now = new Date();
   const windowStartCutoff = new Date(now.getTime() - windowMs);
 
+  const admin = getAdmin();
   const { data: existing } = await admin
     .from("rate_limit_buckets")
     .select("key, count, window_start")

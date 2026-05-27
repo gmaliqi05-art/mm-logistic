@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { requireCaller, forbidden } from "../_shared/requireCaller.ts";
+import { requireEnv } from "../_shared/env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -284,8 +285,8 @@ Deno.serve(async (req: Request) => {
     if (!mode) throw new Error("mode required");
 
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      requireEnv("SUPABASE_URL"),
+      requireEnv("SUPABASE_SERVICE_ROLE_KEY")
     );
 
     const { data: scan, error: scanErr } = await supabase
@@ -358,8 +359,8 @@ Deno.serve(async (req: Request) => {
       const { scanId } = (await req.clone().json().catch(() => ({}))) as Payload;
       if (scanId) {
         const supabase = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+          requireEnv("SUPABASE_URL"),
+          requireEnv("SUPABASE_SERVICE_ROLE_KEY")
         );
         await supabase
           .from("fleet_scanned_documents")

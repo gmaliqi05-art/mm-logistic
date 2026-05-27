@@ -1,17 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Link2,
-  Plus,
-  Edit3,
-  Trash2,
-  Save,
-  X,
-  Loader2,
-  AlertTriangle,
-  Eye,
-  EyeOff,
-  ExternalLink,
-} from 'lucide-react';
+import { Link2, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
 import { PageSkeleton } from '../../components/ui/Skeleton';
@@ -57,7 +45,7 @@ export default function FooterLinks() {
       const { data, error: err } = await supabase.from('footer_links').select('*').order('category').order('sort_order');
       if (err) throw err;
       setLinks(data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -98,7 +86,7 @@ export default function FooterLinks() {
       }
       closeModal();
       await fetchLinks();
-    } catch (err: any) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err.message); } finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
@@ -107,7 +95,7 @@ export default function FooterLinks() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchLinks();
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err.message); }
   }
 
   async function toggleActive(link: FooterLink) {
@@ -115,7 +103,7 @@ export default function FooterLinks() {
       const { error: err } = await supabase.from('footer_links').update({ is_active: !link.is_active }).eq('id', link.id);
       if (err) throw err;
       await fetchLinks();
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err.message); }
   }
 
   const getCatConfig = (cat: string) => categories.find((c) => c.value === cat) || { value: cat, label: cat, color: 'bg-gray-100 text-gray-700' };

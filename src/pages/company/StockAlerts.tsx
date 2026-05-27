@@ -1,17 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  AlertCircle,
-  Plus,
-  Edit2,
-  Trash2,
-  X,
-  Loader2,
-  AlertTriangle,
-  Bell,
-  BellOff,
-  Package,
-  Warehouse,
-} from 'lucide-react';
+import { AlertCircle, Plus, CreditCard as Edit2, Trash2, X, Loader2, AlertTriangle, Bell, BellOff, Package, Warehouse } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -71,7 +59,7 @@ function StockAlertsContent() {
       setDepots(depotsRes.data ?? []);
       setCategories(catsRes.data ?? []);
       setStocks(stockRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -100,7 +88,7 @@ function StockAlertsContent() {
       setEditingId(null);
       setForm(emptyForm);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -112,7 +100,7 @@ function StockAlertsContent() {
       const { error: err } = await supabase.from('stock_alerts').update({ is_active: !alert.is_active }).eq('id', alert.id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }
@@ -123,7 +111,7 @@ function StockAlertsContent() {
       const { error: err } = await supabase.from('stock_alerts').delete().eq('id', id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }

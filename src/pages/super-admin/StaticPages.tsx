@@ -1,16 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  FileText,
-  Plus,
-  Edit3,
-  Trash2,
-  Save,
-  X,
-  Loader2,
-  AlertTriangle,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
+import { FileText, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
 import { PageSkeleton } from '../../components/ui/Skeleton';
@@ -58,7 +47,7 @@ export default function StaticPages() {
         .order('sort_order');
       if (err) throw err;
       setPages(data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -124,7 +113,7 @@ export default function StaticPages() {
       }
       closeModal();
       await fetchPages();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setSaving(false);
@@ -137,7 +126,7 @@ export default function StaticPages() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchPages();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     }
   }
@@ -150,7 +139,7 @@ export default function StaticPages() {
         .eq('id', page.id);
       if (err) throw err;
       await fetchPages();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     }
   }

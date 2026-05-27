@@ -160,7 +160,7 @@ export default function Purchases() {
       setContacts(contactsRes.data ?? []);
       setProducts(productsRes.data ?? []);
       setBankAccounts(bankRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -385,7 +385,7 @@ export default function Purchases() {
 
       closeModal();
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -421,7 +421,7 @@ export default function Purchases() {
       }
 
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }

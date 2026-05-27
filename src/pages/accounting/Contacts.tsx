@@ -108,7 +108,7 @@ export default function Contacts() {
 
       if (err) throw err;
       setContacts(data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -171,7 +171,7 @@ export default function Contacts() {
       setEditingId(null);
       setForm(emptyForm);
       await fetchContacts();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -187,7 +187,7 @@ export default function Contacts() {
         .eq('id', contact.id);
       if (err) throw err;
       await fetchContacts();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }

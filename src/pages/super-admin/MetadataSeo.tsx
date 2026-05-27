@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Globe,
-  Plus,
-  Edit3,
-  Trash2,
-  Save,
-  X,
-  Loader2,
-  AlertTriangle,
-  Search,
-} from 'lucide-react';
+import { Globe, Plus, CreditCard as Edit3, Trash2, Save, X, Loader2, AlertTriangle, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
 import { PageSkeleton } from '../../components/ui/Skeleton';
@@ -45,7 +35,7 @@ export default function MetadataSeo() {
       const { data, error: err } = await supabase.from('seo_metadata').select('*').order('page_path');
       if (err) throw err;
       setEntries(data ?? []);
-    } catch (err: any) { setError(err.message); } finally { setLoading(false); }
+    } catch (err) { setError(err.message); } finally { setLoading(false); }
   }
 
   function openCreate() { setEditing(null); setForm(emptySeo); setCreating(true); }
@@ -72,7 +62,7 @@ export default function MetadataSeo() {
       }
       closeModal();
       await fetchEntries();
-    } catch (err: any) { setError(err.message); } finally { setSaving(false); }
+    } catch (err) { setError(err.message); } finally { setSaving(false); }
   }
 
   async function handleDelete(id: string) {
@@ -81,7 +71,7 @@ export default function MetadataSeo() {
       if (err) throw err;
       setDeleteConfirm(null);
       await fetchEntries();
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err.message); }
   }
 
   const showModal = creating || editing !== null;

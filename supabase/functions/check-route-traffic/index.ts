@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireEnv } from "../_shared/env.ts";
 import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
@@ -7,8 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+let _url: string, _key: string;
+function getEnv() {
+  if (!_url) { _url = requireEnv("SUPABASE_URL"); _key = requireEnv("SUPABASE_SERVICE_ROLE_KEY"); }
+  return { url: _url, key: _key };
+}
 
 interface Delivery {
   id: string;
@@ -40,11 +44,12 @@ async function getCompany(companyId: string): Promise<CompanyConfig | null> {
 }
 
 async function pg<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+  const { url, key } = getEnv();
+  const res = await fetch(`${url}/rest/v1/${path}`, {
     ...init,
     headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
+      apikey: key,
+      Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
       Prefer: "return=representation",
       ...(init.headers ?? {}),
@@ -161,11 +166,12 @@ async function checkOne(delivery: Delivery): Promise<{ checked: boolean; alerted
   );
   const recipientIds = Array.from(new Set([delivery.assigned_driver_id, ...companyAdmins.map((p) => p.id)]));
 
-  await fetch(`${SUPABASE_URL}/functions/v1/dispatch-notification`, {
+  const { url: envUrl, key: envKey } = getEnv();
+  await fetch(`${envUrl}/functions/v1/dispatch-notification`, {
     method: "POST",
     headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
+      apikey: envKey,
+      Authorization: `Bearer ${envKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

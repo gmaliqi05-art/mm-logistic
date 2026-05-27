@@ -93,7 +93,7 @@ export default function DepotDeliveryNotes() {
         }
         setBatchesByNote(map);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);

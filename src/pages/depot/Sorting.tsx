@@ -182,7 +182,7 @@ export default function DepotSorting() {
       setCategories((catRes.data ?? []) as ProductCategory[]);
       setProducts((prodRes.data ?? []) as CategoryProduct[]);
       setBatches((batchRes.data ?? []) as BatchWithItems[]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -348,7 +348,7 @@ export default function DepotSorting() {
       setSuccess(t('depot.sorting.progressSaved'));
       setTimeout(() => setSuccess(null), 2500);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSubmitting(false);
@@ -376,7 +376,7 @@ export default function DepotSorting() {
       setTimeout(() => setSuccess(null), 3000);
       closeBatch();
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSubmitting(false);
@@ -394,7 +394,7 @@ export default function DepotSorting() {
       if (updErr) throw updErr;
       if (activeBatchId === batchId) closeBatch();
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     } finally {
       setSubmitting(false);
@@ -460,7 +460,7 @@ export default function DepotSorting() {
       setSuccess(t('depot.sorting.reportSent') || 'Raporti u dergua me sukses');
       setTimeout(() => setSuccess(null), 3000);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate dergimit te raportit');
     } finally {
       setSubmitting(false);

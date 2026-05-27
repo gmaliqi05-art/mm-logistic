@@ -113,7 +113,7 @@ export default function InvoicePrint() {
       };
 
       setPreviewData(data);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('Error loading invoice for print', { error: err });
     } finally {
       setLoading(false);

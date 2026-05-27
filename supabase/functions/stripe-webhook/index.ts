@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14.25.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { requireEnv } from "../_shared/env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,8 +10,11 @@ const corsHeaders = {
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+let _url: string, _key: string;
+function getEnv() {
+  if (!_url) { _url = requireEnv("SUPABASE_URL"); _key = requireEnv("SUPABASE_SERVICE_ROLE_KEY"); }
+  return { url: _url, key: _key };
+}
 
 async function getStripeSecrets(
   supabase: ReturnType<typeof createClient>,
@@ -42,10 +46,11 @@ async function notifySuperAdmins(
   amountEur: number,
 ): Promise<void> {
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/dispatch-notification`, {
+    const { url, key } = getEnv();
+    await fetch(`${url}/functions/v1/dispatch-notification`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${SERVICE_KEY}`,
+        Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -71,10 +76,11 @@ async function sendWelcomeEmail(
   companyName: string,
 ): Promise<void> {
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+    const { url, key } = getEnv();
+    await fetch(`${url}/functions/v1/send-email`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${SERVICE_KEY}`,
+        Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -97,7 +103,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { url: sbUrl, key: sbKey } = getEnv();
+    const supabase = createClient(sbUrl, sbKey);
     const secrets = await getStripeSecrets(supabase);
 
     if (!secrets) {

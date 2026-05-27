@@ -449,7 +449,7 @@ function ReviewModal({
       if (dbErr) throw dbErr;
 
       setScannedUrl(url);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Ngarkimi deshtoi');
     } finally {
       setUploading(false);
@@ -466,7 +466,7 @@ function ReviewModal({
         .eq('id', note.id);
       if (dbErr) throw dbErr;
       setScannedUrl(null);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Heqja deshtoi');
     } finally {
       setUploading(false);
@@ -941,7 +941,7 @@ function ReviewModal({
         }
       }
       await onDone();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim');
     } finally {
       setSaving(null);
@@ -1122,7 +1122,7 @@ function ReviewModal({
         });
       }
       await onDone();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim');
     } finally {
       setSaving(null);
@@ -1310,7 +1310,7 @@ function ReviewModal({
       } else {
         await onDone();
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate regjistrimit ne stok');
     } finally {
       setSaving(null);
@@ -1369,7 +1369,7 @@ function ReviewModal({
         }
       }
       await onDone();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim');
     } finally {
       setSaving(null);
@@ -2311,7 +2311,7 @@ function SplitRow({
       setCreateCatName('');
       setCreateMode(null);
       onUpdate(row._key, { category_id: cat.id, product_id: null, auto_matched: false });
-    } catch (err: any) {
+    } catch (err) {
       alert(err.message || 'Gabim');
     } finally {
       setCreating(false);
@@ -2326,7 +2326,7 @@ function SplitRow({
       setCreateProdName('');
       setCreateMode(null);
       onUpdate(row._key, { product_id: prod.id, auto_matched: false });
-    } catch (err: any) {
+    } catch (err) {
       alert(err.message || 'Gabim');
     } finally {
       setCreating(false);

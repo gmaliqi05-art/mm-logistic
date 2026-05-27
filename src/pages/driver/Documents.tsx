@@ -79,7 +79,7 @@ export default function DriverDocuments() {
         .limit(300);
       if (err) throw err;
       setCompletedNotes((data as CompletedNote[]) ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);

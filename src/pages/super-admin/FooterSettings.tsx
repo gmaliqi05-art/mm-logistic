@@ -45,7 +45,7 @@ export default function FooterSettings() {
       const map: Record<string, string> = {};
       (data ?? []).forEach((d) => { map[d.key] = d.value; });
       setSettings(map);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -68,7 +68,7 @@ export default function FooterSettings() {
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setSaving(false);

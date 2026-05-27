@@ -126,7 +126,7 @@ export default function DepotOutgoing() {
       setProducts(prodRes.data ?? []);
       setStockData((stockRes.data ?? []) as StockRow[]);
       setHistory((histRes.data ?? []) as unknown as HistoryRow[]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -437,7 +437,7 @@ export default function DepotOutgoing() {
       setAiNotice(null);
       setSuccess(t('depot.outgoing.savedOk') || 'Dalja u regjistrua me sukses');
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSubmitting(false);

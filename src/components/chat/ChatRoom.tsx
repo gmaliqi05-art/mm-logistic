@@ -153,7 +153,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
 
       const enriched = await enrichRooms(roomsData ?? []);
       setRooms(enriched);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -190,7 +190,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
 
       const enriched = await enrichRooms(roomsData ?? []);
       setRooms(enriched);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -260,7 +260,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
 
       if (err) throw err;
       setMessages(data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setMessagesLoading(false);
@@ -370,7 +370,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
         throw err;
       }
 
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSending'));
     } finally {
       setSending(false);
@@ -422,7 +422,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
         throw msgErr;
       }
 
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSending'));
     } finally {
       setUploading(false);
@@ -440,7 +440,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
 
       if (err) throw err;
       setMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, is_deleted: true } : m)));
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
     setShowDeleteConfirm(null);
@@ -505,7 +505,7 @@ export default function ChatRoomComponent({ channelPrefix = 'chat', subtitle, is
       };
       setSelectedRoom(newRoom);
       setShowMobileChat(true);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     } finally {
       setCreating(false);

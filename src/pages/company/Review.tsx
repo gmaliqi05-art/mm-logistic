@@ -291,7 +291,7 @@ function RepairReviewModal({
         });
       }
       await onDone();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Error');
     } finally {
       setSaving(null);
@@ -326,7 +326,7 @@ function RepairReviewModal({
         });
       }
       await onDone();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Error');
     } finally {
       setSaving(null);

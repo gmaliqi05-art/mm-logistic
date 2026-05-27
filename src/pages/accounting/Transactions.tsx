@@ -135,7 +135,7 @@ export default function Transactions() {
       setContacts(contactsRes.data ?? []);
       setCategories(categoriesRes.data ?? []);
       setBankAccounts(bankRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -250,7 +250,7 @@ export default function Transactions() {
       setEditingId(null);
       setForm(emptyForm);
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);

@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireEnv } from "../_shared/env.ts";
 import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
@@ -7,19 +8,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+let _url: string, _key: string;
+function getEnv() {
+  if (!_url) { _url = requireEnv("SUPABASE_URL"); _key = requireEnv("SUPABASE_SERVICE_ROLE_KEY"); }
+  return { url: _url, key: _key };
+}
 
-const restHeaders = {
-  apikey: SERVICE_KEY,
-  Authorization: `Bearer ${SERVICE_KEY}`,
-  "Content-Type": "application/json",
-};
+function restHeaders() {
+  const { key } = getEnv();
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+  };
+}
 
 async function claimItems(limit: number): Promise<Array<{ id: string }>> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/claim_notifications`, {
+  const { url } = getEnv();
+  const res = await fetch(`${url}/rest/v1/rpc/claim_notifications`, {
     method: "POST",
-    headers: restHeaders,
+    headers: restHeaders(),
     body: JSON.stringify({ p_limit: limit }),
   });
   if (!res.ok) throw new Error(`claim_notifications failed: ${res.status} ${await res.text()}`);
@@ -27,9 +35,10 @@ async function claimItems(limit: number): Promise<Array<{ id: string }>> {
 }
 
 async function markFailed(id: string, error: string, transient: boolean): Promise<void> {
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/mark_notification_failed`, {
+  const { url } = getEnv();
+  await fetch(`${url}/rest/v1/rpc/mark_notification_failed`, {
     method: "POST",
-    headers: restHeaders,
+    headers: restHeaders(),
     body: JSON.stringify({ p_id: id, p_error: error.slice(0, 1000), p_transient: transient }),
   }).catch((e) => console.error("mark_notification_failed call failed", id, e));
 }
@@ -56,10 +65,11 @@ Deno.serve(async (req: Request) => {
 
     for (const item of items) {
       try {
-        const dispatchRes = await fetch(`${SUPABASE_URL}/functions/v1/dispatch-notification`, {
+        const { url, key } = getEnv();
+        const dispatchRes = await fetch(`${url}/functions/v1/dispatch-notification`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${SERVICE_KEY}`,
+            Authorization: `Bearer ${key}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ queueId: item.id }),

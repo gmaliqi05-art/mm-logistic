@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireEnv } from "../_shared/env.ts";
 import { requireSetupToken } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
@@ -18,8 +19,8 @@ Deno.serve(async (req: Request) => {
   if (tokenErr) return tokenErr;
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = requireEnv("SUPABASE_URL");
+    const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
     const rows = [
       { key: "supabase_url", value: supabaseUrl },

@@ -141,7 +141,7 @@ export default function CompanyDocuments() {
 
       setReceivedDocs(recvDocsData);
       setWorkers(workersRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -224,7 +224,7 @@ export default function CompanyDocuments() {
 
       resetSendForm();
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSending'));
     } finally {
       setSending(false);

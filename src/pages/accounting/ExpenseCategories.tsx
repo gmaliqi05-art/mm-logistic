@@ -49,7 +49,7 @@ export default function ExpenseCategories() {
         .order('name', { ascending: true });
       if (err) throw err;
       setCategories(data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ export default function ExpenseCategories() {
       setEditingId(null);
       setForm(emptyForm);
       await fetchCategories();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -135,7 +135,7 @@ export default function ExpenseCategories() {
         .eq('id', id);
       if (err) throw err;
       await fetchCategories();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   };

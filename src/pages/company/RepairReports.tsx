@@ -119,7 +119,7 @@ export default function CompanyRepairReports() {
 
       setReports((reportsRes.data ?? []) as unknown as WorkerReport[]);
       setDepots((depotsRes.data ?? []) as Depot[]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);

@@ -176,7 +176,7 @@ export default function AccSettings() {
 
       setSequences(seqRes.data ?? []);
       setBankAccounts(bankRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -224,7 +224,7 @@ export default function AccSettings() {
 
       setSuccess('Te dhenat e kompanise u ruajten me sukses');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate ruajtjes');
     } finally {
       setSaving(false);

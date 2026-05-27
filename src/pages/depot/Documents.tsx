@@ -70,7 +70,7 @@ export default function DepotDocuments() {
         }));
 
       setDocs(docsData);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -95,7 +95,7 @@ export default function DepotDocuments() {
             : d
         )
       );
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     }
   }
@@ -122,7 +122,7 @@ export default function DepotDocuments() {
           prev ? { ...prev, recipientEntry: { ...entry, status: 'completed' as const } } : prev
         );
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     }
   }

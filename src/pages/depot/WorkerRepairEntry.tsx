@@ -154,7 +154,7 @@ export default function WorkerRepairEntry() {
       setCatalog((catalogRes.data ?? []) as CatalogProduct[]);
       setEntries((entriesRes.data ?? []) as unknown as RepairEntry[]);
       setReports((reportsRes.data ?? []) as RepairReport[]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -199,7 +199,7 @@ export default function WorkerRepairEntry() {
       setFormQuantity('');
       quantityRef.current?.focus();
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -212,7 +212,7 @@ export default function WorkerRepairEntry() {
       const { error: err } = await supabase.from('depot_repairs').delete().eq('id', id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }
@@ -329,7 +329,7 @@ export default function WorkerRepairEntry() {
       void reportRow;
       setSuccess(t('depot.repairWorkers.finalizedOk'));
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setFinalizing(false);

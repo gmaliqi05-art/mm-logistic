@@ -90,7 +90,7 @@ function DataExportContent() {
       const csv = toCsvString(data);
       downloadCsv(csv, option.filename);
       setExported((prev) => new Set([...prev, option.id]));
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorExporting'));
     } finally {
       setExporting(null);

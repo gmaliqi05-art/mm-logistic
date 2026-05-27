@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import webpush from "npm:web-push@3.6.7";
+import { requireEnv } from "../_shared/env.ts";
 import { requireCaller, isServiceRoleCall } from "../_shared/requireCaller.ts";
 
 const corsHeaders = {
@@ -80,8 +81,8 @@ Deno.serve(async (req: Request) => {
     const cleanIcon = typeof icon === "string" ? icon.slice(0, 500) : undefined;
     const cleanTag = typeof tag === "string" ? tag.slice(0, 200) : undefined;
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = requireEnv("SUPABASE_URL");
+    const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
     const idsCsv = safeIds.map((id) => `"${id}"`).join(",");
     const subsRes = await fetch(

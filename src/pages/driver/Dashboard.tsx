@@ -110,7 +110,7 @@ export default function DriverDashboard() {
         .eq('id', id);
       if (err) throw err;
       setToast(t('driver.taskDetail.dispatchSuccess'));
-    } catch (err: any) {
+    } catch (err) {
       setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, status: 'sent' } : n)));
       setConfirmErrors((prev) => ({ ...prev, [id]: err.message || t('driver.home.confirmError') }));
     } finally {
@@ -196,7 +196,7 @@ export default function DriverDashboard() {
         .limit(300);
       if (err) throw err;
       setNotes((data as any) ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('driver.home.errorLoading'));
     } finally {
       setLoading(false);
@@ -856,7 +856,7 @@ export function TaskDetailSheet({
       if (error) throw error;
       setEditingNotes(false);
       await onUpdated();
-    } catch (err: any) {
+    } catch (err) {
       setLocalError(err.message || t('driver.taskDetail.errorSaving'));
     } finally {
       setSavingNotes(false);
@@ -878,7 +878,7 @@ export function TaskDetailSheet({
       }
       setItems((prev) => prev.map((it) => itemEdits[it.id] ? { ...it, ...itemEdits[it.id] } : it));
       setItemEdits({});
-    } catch (err: any) {
+    } catch (err) {
       setLocalError(err.message || t('driver.taskDetail.errorSaving'));
     } finally {
       setSavingItems(false);
@@ -926,7 +926,7 @@ export function TaskDetailSheet({
       }
 
       await onUpdated(t('driver.taskDetail.closeWithoutDocSuccess'));
-    } catch (err: any) {
+    } catch (err) {
       setLocalError(err.message || t('driver.taskDetail.errorSaving'));
     } finally {
       setClosingWithout(false);
@@ -953,7 +953,7 @@ export function TaskDetailSheet({
         .eq('id', note.id);
       if (err) throw err;
       await onUpdated(t('driver.taskDetail.dispatchSuccess'));
-    } catch (err: any) {
+    } catch (err) {
       setLocalError(err.message || t('driver.taskDetail.errorGeneric'));
     } finally {
       setDispatching(false);
@@ -1240,7 +1240,7 @@ export function TaskDetailSheet({
       }
 
       await onUpdated(t('driver.taskDetail.scanSuccess'));
-    } catch (err: any) {
+    } catch (err) {
       setLocalError(err.message || t('driver.taskDetail.errorSaving'));
     } finally {
       setUploading(false);

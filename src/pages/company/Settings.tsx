@@ -75,7 +75,7 @@ export default function CompanySettings() {
         setTrafficProvider((data.traffic_provider as 'none' | 'tomtom') || 'none');
         setTrafficApiKey(data.traffic_api_key || '');
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -107,7 +107,7 @@ export default function CompanySettings() {
       const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(filePath);
       setLogoUrl(urlData.publicUrl);
       setSuccess(t('settings.logoUploadedSuccess'));
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('settings.logoUploadFailed'));
     } finally {
       setUploading(false);
@@ -147,7 +147,7 @@ export default function CompanySettings() {
       if (err) throw err;
       setSuccess(t('settings.changesSaved'));
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('settings.saveFailed'));
     } finally {
       setSaving(false);

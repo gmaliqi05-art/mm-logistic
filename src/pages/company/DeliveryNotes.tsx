@@ -238,7 +238,7 @@ export default function CompanyDeliveryNotes() {
       setCategories(catsRes.data ?? []);
       setContacts((contactsRes.data ?? []) as Contact[]);
       setProducts((productsRes.data ?? []) as CompanyProduct[]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -265,7 +265,7 @@ export default function CompanyDeliveryNotes() {
         .getPublicUrl(fileName);
 
       setForm({ ...form, attachment_url: urlData.publicUrl });
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorUploading'));
     } finally {
       setUploadingAttachment(false);
@@ -440,7 +440,7 @@ export default function CompanyDeliveryNotes() {
       setShowCreateModal(false);
       setForm({ ...emptyForm });
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -468,7 +468,7 @@ export default function CompanyDeliveryNotes() {
       if (selectedNote?.id === noteId) {
         setSelectedNote((prev) => (prev ? { ...prev, status: newStatus as any } : null));
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }
@@ -520,7 +520,7 @@ export default function CompanyDeliveryNotes() {
       }
 
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     } finally {
       setReassigning(false);
@@ -549,7 +549,7 @@ export default function CompanyDeliveryNotes() {
       );
 
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     } finally {
       setSendingId(null);
@@ -576,7 +576,7 @@ export default function CompanyDeliveryNotes() {
         .order('created_at');
       setNoteItems((data as any) ?? []);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     } finally {
       setRemovingItemId(null);
@@ -605,7 +605,7 @@ export default function CompanyDeliveryNotes() {
       setShowDetail(false);
       setSelectedNote(null);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     } finally {
       setDeletingId(null);
@@ -625,7 +625,7 @@ export default function CompanyDeliveryNotes() {
       setShowDetail(false);
       setSelectedNote(null);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     } finally {
       setCancellingId(null);

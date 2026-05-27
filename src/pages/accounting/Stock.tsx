@@ -83,7 +83,7 @@ export default function Stock() {
       setProducts(productsRes.data ?? []);
       setCategories(categoriesRes.data ?? []);
       setMovements(movementsRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -170,7 +170,7 @@ export default function Stock() {
 
       setAdjustmentModal(null);
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim gjate rregullimit te stokut');
     } finally {
       setSaving(false);

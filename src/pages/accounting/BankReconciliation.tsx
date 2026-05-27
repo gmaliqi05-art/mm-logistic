@@ -74,7 +74,7 @@ export default function BankReconciliation() {
         });
         setTxCache(map);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Error');
     } finally {
       setLoading(false);
@@ -97,7 +97,7 @@ export default function BankReconciliation() {
         .eq('id', line.matched_transaction_id);
       if (e2) throw e2;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Error');
     } finally {
       setBusyId(null);
@@ -113,7 +113,7 @@ export default function BankReconciliation() {
         .eq('id', line.id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Error');
     } finally {
       setBusyId(null);
@@ -129,7 +129,7 @@ export default function BankReconciliation() {
         .eq('id', line.id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Error');
     } finally {
       setBusyId(null);

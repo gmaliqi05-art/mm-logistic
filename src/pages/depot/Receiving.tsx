@@ -206,7 +206,7 @@ export default function DepotReceiving() {
       setCategories(catRes.data ?? []);
       setProducts(prodRes.data ?? []);
       setHistory(histRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -329,7 +329,7 @@ export default function DepotReceiving() {
       setSourceContactId(null);
       setSuccess(t('depot.receiving.savedOk') || 'Pranimi u regjistrua me sukses');
       await fetchData();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSubmitting(false);

@@ -5,6 +5,7 @@
 // created through manage-users by an existing super_admin.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { requireSetupToken } from "../_shared/requireCaller.ts";
+import { requireEnv } from "../_shared/env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,8 +42,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      requireEnv("SUPABASE_URL"),
+      requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
     );
 
     // Refuse if the email already exists — avoid silent privilege change.

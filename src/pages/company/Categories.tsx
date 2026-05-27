@@ -113,7 +113,7 @@ function CategoriesContent() {
       if (prodRes.error) throw prodRes.error;
       setCategories(catRes.data ?? []);
       setProducts(prodRes.data ?? []);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -260,7 +260,7 @@ function CategoriesContent() {
       setShowModal(false);
       resetForm();
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     } finally {
       setSaving(false);
@@ -274,7 +274,7 @@ function CategoriesContent() {
       if (err) throw err;
       if (selectedCategoryId === id) setSelectedCategoryId(null);
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }
@@ -292,7 +292,7 @@ function CategoriesContent() {
         setProducts((prev) => prev.map((p) => (p.id === prod.id ? { ...p, is_active: !next } : p)));
         throw err;
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorSaving'));
     }
   }
@@ -303,7 +303,7 @@ function CategoriesContent() {
       const { error: err } = await supabase.from('category_products').delete().eq('id', id);
       if (err) throw err;
       await fetchAll();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.error'));
     }
   }

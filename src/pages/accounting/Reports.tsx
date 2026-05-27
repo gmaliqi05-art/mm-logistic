@@ -459,7 +459,7 @@ export default function Reports() {
           .sort((a, b) => b.revenue - a.revenue);
         setProductRows(rows);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || t('common.errorLoading'));
     } finally {
       setLoading(false);
@@ -610,7 +610,7 @@ export default function Reports() {
       }
 
       exportDatevCSV(rows, dateFrom, dateTo);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim ne eksport DATEV');
     } finally {
       setLoading(false);
@@ -674,7 +674,7 @@ export default function Reports() {
         },
         compRes.data?.name || 'Company'
       );
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Gabim ne eksport UStVA');
     } finally {
       setLoading(false);

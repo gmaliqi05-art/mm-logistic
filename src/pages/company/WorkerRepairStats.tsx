@@ -137,7 +137,7 @@ export default function WorkerRepairStats() {
       if (depotsRes.error) throw depotsRes.error;
       setRows((repairsRes.data ?? []) as unknown as RepairRow[]);
       setDepots((depotsRes.data ?? []) as Depot[]);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'Failed to load statistics');
     } finally {
       setLoading(false);
