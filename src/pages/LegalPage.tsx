@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Package, Shield, Scale, FileText, Cookie, Lock, Users, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Package, Shield, Scale, FileText, Cookie, Lock, Users, AlertTriangle, RefreshCw, Fingerprint } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import type { LegalDocumentKey } from '../i18n/legal';
@@ -13,9 +13,10 @@ const iconMap: Record<string, typeof Shield> = {
   subprocessors: Users,
   aup: AlertTriangle,
   refund: RefreshCw,
+  'ip-protection': Fingerprint,
 };
 
-const validKeys = ['impressum', 'terms', 'cookies', 'privacy', 'dpa', 'subprocessors', 'aup', 'refund'];
+const validKeys = ['impressum', 'terms', 'cookies', 'privacy', 'dpa', 'subprocessors', 'aup', 'refund', 'ip-protection'];
 
 interface LegalPageProps {
   documentKey?: LegalDocumentKey;

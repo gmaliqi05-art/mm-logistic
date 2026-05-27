@@ -6,17 +6,21 @@ import { dpa } from './dpa';
 import { subprocessors } from './subprocessors';
 import { aup } from './aup';
 import { refund } from './refund';
+import { ipProtection } from './ip-protection';
 
-const documentKeys = ['impressum', 'terms', 'cookies', 'privacy', 'dpa', 'subprocessors', 'aup', 'refund'] as const;
+const documentKeys = ['impressum', 'terms', 'cookies', 'privacy', 'dpa', 'subprocessors', 'aup', 'refund', 'ip-protection'] as const;
 export type LegalDocumentKey = (typeof documentKeys)[number];
 
-const documents = { impressum, terms, cookies, privacy, dpa, subprocessors, aup, refund };
+const documents: Record<string, Record<string, unknown>> = {
+  impressum, terms, cookies, privacy, dpa, subprocessors, aup, refund,
+  'ip-protection': ipProtection,
+};
 
 function buildLanguage(lang: 'sq' | 'en' | 'de' | 'fr') {
   const docs: Record<string, unknown> = {};
   for (const key of documentKeys) {
     const doc = documents[key];
-    docs[key] = (doc as Record<string, unknown>)[lang] ?? (doc as Record<string, unknown>).en;
+    docs[key] = doc[lang] ?? doc.en;
   }
   return {
     documents: docs,
@@ -29,6 +33,7 @@ function buildLanguage(lang: 'sq' | 'en' | 'de' | 'fr') {
       subprocessors: (docs.subprocessors as { shortTitle?: string })?.shortTitle ?? 'Subprocessors',
       aup: (docs.aup as { shortTitle?: string })?.shortTitle ?? 'AUP',
       refund: (docs.refund as { shortTitle?: string })?.shortTitle ?? 'Refund',
+      'ip-protection': (docs['ip-protection'] as { shortTitle?: string })?.shortTitle ?? 'IP Protection',
     },
   };
 }
