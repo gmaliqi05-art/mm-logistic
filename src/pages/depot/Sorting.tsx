@@ -23,7 +23,7 @@ import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { ProductCategory, PalletSortingBatch, PalletSortingItem } from '../../types';
-import { epalClassRank } from '../../utils/productSort';
+import { epalClassRank, isEuroPaletteName, isNewPalletProduct } from '../../utils/productSort';
 
 interface CategoryProduct {
   id: string;
@@ -55,15 +55,25 @@ interface ItemInput {
   condition: 'good' | 'damaged';
 }
 
-// Sentinel id for the synthetic "Defekt" input row. It is not a real
-// category_products.id — when this row is saved we write
-// category_product_id = NULL so the damaged quantity is recorded at the
-// category level only, matching how pallet companies model defekt stock.
+interface ExtraItem {
+  category_id: string;
+  category_product_id: string;
+  category_name: string;
+  product_name: string;
+  quantity: string;
+  condition: 'good' | 'damaged';
+}
+
 const DEFEKT_INPUT_ID = '__defekt__';
 
 function isDefectProduct(name: string) {
   const n = (name || '').toLowerCase();
   return n.includes('defekt') || n.includes('defect') || n.includes('damaged');
+}
+
+function isClassSortProduct(name: string): boolean {
+  const n = (name || '').toLowerCase();
+  return isEuroPaletteName(n) || isNewPalletProduct(n);
 }
 
 const PRIMARY_ORDER = ['a klasse', 'b klasse', 'c klasse', 'defekt'];
@@ -121,6 +131,7 @@ export default function DepotSorting() {
 
   const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
   const [itemInputs, setItemInputs] = useState<ItemInput[]>([]);
+  const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
   const [editTotal, setEditTotal] = useState('');
 
   useEffect(() => {
@@ -202,9 +213,10 @@ export default function DepotSorting() {
   const openBatch = (batch: BatchWithItems) => {
     const cat = categories.find((c) => c.id === batch.category_id);
     const catProducts = (productsByCat.get(batch.category_id) ?? []).slice();
+    const isClassMode = cat?.sorting_mode === 'class';
 
     catProducts.sort((a, b) => {
-      if (cat?.sorting_mode === 'class') {
+      if (isClassMode) {
         const pa = primaryRank(a.name);
         const pb = primaryRank(b.name);
         if (pa !== pb) return pa - pb;
@@ -213,18 +225,17 @@ export default function DepotSorting() {
       return a.name.localeCompare(b.name);
     });
 
-    // Defekt is a category-level bucket — sum every damaged item in the
-    // batch regardless of whether it has a product_id (NULL = new model)
-    // or sits on the legacy "Defekt" / Klasse A/B/C category_products.
     let damagedTotal = 0;
     for (const item of batch.items) {
       if (item.condition === 'damaged') damagedTotal += item.quantity;
     }
 
-    // Drop any legacy "Defekt" category_product from the per-product rows so
-    // it doesn't render twice; we render a single synthetic Defekt row below.
     const productRows: ItemInput[] = catProducts
-      .filter((p) => !isDefectProduct(p.name))
+      .filter((p) => {
+        if (isDefectProduct(p.name)) return false;
+        if (isClassMode && isClassSortProduct(p.name) && primaryRank(p.name) >= 99) return false;
+        return true;
+      })
       .map((p) => {
         const goodItem = batch.items.find(
           (i) => i.category_product_id === p.id && i.condition === 'good',
@@ -249,12 +260,14 @@ export default function DepotSorting() {
 
     setActiveBatchId(batch.id);
     setItemInputs(inputs);
+    setExtraItems([]);
     setEditTotal(String(batch.total_received));
   };
 
   const closeBatch = () => {
     setActiveBatchId(null);
     setItemInputs([]);
+    setExtraItems([]);
     setEditTotal('');
   };
 
@@ -266,9 +279,6 @@ export default function DepotSorting() {
       condition: string;
     }> = [];
 
-    // Class/product rows save with their real category_product_id; the
-    // synthetic Defekt row saves with NULL so the damaged quantity lives at
-    // the category level (no fictional "Defekt" product behind it).
     for (const r of itemInputs) {
       const qty = Math.max(0, parseInt(r.quantity || '0', 10) || 0);
       if (qty <= 0) continue;
@@ -300,12 +310,36 @@ export default function DepotSorting() {
     if (updErr) throw updErr;
   }
 
+  async function persistExtraItems() {
+    if (extraItems.length === 0) return;
+    const depotId = profile?.depot_id ?? null;
+    const companyId = profile!.company_id!;
+
+    for (const item of extraItems) {
+      const qty = Math.max(0, parseInt(item.quantity || '0', 10) || 0);
+      if (qty <= 0) continue;
+      await supabase.from('stock_movements').insert({
+        company_id: companyId,
+        depot_id: depotId,
+        category_id: item.category_id,
+        category_product_id: item.category_product_id,
+        movement_type: 'entry',
+        quantity: qty,
+        condition: item.condition,
+        performed_by: profile!.id,
+        notes: 'Gjetur gjate sortimit',
+      });
+    }
+  }
+
   async function handleSaveProgress() {
     if (!activeBatchId) return;
     try {
       setSubmitting(true);
       setError(null);
       await persistItems(activeBatchId);
+      await persistExtraItems();
+      setExtraItems([]);
       setSuccess(t('depot.sorting.progressSaved'));
       setTimeout(() => setSuccess(null), 2500);
       await fetchAll();
@@ -322,6 +356,7 @@ export default function DepotSorting() {
       setSubmitting(true);
       setError(null);
       await persistItems(activeBatchId);
+      await persistExtraItems();
       const { error: updErr } = await supabase
         .from('pallet_sorting_batches')
         .update({
@@ -642,27 +677,24 @@ export default function DepotSorting() {
 
       {/* Active Batch Modal */}
       {currentBatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           <div className="fixed inset-0 bg-black/50" onClick={closeBatch} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-2xl max-h-[95dvh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0">
-                  <Layers className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0">
+                  <Layers className="w-4.5 h-4.5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-semibold text-gray-900 truncate">
+                  <h2 className="text-base font-bold text-gray-900 truncate">
                     {currentCategory?.name ?? t('depot.sorting.title')}
                   </h2>
-                  <p className="text-xs text-gray-500">
-                    {currentCategory ? t(`depot.sorting.mode.${currentCategory.sorting_mode}`) : '-'} &middot;{' '}
-                    {new Date(currentBatch.created_at).toLocaleString()}
+                  <p className="text-[11px] text-gray-500">
+                    {currentBatch.reference_number_snapshot && (
+                      <span className="text-teal-700 font-medium">{currentBatch.reference_number_snapshot} &middot; </span>
+                    )}
+                    {new Date(currentBatch.created_at).toLocaleDateString()}
                   </p>
-                  {currentBatch.reference_number_snapshot && (
-                    <p className="text-xs text-teal-700 mt-0.5 font-medium">
-                      {t('depot.sorting.fromNote')}: {currentBatch.reference_number_snapshot}
-                    </p>
-                  )}
                 </div>
               </div>
               <button
@@ -673,48 +705,49 @@ export default function DepotSorting() {
               </button>
             </div>
 
-            <div className="p-5 space-y-4 overflow-y-auto">
+            <div className="px-4 py-3 space-y-3 overflow-y-auto flex-1">
               {currentBatch.source_delivery_note_id && (
-                <div className="bg-sky-50 border border-sky-200 rounded-lg p-2.5 flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-sky-600 flex-shrink-0" />
-                  <p className="text-xs text-sky-800">
+                <div className="bg-sky-50 border border-sky-200 rounded-lg p-2 flex items-center gap-2">
+                  <Truck className="w-3.5 h-3.5 text-sky-600 flex-shrink-0" />
+                  <p className="text-[11px] text-sky-800">
                     {t('depot.sorting.dataFromCompany')}
                   </p>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <label className="block text-[11px] font-medium text-gray-500 uppercase tracking-wide mb-1">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-gray-50 rounded-lg p-2.5">
+                  <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
                     {t('depot.sorting.totalReceived')}
                   </label>
                   <input
                     type="number"
                     min="0"
+                    inputMode="numeric"
                     value={editTotal}
                     onChange={(e) => setEditTotal(e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-base font-semibold"
+                    className="w-full px-2 py-1.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-lg font-bold"
                   />
                 </div>
-                <div className="bg-teal-50 rounded-lg p-3">
-                  <p className="text-[11px] font-medium text-teal-700 uppercase tracking-wide mb-1">
+                <div className="bg-teal-50 rounded-lg p-2.5">
+                  <p className="text-[10px] font-medium text-teal-700 uppercase tracking-wide mb-1">
                     {t('depot.sorting.sorted')}
                   </p>
-                  <p className="text-xl font-bold text-teal-800">{sortedTotal}</p>
+                  <p className="text-2xl font-bold text-teal-800">{sortedTotal}</p>
                 </div>
                 <div
-                  className={`rounded-lg p-3 ${
+                  className={`rounded-lg p-2.5 ${
                     diff === 0 ? 'bg-green-50' : diff > 0 ? 'bg-amber-50' : 'bg-red-50'
                   }`}
                 >
                   <p
-                    className={`text-[11px] font-medium uppercase tracking-wide mb-1 ${
+                    className={`text-[10px] font-medium uppercase tracking-wide mb-1 ${
                       diff === 0 ? 'text-green-700' : diff > 0 ? 'text-amber-700' : 'text-red-700'
                     }`}
                   >
                     {t('depot.sorting.remaining')}
                   </p>
                   <p
-                    className={`text-xl font-bold ${
+                    className={`text-2xl font-bold ${
                       diff === 0 ? 'text-green-800' : diff > 0 ? 'text-amber-800' : 'text-red-800'
                     }`}
                   >
@@ -728,6 +761,15 @@ export default function DepotSorting() {
                 setItemInputs={setItemInputs}
                 isClassMode={currentCategory?.sorting_mode === 'class'}
               />
+
+              <ExtraProductSelector
+                categories={categories}
+                productsByCat={productsByCat}
+                currentCategoryId={currentCategory?.id ?? ''}
+                extraItems={extraItems}
+                setExtraItems={setExtraItems}
+              />
+
               <OtherCategoriesPanel
                 currentCategoryId={currentCategory?.id ?? ''}
                 categories={categories}
@@ -742,20 +784,20 @@ export default function DepotSorting() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 p-5 border-t border-gray-100">
+            <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-100">
               <button
                 onClick={() => handleCancel(currentBatch.id)}
                 disabled={submitting}
-                className="inline-flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
                 {t('depot.sorting.cancelBatch')}
               </button>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleSaveProgress}
                   disabled={submitting}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  className="px-3 py-2 text-xs font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   {t('depot.sorting.saveProgress')}
                 </button>
@@ -767,10 +809,10 @@ export default function DepotSorting() {
                     handleComplete();
                   }}
                   disabled={submitting || sortedTotal === 0}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <CheckCircle2 className="w-4 h-4" />
+                  {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                   {t('depot.sorting.completeAndPost')}
                 </button>
               </div>
@@ -802,7 +844,7 @@ function SortingItemsGrid({
   }
 
   const primary = isClassMode ? itemInputs.filter((r) => primaryRank(r.product_name) < 99) : itemInputs;
-  const extras = isClassMode ? itemInputs.filter((r) => primaryRank(r.product_name) >= 99) : [];
+  const extras = isClassMode ? itemInputs.filter((r) => primaryRank(r.product_name) >= 99 && r.category_product_id !== DEFEKT_INPUT_ID) : [];
 
   function updateQty(index: number, next: string) {
     const copy = itemInputs.slice();
@@ -817,56 +859,65 @@ function SortingItemsGrid({
     setItemInputs(copy);
   }
 
+  const CLASS_LETTERS: Record<number, string> = { 0: 'A', 1: 'B', 2: 'C' };
+
   const renderRow = (row: ItemInput) => {
     const realIdx = itemInputs.indexOf(row);
-    const isDefect = isDefectProduct(row.product_name);
+    const isDefect = isDefectProduct(row.product_name) || row.category_product_id === DEFEKT_INPUT_ID;
     const rank = primaryRank(row.product_name);
     const tone: Record<number, string> = {
-      0: 'border-emerald-200 bg-emerald-50',
-      1: 'border-amber-200 bg-amber-50',
-      2: 'border-sky-200 bg-sky-50',
-      3: 'border-rose-200 bg-rose-50',
+      0: 'border-emerald-300 bg-emerald-50',
+      1: 'border-amber-300 bg-amber-50',
+      2: 'border-sky-300 bg-sky-50',
+      3: 'border-rose-300 bg-rose-50',
     };
-    const iconTone: Record<number, string> = {
-      0: 'bg-emerald-100 text-emerald-700',
-      1: 'bg-amber-100 text-amber-700',
-      2: 'bg-sky-100 text-sky-700',
-      3: 'bg-rose-100 text-rose-700',
+    const letterTone: Record<number, string> = {
+      0: 'bg-emerald-600 text-white',
+      1: 'bg-amber-500 text-white',
+      2: 'bg-sky-600 text-white',
     };
     const shell = isDefect
-      ? 'border-rose-200 bg-rose-50'
+      ? 'border-rose-300 bg-rose-50'
       : isClassMode && rank < 99
-      ? tone[rank] ?? 'border-gray-100 bg-white'
-      : 'border-gray-100 bg-white';
-    const iconShell = isDefect
-      ? 'bg-rose-100 text-rose-700'
-      : isClassMode && rank < 99
-      ? iconTone[rank] ?? 'bg-teal-100 text-teal-700'
-      : 'bg-teal-100 text-teal-700';
+      ? tone[rank] ?? 'border-gray-200 bg-white'
+      : 'border-gray-200 bg-white';
+
+    const showLetter = isClassMode && rank < 3 && !isDefect;
 
     return (
       <div
         key={row.category_product_id}
-        className={`flex items-center gap-3 p-3 rounded-lg border ${shell}`}
+        className={`flex items-center gap-3 p-4 rounded-xl border-2 ${shell}`}
       >
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${iconShell}`}>
-          {isDefect ? <Wrench className="w-4 h-4" /> : <Package className="w-4 h-4" />}
-        </div>
+        {showLetter ? (
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${letterTone[rank] ?? 'bg-teal-600 text-white'}`}>
+            <span className="text-xl font-black">{CLASS_LETTERS[rank]}</span>
+          </div>
+        ) : isDefect ? (
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-rose-600 text-white">
+            <span className="text-xl font-black">D</span>
+          </div>
+        ) : (
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-teal-100 text-teal-700">
+            <Package className="w-5 h-5" />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">{row.product_name}</p>
-          {isDefect && <p className="text-[11px] text-rose-600">Shkon automatikisht ne stokun e defekteve</p>}
+          <p className="text-base font-bold text-gray-900 truncate">
+            {showLetter ? row.product_name.replace(/\s*klasse\s*/i, ' Klasse ').trim() : row.product_name}
+          </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => bump(realIdx, -1)}
-            className={`w-7 h-7 rounded-lg border flex items-center justify-center ${
+            className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center active:scale-95 transition-transform ${
               isDefect
-                ? 'bg-white border-rose-200 text-rose-600 hover:bg-rose-50'
-                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+                ? 'bg-white border-rose-300 text-rose-600 active:bg-rose-100'
+                : 'bg-white border-gray-300 text-gray-700 active:bg-gray-100'
             }`}
           >
-            <Minus className="w-3 h-3" />
+            <Minus className="w-4 h-4" />
           </button>
           <input
             type="number"
@@ -874,23 +925,23 @@ function SortingItemsGrid({
             inputMode="numeric"
             value={row.quantity}
             onChange={(e) => updateQty(realIdx, e.target.value)}
-            className={`w-16 px-2 py-1.5 border rounded-lg focus:outline-none text-sm text-right font-bold ${
+            className={`w-20 px-2 py-2.5 border-2 rounded-xl focus:outline-none text-center text-lg font-black ${
               isDefect
-                ? 'border-rose-200 bg-white text-rose-700 placeholder-rose-300 focus:ring-2 focus:ring-rose-400'
-                : 'border-gray-200 bg-white focus:ring-2 focus:ring-teal-500'
+                ? 'border-rose-300 bg-white text-rose-700 placeholder-rose-300 focus:ring-2 focus:ring-rose-400'
+                : 'border-gray-300 bg-white focus:ring-2 focus:ring-teal-500'
             }`}
             placeholder="0"
           />
           <button
             type="button"
             onClick={() => bump(realIdx, 1)}
-            className={`w-7 h-7 rounded-lg border flex items-center justify-center ${
+            className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center active:scale-95 transition-transform ${
               isDefect
-                ? 'bg-white border-rose-200 text-rose-600 hover:bg-rose-50'
-                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-100'
+                ? 'bg-white border-rose-300 text-rose-600 active:bg-rose-100'
+                : 'bg-white border-gray-300 text-gray-700 active:bg-gray-100'
             }`}
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -898,25 +949,186 @@ function SortingItemsGrid({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-3 px-3 pb-1">
-        <div className="w-9 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Produkti</span>
-        </div>
-        <div className="w-[7.5rem] text-center">
-          <span className="text-[11px] font-semibold text-teal-700 uppercase tracking-wide">Sasia</span>
-        </div>
-      </div>
+    <div className="space-y-2.5">
       {primary.map(renderRow)}
       {extras.length > 0 && (
-        <details className="rounded-lg border border-gray-100 bg-gray-50/50 open:bg-white">
-          <summary className="cursor-pointer list-none p-3 flex items-center gap-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+        <details className="rounded-xl border border-gray-200 bg-gray-50/50 open:bg-white">
+          <summary className="cursor-pointer list-none p-3 flex items-center gap-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl">
             <ChevronRight className="w-4 h-4 text-gray-400 transition-transform details-chevron" />
             Produkte te tjera te kategorise ({extras.length})
           </summary>
-          <div className="p-2 pt-0 space-y-2">{extras.map(renderRow)}</div>
+          <div className="p-2 pt-0 space-y-2.5">{extras.map(renderRow)}</div>
         </details>
+      )}
+    </div>
+  );
+}
+
+function ExtraProductSelector({
+  categories,
+  productsByCat,
+  currentCategoryId,
+  extraItems,
+  setExtraItems,
+}: {
+  categories: ProductCategory[];
+  productsByCat: Map<string, CategoryProduct[]>;
+  currentCategoryId: string;
+  extraItems: ExtraItem[];
+  setExtraItems: (items: ExtraItem[]) => void;
+}) {
+  const { t } = useTranslation();
+  const [showSelector, setShowSelector] = useState(false);
+  const [selectedCatId, setSelectedCatId] = useState('');
+
+  const otherCategories = categories.filter((c) => c.id !== currentCategoryId);
+  const selectedCatProducts = selectedCatId ? (productsByCat.get(selectedCatId) ?? []) : [];
+  const selectedCatName = categories.find((c) => c.id === selectedCatId)?.name ?? '';
+
+  function addProduct(product: CategoryProduct) {
+    const already = extraItems.find((e) => e.category_product_id === product.id);
+    if (already) return;
+    const catName = categories.find((c) => c.id === product.category_id)?.name ?? '';
+    setExtraItems([
+      ...extraItems,
+      {
+        category_id: product.category_id,
+        category_product_id: product.id,
+        category_name: catName,
+        product_name: product.name,
+        quantity: '',
+        condition: 'good',
+      },
+    ]);
+    setShowSelector(false);
+    setSelectedCatId('');
+  }
+
+  function removeExtra(index: number) {
+    const copy = extraItems.slice();
+    copy.splice(index, 1);
+    setExtraItems(copy);
+  }
+
+  function updateExtraQty(index: number, value: string) {
+    const copy = extraItems.slice();
+    copy[index] = { ...copy[index], quantity: value };
+    setExtraItems(copy);
+  }
+
+  function bumpExtra(index: number, delta: number) {
+    const copy = extraItems.slice();
+    const current = parseInt(copy[index].quantity || '0', 10) || 0;
+    copy[index] = { ...copy[index], quantity: String(Math.max(0, current + delta)) };
+    setExtraItems(copy);
+  }
+
+  return (
+    <div className="space-y-2">
+      {extraItems.map((item, idx) => (
+        <div
+          key={item.category_product_id}
+          className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50"
+        >
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-200 text-slate-600">
+            <Package className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-bold text-gray-900 truncate">{item.product_name}</p>
+            <p className="text-[11px] text-slate-500">{item.category_name}</p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => bumpExtra(idx, -1)}
+              className="w-10 h-10 rounded-xl border-2 bg-white border-slate-300 text-slate-600 flex items-center justify-center active:scale-95 transition-transform active:bg-slate-100"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <input
+              type="number"
+              min="0"
+              inputMode="numeric"
+              value={item.quantity}
+              onChange={(e) => updateExtraQty(idx, e.target.value)}
+              className="w-20 px-2 py-2.5 border-2 border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-center text-lg font-black"
+              placeholder="0"
+            />
+            <button
+              type="button"
+              onClick={() => bumpExtra(idx, 1)}
+              className="w-10 h-10 rounded-xl border-2 bg-white border-slate-300 text-slate-600 flex items-center justify-center active:scale-95 transition-transform active:bg-slate-100"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => removeExtra(idx)}
+            className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ))}
+
+      {!showSelector ? (
+        <button
+          type="button"
+          onClick={() => setShowSelector(true)}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:border-teal-400 hover:text-teal-600 hover:bg-teal-50/50 transition-colors text-sm font-medium"
+        >
+          <Plus className="w-4 h-4" />
+          {t('depot.sorting.addExtraProduct')}
+        </button>
+      ) : (
+        <div className="rounded-xl border border-gray-200 bg-white p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-700">{t('depot.sorting.addExtraProduct')}</p>
+            <button
+              type="button"
+              onClick={() => { setShowSelector(false); setSelectedCatId(''); }}
+              className="p-1 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <select
+            value={selectedCatId}
+            onChange={(e) => setSelectedCatId(e.target.value)}
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="">{t('depot.sorting.selectCategory')}</option>
+            {otherCategories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+          {selectedCatId && selectedCatProducts.length > 0 && (
+            <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto">
+              {selectedCatProducts.map((p) => {
+                const alreadyAdded = extraItems.some((e) => e.category_product_id === p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={alreadyAdded}
+                    onClick={() => addProduct(p)}
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-gray-100 hover:border-teal-300 hover:bg-teal-50 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Package className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-900 truncate">{p.name}</span>
+                    {alreadyAdded && <span className="text-[10px] text-gray-400 ml-auto">Shtuar</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {selectedCatId && selectedCatProducts.length === 0 && (
+            <p className="text-xs text-gray-400 text-center py-3">
+              {selectedCatName} nuk ka produkte
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
@@ -934,9 +1146,6 @@ function OtherCategoriesPanel({
   onOpen: (b: BatchWithItems) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  // Only show categories that already have an in-progress batch (auto-created
-  // from an incoming delivery). Manual batch creation was removed in favour of
-  // the auto-flow.
   const otherActive = categories
     .filter((c) => c.id !== currentCategoryId)
     .map((c) => ({ cat: c, batch: batches.find((b) => b.category_id === c.id && b.status === 'in_progress') }))
