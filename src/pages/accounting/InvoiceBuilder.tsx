@@ -334,12 +334,13 @@ export default function InvoiceBuilder() {
       setDeliveryNoteResults([]);
       return;
     }
+    const q = query.trim();
     const { data } = await supabase
       .from('delivery_notes')
-      .select('id, note_number, partner_name, partner_id, type, delivered_at, acc_invoice_id')
+      .select('id, note_number, document_number, partner_name, partner_id, type, delivered_at, acc_invoice_id')
       .eq('company_id', profile.company_id)
       .is('acc_invoice_id', null)
-      .or(`note_number.ilike.%${query}%,partner_name.ilike.%${query}%`)
+      .or(`note_number.ilike.%${q}%,partner_name.ilike.%${q}%,document_number.ilike.%${q}%`)
       .order('created_at', { ascending: false })
       .limit(10);
     setDeliveryNoteResults((data as any[]) ?? []);
@@ -967,7 +968,12 @@ export default function InvoiceBuilder() {
                         }}
                         className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
                       >
-                        <div className="text-sm font-semibold text-slate-900">#{r.note_number}</div>
+                        <div className="text-sm font-semibold text-slate-900">
+                          #{r.document_number || r.note_number}
+                          {r.document_number && r.document_number !== r.note_number && (
+                            <span className="ml-1.5 text-xs font-normal text-slate-400">({r.note_number})</span>
+                          )}
+                        </div>
                         <div className="text-xs text-slate-500">
                           {r.partner_name || t('accounting.invoiceBuilder.noPartner')} • {r.type === 'pickup' ? t('accounting.invoiceBuilder.pickup') : t('accounting.invoiceBuilder.delivery')}
                           {r.delivered_at ? ` • ${String(r.delivered_at).slice(0, 10)}` : ''}

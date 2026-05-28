@@ -159,6 +159,8 @@ export default function Invoices() {
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<AccInvoice | null>(null);
   const [previewItems, setPreviewItems] = useState<AccInvoiceItem[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<AccInvoice | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function openPreview(invoice: AccInvoice) {
     setPreviewInvoice(invoice);
@@ -215,6 +217,23 @@ export default function Invoices() {
       setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDeleteInvoice(invoice: AccInvoice) {
+    setDeleting(true);
+    try {
+      const { error: delErr } = await supabase
+        .from('acc_invoices')
+        .delete()
+        .eq('id', invoice.id);
+      if (delErr) throw delErr;
+      setInvoices((prev) => prev.filter((i) => i.id !== invoice.id));
+      setDeleteConfirm(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fshirja deshtoi');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -945,6 +964,15 @@ export default function Invoices() {
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
+                          {invoice.status === 'draft' && (
+                            <button
+                              onClick={() => setDeleteConfirm(invoice)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Fshij faturen"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                           {getStatusActions(invoice.status).length > 0 && (
                             <div className="relative">
                               <button
@@ -1628,6 +1656,46 @@ export default function Invoices() {
                   Dergo me PDF
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50" onClick={() => !deleting && setDeleteConfirm(null)} />
+          <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Fshij faturen?</h3>
+                <p className="text-sm text-gray-500">{deleteConfirm.invoice_number}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Kjo veprim eshte i pakthyeshem. Fatura dhe artikujt e saj do te fshihen perfundimisht.
+              {deleteConfirm.delivery_note_id && (
+                <span className="block mt-1 text-gray-500">Fletedergesa e lidhur do te lirohet per faturim te ri.</span>
+              )}
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Anulo
+              </button>
+              <button
+                onClick={() => handleDeleteInvoice(deleteConfirm)}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Fshij
+              </button>
             </div>
           </div>
         </div>
