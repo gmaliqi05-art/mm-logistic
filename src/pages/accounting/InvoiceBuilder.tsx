@@ -339,6 +339,8 @@ export default function InvoiceBuilder() {
       .from('delivery_notes')
       .select('id, note_number, document_number, partner_name, partner_id, type, delivered_at, acc_invoice_id')
       .eq('company_id', profile.company_id)
+      .eq('type', 'delivery')
+      .in('status', ['delivered', 'confirmed'])
       .is('acc_invoice_id', null)
       .or(`note_number.ilike.%${q}%,partner_name.ilike.%${q}%,document_number.ilike.%${q}%`)
       .order('created_at', { ascending: false })

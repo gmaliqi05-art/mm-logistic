@@ -187,6 +187,7 @@ export default function AccountingDashboard() {
           .from('delivery_notes')
           .select('id, note_number, type, status, partner_name, delivered_at, confirmed_at, created_at')
           .eq('company_id', companyId)
+          .eq('type', 'delivery')
           .in('status', ['delivered', 'confirmed'])
           .is('acc_invoice_id', null)
           .order('confirmed_at', { ascending: false, nullsFirst: false })

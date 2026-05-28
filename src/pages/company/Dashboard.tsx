@@ -450,6 +450,7 @@ export default function CompanyDashboard() {
             .from('delivery_notes')
             .select('id', { count: 'exact', head: true })
             .eq('company_id', companyId)
+            .eq('type', 'delivery')
             .in('status', ['delivered', 'confirmed'])
             .is('acc_invoice_id', null),
         ]);
