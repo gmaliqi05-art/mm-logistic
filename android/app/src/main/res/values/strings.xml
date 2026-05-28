@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MM Logistic</string>
+    <string name="title_activity_main">MM Logistic</string>
+    <string name="package_name">eu.mmlogistic.app</string>
+    <string name="custom_url_scheme">eu.mmlogistic.app</string>
+</resources>

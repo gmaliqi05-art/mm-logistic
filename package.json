@@ -13,6 +13,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@sentry/browser": "^10.53.1",
     "@supabase/supabase-js": "^2.57.4",
     "@tiptap/extension-link": "^3.22.5",
