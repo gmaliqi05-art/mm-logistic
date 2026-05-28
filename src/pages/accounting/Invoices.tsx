@@ -1109,6 +1109,14 @@ export default function Invoices() {
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
+                  {invoice.status === 'draft' && (
+                    <button
+                      onClick={() => setDeleteConfirm(invoice)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     onClick={() => handlePrintPreview(invoice)}
                     className="p-2 text-gray-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
