@@ -576,7 +576,7 @@ export default function BankAccounts() {
                   value={form.bank_name}
                   onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                  placeholder="Emri i bankes"
+                  placeholder={t('common.bankName')}
                 />
               </div>
               <div>

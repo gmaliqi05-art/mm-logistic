@@ -2497,7 +2497,7 @@ function SplitRow({
             type="text"
             value={createCatName}
             onChange={(e) => setCreateCatName(e.target.value)}
-            placeholder="Emri i kategorise se re"
+            placeholder={t('common.newCategoryName')}
             className="flex-1 bg-white border border-sky-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
             onKeyDown={(e) => { if (e.key === 'Enter') submitCreateCategory(); if (e.key === 'Escape') setCreateMode(null); }}
           />

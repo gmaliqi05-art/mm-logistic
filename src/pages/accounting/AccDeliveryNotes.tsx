@@ -695,7 +695,7 @@ export default function AccDeliveryNotes() {
                               value={item.description}
                               onChange={(e) => updateItem(index, 'description', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                              placeholder="Pershkrimi"
+                              placeholder={t('common.description')}
                             />
                           </div>
                           <div className="sm:col-span-2">
