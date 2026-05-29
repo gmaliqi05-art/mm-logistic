@@ -187,7 +187,7 @@ export default function ApiWebhooks() {
       ) : tab === 'keys' ? (
         <div className="space-y-6">
           <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <h2 className="font-semibold text-gray-900 mb-3">Krijo celes te ri</h2>
+            <h2 className="font-semibold text-gray-900 mb-3">{t('common.createNewKey')}</h2>
             <div className="flex gap-2">
               <input
                 value={newKeyName}

@@ -282,7 +282,7 @@ export default function VehicleDetail() {
                 <div className="flex gap-2 p-3 bg-gray-50 rounded-lg">
                   <select value={addForm.value} onChange={(e) => setAddForm({ ...addForm, value: e.target.value })}
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-                    <option value="">Zgjidh shoferin</option>
+                    <option value="">{t('common.selectDriverInline')}</option>
                     {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
                   </select>
                   <button onClick={() => addAssignment(addForm.value)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">{t('common.save')}</button>

@@ -605,7 +605,7 @@ export default function AccDeliveryNotes() {
                       onChange={(e) => handleContactChange(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">Zgjidh klientin</option>
+                      <option value="">{t('common.selectClientInline')}</option>
                       {contacts.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -677,7 +677,7 @@ export default function AccDeliveryNotes() {
                               onChange={(e) => handleProductChange(index, e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                             >
-                              <option value="">Zgjidh produktin</option>
+                              <option value="">{t('common.selectProductInline')}</option>
                               {products.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                               ))}
