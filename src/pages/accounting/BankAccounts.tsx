@@ -282,7 +282,7 @@ export default function BankAccounts() {
           ) : accountTransactions.length === 0 ? (
             <div className="py-16 text-center">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 font-medium">Asnje transaksion</p>
+              <p className="text-gray-500 font-medium">{t('accounting.transactions.noTransactions')}</p>
               <p className="text-gray-400 text-sm mt-1">Kjo llogari nuk ka transaksione</p>
             </div>
           ) : (

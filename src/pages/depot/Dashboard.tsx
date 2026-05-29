@@ -346,7 +346,7 @@ function DepoistDashboard() {
             </Link>
           </div>
           {topCategories.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">Asnje stok i regjistruar</div>
+            <div className="py-8 text-center text-xs text-slate-400">{t('company.stock.noStock')}</div>
           ) : (
             <ul className="space-y-2">
               {topCategories.map((c) => (
