@@ -131,7 +131,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={ROLES} selected={value.roles ?? []} onChange={(v) => onChange({ ...value, roles: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">Lloji i biznesit</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.businessType')}</label>
         <CheckGroup options={BUSINESS_TYPES} selected={value.business_types ?? []} onChange={(v) => onChange({ ...value, business_types: v })} />
       </div>
       <div>
@@ -153,7 +153,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         />
         <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white">
           {filteredCompanies.length === 0 ? (
-            <div className="p-3 text-xs text-slate-500">Pa kompani.</div>
+            <div className="p-3 text-xs text-slate-500">{t('common.noCompanies')}</div>
           ) : (
             filteredCompanies.map((c) => {
               const selected = (value.company_ids ?? []).includes(c.id);

@@ -307,7 +307,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                   className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
                 >
                   <Camera className="w-8 h-8 text-teal-600 mb-2" />
-                  <p className="text-sm font-semibold text-slate-900">Skano me kamere</p>
+                  <p className="text-sm font-semibold text-slate-900">{t('common.scanWithCamera')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">Fotografo dokumentin me telefon</p>
                 </button>
                 <button
@@ -348,7 +348,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                   className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
                 >
                   <Camera className="w-8 h-8 text-teal-600 mb-2" />
-                  <p className="text-sm font-semibold text-slate-900">Skano me kamere</p>
+                  <p className="text-sm font-semibold text-slate-900">{t('common.scanWithCamera')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">Fotografo anen e pasme</p>
                 </button>
                 <button

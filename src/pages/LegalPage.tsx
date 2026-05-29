@@ -24,7 +24,7 @@ interface LegalPageProps {
 
 export default function LegalPage({ documentKey }: LegalPageProps) {
   const { slug } = useParams<{ slug: string }>();
-  const { tRaw } = useTranslation();
+  const { t, tRaw } = useTranslation();
 
   const key = (documentKey ?? slug ?? 'impressum') as LegalDocumentKey;
   const isValid = validKeys.includes(key);
@@ -59,8 +59,8 @@ export default function LegalPage({ documentKey }: LegalPageProps) {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-slate-800 mb-2">Dokumenti nuk u gjet</h1>
-          <p className="text-slate-500 mb-6">Faqja ligjore e kerkuar nuk ekziston.</p>
+          <h1 className="text-xl font-bold text-slate-800 mb-2">{t('common.documentNotFound')}</h1>
+          <p className="text-slate-500 mb-6">{t('common.legalPageNotExists')}</p>
           <Link to="/" className="text-teal-600 hover:text-teal-700 font-medium">
             Kthehu ne faqen kryesore
           </Link>

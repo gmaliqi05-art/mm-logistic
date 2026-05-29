@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Settings, Save, Loader2, CheckCircle2, AlertCircle, Clock, Mail } from "lucide-react";
+import { useTranslation } from "../../i18n";
 
 type BrandKey = {
   key: string;
@@ -26,6 +27,7 @@ const COLOR_KEYS = [
 ] as const;
 
 export default function EmailSettings() {
+  const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, string>>({});
   // Note: service_role_key is NEVER fetched into client state. The
   // DB column stores it for pg_cron to read server-side, but pulling
@@ -128,7 +130,7 @@ export default function EmailSettings() {
             <Settings className="h-6 w-6 text-teal-600" />
             Parametrat e emailit
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Identiteti i markes, adresat dhe automatizimi i fushatave.</p>
+          <p className="mt-1 text-sm text-slate-500">{t('common.brandIdentityHint')}</p>
         </div>
         <button
           type="button"
