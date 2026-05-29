@@ -319,7 +319,7 @@ export default function TrailersManager({
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center">
           <Truck className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 mb-3">Asnje rimorkio e regjistruar ende</p>
+          <p className="text-sm text-gray-500 mb-3">{t('company.vehicles.noTrailers')}</p>
           {canRegister && (
             <button
               onClick={() => setRegisterOpen(true)}

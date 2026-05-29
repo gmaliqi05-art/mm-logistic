@@ -13,6 +13,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../utils/logger';
+import { useTranslation } from '../../i18n';
 
 interface SortingItem {
   category_product_id: string | null;
@@ -60,6 +61,7 @@ const CONDITION_TONE: Record<string, string> = {
 
 export default function SortingReports() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<BatchRow[]>([]);
   const [productNames, setProductNames] = useState<ProductName[]>([]);
@@ -264,7 +266,7 @@ export default function SortingReports() {
       {filtered.length === 0 ? (
         <div className="bg-white border border-gray-100 rounded-xl p-12 text-center">
           <Layers className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Asnje raport sortimi per keto filtra</p>
+          <p className="text-gray-500">{t('common.noSortingReportsForFilters')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -362,7 +364,7 @@ export default function SortingReports() {
                       </tbody>
                     </table>
                     {b.items.filter((i) => i.quantity > 0).length === 0 && (
-                      <p className="text-center text-gray-400 text-sm py-4">Asnje artikull i regjistruar</p>
+                      <p className="text-center text-gray-400 text-sm py-4">{t('common.noItemsRecorded')}</p>
                     )}
                   </div>
                 )}

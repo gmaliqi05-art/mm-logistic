@@ -558,7 +558,7 @@ export default function AccSettings() {
                 onChange={(e) => handleBankAccountChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
               >
-                <option value="">Asnjera</option>
+                <option value="">{t('common.none')}</option>
                 {bankAccounts.map((ba) => (
                   <option key={ba.id} value={ba.id}>
                     {ba.name} ({ba.iban})
