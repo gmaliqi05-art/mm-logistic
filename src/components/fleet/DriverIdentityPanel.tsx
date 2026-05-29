@@ -384,7 +384,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
               {saving ? 'Duke ruajtur…' : 'Ruaj dokumentin'}
             </button>
           </div>
-          {!capturedFront && <p className="text-xs text-gray-500 text-right">Skano te pakten anen e perparme per te ruajtur.</p>}
+          {!capturedFront && <p className="text-xs text-gray-500 text-right">{t('common.scanAtLeastFrontToSave')}</p>}
         </div>
       </div>
     </div>
