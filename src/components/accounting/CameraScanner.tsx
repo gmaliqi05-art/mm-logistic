@@ -557,7 +557,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       <div className="flex items-center justify-between px-4 py-3 bg-black/80 text-white">
         <div className="flex items-center gap-2">
           <Camera className="w-5 h-5 text-teal-400" />
-          <span className="font-semibold text-sm">Skano me kamere</span>
+          <span className="font-semibold text-sm">{t('common.scanWithCamera')}</span>
         </div>
         <div className="flex items-center gap-2">
           {!previewUrl && (
