@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Save, CheckCircle2, AlertTriangle, Mail, Bell, Clock, Zap, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface Settings {
   auto_send_on_finalize: boolean;
@@ -44,6 +45,7 @@ interface TemplateOption {
 
 export default function AutomationRules() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -393,7 +395,7 @@ export default function AutomationRules() {
           <div className="space-y-4">
             <TimelineStep
               icon={<FileText className="w-3.5 h-3.5" />}
-              title="Fatura krijohet dhe finalizohet"
+              title={t('common.invoiceCreatedAndFinalized')}
               description={settings.auto_send_on_finalize
                 ? 'Email me PDF dergohet automatikisht tek klienti'
                 : 'Hapet dialogu per dergim manual te fatures'
