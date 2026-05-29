@@ -385,7 +385,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      if (!selectedPlan) throw new Error('Plani nuk u gjet');
+      if (!selectedPlan) throw new Error(t('common.planNotFound'));
 
       const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
       const checkoutRes = await fetch(checkoutUrl, {

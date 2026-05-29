@@ -336,7 +336,7 @@ export default function DepotRepairWorkers() {
       }
 
       if (!damagedRows || damagedRows.length === 0) {
-        throw new Error('Nuk ka stok defekt te disponueshem per kete kategori');
+        throw new Error(t('common.noDefectStockForCategory'));
       }
       const stockRow = damagedRows[0];
       if (stockRow.quantity < qty) {
