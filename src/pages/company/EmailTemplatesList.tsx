@@ -439,7 +439,7 @@ function TemplateCard({ tpl, profile, navigate, onToggle, onDuplicate, testingId
               setTestEmail(profile?.email || '');
             }}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Dergo test"
+            title={t('common.sendTestAction')}
           >
             <Send className="w-4 h-4" />
           </button>

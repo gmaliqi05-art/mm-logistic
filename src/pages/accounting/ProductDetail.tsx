@@ -1073,7 +1073,7 @@ export default function ProductDetail() {
                     onChange={(e) => setAdjustReason(e.target.value)}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                    placeholder="Shkruaj arsyen e rregullimit..."
+                    placeholder={t('common.writeReasonPlaceholder')}
                   />
                 </div>
               </div>
@@ -1185,7 +1185,7 @@ export default function ProductDetail() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Emri i produktit"
+                      placeholder={t('common.productName')}
                     />
                   </div>
 
@@ -1196,7 +1196,7 @@ export default function ProductDetail() {
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Kodi i produktit"
+                      placeholder={t('common.productCode')}
                     />
                   </div>
 
@@ -1224,7 +1224,7 @@ export default function ProductDetail() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder="Pershkrimi i produktit"
+                      placeholder={t('common.productDescription')}
                     />
                   </div>
 
