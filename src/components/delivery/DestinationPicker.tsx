@@ -143,7 +143,7 @@ export default function DestinationPicker({ address, lat, lng, driverId, onChang
                 void handleAddressBlur();
               }, 200);
             }}
-            placeholder="Shkruaj adresen e destinacionit"
+            placeholder={t('common.writeDestinationAddress')}
             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
