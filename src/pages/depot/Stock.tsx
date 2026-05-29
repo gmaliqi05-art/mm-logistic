@@ -746,7 +746,7 @@ export default function DepotStock() {
                   onChange={(e) => setFormQuantity(e.target.value)}
                   required
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                  placeholder="Vendos sasine"
+                  placeholder={t('common.enterQuantity')}
                 />
               </div>
 

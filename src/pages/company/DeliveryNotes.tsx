@@ -811,7 +811,7 @@ export default function CompanyDeliveryNotes() {
                     ? 'bg-teal-600 text-white border-teal-600'
                     : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                 }`}
-                title="Rendit sipas kompanise partnere"
+                title={t('common.sortByPartner')}
               >
                 Sipas Partnerit
               </button>
