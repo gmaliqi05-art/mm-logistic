@@ -809,7 +809,7 @@ export default function Reports() {
               <tr>
                 <td colSpan={4} className="px-6 py-16 text-center">
                   <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500 font-medium">Asnje te dhene per kete periudhe</p>
+                  <p className="text-gray-500 font-medium">{t('common.noDataForPeriod')}</p>
                 </td>
               </tr>
             ) : (
@@ -848,7 +848,7 @@ export default function Reports() {
               <tr>
                 <td colSpan={5} className="px-6 py-16 text-center">
                   <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500 font-medium">Asnje te dhene per kete periudhe</p>
+                  <p className="text-gray-500 font-medium">{t('common.noDataForPeriod')}</p>
                 </td>
               </tr>
             ) : (
@@ -948,7 +948,7 @@ export default function Reports() {
               <tr>
                 <td colSpan={6} className="px-6 py-16 text-center">
                   <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500 font-medium">Asnje te dhene per kete periudhe</p>
+                  <p className="text-gray-500 font-medium">{t('common.noDataForPeriod')}</p>
                 </td>
               </tr>
             ) : (

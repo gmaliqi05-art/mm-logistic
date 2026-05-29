@@ -19,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 import type { AccProduct, AccProductCategory, AccStockMovement, AccMovementType } from '../../types/accounting';
 import { formatCurrency } from '../../types/accounting';
+import { useTranslation } from '../../i18n';
 import { compareProducts } from '../../utils/productSort';
 
 interface AdjustmentModal {
@@ -31,6 +32,7 @@ type StockFilter = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 
 export default function Stock() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
 
 
   const [products, setProducts] = useState<AccProduct[]>([]);
@@ -300,7 +302,7 @@ export default function Stock() {
                   <td colSpan={7} className="px-6 py-16 text-center">
                     <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p className="text-gray-500 font-medium">Nuk ka produkte</p>
-                    <p className="text-gray-400 text-sm mt-1">Asnje produkt nuk perputhet me filtrat</p>
+                    <p className="text-gray-400 text-sm mt-1">{t('common.noProductsMatchFilters')}</p>
                   </td>
                 </tr>
               ) : (
@@ -373,7 +375,7 @@ export default function Stock() {
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
                     <CornerDownLeft className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Asnje levizje stoku</p>
+                    <p className="text-gray-500 font-medium">{t('common.noStockMovements')}</p>
                     <p className="text-gray-400 text-sm mt-1">Levizjet e stokut do te shfaqen ketu</p>
                   </td>
                 </tr>
