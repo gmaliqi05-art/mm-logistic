@@ -405,7 +405,7 @@ export default function EmailCampaignNew() {
         {step === 3 && (
           <div className="space-y-5">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">Dergo nje test perpara</h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">{t('common.sendTestFirst')}</h3>
               <div className="flex flex-wrap gap-2">
                 <input
                   type="email"

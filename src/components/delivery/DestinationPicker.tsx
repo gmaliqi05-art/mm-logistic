@@ -185,7 +185,7 @@ export default function DestinationPicker({ address, lat, lng, driverId, onChang
         <div className="fixed inset-0 z-[2000] bg-black/60 flex items-center justify-center p-4" onClick={() => setMapOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-              <div className="font-semibold text-slate-900 text-sm">Zgjidh destinacionin ne harte</div>
+              <div className="font-semibold text-slate-900 text-sm">{t('common.selectDestinationOnMap')}</div>
               <button onClick={() => setMapOpen(false)} className="text-slate-500 hover:text-slate-700"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-3 border-b border-slate-100 flex gap-2">

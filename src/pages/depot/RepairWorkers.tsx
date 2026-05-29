@@ -839,11 +839,11 @@ export default function DepotRepairWorkers() {
             <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Selektimi aktual</p>
             <p className="text-sm text-gray-700">
               <span className="font-semibold">
-                {selectedWorker?.full_name ?? <span className="text-gray-400">Zgjidh puntorin</span>}
+                {selectedWorker?.full_name ?? <span className="text-gray-400">{t('common.selectWorker')}</span>}
               </span>
               <span className="text-gray-400 mx-2">·</span>
               <span className="font-semibold">
-                {selectedProduct?.name ?? <span className="text-gray-400">Zgjidh produktin</span>}
+                {selectedProduct?.name ?? <span className="text-gray-400">{t('common.selectProductInline')}</span>}
               </span>
               <span className="text-gray-400 mx-2">·</span>
               <span className="font-bold text-teal-700">+{batchSize} paleta</span>
