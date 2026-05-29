@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Bell, BellOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useTranslation } from '../i18n';
 
 export default function PushNotificationSettings() {
+  const { t } = useTranslation();
   const {
     isSupported,
     isSubscribed,
@@ -119,12 +121,12 @@ export default function PushNotificationSettings() {
                 {isSubscribed ? (
                   <>
                     <BellOff className="w-4 h-4" />
-                    <span>Çaktivizo</span>
+                    <span>{t('common.disable')}</span>
                   </>
                 ) : (
                   <>
                     <Bell className="w-4 h-4" />
-                    <span>Aktivizo</span>
+                    <span>{t('common.enable')}</span>
                   </>
                 )}
               </>

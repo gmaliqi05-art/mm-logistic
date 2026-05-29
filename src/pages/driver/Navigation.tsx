@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { Clock, MapPin, Navigation as NavigationIcon, Route, Truck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 import TruckNavChooser from '../../components/fleet/TruckNavChooser';
 
 interface CountrySegment {
@@ -61,6 +62,7 @@ function FitToRoute({ geometry }: { geometry: [number, number][] }) {
 
 export default function DriverNavigation() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [delivery, setDelivery] = useState<AssignedDelivery | null>(null);
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
@@ -174,8 +176,8 @@ export default function DriverNavigation() {
       <div className="p-4 max-w-2xl mx-auto">
         <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
           <NavigationIcon className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <h2 className="text-lg font-semibold text-slate-900">Nuk ka rrugen e caktuar</h2>
-          <p className="text-sm text-slate-600 mt-1">Kompania ende nuk te ka caktuar nje rruge per transportin tend.</p>
+          <h2 className="text-lg font-semibold text-slate-900">{t('common.noAssignedRoute')}</h2>
+          <p className="text-sm text-slate-600 mt-1">{t('common.companyHasNotAssignedRoute')}</p>
         </div>
       </div>
     );
@@ -191,7 +193,7 @@ export default function DriverNavigation() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <NavigationIcon className="w-6 h-6 text-teal-600" /> Navigimi (LKW)
         </h1>
-        <p className="text-sm text-slate-600 mt-1">Rruga e caktuar nga kompania per kamiona.</p>
+        <p className="text-sm text-slate-600 mt-1">{t('common.routeAssignedByCompany')}</p>
       </div>
 
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center gap-2 text-sm text-teal-900">
