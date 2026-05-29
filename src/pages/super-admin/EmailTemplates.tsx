@@ -112,7 +112,7 @@ export default function EmailTemplates() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko sipas emrit ose kodit..."
+            placeholder={tr('common.searchByNameOrCode')}
             className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
           />
         </div>
