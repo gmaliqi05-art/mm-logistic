@@ -124,6 +124,10 @@ export const de: typeof sq = {
     messages: 'Nachrichten',
     now: 'Jetzt',
     ago: 'vor',
+    skipped: 'Übersprungen',
+    sendNow: 'Jetzt senden',
+    sendNowHint: 'Startet sofort nach der Erstellung.',
+    sendEmail: 'E-Mail senden',
     scanner: {
       title: 'Dokument mit KI scannen',
       subtitle: 'Die KI erkennt und klassifiziert das Dokument automatisch',
@@ -2888,6 +2892,8 @@ export const de: typeof sq = {
       partner: 'Partner',
       address: 'Adresse',
       invoice: 'Rechnung',
+      empty: 'Keine Lieferscheine',
+      emptyHint: 'Fügen Sie Ihren ersten Lieferschein hinzu, um zu beginnen',
     },
     purchases: {
       title: 'Einkaeufe',
@@ -3129,6 +3135,7 @@ export const de: typeof sq = {
       addAccount: 'Konto hinzufuegen',
       editAccount: 'Konto bearbeiten',
       noAccounts: 'Keine Bankkonten',
+      emptyHint: 'Fügen Sie Ihr erstes Bankkonto hinzu, um zu beginnen',
       accountName: 'Kontoname',
       iban: 'IBAN',
       bic: 'BIC',
@@ -3388,6 +3395,16 @@ export const de: typeof sq = {
     notificationSettings: 'Benachrichtigungseinstellungen',
   },
   companyAdmin: {
+    partnerFlows: {
+      headers: {
+        partner: 'Partner',
+        inbound: 'Eingang',
+        outbound: 'Ausgang',
+        transport: 'Transport',
+        custody: 'Verwahrung',
+        lastActivity: 'Letzte Aktivität',
+      },
+    },
     dashboard: {
       pendingPickups: 'Ausstehende Abholungen',
       pendingPickupsDesc: 'Auftraege, die von Partnerunternehmen abzuholen sind',

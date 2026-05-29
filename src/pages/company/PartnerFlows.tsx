@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowDownLeft, ArrowUpRight, Handshake, Warehouse, Package, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface FlowRow {
   id: string;
@@ -35,6 +36,7 @@ const DIRECTION_META: Record<FlowRow['direction'], { label: string; tone: string
 
 export default function PartnerFlows() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<FlowRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'stock' | 'carrier' | 'custody'>('all');
@@ -193,12 +195,12 @@ export default function PartnerFlows() {
             <table className="w-full text-sm min-w-[720px]">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-2 text-left">Partneri</th>
-                  <th className="px-4 py-2 text-right">Hyrje</th>
-                  <th className="px-4 py-2 text-right">Dalje</th>
-                  <th className="px-4 py-2 text-right">Transport</th>
-                  <th className="px-4 py-2 text-right">Ruajtje</th>
-                  <th className="px-4 py-2 text-left whitespace-nowrap">Aktiviteti i fundit</th>
+                  <th className="px-4 py-2 text-left">{t('companyAdmin.partnerFlows.headers.partner')}</th>
+                  <th className="px-4 py-2 text-right">{t('companyAdmin.partnerFlows.headers.inbound')}</th>
+                  <th className="px-4 py-2 text-right">{t('companyAdmin.partnerFlows.headers.outbound')}</th>
+                  <th className="px-4 py-2 text-right">{t('companyAdmin.partnerFlows.headers.transport')}</th>
+                  <th className="px-4 py-2 text-right">{t('companyAdmin.partnerFlows.headers.custody')}</th>
+                  <th className="px-4 py-2 text-left whitespace-nowrap">{t('companyAdmin.partnerFlows.headers.lastActivity')}</th>
                   <th className="px-4 py-2 text-right" />
                 </tr>
               </thead>

@@ -452,8 +452,8 @@ export default function AccDeliveryNotes() {
                 <tr>
                   <td colSpan={8} className="px-6 py-16 text-center">
                     <Truck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Asnje fletedalje</p>
-                    <p className="text-gray-400 text-sm mt-1">Shto fletedaljen e pare per te filluar</p>
+                    <p className="text-gray-500 font-medium">{t('accounting.deliveryNotes.empty')}</p>
+                    <p className="text-gray-400 text-sm mt-1">{t('accounting.deliveryNotes.emptyHint')}</p>
                   </td>
                 </tr>
               ) : (
