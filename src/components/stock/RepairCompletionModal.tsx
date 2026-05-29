@@ -168,7 +168,7 @@ export default function RepairCompletionModal({ stockId, onClose, onApplied }: P
         ) : detail ? (
           <div className="p-5 space-y-4">
             <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-center">
-              <p className="text-[10px] uppercase tracking-wide text-amber-600 font-medium">Stoku defekt i disponueshem</p>
+              <p className="text-[10px] uppercase tracking-wide text-amber-600 font-medium">{t('common.damagedStockAvailable')}</p>
               <p className="text-3xl font-bold text-amber-800 mt-1">{detail.quantity}</p>
             </div>
 
