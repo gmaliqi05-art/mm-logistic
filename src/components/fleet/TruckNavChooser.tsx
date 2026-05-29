@@ -151,7 +151,7 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
           <div className="flex items-start gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-900">
             <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
-              <div className="font-semibold">Mos perdor Google Maps per navigim</div>
+              <div className="font-semibold">{t('common.dontUseGoogleMapsForNav')}</div>
               <div className="mt-0.5">
                 Google Maps dhe Waze nuk kane profil per kamiona — ato dergojne neper rruge ku LKW nuk lejohen. Perdor nje nga aplikacionet me profil HGV me poshte.
               </div>

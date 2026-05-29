@@ -1986,7 +1986,7 @@ function ReviewModal({
             <div className="bg-teal-50 border-b border-teal-100 px-5 py-4 flex items-start gap-3">
               <CheckCircle2 className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-gray-900">U konfirmua me sukses</h4>
+                <h4 className="font-bold text-gray-900">{t('common.confirmedSuccessfully')}</h4>
                 <p className="text-sm text-gray-600 mt-1">{t('common.itemsSortedGoToSortingPage')}</p>
               </div>
             </div>

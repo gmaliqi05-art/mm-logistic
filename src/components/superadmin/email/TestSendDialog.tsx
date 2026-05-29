@@ -253,7 +253,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-700">Adresa e marresit</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.recipientAddress')}</label>
             <input
               type="email"
               value={email}
