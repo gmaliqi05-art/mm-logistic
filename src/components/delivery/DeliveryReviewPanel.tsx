@@ -1615,7 +1615,7 @@ function ReviewModal({
                 <>
                 {noScanFlag && (
                   <div className="mb-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-amber-800">Shoferi e mbylli pa skanim</p>
+                    <p className="text-xs font-semibold text-amber-800">{t('common.driverClosedWithoutScan')}</p>
                     <p className="text-[11px] text-amber-700 mt-0.5">Ngarkoni dokumentin qe ju erdhi me email kur te vij.</p>
                   </div>
                 )}
@@ -1644,7 +1644,7 @@ function ReviewModal({
                 </>
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-xs text-gray-400">
-                  {noScanFlag ? 'Shoferi e mbylli pa skanim - pritet ngarkimi nga kompania' : 'Nuk ka dokument te skanuar'}
+                  {noScanFlag ? t('common.driverClosedWithoutScanWaiting') : t('common.noScannedDocument')}
                 </div>
               )}
             </div>
@@ -1683,7 +1683,7 @@ function ReviewModal({
                     <table className="w-full text-xs">
                       <thead className="bg-slate-100 text-left">
                         <tr>
-                          <th className="px-2.5 py-1.5 font-semibold text-slate-600">Pershkrim</th>
+                          <th className="px-2.5 py-1.5 font-semibold text-slate-600">{t('common.description')}</th>
                           <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Sasi</th>
                         </tr>
                       </thead>
@@ -1882,7 +1882,7 @@ function ReviewModal({
               <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-gray-900">Stok i pamjaftueshem</h4>
-                <p className="text-xs text-gray-600 mt-1">Disa artikuj do te shkojne ne minus ne stok. Deshironi te vazhdoni?</p>
+                <p className="text-xs text-gray-600 mt-1">{t('common.itemsWillGoNegativeContinue')}</p>
               </div>
             </div>
             <div className="p-5 space-y-2 max-h-80 overflow-y-auto">
@@ -1959,7 +1959,7 @@ function ReviewModal({
               <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-gray-900">Dergesa u regjistrua ne stok</h4>
-                <p className="text-sm text-gray-600 mt-1">Deshironi te krijoni fature per kete dergese?</p>
+                <p className="text-sm text-gray-600 mt-1">{t('common.createInvoiceForDelivery')}</p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-4">
@@ -1987,7 +1987,7 @@ function ReviewModal({
               <CheckCircle2 className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-gray-900">U konfirmua me sukses</h4>
-                <p className="text-sm text-gray-600 mt-1">Artikujt per sortim jane derguar ne sortire. Deshironi te shkoni direkt te faqja e sortimit?</p>
+                <p className="text-sm text-gray-600 mt-1">{t('common.itemsSortedGoToSortingPage')}</p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-4">

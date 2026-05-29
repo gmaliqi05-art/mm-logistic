@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Link2, Search, AlertCircle, Loader2, UserPlus, ShieldAlert, Sparkles, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 import {
   FLOW_ROLE_META,
   matchCounterparty,
@@ -54,6 +55,7 @@ function flowRoleToOurRole(role: FlowRole): string {
 }
 
 export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, aiSnapshot, onChanged, onRoleChange, disabled }: Props) {
+  const { t } = useTranslation();
   const [role, setRoleState] = useState<FlowRole>((initial.flow_role as FlowRole) ?? 'sender');
   const setRole = (next: FlowRole) => {
     setRoleState(next);
@@ -291,7 +293,7 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
           className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-semibold text-gray-800">Emri i pales tjeter</span>
+            <span className="text-sm font-semibold text-gray-800">{t('common.otherPartyName')}</span>
             {snapshot.name && !partnerExpanded && (
               <span className="text-xs text-gray-500 truncate max-w-[180px]">{snapshot.name}</span>
             )}
@@ -302,7 +304,7 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
         {partnerExpanded && (
           <div className="px-4 py-3 space-y-3 border-t border-gray-200">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <Field label="Emri i pales tjeter" value={snapshot.name ?? ''} onChange={(v) => { setSnapshot({ ...snapshot, name: v }); setMatchedCompanyId(null); setMatchedContactId(null); }} />
+              <Field label={t('common.otherPartyName')} value={snapshot.name ?? ''} onChange={(v) => { setSnapshot({ ...snapshot, name: v }); setMatchedCompanyId(null); setMatchedContactId(null); }} />
               <Field label="Adresa" value={snapshot.address ?? ''} onChange={(v) => setSnapshot({ ...snapshot, address: v })} />
               <Field label="Nr. porosise / LS" value={snapshot.order_number ?? ''} onChange={(v) => setSnapshot({ ...snapshot, order_number: v })} />
               <Field label="Telefon" value={snapshot.phone ?? ''} onChange={(v) => { setSnapshot({ ...snapshot, phone: v }); setMatchedCompanyId(null); }} />
