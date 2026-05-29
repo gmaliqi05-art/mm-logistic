@@ -122,6 +122,10 @@ export const sq = {
     messages: 'mesazhe',
     now: 'Tani',
     ago: 'me pare',
+    skipped: 'Kapercyer',
+    sendNow: 'Dergo menjehere',
+    sendNowHint: 'Fillon menjehere pas krijimit.',
+    sendEmail: 'Dergo email',
     scanner: {
       title: 'Skano dokument me AI',
       subtitle: 'AI-ja e identifikon dhe klasifikon dokumentin automatikisht',
@@ -2886,6 +2890,8 @@ export const sq = {
       partner: 'Partneri',
       address: 'Adresa',
       invoice: 'Fatura',
+      empty: 'Asnje fletedalje',
+      emptyHint: 'Shto fletedaljen e pare per te filluar',
     },
     purchases: {
       title: 'Blerjet',
@@ -3127,6 +3133,7 @@ export const sq = {
       addAccount: 'Shto Llogari',
       editAccount: 'Ndrysho Llogarme',
       noAccounts: 'Nuk ka llogari bankare',
+      emptyHint: 'Shto llogarite e para bankare per te filluar',
       accountName: 'Emri i Llogarise',
       iban: 'IBAN',
       bic: 'BIC',
@@ -3386,6 +3393,16 @@ export const sq = {
     notificationSettings: 'Cilesimet e Njoftimeve',
   },
   companyAdmin: {
+    partnerFlows: {
+      headers: {
+        partner: 'Partneri',
+        inbound: 'Hyrje',
+        outbound: 'Dalje',
+        transport: 'Transport',
+        custody: 'Ruajtje',
+        lastActivity: 'Aktiviteti i fundit',
+      },
+    },
     dashboard: {
       pendingPickups: 'Fletemarrje ne pritje',
       pendingPickupsDesc: 'Porosite per t\'u marrur nga kompanite partnere',

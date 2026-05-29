@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTranslation } from "../../i18n";
 import {
   ArrowLeft, ArrowRight, Send, Clock, Loader2, Users, FileText,
   CheckCircle2, AlertCircle, Mail,
@@ -36,6 +37,7 @@ const EMPTY_AD_HOC: AdHocContent = {
 export default function EmailCampaignNew() {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
 
@@ -442,8 +444,8 @@ export default function EmailCampaignNew() {
                 >
                   <Send className="h-5 w-5 text-teal-600" />
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">Dergo menjehere</div>
-                    <div className="text-xs text-slate-500">Fillon menjehere pas krijimit.</div>
+                    <div className="text-sm font-semibold text-slate-900">{t('common.sendNow')}</div>
+                    <div className="text-xs text-slate-500">{t('common.sendNowHint')}</div>
                   </div>
                 </button>
                 <button

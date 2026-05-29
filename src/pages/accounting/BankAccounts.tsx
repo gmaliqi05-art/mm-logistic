@@ -368,8 +368,8 @@ export default function BankAccounts() {
       {accounts.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center">
           <Landmark className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 font-medium">Asnje llogari bankare</p>
-          <p className="text-gray-400 text-sm mt-1">Shto llogarite e para bankare per te filluar</p>
+          <p className="text-gray-500 font-medium">{t('accounting.bankAccounts.noAccounts')}</p>
+          <p className="text-gray-400 text-sm mt-1">{t('accounting.bankAccounts.emptyHint')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

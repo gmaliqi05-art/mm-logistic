@@ -124,6 +124,10 @@ export const fr: typeof sq = {
     messages: 'messages',
     now: 'Maintenant',
     ago: 'il y a',
+    skipped: 'Ignoré',
+    sendNow: 'Envoyer maintenant',
+    sendNowHint: 'Démarre immédiatement après la création.',
+    sendEmail: 'Envoyer un e-mail',
     scanner: {
       title: 'Scanner un document avec l\'IA',
       subtitle: 'L\'IA identifie et classe le document automatiquement',
@@ -2888,6 +2892,8 @@ export const fr: typeof sq = {
       partner: 'Partenaire',
       address: 'Adresse',
       invoice: 'Facture',
+      empty: 'Aucun bon de livraison',
+      emptyHint: 'Ajoutez votre premier bon de livraison pour commencer',
     },
     purchases: {
       title: 'Achats',
@@ -3129,6 +3135,7 @@ export const fr: typeof sq = {
       addAccount: 'Ajouter un compte',
       editAccount: 'Modifier le compte',
       noAccounts: 'Aucun compte bancaire',
+      emptyHint: 'Ajoutez votre premier compte bancaire pour commencer',
       accountName: 'Nom du compte',
       iban: 'IBAN',
       bic: 'BIC',
@@ -3388,6 +3395,16 @@ export const fr: typeof sq = {
     notificationSettings: 'Parametres de notification',
   },
   companyAdmin: {
+    partnerFlows: {
+      headers: {
+        partner: 'Partenaire',
+        inbound: 'Entrée',
+        outbound: 'Sortie',
+        transport: 'Transport',
+        custody: 'Garde',
+        lastActivity: 'Dernière activité',
+      },
+    },
     dashboard: {
       pendingPickups: 'Enlevements en attente',
       pendingPickupsDesc: 'Commandes a enlever par les societes partenaires',

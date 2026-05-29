@@ -124,6 +124,10 @@ export const en: typeof sq = {
     messages: 'messages',
     now: 'Now',
     ago: 'ago',
+    skipped: 'Skipped',
+    sendNow: 'Send now',
+    sendNowHint: 'Starts immediately after creation.',
+    sendEmail: 'Send email',
     scanner: {
       title: 'Scan document with AI',
       subtitle: 'AI identifies and classifies the document automatically',
@@ -2891,6 +2895,8 @@ export const en: typeof sq = {
       partner: 'Partner',
       address: 'Address',
       invoice: 'Invoice',
+      empty: 'No delivery notes',
+      emptyHint: 'Add your first delivery note to get started',
     },
     purchases: {
       title: 'Purchases',
@@ -3132,6 +3138,7 @@ export const en: typeof sq = {
       addAccount: 'Add Account',
       editAccount: 'Edit Account',
       noAccounts: 'No bank accounts',
+      emptyHint: 'Add your first bank account to get started',
       accountName: 'Account Name',
       iban: 'IBAN',
       bic: 'BIC',
@@ -3391,6 +3398,16 @@ export const en: typeof sq = {
     notificationSettings: 'Notification Settings',
   },
   companyAdmin: {
+    partnerFlows: {
+      headers: {
+        partner: 'Partner',
+        inbound: 'Inbound',
+        outbound: 'Outbound',
+        transport: 'Transport',
+        custody: 'Custody',
+        lastActivity: 'Last activity',
+      },
+    },
     dashboard: {
       pendingPickups: 'Pending pickups',
       pendingPickupsDesc: 'Orders to be picked up by partner companies',
