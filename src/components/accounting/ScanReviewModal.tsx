@@ -275,7 +275,7 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
 
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Lloji i dokumentit</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">{t('common.documentType')}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {(Object.keys(KIND_META) as DocKind[]).map((k) => {
                 const meta = KIND_META[k];

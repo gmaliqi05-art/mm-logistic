@@ -446,7 +446,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                     )}
                     {needsTarget && (
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">Lidh me shofer</label>
+                        <label className="text-xs text-slate-500 mb-1 block">{t('common.linkToDriver')}</label>
                         <select
                           value={targetEntityId}
                           onChange={(e) => setTargetEntityId(e.target.value)}
