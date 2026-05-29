@@ -1,4 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { requireCaller } from "../_shared/requireCaller.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,30 +18,29 @@ const VAT_REGEX: Record<string, RegExp> = {
   SI: /^SI\d{8}$/, ES: /^ES[A-Z0-9]\d{7}[A-Z0-9]$/, SE: /^SE\d{12}$/,
 };
 
-const ipBuckets = new Map<string, { count: number; reset: number }>();
-
-function rateLimitByIp(ip: string, maxPerMin: number): boolean {
-  const now = Date.now();
-  const bucket = ipBuckets.get(ip);
-  if (!bucket || now > bucket.reset) {
-    ipBuckets.set(ip, { count: 1, reset: now + 60_000 });
-    return true;
-  }
-  bucket.count++;
-  return bucket.count <= maxPerMin;
-}
-
 function normalize(v: string): string {
   return (v || "").toUpperCase().replace(/[\s.-]/g, "");
 }
 
+function xmlEscape(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 async function checkVies(country: string, number: string): Promise<{ valid: boolean; name?: string; address?: string }> {
+  // Inputs are already format-validated against VAT_REGEX (alphanumerics
+  // only), so XML injection is not possible today. xmlEscape is cheap
+  // defense in depth in case the regex set is ever relaxed.
   const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns1="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
 <soap:Body>
 <tns1:checkVat>
-<tns1:countryCode>${country}</tns1:countryCode>
-<tns1:vatNumber>${number}</tns1:vatNumber>
+<tns1:countryCode>${xmlEscape(country)}</tns1:countryCode>
+<tns1:vatNumber>${xmlEscape(number)}</tns1:vatNumber>
 </tns1:checkVat>
 </soap:Body>
 </soap:Envelope>`;
@@ -64,17 +65,23 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
-  try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    if (!rateLimitByIp(ip, 20)) {
-      return new Response(JSON.stringify({ error: "rate_limited" }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
+  // VIES is a shared EU resource. Previously this endpoint was wide
+  // open: anyone with the anon key could spam it, exfiltrate EU
+  // company names+addresses for any VAT number, or get the project
+  // IP banned by VIES. Gate on authenticated user, then per-user
+  // rate-limit (60/min — generous enough for invoice/partner edit
+  // flows, tight enough to block abuse). Both legitimate callers
+  // (InvoiceBuilder, Partners) already pass a user session.
+  const caller = await requireCaller(req, { corsHeaders });
+  if (!caller.ok) return caller.response;
+
+  const rl = await checkRateLimit(`vat-validate:user=${caller.profile.id}`, 60, 60_000);
+  if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
+
+  try {
     const { vat } = await req.json();
-    const norm = normalize(vat);
+    const norm = normalize(typeof vat === "string" ? vat : "");
     if (norm.length < 4) {
       return new Response(JSON.stringify({ valid: false, reason: "too_short" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -97,7 +104,8 @@ Deno.serve(async (req: Request) => {
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch {
+  } catch (e) {
+    console.error("validate-vat-number error", e);
     return new Response(JSON.stringify({ valid: false, error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -36,6 +36,7 @@ interface Extracted {
   }>;
   confidence: number;
   notes: string;
+  document_number?: string;
 }
 
 type Step = 'upload' | 'classify' | 'scanning' | 'preview' | 'saving';

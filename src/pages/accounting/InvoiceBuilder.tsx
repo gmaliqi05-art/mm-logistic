@@ -176,7 +176,7 @@ export default function InvoiceBuilder() {
   const [deliveryNoteId, setDeliveryNoteId] = useState<string | null>(null);
   const [deliveryNoteNumber, setDeliveryNoteNumber] = useState<string>('');
   const [deliveryNoteSearch, setDeliveryNoteSearch] = useState('');
-  const [deliveryNoteResults, setDeliveryNoteResults] = useState<Array<{ id: string; note_number: string; partner_name: string | null; type: string; delivered_at: string | null; partner_id: string | null }>>([]);
+  const [deliveryNoteResults, setDeliveryNoteResults] = useState<Array<{ id: string; note_number: string; document_number: string | null; partner_name: string | null; type: string; delivered_at: string | null; partner_id: string | null }>>([]);
   const [deliveryNoteSearchOpen, setDeliveryNoteSearchOpen] = useState(false);
   const [deliveryNotePartner, setDeliveryNotePartner] = useState<string>('');
   const [deliveryNoteDate, setDeliveryNoteDate] = useState<string>('');

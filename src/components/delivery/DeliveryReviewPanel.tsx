@@ -459,7 +459,7 @@ function ReviewModal({
     }
   }
 
-  async function triggerAiScan(file: File, storagePath: string) {
+  async function triggerAiScan(file: File, _storagePath: string) {
     try {
       const companyId = profile?.company_id;
       if (!companyId) return;
