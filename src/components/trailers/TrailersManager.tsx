@@ -896,7 +896,7 @@ function RegisterPlateModal({
         </div>
         <div className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Numri i tabeles</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t('common.plateNumber')}</label>
             <input
               autoFocus
               value={plate}

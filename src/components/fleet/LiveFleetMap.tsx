@@ -931,7 +931,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
 
           {!compact && list.length > 0 && !activeDriver && (
             <div className="absolute top-3 right-3 z-[6] bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-2 max-w-[220px] w-[200px]">
-              <div className="text-[11px] font-semibold text-slate-500 uppercase mb-1 px-1">Shoferet aktive</div>
+              <div className="text-[11px] font-semibold text-slate-500 uppercase mb-1 px-1">{t('common.activeDrivers')}</div>
               <div className="max-h-[140px] sm:max-h-[200px] overflow-y-auto space-y-1">
                 {list.map((d) => (
                   <button
