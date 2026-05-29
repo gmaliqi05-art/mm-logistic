@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { AlertTriangle, Compass, Copy, Crosshair, ExternalLink, Gauge, Home, LocateFixed, MapPin, Navigation, Phone, Route, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { logger } from '../../utils/logger';
+import { useTranslation } from '../../i18n';
 
 interface DriverPing {
   driver_id: string;
@@ -268,6 +269,7 @@ function agoLabel(iso: string | null, now: number = Date.now()): string {
 }
 
 export default function LiveFleetMap({ companyId, height = '520px', compact = false }: Props) {
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<Record<string, DriverPing>>({});
   const [trails, setTrails] = useState<Record<string, [number, number][]>>({});
   const [loading, setLoading] = useState(true);
@@ -1060,13 +1062,13 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
                     <button
                       onClick={() => { setExtendOpen(null); setExtendText(''); }}
                       className="text-xs px-2 py-1 rounded-md text-slate-600 hover:bg-slate-200"
-                    >Anulo</button>
+                    >{t('common.cancel')}</button>
                     <button
                       disabled={extendSaving || !extendText.trim()}
                       onClick={() => submitExtension(activeDriver)}
                       className="text-xs px-3 py-1 rounded-md bg-teal-600 text-white disabled:opacity-50 inline-flex items-center gap-1"
                     >
-                      <Send className="w-3 h-3" /> Dergo
+                      <Send className="w-3 h-3" /> {t('common.send')}
                     </button>
                   </div>
                 </div>

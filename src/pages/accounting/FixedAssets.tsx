@@ -310,8 +310,8 @@ export default function FixedAssets() {
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
-              <button onClick={() => setShowManual(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg text-sm">Anulo</button>
-              <button onClick={handleSaveManual} className="px-5 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm">Ruaj</button>
+              <button onClick={() => setShowManual(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg text-sm">{t('common.cancel')}</button>
+              <button onClick={handleSaveManual} className="px-5 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm">{t('common.save')}</button>
             </div>
           </div>
         </div>

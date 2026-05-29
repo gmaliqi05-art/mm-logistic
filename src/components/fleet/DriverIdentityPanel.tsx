@@ -375,7 +375,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
           {err && <div className="text-sm text-red-600">{err}</div>}
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium">Anulo</button>
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium">{t('common.cancel')}</button>
             <button
               onClick={save}
               disabled={saving || !capturedFront}
