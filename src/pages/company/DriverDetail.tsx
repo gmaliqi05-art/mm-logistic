@@ -378,6 +378,7 @@ function TabBtn({ active, onClick, icon, children }: { active: boolean; onClick:
 }
 
 function LicenseAddForm({ companyId, driverId, onDone }: { companyId: string; driverId: string; onDone: () => void }) {
+  const { t } = useTranslation();
   const [number, setNumber] = useState('');
   const [categories, setCategories] = useState<string[]>(['B']);
   const [issued, setIssued] = useState('');
@@ -421,14 +422,15 @@ function LicenseAddForm({ companyId, driverId, onDone }: { companyId: string; dr
         </div>
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
-        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">Ruaj</button>
+        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('common.cancel')}</button>
+        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">{t('common.save')}</button>
       </div>
     </div>
   );
 }
 
 function QualAddForm({ companyId, driverId, onDone }: { companyId: string; driverId: string; onDone: () => void }) {
+  const { t } = useTranslation();
   const [type, setType] = useState('kod95');
   const [issued, setIssued] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -467,14 +469,15 @@ function QualAddForm({ companyId, driverId, onDone }: { companyId: string; drive
         <MiniField label="Skadon me *" type="date" value={expiry} onChange={setExpiry} />
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
-        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">Ruaj</button>
+        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('common.cancel')}</button>
+        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">{t('common.save')}</button>
       </div>
     </div>
   );
 }
 
 function MedicalAddForm({ companyId, driverId, onDone }: { companyId: string; driverId: string; onDone: () => void }) {
+  const { t } = useTranslation();
   const [exam, setExam] = useState('g25');
   const [doctor, setDoctor] = useState('');
   const [issued, setIssued] = useState('');
@@ -508,8 +511,8 @@ function MedicalAddForm({ companyId, driverId, onDone }: { companyId: string; dr
         <MiniField label="Skadon me *" type="date" value={expiry} onChange={setExpiry} />
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
-        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">Ruaj</button>
+        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('common.cancel')}</button>
+        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">{t('common.save')}</button>
       </div>
     </div>
   );
