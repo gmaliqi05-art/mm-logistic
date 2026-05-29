@@ -589,7 +589,7 @@ export default function Transactions() {
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Pershkrimi i transaksionit"
+                      placeholder={t('common.transactionDescription')}
                     />
                   </div>
                   <div>

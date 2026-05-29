@@ -470,7 +470,7 @@ export default function Imports() {
                               <option value="">— pa produkt —</option>
                               {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
-                            <input type="text" placeholder="Pershkrim" value={it.description}
+                            <input type="text" placeholder={t('common.description')} value={it.description}
                               onChange={e => updateItem(idx, { description: e.target.value })}
                               className="w-full mt-1 px-1 py-1 border border-gray-200 rounded text-xs" />
                           </td>

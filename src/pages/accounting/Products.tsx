@@ -772,7 +772,7 @@ export default function Products() {
                           type="text"
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
-                          placeholder="Emri i kategorise"
+                          placeholder={t('common.categoryName')}
                           className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
