@@ -803,7 +803,7 @@ export default function SubscriptionPlans() {
                         type="button"
                         onClick={() => removeFeature(idx)}
                         className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0"
-                        title="Fshi vecorine"
+                        title={t('common.deleteFeature')}
                       >
                         <X className="w-4 h-4" />
                       </button>
