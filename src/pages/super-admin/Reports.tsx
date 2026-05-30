@@ -10,6 +10,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 
 interface PlanRevenue {
   name: string;
@@ -37,6 +38,7 @@ const planIcons: Record<string, typeof Zap> = {
 };
 
 export default function SuperAdminReports() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -154,7 +156,7 @@ export default function SuperAdminReports() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Te Ardhurat</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('common.revenue')}</h1>
         <p className="text-gray-500 mt-1">Raporte financiare dhe historiku i pagesave</p>
       </div>
 
@@ -164,7 +166,7 @@ export default function SuperAdminReports() {
             <div>
               <p className="text-sm text-gray-500">MRR</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{mrr.toFixed(0)}{'\u20AC'}</p>
-              <p className="text-xs text-gray-500 mt-1">Te ardhura mujore te perseritura</p>
+              <p className="text-xs text-gray-500 mt-1">{t('common.recurringMonthlyRevenue')}</p>
             </div>
             <div className="bg-teal-500 p-3 rounded-xl">
               <TrendingUp className="w-6 h-6 text-white" />
@@ -186,7 +188,7 @@ export default function SuperAdminReports() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Te Ardhura Totale</p>
+              <p className="text-sm text-gray-500">{t('common.totalRevenue')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{totalRevenue.toFixed(0)}{'\u20AC'}</p>
               <p className="text-xs text-gray-500 mt-1">Qe nga fillimi</p>
             </div>
@@ -198,7 +200,7 @@ export default function SuperAdminReports() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Kompani</p>
+              <p className="text-sm text-gray-500">{t('common.companies')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{totalCompanies}</p>
               <p className="text-xs text-gray-500 mt-1">Te regjistruara ne platforme</p>
             </div>
@@ -213,7 +215,7 @@ export default function SuperAdminReports() {
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Te Ardhura sipas Planit</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('common.revenueByPlan')}</h2>
           </div>
         </div>
         <div className="p-6">
@@ -271,7 +273,7 @@ export default function SuperAdminReports() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kompania</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.company')}</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shuma</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Metoda</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statusi</th>

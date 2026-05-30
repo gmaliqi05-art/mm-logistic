@@ -751,7 +751,7 @@ export default function ProductDetail() {
                   <p className="text-xs text-emerald-500 mt-0.5">njesi</p>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">Te Ardhurat</p>
+                  <p className="text-sm text-emerald-600 font-medium">{t('common.revenue')}</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">
                     {formatCurrency(totalRevenue)}
                   </p>

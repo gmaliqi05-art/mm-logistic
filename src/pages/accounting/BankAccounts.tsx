@@ -275,7 +275,7 @@ export default function BankAccounts() {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Transaksionet e Llogarise</h2>
+            <h2 className="font-semibold text-gray-900">{t('common.accountTransactions')}</h2>
           </div>
           {loadingTx ? (
             <PageSkeleton rows={6} cols={4} showStats={false} />
