@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import FleetDocScanner from '../../components/fleet/FleetDocScanner';
 import DriverCVSummary from '../../components/fleet/DriverCVSummary';
-import { useTranslation } from '../../i18n';
 
 type ExpiryStatus = 'valid' | 'warn' | 'critical' | 'expired' | 'unknown';
 
@@ -58,7 +57,6 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export default function DriverMyDocuments() {
   const { profile } = useAuth();
-  const { t } = useTranslation();
   const [rows, setRows] = useState<DocRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
@@ -250,7 +248,7 @@ export default function DriverMyDocuments() {
       ) : rows.length === 0 ? (
         <div className="text-center py-10 border border-dashed border-gray-200 rounded-xl">
           <ScanLine className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">{t('common.noDocumentsRegistered')}</p>
+          <p className="text-sm text-gray-500">Asnje dokument i regjistruar.</p>
           <button
             onClick={() => setShowScanner(true)}
             className="mt-3 text-sm font-semibold text-teal-600 hover:text-teal-700"
@@ -338,13 +336,13 @@ export default function DriverMyDocuments() {
 
       {/* Recent Scans */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('common.recentScans')}</h3>
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Skanimet e fundit</h3>
         {loadingScans ? (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
           </div>
         ) : recentScans.length === 0 ? (
-          <p className="text-sm text-gray-400 py-3 text-center">{t('common.noRecentScans')}</p>
+          <p className="text-sm text-gray-400 py-3 text-center">Nuk ka skanimete te fundit</p>
         ) : (
           <ul className="space-y-2">
             {recentScans.map((d) => (

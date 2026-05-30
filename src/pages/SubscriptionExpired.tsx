@@ -21,7 +21,7 @@ import PlatformLogo from '../components/PlatformLogo';
 export default function SubscriptionExpired() {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  const { plan: currentPlan, isExpired, isTrial, refreshSubscription, loading: subLoading } = useSubscription();
+  const { subscription, plan: currentPlan, isExpired, isTrial, refreshSubscription, loading: subLoading } = useSubscription();
   const { t } = useTranslation();
   const { settings: platformSettings } = usePlatformSettings();
 

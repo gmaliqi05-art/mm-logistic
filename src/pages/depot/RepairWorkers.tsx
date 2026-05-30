@@ -28,7 +28,7 @@ function getWorkerBatchSize(workerId: string): number {
   } catch { return DEFAULT_BATCH_SIZE; }
 }
 function setWorkerBatchSize(workerId: string, size: number) {
-  try { localStorage.setItem(`repair_batch_${workerId}`, String(Math.max(1, size))); } catch { /* quota / private mode */ }
+  try { localStorage.setItem(`repair_batch_${workerId}`, String(Math.max(1, size))); } catch {}
 }
 
 interface WorkerRow extends Profile {
@@ -336,7 +336,7 @@ export default function DepotRepairWorkers() {
       }
 
       if (!damagedRows || damagedRows.length === 0) {
-        throw new Error(t('common.noDefectStockForCategory'));
+        throw new Error('Nuk ka stok defekt te disponueshem per kete kategori');
       }
       const stockRow = damagedRows[0];
       if (stockRow.quantity < qty) {
@@ -839,11 +839,11 @@ export default function DepotRepairWorkers() {
             <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Selektimi aktual</p>
             <p className="text-sm text-gray-700">
               <span className="font-semibold">
-                {selectedWorker?.full_name ?? <span className="text-gray-400">{t('common.selectWorker')}</span>}
+                {selectedWorker?.full_name ?? <span className="text-gray-400">Zgjidh puntorin</span>}
               </span>
               <span className="text-gray-400 mx-2">·</span>
               <span className="font-semibold">
-                {selectedProduct?.name ?? <span className="text-gray-400">{t('common.selectProductInline')}</span>}
+                {selectedProduct?.name ?? <span className="text-gray-400">Zgjidh produktin</span>}
               </span>
               <span className="text-gray-400 mx-2">·</span>
               <span className="font-bold text-teal-700">+{batchSize} paleta</span>

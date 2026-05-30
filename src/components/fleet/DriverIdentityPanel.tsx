@@ -88,7 +88,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 p-4">
-        <div className="text-xs uppercase tracking-wider text-teal-700 font-semibold">{t('common.residencyStatus')}</div>
+        <div className="text-xs uppercase tracking-wider text-teal-700 font-semibold">Statusi i rezidences</div>
         <p className="text-sm text-gray-700 mt-1">
           Percakton cilet dokumente identiteti kerkohen. Ndryshimi lejohet vetem nga administratori.
         </p>
@@ -145,7 +145,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
       ) : docs.length === 0 ? (
         <div className="text-center py-10 border border-dashed border-gray-200 rounded-xl">
           <IdCard className="w-10 h-10 text-gray-300 mx-auto" />
-          <p className="text-sm text-gray-500 mt-2">{t('common.noIdentityDocuments')}</p>
+          <p className="text-sm text-gray-500 mt-2">Asnje dokument identiteti i regjistruar.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -375,7 +375,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
           {err && <div className="text-sm text-red-600">{err}</div>}
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium">{t('common.cancel')}</button>
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium">Anulo</button>
             <button
               onClick={save}
               disabled={saving || !capturedFront}
@@ -384,7 +384,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
               {saving ? 'Duke ruajtur…' : 'Ruaj dokumentin'}
             </button>
           </div>
-          {!capturedFront && <p className="text-xs text-gray-500 text-right">{t('common.scanAtLeastFrontToSave')}</p>}
+          {!capturedFront && <p className="text-xs text-gray-500 text-right">Skano te pakten anen e perparme per te ruajtur.</p>}
         </div>
       </div>
     </div>

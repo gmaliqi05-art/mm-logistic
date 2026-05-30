@@ -1,6 +1,5 @@
 import { Info, Navigation, Truck, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from '../../i18n';
 
 interface Props {
   destLat: number;
@@ -52,7 +51,6 @@ function detectPlatform(): Platform {
 }
 
 export default function TruckNavChooser({ destLat, destLng, label, onClose }: Props) {
-  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [launching, setLaunching] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -140,7 +138,7 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-bold text-slate-900">{t('common.truckNavigation')}</h2>
+            <h2 className="text-lg font-bold text-slate-900">Navigim per Kamiona</h2>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100" aria-label="Mbyll">
             <X className="w-5 h-5 text-slate-500" />
@@ -151,7 +149,7 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
           <div className="flex items-start gap-2 text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-900">
             <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
-              <div className="font-semibold">{t('common.dontUseGoogleMapsForNav')}</div>
+              <div className="font-semibold">Mos perdor Google Maps per navigim</div>
               <div className="mt-0.5">
                 Google Maps dhe Waze nuk kane profil per kamiona — ato dergojne neper rruge ku LKW nuk lejohen. Perdor nje nga aplikacionet me profil HGV me poshte.
               </div>

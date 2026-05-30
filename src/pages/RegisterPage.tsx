@@ -385,7 +385,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      if (!selectedPlan) throw new Error(t('common.planNotFound'));
+      if (!selectedPlan) throw new Error('Plani nuk u gjet');
 
       const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
       const checkoutRes = await fetch(checkoutUrl, {
@@ -1015,8 +1015,8 @@ function StepPlan({
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-slate-700">{t('common.noPlansAvailable')}</h3>
-        <p className="mt-2 text-sm text-slate-500">{t('common.contactAdminForInfo')}</p>
+        <h3 className="text-lg font-semibold text-slate-700">Nuk ka plane te disponueshme</h3>
+        <p className="mt-2 text-sm text-slate-500">Kontaktoni administratorin per me shume informacion.</p>
         <button
           type="button"
           onClick={onRetry}
@@ -1189,7 +1189,7 @@ function StepPlan({
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs text-teal-600 font-medium">{t('common.monthlyTotal')}</p>
+              <p className="text-xs text-teal-600 font-medium">Totali mujor</p>
               <p className="text-2xl font-extrabold text-teal-900">
                 {(Number(selected!.price_monthly) + Number(addonPrice)).toFixed(2)}€
               </p>

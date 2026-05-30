@@ -8,7 +8,6 @@ import {
 import EmailRichTextEditor from "../../components/superadmin/email/EmailRichTextEditor";
 import EmailPreviewPane from "../../components/superadmin/email/EmailPreviewPane";
 import VariableChipList from "../../components/superadmin/email/VariableChipList";
-import { useTranslation } from "../../i18n";
 import TestSendDialog from "../../components/superadmin/email/TestSendDialog";
 
 type Locale = "sq" | "de" | "en";
@@ -45,7 +44,6 @@ const EMPTY: TemplateRow = {
 };
 
 export default function EmailTemplateEditor() {
-  const { t } = useTranslation();
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -245,7 +243,7 @@ export default function EmailTemplateEditor() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.description')}</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">Pershkrim</label>
                     <textarea
                       value={tpl.description}
                       onChange={(e) => update("description", e.target.value)}
@@ -317,7 +315,7 @@ export default function EmailTemplateEditor() {
                   <EmailRichTextEditor
                     value={String(tpl[field("body_html")] ?? "")}
                     onChange={(v) => update(field("body_html"), v)}
-                    placeholder={t('common.mainContentPlaceholder')}
+                    placeholder="Shkruani permbajtjen kryesore..."
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">

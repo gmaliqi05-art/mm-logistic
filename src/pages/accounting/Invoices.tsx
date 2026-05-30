@@ -968,7 +968,7 @@ export default function Invoices() {
                             <button
                               onClick={() => setDeleteConfirm(invoice)}
                               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title={t('common.deleteInvoice')}
+                              title="Fshij faturen"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1023,7 +1023,7 @@ export default function Invoices() {
                                 setEmailSent(false);
                               }}
                               className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                              title={t('common.sendEmail')}
+                              title="Dergo me email"
                             >
                               <Mail className="w-4 h-4" />
                             </button>

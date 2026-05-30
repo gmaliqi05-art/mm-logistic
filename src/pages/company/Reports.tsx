@@ -482,7 +482,7 @@ export default function CompanyReports() {
             <StatCard icon={Truck} color="bg-slate-600" label="Shofere" value={driverCount} />
           </div>
 
-          <Card title={t('common.stockByDepot')} icon={Package}>
+          <Card title="Stoku sipas depos" icon={Package}>
             {stockByDepot.length === 0 ? (
               <EmptyState icon={Warehouse} label="Pa te dhena stoku." />
             ) : (
@@ -505,7 +505,7 @@ export default function CompanyReports() {
             )}
           </Card>
 
-          <Card title={t('common.notesByStatus')} icon={FileText}>
+          <Card title="Fletedokumente sipas statusit" icon={FileText}>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {Object.entries(noteStatusCounts).map(([status, count]) => (
                 <div key={status} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
@@ -799,7 +799,6 @@ export default function CompanyReports() {
 }
 
 function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
-  const { t } = useTranslation();
   const totalQty = rows.reduce((s, r) => s + r.total_quantity, 0);
   const inRows = rows.filter(r => r.type === 'pickup');
   const outRows = rows.filter(r => r.type !== 'pickup');
@@ -850,7 +849,7 @@ function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
       </div>
 
       {byPartner.length > 0 && (
-        <Card title={t('common.topPartnersByQuantity')} icon={Users}>
+        <Card title="Top partneret sipas sasise" icon={Users}>
           <div className="space-y-2">
             {byPartner.map((p, i) => {
               const pct = totalQty > 0 ? (p.qty / totalQty) * 100 : 0;

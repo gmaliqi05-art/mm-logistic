@@ -447,7 +447,7 @@ export default function Products() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Njesia</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.netPrice')}</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cmimi Neto</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">TVSH</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stoku</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Min</th>
@@ -640,7 +640,7 @@ export default function Products() {
                           className="w-32 h-32 object-cover rounded-xl"
                         />
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500">{t('common.clickOrDragToChange')}</span>
+                          <span className="text-sm text-gray-500">Kliko ose terhiq per te ndryshuar</span>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -681,7 +681,7 @@ export default function Products() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder={t('common.productName')}
+                      placeholder="Emri i produktit"
                     />
                   </div>
 
@@ -692,7 +692,7 @@ export default function Products() {
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder={t('common.productCode')}
+                      placeholder="Kodi i produktit"
                     />
                   </div>
 
@@ -710,18 +710,18 @@ export default function Products() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.description')}</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder={t('common.productDescription')}
+                      placeholder="Pershkrimi i produktit"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.netPrice')}</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cmimi Neto</label>
                     <input
                       type="number"
                       value={formData.price_net}
@@ -772,7 +772,7 @@ export default function Products() {
                           type="text"
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
-                          placeholder={t('common.categoryName')}
+                          placeholder="Emri i kategorise"
                           className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {

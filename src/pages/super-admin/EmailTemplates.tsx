@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Mail, Search, Plus, CreditCard as Edit3, Send, Copy, Power, Loader2, Tag } from "lucide-react";
 import TestSendDialog from "../../components/superadmin/email/TestSendDialog";
-import { useTranslation } from "../../i18n";
 
 interface Template {
   id: string;
@@ -29,7 +28,6 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 
 export default function EmailTemplates() {
-  const { t: tr } = useTranslation();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -112,7 +110,7 @@ export default function EmailTemplates() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tr('common.searchByNameOrCode')}
+            placeholder="Kerko sipas emrit ose kodit..."
             className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
           />
         </div>
@@ -205,7 +203,7 @@ export default function EmailTemplates() {
                   <th className="px-4 py-3">Emri</th>
                   <th className="px-4 py-3">Kodi</th>
                   <th className="px-4 py-3">Kategoria</th>
-                  <th className="px-4 py-3">{tr('common.status')}</th>
+                  <th className="px-4 py-3">Statusi</th>
                   <th className="px-4 py-3">Perditesuar</th>
                   <th className="px-4 py-3 text-right">Veprime</th>
                 </tr>
@@ -254,7 +252,7 @@ export default function EmailTemplates() {
                           type="button"
                           onClick={() => setTestCode(t.code)}
                           className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-teal-600"
-                          title={tr('common.sendTestAction')}
+                          title="Dergo test"
                         >
                           <Send className="h-4 w-4" />
                         </button>

@@ -19,7 +19,6 @@ import { useAuth } from '../../contexts/AuthContext';
 
 import type { AccProduct, AccProductCategory, AccStockMovement, AccMovementType } from '../../types/accounting';
 import { formatCurrency } from '../../types/accounting';
-import { useTranslation } from '../../i18n';
 import { compareProducts } from '../../utils/productSort';
 
 interface AdjustmentModal {
@@ -32,7 +31,6 @@ type StockFilter = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 
 export default function Stock() {
   const { profile } = useAuth();
-  const { t } = useTranslation();
 
 
   const [products, setProducts] = useState<AccProduct[]>([]);
@@ -215,7 +213,7 @@ export default function Stock() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.stockValue')}</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vlera e Stokut</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalStockValue)}</p>
             </div>
             <div className="bg-blue-500 p-2.5 rounded-xl">
@@ -255,7 +253,7 @@ export default function Stock() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('common.searchProductSku')}
+              placeholder="Kerko produktin, SKU..."
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
             />
           </div>
@@ -302,7 +300,7 @@ export default function Stock() {
                   <td colSpan={7} className="px-6 py-16 text-center">
                     <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p className="text-gray-500 font-medium">Nuk ka produkte</p>
-                    <p className="text-gray-400 text-sm mt-1">{t('common.noProductsMatchFilters')}</p>
+                    <p className="text-gray-400 text-sm mt-1">Asnje produkt nuk perputhet me filtrat</p>
                   </td>
                 </tr>
               ) : (
@@ -375,7 +373,7 @@ export default function Stock() {
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
                     <CornerDownLeft className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">{t('common.noStockMovements')}</p>
+                    <p className="text-gray-500 font-medium">Asnje levizje stoku</p>
                     <p className="text-gray-400 text-sm mt-1">Levizjet e stokut do te shfaqen ketu</p>
                   </td>
                 </tr>

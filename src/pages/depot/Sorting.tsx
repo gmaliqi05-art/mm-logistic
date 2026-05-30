@@ -42,8 +42,8 @@ interface BatchWithItems extends PalletSortingBatch {
   items: PalletSortingItem[];
   reference_number_snapshot?: string | null;
   report_sent_at?: string | null;
-  creator?: { full_name?: string | null; role?: string | null } | null;
-  completer?: { full_name?: string | null; role?: string | null } | null;
+  creator?: { full_name?: string | null } | null;
+  completer?: { full_name?: string | null } | null;
   source_delivery_note?: DeliveryNoteSource | null;
 }
 
