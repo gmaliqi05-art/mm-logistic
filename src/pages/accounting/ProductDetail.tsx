@@ -490,7 +490,7 @@ export default function ProductDetail() {
         </Link>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-16 text-center">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 font-medium">Produkti nuk u gjet</p>
+          <p className="text-gray-500 font-medium">{t('common.productNotFound')}</p>
         </div>
       </div>
     );
@@ -598,7 +598,7 @@ export default function ProductDetail() {
 
             <div className="flex flex-wrap items-center gap-4">
               <div>
-                <span className="text-sm text-gray-500">Cmimi Neto:</span>{' '}
+                <span className="text-sm text-gray-500">{t('common.netPrice')}:</span>{' '}
                 <span className="text-lg font-semibold text-gray-900">
                   {formatCurrency(product.price_net)}
                 </span>
@@ -654,7 +654,7 @@ export default function ProductDetail() {
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 font-medium">Sasia Aktuale</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('common.currentQuantity')}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{product.current_stock}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
@@ -746,7 +746,7 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">Totali i Shitur</p>
+                  <p className="text-sm text-emerald-600 font-medium">{t('common.totalSold')}</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">{totalUnitsSold}</p>
                   <p className="text-xs text-emerald-500 mt-0.5">njesi</p>
                 </div>
@@ -834,12 +834,12 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-sm text-blue-600 font-medium">Totali i Blere</p>
+                  <p className="text-sm text-blue-600 font-medium">{t('common.totalBought')}</p>
                   <p className="text-2xl font-bold text-blue-700 mt-1">{totalUnitsPurchased}</p>
                   <p className="text-xs text-blue-500 mt-0.5">njesi</p>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-sm text-blue-600 font-medium">Kostoja Totale</p>
+                  <p className="text-sm text-blue-600 font-medium">{t('common.totalCost')}</p>
                   <p className="text-2xl font-bold text-blue-700 mt-1">
                     {formatCurrency(totalCost)}
                   </p>
@@ -1032,7 +1032,7 @@ export default function ProductDetail() {
 
               <div className="p-6 space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-500">Sasia Aktuale</p>
+                  <p className="text-sm text-gray-500">{t('common.currentQuantity')}</p>
                   <p className="text-2xl font-bold text-gray-900">{product.current_stock}</p>
                 </div>
 
@@ -1141,7 +1141,7 @@ export default function ProductDetail() {
                         />
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-500">
-                            Kliko ose terhiq per te ndryshuar
+                            {t('common.clickOrDragToChange')}
                           </span>
                           <button
                             type="button"
@@ -1230,7 +1230,7 @@ export default function ProductDetail() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cmimi Neto
+                      {t('common.netPrice')}
                     </label>
                     <input
                       type="number"
