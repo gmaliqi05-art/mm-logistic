@@ -776,9 +776,7 @@ export default function DepotRepairWorkers() {
               <Settings className="w-3.5 h-3.5" />{t('common.kategorit')}</button>
           </div>
           {visibleProducts.length === 0 ? (
-            <div className="p-6 text-center text-sm text-slate-400">
-              Nuk ka kategori te zgjedhura. Hap "Kategorit" per te aktivizuar kategori per reparim.
-            </div>
+            <div className="p-6 text-center text-sm text-slate-400">{t('common.nukKaKategoriTeZgjedhuraHap')}</div>
           ) : (
             <div className="p-2 space-y-2">
               {productsByCategory.map(([catName, items]) => (

@@ -316,7 +316,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                 >
                   <Upload className="w-8 h-8 text-teal-600 mb-2" />
                   <p className="text-sm font-semibold text-slate-900">{t('common.ngarkoSkedar')}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">PDF ose foto nga kompjuteri</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t('common.pdfOseFotoNgaKompjuteri')}</p>
                 </button>
               </div>
               <input
@@ -389,7 +389,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
               <p className="text-base font-semibold text-slate-800">
                 {step === 'uploading_back' ? 'Duke ngarkuar anen e pasme...' : step === 'uploading' ? 'Duke ngarkuar...' : 'Duke analizuar...'}
               </p>
-              <p className="text-sm text-slate-500 mt-1">Kjo zakonisht zgjat 5-15 sekonda</p>
+              <p className="text-sm text-slate-500 mt-1">{t('common.kjoZakonishtZgjatSekonda')}</p>
             </div>
           )}
 
@@ -431,7 +431,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                   <div className="space-y-3">
                     {needsVehicleTarget && (
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">Lidh me mjet ekzistues</label>
+                        <label className="text-xs text-slate-500 mb-1 block">{t('common.lidhMeMjetEkzistues')}</label>
                         <select
                           value={targetEntityId}
                           onChange={(e) => setTargetEntityId(e.target.value)}
@@ -446,7 +446,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                     )}
                     {needsTarget && (
                       <div>
-                        <label className="text-xs text-slate-500 mb-1 block">Lidh me shofer</label>
+                        <label className="text-xs text-slate-500 mb-1 block">{t('common.lidhMeShofer')}</label>
                         <select
                           value={targetEntityId}
                           onChange={(e) => setTargetEntityId(e.target.value)}

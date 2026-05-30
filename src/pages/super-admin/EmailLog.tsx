@@ -88,7 +88,7 @@ export default function EmailLog() {
           <Mail className="h-6 w-6 text-teal-600" />
           Log-u i emaileve
         </h1>
-        <p className="mt-1 text-sm text-slate-500">Historia dhe statusi i cdo emaili te derguar.</p>
+        <p className="mt-1 text-sm text-slate-500">{t('common.historiaDheStatusiICdoEmaili')}</p>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,7 +107,7 @@ export default function EmailLog() {
           onChange={(e) => setTemplateFilter(e.target.value)}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
         >
-          <option value="all">Te gjitha template-t</option>
+          <option value="all">{t('common.teGjithaTemplateT')}</option>
           {templates.map((c) => (<option key={c} value={c}>{c}</option>))}
         </select>
         <select
@@ -137,7 +137,7 @@ export default function EmailLog() {
       {loading ? (
         <div className="flex items-center justify-center p-10"><Loader2 className="h-6 w-6 animate-spin text-teal-600" /></div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">Pa te dhena.</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">{t('common.paTeDhena')}</div>
       ) : (
         <>
           <div className="grid gap-3 xl:hidden">

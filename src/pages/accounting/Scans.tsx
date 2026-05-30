@@ -110,7 +110,7 @@ export default function Scans() {
       {rows.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
           <ScanLine className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600 font-medium">Ende asnje skanim</p>
+          <p className="text-slate-600 font-medium">{t('common.noScanYet')}</p>
           <p className="text-slate-400 text-sm mt-1">{t('common.uploadDocToStart')}</p>
         </div>
       ) : (
@@ -121,7 +121,7 @@ export default function Scans() {
                 <tr>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Skedari</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">{t('common.type')}</th>
-                  <th className="text-left font-semibold text-slate-700 px-4 py-3">Furnizuesi / Klienti</th>
+                  <th className="text-left font-semibold text-slate-700 px-4 py-3">{t('common.furnizuesiKlienti')}</th>
                   <th className="text-right font-semibold text-slate-700 px-4 py-3">{t('common.total')}</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">{t('common.status')}</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Data</th>

@@ -441,9 +441,7 @@ export default function SuperAdminCompanies() {
                       )}
                       {uploading ? 'Duke ngarkuar...' : 'Ngarko Logo'}
                     </button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      PNG, JPG, GIF deri në 2MB
-                    </p>
+                    <p className="text-xs text-gray-500 mt-2">{t('common.pngJpgGifDeriNeMb')}</p>
                   </div>
                 </div>
               </div>

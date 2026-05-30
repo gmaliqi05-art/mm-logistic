@@ -406,7 +406,7 @@ export default function CompanyReports() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('common.raportetEKompanise')}</h1>
-          <p className="text-gray-500 mt-1">Stoku, levizjet, sortimi dhe riparimi — vetem per kompanine tuaj.</p>
+          <p className="text-gray-500 mt-1">{t('common.stokuLevizjetSortimiDheRiparimiVetem')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -427,7 +427,7 @@ export default function CompanyReports() {
             onChange={e => setDepotFilter(e.target.value)}
             className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
           >
-            <option value="all">Te gjitha depot</option>
+            <option value="all">{t('common.teGjithaDepot')}</option>
             {depots.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
           <button
@@ -512,7 +512,7 @@ export default function CompanyReports() {
                 </div>
               ))}
               {Object.keys(noteStatusCounts).length === 0 && (
-                <p className="text-sm text-gray-400 col-span-full">Pa fletedokumente.</p>
+                <p className="text-sm text-gray-400 col-span-full">{t('common.paFletedokumente')}</p>
               )}
             </div>
           </Card>
@@ -579,7 +579,7 @@ export default function CompanyReports() {
                     <th className="text-left px-3 py-2">Depoja</th>
                     <th className="text-left px-3 py-2">{t('common.punetori')}</th>
                     <th className="text-left px-3 py-2">Nga / Per</th>
-                    <th className="text-right px-3 py-2">Sasi</th>
+                    <th className="text-right px-3 py-2">{t('common.sasi')}</th>
                     <th className="text-left px-3 py-2">Flow</th>
                   </tr>
                 </thead>
@@ -615,7 +615,7 @@ export default function CompanyReports() {
                 </tbody>
               </table>
               {filteredMovements.length > 500 && (
-                <p className="text-xs text-gray-400 mt-3 text-center">Po shfaqen 500 rreshtat me te fundit. Ngushtoni intervalin per me shume detaje.</p>
+                <p className="text-xs text-gray-400 mt-3 text-center">{t('common.poShfaqenRreshtatMeTeFundit')}</p>
               )}
             </div>
           )}
@@ -646,7 +646,7 @@ export default function CompanyReports() {
                       <th className="text-left px-3 py-2">Depoja</th>
                       <th className="text-left px-3 py-2">{t('common.kategoria')}</th>
                       <th className="text-left px-3 py-2">Produkti</th>
-                      <th className="text-right px-3 py-2">Sasi</th>
+                      <th className="text-right px-3 py-2">{t('common.sasi')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -678,7 +678,7 @@ export default function CompanyReports() {
                         <th className="text-left px-3 py-2">{t('common.date')}</th>
                         <th className="text-left px-3 py-2">Tipi</th>
                         <th className="text-left px-3 py-2">Depoja</th>
-                        <th className="text-right px-3 py-2">Sasi</th>
+                        <th className="text-right px-3 py-2">{t('common.sasi')}</th>
                         <th className="text-left px-3 py-2">{t('common.punetori')}</th>
                         <th className="text-left px-3 py-2">Nga / Per</th>
                       </tr>
@@ -722,7 +722,7 @@ export default function CompanyReports() {
                       <th className="text-left px-3 py-2">Depoja</th>
                       <th className="text-left px-3 py-2">Produkti</th>
                       <th className="text-left px-3 py-2">Gjendja burim</th>
-                      <th className="text-right px-3 py-2">Sasi</th>
+                      <th className="text-right px-3 py-2">{t('common.sasi')}</th>
                       <th className="text-left px-3 py-2">{t('common.punetori')}</th>
                       <th className="text-left px-3 py-2">Arsyeja</th>
                     </tr>

@@ -1376,7 +1376,7 @@ export function TaskDetailSheet({
                 <Loader2 className="w-4 h-4 animate-spin" />
               </div>
             ) : items.length === 0 ? (
-              <p className="px-3 py-3 text-xs text-gray-500 italic">Pa artikuj te regjistruar.</p>
+              <p className="px-3 py-3 text-xs text-gray-500 italic">{t('common.paArtikujTeRegjistruar')}</p>
             ) : (
               <ul className="divide-y divide-gray-100">
                 {items.map((it) => {

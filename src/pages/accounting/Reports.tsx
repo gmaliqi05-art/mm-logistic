@@ -799,7 +799,7 @@ export default function Reports() {
           <thead>
             <tr className="border-b border-gray-100">
               <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.customer')}</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nr. Faturave</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.nrFaturave')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.teArdhuratTotale')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">%</th>
             </tr>
@@ -879,17 +879,17 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-emerald-600 rounded-xl p-5 text-white">
-          <p className="text-xs font-medium uppercase tracking-wide text-emerald-100">TVSH Mbledhur</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-emerald-100">{t('common.tvshMbledhur')}</p>
           <p className="text-2xl font-bold mt-2">{formatCurrency(vatCollected)}</p>
           <p className="text-xs text-emerald-200 mt-1">Nga faturat e derguara/paguara</p>
         </div>
         <div className="bg-red-600 rounded-xl p-5 text-white">
-          <p className="text-xs font-medium uppercase tracking-wide text-red-100">TVSH Paguar</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-red-100">{t('common.tvshPaguar')}</p>
           <p className="text-2xl font-bold mt-2">{formatCurrency(vatPaid)}</p>
           <p className="text-xs text-red-200 mt-1">Nga blerjet e pranuara/paguara</p>
         </div>
         <div className="bg-blue-600 rounded-xl p-5 text-white">
-          <p className="text-xs font-medium uppercase tracking-wide text-blue-100">TVSH per Pagese</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-blue-100">{t('common.tvshPerPagese')}</p>
           <p className="text-2xl font-bold mt-2">{formatCurrency(vatDue)}</p>
           <p className="text-xs text-blue-200 mt-1">Diferenca (mbledhur - paguar)</p>
         </div>

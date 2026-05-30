@@ -768,7 +768,7 @@ export default function GermanFinancials() {
                   <VatLine label={isDE ? 'Shitjet Intra-EU (tax-free §6a UStG)' : 'Shitjet me TVSH 0%'} net={vat.salesIntraEU} vat={0} fmt={formatMoney} />
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-3 pb-2 border-b-2 border-blue-600">TVSH e zbritshme</h3>
+                  <h3 className="font-semibold mb-3 pb-2 border-b-2 border-blue-600">{t('common.tvshEZbritshme')}</h3>
                   <VatLine label={`TVSH ${vatStd}% + ${vatRed}%`} net={0} vat={vat.inputVatStd + vat.inputVatRed} fmt={formatMoney} />
                   <VatLine label="TVSH importi" net={0} vat={vat.importVat} fmt={formatMoney} />
                 </div>

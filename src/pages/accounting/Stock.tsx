@@ -125,7 +125,7 @@ export default function Stock() {
 
   const getStockBadge = (product: AccProduct) => {
     if (product.current_stock <= 0) {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Pa Stok</span>;
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">{t('common.paStok')}</span>;
     }
     if (product.current_stock <= product.min_stock) {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Stok i Ulet</span>;
@@ -187,7 +187,7 @@ export default function Stock() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{t('common.menaxhimiIStokut')}</h1>
-        <p className="text-gray-500 mt-1">Kontrollo inventarin dhe levizjet e stokut</p>
+        <p className="text-gray-500 mt-1">{t('common.kontrolloInventarinDheLevizjetEStokut')}</p>
       </div>
 
       {error && (
@@ -264,7 +264,7 @@ export default function Stock() {
             onChange={(e) => setFilterCategory(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
-            <option value="">Te gjitha kategorite</option>
+            <option value="">{t('common.teGjithaKategorite')}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -274,10 +274,10 @@ export default function Stock() {
             onChange={(e) => setFilterStock(e.target.value as StockFilter)}
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
-            <option value="all">Te gjitha statuset</option>
+            <option value="all">{t('common.allStatuses')}</option>
             <option value="in-stock">Ne Stok</option>
             <option value="low-stock">Stok i Ulet</option>
-            <option value="out-of-stock">Pa Stok</option>
+            <option value="out-of-stock">{t('common.paStok')}</option>
           </select>
         </div>
       </div>
@@ -356,7 +356,7 @@ export default function Stock() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
           <RotateCcw className="w-4.5 h-4.5 text-emerald-600" />
-          <h2 className="font-semibold text-gray-900">Historia e Levizjeve</h2>
+          <h2 className="font-semibold text-gray-900">{t('common.historiaELevizjeve')}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">

@@ -1052,7 +1052,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
                   <textarea
                     value={extendText}
                     onChange={(e) => setExtendText(e.target.value)}
-                    placeholder="Adresa e re / ndalesa shtese"
+                    placeholder={t('common.adresaEReNdalesaShtese')}
                     className="w-full text-xs rounded-md border border-slate-200 p-2 focus:ring-2 focus:ring-teal-500 outline-none"
                     rows={2}
                   />
@@ -1076,9 +1076,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
       )}
       {list.length === 0 && !loading && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-lg text-sm text-slate-600 shadow">
-            Asnje shofer aktiv ne 24 oret e fundit
-          </div>
+          <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-lg text-sm text-slate-600 shadow">{t('common.asnjeShoferAktivNeOretE')}</div>
         </div>
       )}
     </div>

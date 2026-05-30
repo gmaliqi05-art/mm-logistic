@@ -316,9 +316,7 @@ export default function EmailTemplateEditor() {
       )}
 
       {isReadOnly && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-          Ky eshte template global. Per ta modifikuar, beni nje kopje (personalizo) per kompanine tuaj.
-        </div>
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">{t('common.kyEshteTemplateGlobalPerTa')}</div>
       )}
 
       <div className={`grid gap-5 ${showPreview ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>

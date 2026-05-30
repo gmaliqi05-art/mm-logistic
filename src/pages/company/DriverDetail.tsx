@@ -150,7 +150,7 @@ export default function DriverDetail() {
           {tab === 'license' && (
             <>
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">Patenta sipas FeV (Fahrerlaubnis-Verordnung). Kategorite e zakonshme per kamione: C1, C1E, C, CE.</p>
+                <p className="text-sm text-gray-600">{t('common.patentaSipasFevFahrerlaubnisVerordnungKategorite')}</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('fuehrerschein')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
                     <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>
@@ -308,7 +308,7 @@ export default function DriverDetail() {
             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
               <FileText className="w-4 h-4 text-teal-600" /> Dokumente te skanuara
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">PDF-te origjinale te arkivuara</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('common.pdfTeOrigjinaleTeArkivuara')}</p>
           </div>
           <button onClick={() => setScannerCat('other')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
             <ScanLine className="w-3.5 h-3.5" />{t('common.skanoTeRi')}</button>

@@ -249,9 +249,7 @@ export default function PlatformBranding() {
               <li><strong>Logo Kryesore (transparente)</strong>: navbar, sidebar, login, register, fatura, favicon, PWA home screen</li>
               <li><strong>Logo per Rrjete Sociale (me sfond)</strong>: kur linku ndahet ne Facebook, WhatsApp, Twitter, LinkedIn, iMessage</li>
             </ul>
-            <p className="text-sm text-blue-700 mt-2">
-              Pas ruajtjes, bej Ctrl+F5 per te rifreskuar cache-in. Per rrjetet sociale, perdor Facebook Debugger ose LinkedIn Post Inspector qe te rifreskosh preview-n.
-            </p>
+            <p className="text-sm text-blue-700 mt-2">{t('common.pasRuajtjesBejCtrlFPer')}</p>
           </div>
         </div>
       </div>

@@ -316,7 +316,7 @@ function DepoistDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900 text-sm">Hyrje vs Dalje — 7 dite</h2>
+            <h2 className="font-semibold text-gray-900 text-sm">{t('common.hyrjeVsDaljeDite')}</h2>
             <Link to="/depot/reports" className="text-xs text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">
               Raporte <ArrowRight className="w-3.5 h-3.5" />
             </Link>

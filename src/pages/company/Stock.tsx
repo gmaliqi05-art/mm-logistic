@@ -656,9 +656,7 @@ export default function CompanyStock() {
                             {c.productName}
                           </h3>
                           {c.isLegacy && (
-                            <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-                              Pa produkt
-                            </span>
+                            <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">{t('common.paProdukt')}</span>
                           )}
                         </div>
                         <div className="text-right flex-shrink-0">

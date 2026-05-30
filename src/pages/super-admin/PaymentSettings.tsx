@@ -316,12 +316,8 @@ export default function PaymentSettings() {
           <h2 className="text-lg font-semibold text-gray-900">{t('common.information')}</h2>
         </div>
         <div className="space-y-3 text-sm text-gray-600">
-          <p>
-            Te gjitha celesat ruhen te enkriptuar ne database dhe nuk transmetohen kurre ne frontend.
-          </p>
-          <p>
-            Per Stripe, perdorni celesat test (pk_test_/sk_test_) per provim dhe celesat live per prodhim.
-          </p>
+          <p>{t('common.teGjithaCelesatRuhenTeEnkriptuar')}</p>
+          <p>{t('common.perStripePerdorniCelesatTestPk')}</p>
           <p>{t('common.sigurohuniQeWebhookUIStripe')}</p>
         </div>
       </div>

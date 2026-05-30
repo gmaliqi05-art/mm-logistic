@@ -127,8 +127,8 @@ export default function DocumentPreviewModal({
                     <tr>
                       <th className="px-3 py-2">{t('common.pershkrim')}</th>
                       <th className="px-3 py-2 text-right">{t('common.quantity')}</th>
-                      <th className="px-3 py-2 text-right">Cmim</th>
-                      <th className="px-3 py-2 text-right">TVSH</th>
+                      <th className="px-3 py-2 text-right">{t('common.cmim')}</th>
+                      <th className="px-3 py-2 text-right">{t('common.tvsh')}</th>
                       <th className="px-3 py-2 text-right">{t('common.total')}</th>
                     </tr>
                   </thead>

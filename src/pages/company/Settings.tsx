@@ -399,7 +399,7 @@ export default function CompanySettings() {
                   value={invoiceFooterText}
                   onChange={(e) => setInvoiceFooterText(e.target.value)}
                   rows={3}
-                  placeholder="P.sh. Ju faleminderit per bashkepunimin. Kushtet e pageses: 14 dite."
+                  placeholder={t('common.pShJuFaleminderitPerBashkepunimin')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
                 />
               </div>
@@ -420,7 +420,7 @@ export default function CompanySettings() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-gray-500">Fatura</div>
+                      <div className="text-xs text-gray-500">{t('common.fatura')}</div>
                       <div className="font-bold text-gray-900">{invoicePrefix}-2026-0001</div>
                     </div>
                   </div>
@@ -454,7 +454,7 @@ export default function CompanySettings() {
                     onChange={(e) => setTrafficProvider(e.target.value as 'none' | 'tomtom')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
                   >
-                    <option value="none">Pa integrim</option>
+                    <option value="none">{t('common.paIntegrim')}</option>
                     <option value="tomtom">TomTom</option>
                   </select>
                 </div>

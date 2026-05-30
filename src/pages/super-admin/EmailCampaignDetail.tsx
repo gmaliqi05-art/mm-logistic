@@ -253,7 +253,7 @@ export default function EmailCampaignDetail() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">Pa marres.</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">{t('common.paMarres')}</div>
       ) : (
         <>
           <div className="grid gap-2 lg:hidden">
