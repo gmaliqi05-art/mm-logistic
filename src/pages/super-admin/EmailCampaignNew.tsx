@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
-import { useTranslation } from "../../i18n";
 import {
   ArrowLeft, ArrowRight, Send, Clock, Loader2, Users, FileText,
   CheckCircle2, AlertCircle, Mail,
 } from "lucide-react";
 import EmailRichTextEditor from "../../components/superadmin/email/EmailRichTextEditor";
 import AudienceSelector, { AudienceFilter } from "../../components/superadmin/email/AudienceSelector";
+import { useTranslation } from "../../i18n";
 
 type Locale = "sq" | "de" | "en";
 
@@ -405,7 +405,7 @@ export default function EmailCampaignNew() {
         {step === 3 && (
           <div className="space-y-5">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">{t('common.sendTestFirst')}</h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">Dergo nje test perpara</h3>
               <div className="flex flex-wrap gap-2">
                 <input
                   type="email"
@@ -444,8 +444,8 @@ export default function EmailCampaignNew() {
                 >
                   <Send className="h-5 w-5 text-teal-600" />
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">{t('common.sendNow')}</div>
-                    <div className="text-xs text-slate-500">{t('common.sendNowHint')}</div>
+                    <div className="text-sm font-semibold text-slate-900">Dergo menjehere</div>
+                    <div className="text-xs text-slate-500">Fillon menjehere pas krijimit.</div>
                   </div>
                 </button>
                 <button
@@ -464,7 +464,7 @@ export default function EmailCampaignNew() {
               </div>
               {schedule === "later" && (
                 <div className="mt-3">
-                  <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.dateAndTime')}</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-700">Data dhe ora</label>
                   <input
                     type="datetime-local"
                     value={scheduledAt}

@@ -511,7 +511,7 @@ export default function AccSettings() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">Preferencat e Parazgjedhura</h2>
-            <p className="text-xs text-gray-500">{t('common.defaultsForNewDocs')}</p>
+            <p className="text-xs text-gray-500">Vlerat standarde per dokumente te reja</p>
           </div>
         </div>
         <div className="p-6">
@@ -558,7 +558,7 @@ export default function AccSettings() {
                 onChange={(e) => handleBankAccountChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
               >
-                <option value="">{t('common.none')}</option>
+                <option value="">Asnjera</option>
                 {bankAccounts.map((ba) => (
                   <option key={ba.id} value={ba.id}>
                     {ba.name} ({ba.iban})

@@ -245,7 +245,7 @@ export default function EmailTemplateEditor() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.description')}</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">Pershkrim</label>
                     <textarea
                       value={tpl.description}
                       onChange={(e) => update("description", e.target.value)}
@@ -317,7 +317,7 @@ export default function EmailTemplateEditor() {
                   <EmailRichTextEditor
                     value={String(tpl[field("body_html")] ?? "")}
                     onChange={(v) => update(field("body_html"), v)}
-                    placeholder={t('common.mainContentPlaceholder')}
+                    placeholder="Shkruani permbajtjen kryesore..."
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">

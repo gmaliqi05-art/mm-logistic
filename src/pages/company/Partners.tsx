@@ -272,7 +272,7 @@ export default function CompanyPartners() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-200 bg-white p-10 text-center">
           <Building2 className="w-10 h-10 mx-auto text-gray-300" />
-          <p className="mt-3 text-gray-700 font-medium">{t('common.noCompaniesRegistered')}</p>
+          <p className="mt-3 text-gray-700 font-medium">Asnje kompani e regjistruar</p>
           <p className="text-sm text-gray-500">Klikoni “Regjistro Kompani te Re” per te shtuar nje partner.</p>
         </div>
       ) : (

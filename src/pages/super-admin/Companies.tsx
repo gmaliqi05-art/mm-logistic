@@ -405,7 +405,7 @@ export default function SuperAdminCompanies() {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.companyLogo')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Logo e Kompanisë</label>
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     {editingCompany.logo_url ? (

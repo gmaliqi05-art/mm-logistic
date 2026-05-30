@@ -19,7 +19,6 @@ import {
   Image,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useTranslation } from '../../i18n';
 
 interface DriverProfile {
   id: string;
@@ -118,7 +117,6 @@ interface Props {
 }
 
 export default function DriverCVSummary({ driverId, companyName, depotName }: Props) {
-  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [driver, setDriver] = useState<DriverProfile | null>(null);
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -165,7 +163,7 @@ export default function DriverCVSummary({ driverId, companyName, depotName }: Pr
   }
 
   if (!driver) {
-    return <p className="text-center text-gray-500 py-8">{t('common.driverNotFound')}</p>;
+    return <p className="text-center text-gray-500 py-8">Shoferi nuk u gjet.</p>;
   }
 
   const initial = driver.full_name?.charAt(0).toUpperCase() ?? 'U';
@@ -326,7 +324,7 @@ export default function DriverCVSummary({ driverId, companyName, depotName }: Pr
       {licenses.length === 0 && qualifications.length === 0 && medicals.length === 0 && identityDocs.length === 0 && (
         <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
           <User className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">{t('common.noDocumentsForDriver')}</p>
+          <p className="text-sm text-gray-500">Asnje dokument i regjistruar per kete shofer.</p>
         </div>
       )}
     </div>

@@ -143,7 +143,7 @@ export default function DestinationPicker({ address, lat, lng, driverId, onChang
                 void handleAddressBlur();
               }, 200);
             }}
-            placeholder={t('common.writeDestinationAddress')}
+            placeholder="Shkruaj adresen e destinacionit"
             className="w-full pl-8 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
@@ -185,7 +185,7 @@ export default function DestinationPicker({ address, lat, lng, driverId, onChang
         <div className="fixed inset-0 z-[2000] bg-black/60 flex items-center justify-center p-4" onClick={() => setMapOpen(false)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-              <div className="font-semibold text-slate-900 text-sm">{t('common.selectDestinationOnMap')}</div>
+              <div className="font-semibold text-slate-900 text-sm">Zgjidh destinacionin ne harte</div>
               <button onClick={() => setMapOpen(false)} className="text-slate-500 hover:text-slate-700"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-3 border-b border-slate-100 flex gap-2">
@@ -220,8 +220,8 @@ export default function DestinationPicker({ address, lat, lng, driverId, onChang
             <div className="px-4 py-3 flex items-center justify-between border-t border-slate-100">
               <div className="text-xs text-slate-500">{pickerLat.toFixed(5)}, {pickerLng.toFixed(5)}</div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setMapOpen(false)} className="px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100">{t('common.cancel')}</button>
-                <button type="button" onClick={confirmMap} className="px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">{t('common.confirm')}</button>
+                <button type="button" onClick={() => setMapOpen(false)} className="px-3 py-2 rounded-lg text-sm text-slate-700 hover:bg-slate-100">Anulo</button>
+                <button type="button" onClick={confirmMap} className="px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">Konfirmo</button>
               </div>
             </div>
           </div>

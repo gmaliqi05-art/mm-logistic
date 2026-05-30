@@ -5,12 +5,10 @@ import { logger } from '../../utils/logger';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTranslation } from '../../i18n';
 import InvoiceTemplate, { type InvoicePreviewData } from '../../components/accounting/InvoiceTemplate';
 import { buildVatBreakdown } from '../../utils/euCompliance';
 
 export default function InvoicePrint() {
-  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -131,7 +129,7 @@ export default function InvoicePrint() {
   if (!previewData) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4">
-        <p className="text-gray-500 text-lg">{t('common.invoiceNotFound')}</p>
+        <p className="text-gray-500 text-lg">Fatura nuk u gjet</p>
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"

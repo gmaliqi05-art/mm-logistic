@@ -490,7 +490,7 @@ export default function ProductDetail() {
         </Link>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-16 text-center">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 font-medium">{t('common.productNotFound')}</p>
+          <p className="text-gray-500 font-medium">Produkti nuk u gjet</p>
         </div>
       </div>
     );
@@ -598,7 +598,7 @@ export default function ProductDetail() {
 
             <div className="flex flex-wrap items-center gap-4">
               <div>
-                <span className="text-sm text-gray-500">{t('common.netPrice')}:</span>{' '}
+                <span className="text-sm text-gray-500">Cmimi Neto:</span>{' '}
                 <span className="text-lg font-semibold text-gray-900">
                   {formatCurrency(product.price_net)}
                 </span>
@@ -648,13 +648,13 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">{t('common.stockValue')}</p>
+                  <p className="text-sm text-emerald-600 font-medium">Vlera e Stokut</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">
                     {formatCurrency(stockValue)}
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 font-medium">{t('common.currentQuantity')}</p>
+                  <p className="text-sm text-gray-600 font-medium">Sasia Aktuale</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{product.current_stock}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
@@ -746,12 +746,12 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">{t('common.totalSold')}</p>
+                  <p className="text-sm text-emerald-600 font-medium">Totali i Shitur</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">{totalUnitsSold}</p>
                   <p className="text-xs text-emerald-500 mt-0.5">njesi</p>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">{t('common.revenue')}</p>
+                  <p className="text-sm text-emerald-600 font-medium">Te Ardhurat</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">
                     {formatCurrency(totalRevenue)}
                   </p>
@@ -834,12 +834,12 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-sm text-blue-600 font-medium">{t('common.totalBought')}</p>
+                  <p className="text-sm text-blue-600 font-medium">Totali i Blere</p>
                   <p className="text-2xl font-bold text-blue-700 mt-1">{totalUnitsPurchased}</p>
                   <p className="text-xs text-blue-500 mt-0.5">njesi</p>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-sm text-blue-600 font-medium">{t('common.totalCost')}</p>
+                  <p className="text-sm text-blue-600 font-medium">Kostoja Totale</p>
                   <p className="text-2xl font-bold text-blue-700 mt-1">
                     {formatCurrency(totalCost)}
                   </p>
@@ -1032,7 +1032,7 @@ export default function ProductDetail() {
 
               <div className="p-6 space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-500">{t('common.currentQuantity')}</p>
+                  <p className="text-sm text-gray-500">Sasia Aktuale</p>
                   <p className="text-2xl font-bold text-gray-900">{product.current_stock}</p>
                 </div>
 
@@ -1073,7 +1073,7 @@ export default function ProductDetail() {
                     onChange={(e) => setAdjustReason(e.target.value)}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                    placeholder={t('common.writeReasonPlaceholder')}
+                    placeholder="Shkruaj arsyen e rregullimit..."
                   />
                 </div>
               </div>
@@ -1141,7 +1141,7 @@ export default function ProductDetail() {
                         />
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-500">
-                            {t('common.clickOrDragToChange')}
+                            Kliko ose terhiq per te ndryshuar
                           </span>
                           <button
                             type="button"
@@ -1185,7 +1185,7 @@ export default function ProductDetail() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder={t('common.productName')}
+                      placeholder="Emri i produktit"
                     />
                   </div>
 
@@ -1196,7 +1196,7 @@ export default function ProductDetail() {
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder={t('common.productCode')}
+                      placeholder="Kodi i produktit"
                     />
                   </div>
 
@@ -1224,13 +1224,13 @@ export default function ProductDetail() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder={t('common.productDescription')}
+                      placeholder="Pershkrimi i produktit"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('common.netPrice')}
+                      Cmimi Neto
                     </label>
                     <input
                       type="number"
@@ -1292,7 +1292,7 @@ export default function ProductDetail() {
                           type="text"
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
-                          placeholder={t('common.categoryName')}
+                          placeholder="Emri i kategorise"
                           className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {

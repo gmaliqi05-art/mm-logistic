@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, X, RotateCcw, Check, Loader2, AlertTriangle, Zap, ZapOff, FlipHorizontal, Crop, ScanLine, ScanSearch, FileText, Palette, Droplet, Gauge } from 'lucide-react';
 import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
-import { useTranslation } from '../../i18n';
 
 interface Props {
   onCapture: (file: File) => void;
@@ -12,7 +11,6 @@ type Pt = { x: number; y: number };
 type Quad = [Pt, Pt, Pt, Pt];
 
 export default function CameraScanner({ onCapture, onClose }: Props) {
-  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rawCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -432,7 +430,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       canvas.width = vw;
       canvas.height = vh;
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error(t('common.canvasContextUnavailable'));
+      if (!ctx) throw new Error('Canvas context i panjohur');
       ctx.drawImage(video, 0, 0, vw, vh);
 
       let didUseQuad = false;
@@ -557,7 +555,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       <div className="flex items-center justify-between px-4 py-3 bg-black/80 text-white">
         <div className="flex items-center gap-2">
           <Camera className="w-5 h-5 text-teal-400" />
-          <span className="font-semibold text-sm">{t('common.scanWithCamera')}</span>
+          <span className="font-semibold text-sm">Skano me kamere</span>
         </div>
         <div className="flex items-center gap-2">
           {!previewUrl && (

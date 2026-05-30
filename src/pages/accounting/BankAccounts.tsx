@@ -275,14 +275,14 @@ export default function BankAccounts() {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">{t('common.accountTransactions')}</h2>
+            <h2 className="font-semibold text-gray-900">Transaksionet e Llogarise</h2>
           </div>
           {loadingTx ? (
             <PageSkeleton rows={6} cols={4} showStats={false} />
           ) : accountTransactions.length === 0 ? (
             <div className="py-16 text-center">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 font-medium">{t('accounting.transactions.noTransactions')}</p>
+              <p className="text-gray-500 font-medium">Asnje transaksion</p>
               <p className="text-gray-400 text-sm mt-1">Kjo llogari nuk ka transaksione</p>
             </div>
           ) : (
@@ -291,7 +291,7 @@ export default function BankAccounts() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.description')}</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pershkrimi</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kontakti</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lloji</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shuma</th>
@@ -368,8 +368,8 @@ export default function BankAccounts() {
       {accounts.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center">
           <Landmark className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 font-medium">{t('accounting.bankAccounts.noAccounts')}</p>
-          <p className="text-gray-400 text-sm mt-1">{t('accounting.bankAccounts.emptyHint')}</p>
+          <p className="text-gray-500 font-medium">Asnje llogari bankare</p>
+          <p className="text-gray-400 text-sm mt-1">Shto llogarite e para bankare per te filluar</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -576,7 +576,7 @@ export default function BankAccounts() {
                   value={form.bank_name}
                   onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                  placeholder={t('common.bankName')}
+                  placeholder="Emri i bankes"
                 />
               </div>
               <div>

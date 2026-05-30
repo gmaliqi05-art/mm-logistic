@@ -452,8 +452,8 @@ export default function AccDeliveryNotes() {
                 <tr>
                   <td colSpan={8} className="px-6 py-16 text-center">
                     <Truck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">{t('accounting.deliveryNotes.empty')}</p>
-                    <p className="text-gray-400 text-sm mt-1">{t('accounting.deliveryNotes.emptyHint')}</p>
+                    <p className="text-gray-500 font-medium">Asnje fletedalje</p>
+                    <p className="text-gray-400 text-sm mt-1">Shto fletedaljen e pare per te filluar</p>
                   </td>
                 </tr>
               ) : (
@@ -605,7 +605,7 @@ export default function AccDeliveryNotes() {
                       onChange={(e) => handleContactChange(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">{t('common.selectClientInline')}</option>
+                      <option value="">Zgjidh klientin</option>
                       {contacts.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -627,7 +627,7 @@ export default function AccDeliveryNotes() {
                       onChange={(e) => setForm({ ...form, shipping_address: e.target.value })}
                       rows={2}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder={t('common.fullDeliveryAddressPlaceholder')}
+                      placeholder="Adresa e plote e dergimit"
                     />
                   </div>
                   <div>
@@ -677,7 +677,7 @@ export default function AccDeliveryNotes() {
                               onChange={(e) => handleProductChange(index, e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                             >
-                              <option value="">{t('common.selectProductInline')}</option>
+                              <option value="">Zgjidh produktin</option>
                               {products.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                               ))}
@@ -689,13 +689,13 @@ export default function AccDeliveryNotes() {
                             )}
                           </div>
                           <div className="sm:col-span-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.description')}</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Pershkrimi</label>
                             <input
                               type="text"
                               value={item.description}
                               onChange={(e) => updateItem(index, 'description', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                              placeholder={t('common.description')}
+                              placeholder="Pershkrimi"
                             />
                           </div>
                           <div className="sm:col-span-2">

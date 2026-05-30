@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import { Users, Loader2 } from "lucide-react";
-import { useTranslation } from "../../../i18n";
 
 export interface AudienceFilter {
   roles?: string[];
@@ -77,7 +76,6 @@ function CheckGroup({
 }
 
 export default function AudienceSelector({ value, onChange }: Props) {
-  const { t } = useTranslation();
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   const [search, setSearch] = useState("");
   const [count, setCount] = useState<number | null>(null);
@@ -131,7 +129,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={ROLES} selected={value.roles ?? []} onChange={(v) => onChange({ ...value, roles: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.businessType')}</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">Lloji i biznesit</label>
         <CheckGroup options={BUSINESS_TYPES} selected={value.business_types ?? []} onChange={(v) => onChange({ ...value, business_types: v })} />
       </div>
       <div>
@@ -139,7 +137,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={LOCALES} selected={value.locales ?? []} onChange={(v) => onChange({ ...value, locales: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.subscriptionStatus')}</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">Statusi i abonimit</label>
         <CheckGroup options={SUBSCRIPTION_STATUSES} selected={value.subscription_statuses ?? []} onChange={(v) => onChange({ ...value, subscription_statuses: v })} />
       </div>
       <div>
@@ -148,12 +146,12 @@ export default function AudienceSelector({ value, onChange }: Props) {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('common.searchCompany')}
+          placeholder="Kerko kompani..."
           className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
         />
         <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white">
           {filteredCompanies.length === 0 ? (
-            <div className="p-3 text-xs text-slate-500">{t('common.noCompanies')}</div>
+            <div className="p-3 text-xs text-slate-500">Pa kompani.</div>
           ) : (
             filteredCompanies.map((c) => {
               const selected = (value.company_ids ?? []).includes(c.id);

@@ -3,7 +3,6 @@ import { X, Send, Loader2, CheckCircle2, AlertCircle, Eye, Settings2, ChevronDow
 import { Link } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
-import { useTranslation } from "../../../i18n";
 import EmailPreviewPane from "./EmailPreviewPane";
 
 interface Props {
@@ -84,7 +83,6 @@ function buildSampleData(
 
 export default function TestSendDialog({ open, onClose, templateCode, defaultLocale = "sq", defaultData = {} }: Props) {
   const { profile } = useAuth();
-  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [locale, setLocale] = useState<"sq" | "de" | "en">(defaultLocale);
   const [sending, setSending] = useState(false);
@@ -213,7 +211,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-slate-900">{t('common.sendEmail')}</h3>
+            <h3 className="text-base font-semibold text-slate-900">Dergo email</h3>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {template && <span className="truncate text-sm text-slate-700">{template.name}</span>}
               {catMeta && (
@@ -253,7 +251,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.recipientAddress')}</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-700">Adresa e marresit</label>
             <input
               type="email"
               value={email}

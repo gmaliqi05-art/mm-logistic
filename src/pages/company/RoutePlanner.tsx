@@ -343,7 +343,7 @@ export default function CompanyRoutePlanner() {
                 <input
                   value={originText}
                   onChange={(e) => { setOriginText(e.target.value); setOrigin(null); }}
-                  placeholder={t('common.fromAddressPlaceholder')}
+                  placeholder="Adresa e nisjes"
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
                 />
               </div>
@@ -365,7 +365,7 @@ export default function CompanyRoutePlanner() {
                 <input
                   value={destText}
                   onChange={(e) => { setDestText(e.target.value); setDest(null); }}
-                  placeholder={t('common.toAddressPlaceholder')}
+                  placeholder="Adresa e destinacionit"
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
                 />
               </div>

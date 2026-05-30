@@ -158,7 +158,7 @@ export default function EmailCampaigns() {
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Fushata</th>
-                <th className="px-4 py-3">{t('common.status')}</th>
+                <th className="px-4 py-3">Statusi</th>
                 <th className="px-4 py-3">Marres</th>
                 <th className="px-4 py-3">Dergua</th>
                 <th className="px-4 py-3">{t('common.failed')}</th>

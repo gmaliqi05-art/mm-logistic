@@ -554,7 +554,7 @@ export default function DepotReceiving() {
 
               <ContactAutocomplete
                 label="Nga kush? (Kompania/Personi)"
-                placeholder={t('common.whoBroughtPallets')}
+                placeholder="Emri i kompanise ose personit qe ka sjelle paletat..."
                 contactId={sourceContactId}
                 partnerText={sourcePartner}
                 onChange={({ contactId, partnerText }) => {

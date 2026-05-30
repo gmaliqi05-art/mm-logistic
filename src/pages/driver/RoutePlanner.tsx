@@ -131,7 +131,7 @@ export default function DriverRoutePlanner() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-sm">
           <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
           <div className="flex-1">
-            <div className="font-semibold text-amber-900">{t('common.gpsNotActive')}</div>
+            <div className="font-semibold text-amber-900">GPS nuk eshte aktiv</div>
             <div className="text-amber-800 text-xs mt-0.5">{gpsError}</div>
             <Link to="/driver/tracking" className="inline-block mt-1 text-xs font-semibold text-teal-700 underline">
               Hap tracking-un
@@ -216,7 +216,7 @@ export default function DriverRoutePlanner() {
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <h3 className="text-sm font-semibold text-slate-900 mb-2">{t('common.placesPassed')}</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-2">Vendet qe pershkohen</h3>
             <div className="space-y-1.5">
               {route.country_breakdown.map((c) => (
                 <div key={c.country_code} className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 last:border-0">

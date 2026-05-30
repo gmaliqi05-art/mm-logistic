@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTranslation } from '../../i18n';
 
 interface DriverProfile {
   id: string;
@@ -91,7 +90,6 @@ function deriveInitials(name: string | null | undefined): string {
 export default function DriverReports() {
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
-  const { t } = useTranslation();
   const [driver, setDriver] = useState<DriverProfile | null>(null);
   const [preset, setPreset] = useState<Preset>('week');
   const [customFrom, setCustomFrom] = useState('');
@@ -324,12 +322,12 @@ export default function DriverReports() {
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp className="w-4 h-4 text-teal-600" />
-          <h2 className="text-sm font-semibold text-slate-900">{t('common.kmPerDay')}</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Km per dite</h2>
         </div>
         {loading ? (
           <div className="py-8 text-center text-sm text-slate-500">Duke llogaritur...</div>
         ) : daily.length === 0 ? (
-          <div className="py-8 text-center text-sm text-slate-500">{t('common.noDataForPeriod')}.</div>
+          <div className="py-8 text-center text-sm text-slate-500">Nuk ka te dhena per kete periudhe.</div>
         ) : (
           <div className="space-y-1.5">
             {daily.map((d) => (
@@ -355,7 +353,7 @@ export default function DriverReports() {
           <h2 className="text-sm font-semibold text-slate-900">Dergesat ne kete periudhe</h2>
         </div>
         {deliveries.length === 0 ? (
-          <div className="p-6 text-center text-sm text-slate-500">{t('common.noDeliveries')}</div>
+          <div className="p-6 text-center text-sm text-slate-500">Nuk ka dergesa.</div>
         ) : (
           <div className="divide-y divide-slate-100">
             {deliveries.map((d) => (

@@ -112,7 +112,7 @@ export default function EmailTemplates() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tr('common.searchByNameOrCode')}
+            placeholder="Kerko sipas emrit ose kodit..."
             className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
           />
         </div>
@@ -254,7 +254,7 @@ export default function EmailTemplates() {
                           type="button"
                           onClick={() => setTestCode(t.code)}
                           className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-teal-600"
-                          title={tr('common.sendTestAction')}
+                          title="Dergo test"
                         >
                           <Send className="h-4 w-4" />
                         </button>

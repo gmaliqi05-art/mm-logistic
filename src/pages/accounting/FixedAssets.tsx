@@ -126,7 +126,7 @@ export default function FixedAssets() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Asetet Fikse / Investimet</h1>
-          <p className="text-gray-500 mt-1">{t('common.assetRegistryDescription')}</p>
+          <p className="text-gray-500 mt-1">Regjistri i aseteve dhe zhvleresimi linear mujor</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -148,15 +148,15 @@ export default function FixedAssets() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase">{t('common.totalPurchaseCost')}</p>
+          <p className="text-xs font-medium text-gray-500 uppercase">Kosto totale blerjeje</p>
           <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalCost)}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase">{t('common.currentBookValue')}</p>
+          <p className="text-xs font-medium text-gray-500 uppercase">Vlera aktuale libri</p>
           <p className="text-2xl font-bold text-emerald-600 mt-2">{formatCurrency(totalBookValue)}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase">{t('common.monthlyDepreciation')}</p>
+          <p className="text-xs font-medium text-gray-500 uppercase">Zhvleresim mujor</p>
           <p className="text-2xl font-bold text-amber-600 mt-2">{formatCurrency(totalMonthlyDep)}</p>
         </div>
       </div>
@@ -166,8 +166,8 @@ export default function FixedAssets() {
       ) : assets.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
           <Briefcase className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-500 text-sm">{t('common.noAssetsRegistered')}</p>
-          <p className="text-gray-400 text-xs mt-1">{t('common.scanInvestmentInvoice')}</p>
+          <p className="text-gray-500 text-sm">Nuk ka asete te regjistruara</p>
+          <p className="text-gray-400 text-xs mt-1">Skano nje fature investimi ose shto manualisht</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -177,11 +177,11 @@ export default function FixedAssets() {
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Emri</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Kategoria</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.purchaseDate')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Data blerjes</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Kosto</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Jeta</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Zhvl. mujore</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.bookValue')}</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Vlera libri</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Veprime</th>
                 </tr>
               </thead>
@@ -278,7 +278,7 @@ export default function FixedAssets() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">{t('common.purchaseDate')}</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Data blerjes</label>
                   <input type="date" value={form.acquisition_date} onChange={(e) => setForm({ ...form, acquisition_date: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
                 </div>
@@ -310,8 +310,8 @@ export default function FixedAssets() {
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
-              <button onClick={() => setShowManual(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg text-sm">{t('common.cancel')}</button>
-              <button onClick={handleSaveManual} className="px-5 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm">{t('common.save')}</button>
+              <button onClick={() => setShowManual(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg text-sm">Anulo</button>
+              <button onClick={handleSaveManual} className="px-5 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-semibold text-sm">Ruaj</button>
             </div>
           </div>
         </div>

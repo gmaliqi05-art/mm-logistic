@@ -467,12 +467,12 @@ export default function Contacts() {
                     value={form.name}
                     onChange={(e) => updateForm('name', e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                    placeholder={t('common.contactName')}
+                    placeholder="Emri i kontaktit"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.contactType')}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Lloji i kontaktit</label>
                   <select
                     value={form.contact_type}
                     onChange={(e) => updateForm('contact_type', e.target.value)}
@@ -509,7 +509,7 @@ export default function Contacts() {
                       value={form.address}
                       onChange={(e) => updateForm('address', e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder={t('common.streetAndNumber')}
+                      placeholder="Rruga, numri"
                     />
                   </div>
                   <div>
@@ -637,7 +637,7 @@ export default function Contacts() {
                       value={form.bank_name}
                       onChange={(e) => updateForm('bank_name', e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder={t('common.bankName')}
+                      placeholder="Emri i bankës"
                     />
                   </div>
                 </div>

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { X, Check, ScanLine, Upload, SkipForward } from 'lucide-react';
 import CameraScanner from '../accounting/CameraScanner';
 import { supabase } from '../../lib/supabase';
-import { useTranslation } from '../../i18n';
 
 interface Props {
   companyId: string;
@@ -170,7 +169,6 @@ function StepPill({ active, done, label }: { active: boolean; done: boolean; lab
 }
 
 function SideCard({ label, url, companyId: _c, skipped }: { label: string; url: string; companyId: string; skipped?: boolean }) {
-  const { t } = useTranslation();
   const [signed, setSigned] = useState<string>('');
 
   useEffect(() => {
@@ -189,10 +187,10 @@ function SideCard({ label, url, companyId: _c, skipped }: { label: string; url: 
         signed ? (
           <img src={signed} alt={label} className="w-full h-full object-cover" />
         ) : (
-          <span>{t('common.saved')}</span>
+          <span>Ruajtur</span>
         )
       ) : skipped ? (
-        <span>{t('common.skipped')}</span>
+        <span>Kapercyer</span>
       ) : (
         <span>{label}</span>
       )}

@@ -5,7 +5,6 @@ import { TableRowsSkeleton } from '../../components/ui/Skeleton';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../types/accounting';
-import { useTranslation } from '../../i18n';
 
 interface StmtLine {
   id: string;
@@ -34,7 +33,6 @@ interface MatchTx {
 
 export default function BankReconciliation() {
   const { profile } = useAuth();
-  const { t } = useTranslation();
   const [sp] = useSearchParams();
   const accountId = sp.get('account') || '';
 
@@ -150,7 +148,7 @@ export default function BankReconciliation() {
     return (
       <div className="p-6">
         <Link to="/accounting/bank-accounts" className="text-emerald-600 text-sm">« Kthehu te Llogarite Bankare</Link>
-        <p className="mt-4 text-gray-600">{t('common.chooseBankAccountForReconcile')}</p>
+        <p className="mt-4 text-gray-600">Zgjidhni nje llogari bankare per te filluar pajtimin.</p>
       </div>
     );
   }
@@ -166,7 +164,7 @@ export default function BankReconciliation() {
             <FileCheck2 className="w-6 h-6 text-emerald-600" />
             Pajtimi i ekstrakteve bankare
           </h1>
-          <p className="text-gray-500 text-sm mt-1">{t('common.reviewAutoSuggestions')}</p>
+          <p className="text-gray-500 text-sm mt-1">Kontrollo sugjerimet automatike dhe konfirmoji me transaksionet e regjistruara.</p>
         </div>
       </div>
 

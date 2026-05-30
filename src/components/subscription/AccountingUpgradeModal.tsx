@@ -3,7 +3,6 @@ import { X, Calculator, Check, Sparkles, Loader2, CreditCard } from 'lucide-reac
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
-import { useTranslation } from '../../i18n';
 
 interface Props {
   onClose: () => void;
@@ -22,7 +21,6 @@ const FEATURES = [
 export default function AccountingUpgradeModal({ onClose, onActivated }: Props) {
   const { profile } = useAuth();
   const { refreshSubscription } = useSubscription();
-  const { t } = useTranslation();
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,7 +109,7 @@ export default function AccountingUpgradeModal({ onClose, onActivated }: Props) 
           <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center mb-3">
             <Calculator className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-bold">{t('common.enableAccounting')}</h2>
+          <h2 className="text-2xl font-bold">Aktivizo Kontabilitetin</h2>
           <p className="text-teal-50/90 text-sm mt-1">
             Lidhja automatike mes kompanise suaj dhe kontabilitetit te integruar.
           </p>
