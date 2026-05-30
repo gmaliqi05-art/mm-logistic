@@ -1491,8 +1491,8 @@ function ReviewModal({
             <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 flex items-center gap-2 text-sm text-sky-800">
               <Sparkles className="w-4 h-4 flex-shrink-0 text-sky-600" />
               <div>
-                <p className="font-semibold text-sky-900">Shqyrtim automatik</p>
-                <p className="text-xs text-sky-700 mt-0.5">Ky dokument u miratua automatikisht sepse partneri eshte i njohur. Mund te editoni te dhenat nese nevojitet.</p>
+                <p className="font-semibold text-sky-900">{t('common.automaticReview')}</p>
+                <p className="text-xs text-sky-700 mt-0.5">{t('common.autoApprovedHint')}</p>
               </div>
             </div>
           )}
@@ -1616,7 +1616,7 @@ function ReviewModal({
                 {noScanFlag && (
                   <div className="mb-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
                     <p className="text-xs font-semibold text-amber-800">{t('common.driverClosedWithoutScan')}</p>
-                    <p className="text-[11px] text-amber-700 mt-0.5">Ngarkoni dokumentin qe ju erdhi me email kur te vij.</p>
+                    <p className="text-[11px] text-amber-700 mt-0.5">{t('common.uploadIncomingDocumentHint')}</p>
                   </div>
                 )}
                 <label className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/40 hover:bg-sky-50 transition-colors p-6 text-center cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
@@ -1881,7 +1881,7 @@ function ReviewModal({
             <div className="bg-amber-50 border-b border-amber-100 px-5 py-4 flex items-start gap-3">
               <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-gray-900">Stok i pamjaftueshem</h4>
+                <h4 className="font-bold text-gray-900">{t('common.insufficientStockShort')}</h4>
                 <p className="text-xs text-gray-600 mt-1">{t('common.itemsWillGoNegativeContinue')}</p>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { Truck, Package, Loader2, CheckCircle2, AlertTriangle, Hand, LogOut, Che
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { notifyUsers } from '../../utils/notifications';
+import { useTranslation } from '../../i18n';
 
 type TrailerStatus = 'available' | 'claimed' | 'dispatched' | 'cancelled';
 
@@ -35,6 +36,7 @@ interface Trailer {
 
 export default function DriverTrailersWidget() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [trailers, setTrailers] = useState<Trailer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -188,7 +190,7 @@ export default function DriverTrailersWidget() {
     return (
       <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-2 text-gray-500 text-sm">
         <Loader2 className="w-4 h-4 animate-spin" />
-        <span>Po ngarkohen rimorkiot...</span>
+        <span>{t('common.loadingTrailers')}</span>
       </div>
     );
   }

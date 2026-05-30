@@ -245,7 +245,7 @@ export default function EmailTemplateEditor() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-slate-700">Pershkrim</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.description')}</label>
                     <textarea
                       value={tpl.description}
                       onChange={(e) => update("description", e.target.value)}
