@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowDownLeft, ArrowUpRight, Handshake, Warehouse, Package, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface FlowRow {
   id: string;
@@ -34,6 +35,7 @@ const DIRECTION_META: Record<FlowRow['direction'], { label: string; tone: string
 };
 
 export default function PartnerFlows() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [rows, setRows] = useState<FlowRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +136,7 @@ export default function PartnerFlows() {
     <div className="space-y-5">
       <div>
         <h1 className="text-xl lg:text-2xl font-bold text-slate-900">Rrjedhat me partneret</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Raport i unifikuar i levizjeve sipas rolit ne cdo dokument</p>
+        <p className="text-slate-500 text-sm mt-0.5">{t('common.raportIUnifikuarILevizjeveSipas')}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -185,20 +187,18 @@ export default function PartnerFlows() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
-            <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-            Asnje rrjedhe per kete filter
-          </div>
+            <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />{t('common.asnjeRrjedhePerKeteFilter')}</div>
         ) : view === 'by_partner' ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[720px]">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-2 text-left">Partneri</th>
-                  <th className="px-4 py-2 text-right">Hyrje</th>
-                  <th className="px-4 py-2 text-right">Dalje</th>
+                  <th className="px-4 py-2 text-right">{t('common.hyrje')}</th>
+                  <th className="px-4 py-2 text-right">{t('common.dalje')}</th>
                   <th className="px-4 py-2 text-right">Transport</th>
-                  <th className="px-4 py-2 text-right">Ruajtje</th>
-                  <th className="px-4 py-2 text-left whitespace-nowrap">Aktiviteti i fundit</th>
+                  <th className="px-4 py-2 text-right">{t('common.ruajtje')}</th>
+                  <th className="px-4 py-2 text-left whitespace-nowrap">{t('common.aktivitetiIFundit')}</th>
                   <th className="px-4 py-2 text-right" />
                 </tr>
               </thead>
@@ -236,9 +236,9 @@ export default function PartnerFlows() {
                   <th className="px-4 py-2 text-left">Dokument</th>
                   <th className="px-4 py-2 text-left">Partneri</th>
                   <th className="px-4 py-2 text-left">Drejtimi</th>
-                  <th className="px-4 py-2 text-left">Kategori</th>
+                  <th className="px-4 py-2 text-left">{t('common.kategori')}</th>
                   <th className="px-4 py-2 text-left">Produkti</th>
-                  <th className="px-4 py-2 text-right">Sasia</th>
+                  <th className="px-4 py-2 text-right">{t('common.quantity')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

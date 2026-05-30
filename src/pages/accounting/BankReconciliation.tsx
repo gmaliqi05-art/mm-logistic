@@ -5,6 +5,7 @@ import { TableRowsSkeleton } from '../../components/ui/Skeleton';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency } from '../../types/accounting';
+import { useTranslation } from '../../i18n';
 
 interface StmtLine {
   id: string;
@@ -32,6 +33,7 @@ interface MatchTx {
 }
 
 export default function BankReconciliation() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [sp] = useSearchParams();
   const accountId = sp.get('account') || '';
@@ -148,7 +150,7 @@ export default function BankReconciliation() {
     return (
       <div className="p-6">
         <Link to="/accounting/bank-accounts" className="text-emerald-600 text-sm">« Kthehu te Llogarite Bankare</Link>
-        <p className="mt-4 text-gray-600">Zgjidhni nje llogari bankare per te filluar pajtimin.</p>
+        <p className="mt-4 text-gray-600">{t('common.chooseBankAccountForReconcile')}</p>
       </div>
     );
   }
@@ -196,9 +198,7 @@ export default function BankReconciliation() {
       {loading ? (
         <TableRowsSkeleton rows={8} cols={6} />
       ) : lines.length === 0 ? (
-        <div className="bg-white border border-gray-100 rounded-xl p-12 text-center text-gray-500">
-          Nuk ka rreshta per kete filter.
-        </div>
+        <div className="bg-white border border-gray-100 rounded-xl p-12 text-center text-gray-500">{t('common.nukKaRreshtaPerKeteFilter')}</div>
       ) : (
         <div className="space-y-3">
           {lines.map((line) => {
@@ -232,7 +232,7 @@ export default function BankReconciliation() {
                       <div className="mt-1 text-sm font-bold text-gray-800">{formatCurrency(tx.amount, tx.currency as any)}</div>
                     </>
                   ) : (
-                    <div className="text-xs text-gray-400 italic">Pa sugjerim. Kerkoni manualisht ne transaksione.</div>
+                    <div className="text-xs text-gray-400 italic">{t('common.paSugjerimKerkoniManualishtNeTransaksione')}</div>
                   )}
                 </div>
 
@@ -243,8 +243,7 @@ export default function BankReconciliation() {
                       onClick={() => confirmMatch(line)}
                       className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Konfirmo
-                    </button>
+                      <CheckCircle2 className="w-4 h-4" />{t('common.confirm')}</button>
                   )}
                   {line.match_status === 'suggested' && (
                     <button

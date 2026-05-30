@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, Check, ScanLine, Upload, SkipForward } from 'lucide-react';
 import CameraScanner from '../accounting/CameraScanner';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   companyId: string;
@@ -16,6 +17,7 @@ interface Props {
 type Side = 'front' | 'back' | 'done';
 
 export default function TwoSidedPhotoCapture({ companyId, label, existingFront, existingBack, allowSkipBack, onDone, onClose }: Props) {
+  const { t } = useTranslation();
   const [side, setSide] = useState<Side>(existingFront ? 'back' : 'front');
   const [front, setFront] = useState<string>(existingFront || '');
   const [back, setBack] = useState<string>(existingBack || '');
@@ -126,8 +128,7 @@ export default function TwoSidedPhotoCapture({ companyId, label, existingFront, 
                   <ScanLine className="w-4 h-4" /> Hap kamera
                 </button>
                 <label className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 cursor-pointer">
-                  <Upload className="w-4 h-4" /> Ngarko skedar
-                  <input type="file" accept="image/*" className="hidden" onChange={handleFileInput} disabled={uploading} />
+                  <Upload className="w-4 h-4" />{t('common.ngarkoSkedar')}<input type="file" accept="image/*" className="hidden" onChange={handleFileInput} disabled={uploading} />
                 </label>
                 {side === 'back' && allowSkipBack && (
                   <button
@@ -148,8 +149,7 @@ export default function TwoSidedPhotoCapture({ companyId, label, existingFront, 
                 onClick={save}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700"
               >
-                <Check className="w-4 h-4" /> Ruaj
-              </button>
+                <Check className="w-4 h-4" />{t('common.save')}</button>
             </div>
           )}
         </div>
@@ -169,6 +169,7 @@ function StepPill({ active, done, label }: { active: boolean; done: boolean; lab
 }
 
 function SideCard({ label, url, companyId: _c, skipped }: { label: string; url: string; companyId: string; skipped?: boolean }) {
+  const { t } = useTranslation();
   const [signed, setSigned] = useState<string>('');
 
   useEffect(() => {
@@ -187,7 +188,7 @@ function SideCard({ label, url, companyId: _c, skipped }: { label: string; url: 
         signed ? (
           <img src={signed} alt={label} className="w-full h-full object-cover" />
         ) : (
-          <span>Ruajtur</span>
+          <span>{t('common.ruajtur')}</span>
         )
       ) : skipped ? (
         <span>Kapercyer</span>

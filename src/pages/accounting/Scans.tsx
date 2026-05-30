@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, type AccCurrency } from '../../types/accounting';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import ScanReviewModal from '../../components/accounting/ScanReviewModal';
+import { useTranslation } from '../../i18n';
 
 interface ScanRow {
   id: string;
@@ -51,6 +52,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function Scans() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [rows, setRows] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ export default function Scans() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Skanimet</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('common.scanResults')}</h1>
           <p className="text-gray-500 mt-1">Historiku i dokumenteve te skanuara</p>
         </div>
         <div className="flex gap-2">
@@ -101,9 +103,7 @@ export default function Scans() {
             onClick={() => setShowScan(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm"
           >
-            <ScanLine className="w-4 h-4" />
-            Skano te Re
-          </button>
+            <ScanLine className="w-4 h-4" />{t('common.skanoTeRe')}</button>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ export default function Scans() {
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
           <ScanLine className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-600 font-medium">Ende asnje skanim</p>
-          <p className="text-slate-400 text-sm mt-1">Ngarko nje dokument per te filluar</p>
+          <p className="text-slate-400 text-sm mt-1">{t('common.uploadDocToStart')}</p>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -120,10 +120,10 @@ export default function Scans() {
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Skedari</th>
-                  <th className="text-left font-semibold text-slate-700 px-4 py-3">Lloji</th>
+                  <th className="text-left font-semibold text-slate-700 px-4 py-3">{t('common.type')}</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Furnizuesi / Klienti</th>
-                  <th className="text-right font-semibold text-slate-700 px-4 py-3">Totali</th>
-                  <th className="text-left font-semibold text-slate-700 px-4 py-3">Statusi</th>
+                  <th className="text-right font-semibold text-slate-700 px-4 py-3">{t('common.total')}</th>
+                  <th className="text-left font-semibold text-slate-700 px-4 py-3">{t('common.status')}</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Data</th>
                 </tr>
               </thead>
@@ -150,9 +150,7 @@ export default function Scans() {
                           </span>
                           {r.routing_decision === 'new_company_required' && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
-                              <Sparkles className="w-3 h-3" />
-                              Kompani e re
-                            </span>
+                              <Sparkles className="w-3 h-3" />{t('common.kompaniERe')}</span>
                           )}
                         </div>
                       </td>

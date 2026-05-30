@@ -1,7 +1,9 @@
 import { LogOut, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../i18n';
 
 export default function NoAccessPage() {
+  const { t } = useTranslation();
   const { profile, signOut } = useAuth();
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
@@ -14,9 +16,7 @@ export default function NoAccessPage() {
           {profile?.full_name ? `${profile.full_name}, ` : ''}
           llogaria juaj sherben vetem per gjurmimin e punes ne raporte. Depoisti i depo-s tuaj e regjistron prodhimin tuaj te perditshem.
         </p>
-        <p className="text-xs text-slate-400 mt-3">
-          Nese mendoni qe ky eshte gabim, kontaktoni administratorin e kompanise.
-        </p>
+        <p className="text-xs text-slate-400 mt-3">{t('common.neseMendoniQeKyEshteGabim')}</p>
         <button
           onClick={() => signOut()}
           className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"

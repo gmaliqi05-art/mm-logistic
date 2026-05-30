@@ -315,7 +315,7 @@ export default function ClientPricesPage() {
           <div className="text-center py-12">
             <Tag className="w-10 h-10 mx-auto mb-3 text-gray-300" />
             <p className="text-sm text-gray-500">{t('common.nukKaCmimeTePersonalizuara')}</p>
-            <p className="text-xs text-gray-400 mt-1">Shtoni cmime te vecanta per kliente specifike</p>
+            <p className="text-xs text-gray-400 mt-1">{t('common.shtoniCmimeTeVecantaPerKliente')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

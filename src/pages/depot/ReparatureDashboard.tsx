@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Wrench, Clock, Calendar, Loader2, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface RepairRow {
   id: string;
@@ -27,6 +28,7 @@ function startOfWeek(): string {
 }
 
 export default function ReparatureDashboard() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [rows, setRows] = useState<RepairRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,9 +73,7 @@ export default function ReparatureDashboard() {
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
           {profile?.full_name ? `Mireserdhe, ${profile.full_name}` : 'Mireserdhe'}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Permbledhje e punes suaj. Te dhenat regjistrohen nga depoisti pasi ju te keni perfunduar reparimet.
-        </p>
+        <p className="text-sm text-slate-500 mt-1">{t('common.permbledhjeEPunesSuajTeDhenat')}</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -96,9 +96,7 @@ export default function ReparatureDashboard() {
         {loading ? (
           <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 text-slate-400 animate-spin" /></div>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500 text-center">
-            Asnje regjistrim ende. Depoisti i shton automatikisht keto te dhena pas raportimit te punes.
-          </div>
+          <div className="p-6 text-sm text-slate-500 text-center">{t('common.asnjeRegjistrimEndeDepoistiIShton')}</div>
         ) : (
           <ul className="divide-y divide-slate-100">
             {rows.map((r) => (

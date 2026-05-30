@@ -1,5 +1,6 @@
 import { X, FileText, Printer, Download, ExternalLink } from 'lucide-react';
 import { formatNumber } from '../../types/accounting';
+import { useTranslation } from '../../i18n';
 
 export interface PreviewField {
   label: string;
@@ -61,6 +62,7 @@ export default function DocumentPreviewModal({
   onPrint,
   accentColor = 'emerald',
 }: Props) {
+  const { t } = useTranslation();
   const accent = accentMap[accentColor];
   const isImage = documentMime?.startsWith('image/');
   const isPdf = documentMime === 'application/pdf';
@@ -123,11 +125,11 @@ export default function DocumentPreviewModal({
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-500">
                     <tr>
-                      <th className="px-3 py-2">Pershkrim</th>
-                      <th className="px-3 py-2 text-right">Sasia</th>
+                      <th className="px-3 py-2">{t('common.pershkrim')}</th>
+                      <th className="px-3 py-2 text-right">{t('common.quantity')}</th>
                       <th className="px-3 py-2 text-right">Cmim</th>
                       <th className="px-3 py-2 text-right">TVSH</th>
-                      <th className="px-3 py-2 text-right">Totali</th>
+                      <th className="px-3 py-2 text-right">{t('common.total')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -202,9 +204,7 @@ export default function DocumentPreviewModal({
                 ) : (
                   <div className="p-6 flex items-center justify-center gap-3 text-slate-600">
                     <Download className="w-5 h-5" />
-                    <a href={documentUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-teal-600 hover:underline">
-                      Shkarko dokumentin
-                    </a>
+                    <a href={documentUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-teal-600 hover:underline">{t('common.shkarkoDokumentin')}</a>
                   </div>
                 )}
               </div>

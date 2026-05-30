@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../i18n';
 
 export default function DeletionBanner() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [scheduledFor, setScheduledFor] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -47,9 +49,7 @@ export default function DeletionBanner() {
             <span className="font-semibold">Llogaria do te fshihet me {formattedDate}</span>
             <span className="text-amber-700"> ({days} dite te mbetura).</span>
             {' '}
-            <a href="/settings/account" className="font-semibold underline hover:text-amber-800">
-              Anulo fshirjen
-            </a>
+            <a href="/settings/account" className="font-semibold underline hover:text-amber-800">{t('common.anuloFshirjen')}</a>
           </p>
         </div>
         <button

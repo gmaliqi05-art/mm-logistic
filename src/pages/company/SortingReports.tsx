@@ -10,6 +10,7 @@ import {
   Users,
   Filter,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../utils/logger';
@@ -59,6 +60,7 @@ const CONDITION_TONE: Record<string, string> = {
 };
 
 export default function SortingReports() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<BatchRow[]>([]);
@@ -244,7 +246,7 @@ export default function SortingReports() {
           <p className="text-2xl font-bold text-gray-900 mt-1">{filtered.length}</p>
         </div>
         <div className="bg-white border border-gray-100 rounded-xl p-4">
-          <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">Total marre</p>
+          <p className="text-[11px] font-medium text-gray-500 uppercase tracking-wide">{t('common.totalMarre')}</p>
           <p className="text-2xl font-bold text-teal-700 mt-1">{totals.totalReceived}</p>
         </div>
         {Object.entries(totals.byCondition)
@@ -264,7 +266,7 @@ export default function SortingReports() {
       {filtered.length === 0 ? (
         <div className="bg-white border border-gray-100 rounded-xl p-12 text-center">
           <Layers className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">Asnje raport sortimi per keto filtra</p>
+          <p className="text-gray-500">{t('common.asnjeRaportSortimiPerKetoFiltra')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -319,7 +321,7 @@ export default function SortingReports() {
                       <thead>
                         <tr className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
                           <th className="text-left pb-2">Produkti</th>
-                          <th className="text-right pb-2 w-20">Sasia</th>
+                          <th className="text-right pb-2 w-20">{t('common.quantity')}</th>
                           <th className="text-right pb-2 w-28">Klasa</th>
                         </tr>
                       </thead>
@@ -362,7 +364,7 @@ export default function SortingReports() {
                       </tbody>
                     </table>
                     {b.items.filter((i) => i.quantity > 0).length === 0 && (
-                      <p className="text-center text-gray-400 text-sm py-4">Asnje artikull i regjistruar</p>
+                      <p className="text-center text-gray-400 text-sm py-4">{t('common.asnjeArtikullIRegjistruar')}</p>
                     )}
                   </div>
                 )}

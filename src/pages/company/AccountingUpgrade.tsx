@@ -3,6 +3,7 @@ import { Calculator, Check, Sparkles, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import AccountingUpgradeModal from '../../components/subscription/AccountingUpgradeModal';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useTranslation } from '../../i18n';
 
 const BULLETS = [
   'Faturat e skanuara kategorizohen automatikisht dhe bien ne vendet e duhura.',
@@ -13,6 +14,7 @@ const BULLETS = [
 ];
 
 export default function AccountingUpgrade() {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
   const { accountingEnabled } = useSubscription();
@@ -23,8 +25,8 @@ export default function AccountingUpgrade() {
         <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-4">
           <Check className="w-7 h-7" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Kontabiliteti eshte aktiv</h1>
-        <p className="text-slate-500 mt-2">Mund te hysh ne dashboardin e kontabilitetit tani.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('common.kontabilitetiEshteAktiv')}</h1>
+        <p className="text-slate-500 mt-2">{t('common.mundTeHyshNeDashboardinE')}</p>
         <button
           onClick={() => navigate('/accounting')}
           className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 text-white font-semibold hover:bg-teal-700"

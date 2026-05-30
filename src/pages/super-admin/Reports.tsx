@@ -9,6 +9,7 @@ import {
   Star,
   Shield,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 
 interface PlanRevenue {
@@ -37,6 +38,7 @@ const planIcons: Record<string, typeof Zap> = {
 };
 
 export default function SuperAdminReports() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -186,7 +188,7 @@ export default function SuperAdminReports() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Te Ardhura Totale</p>
+              <p className="text-sm text-gray-500">{t('common.totalRevenue')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{totalRevenue.toFixed(0)}{'\u20AC'}</p>
               <p className="text-xs text-gray-500 mt-1">Qe nga fillimi</p>
             </div>
@@ -198,7 +200,7 @@ export default function SuperAdminReports() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Kompani</p>
+              <p className="text-sm text-gray-500">{t('common.companies')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{totalCompanies}</p>
               <p className="text-xs text-gray-500 mt-1">Te regjistruara ne platforme</p>
             </div>
@@ -213,7 +215,7 @@ export default function SuperAdminReports() {
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Te Ardhura sipas Planit</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('common.revenueByPlan')}</h2>
           </div>
         </div>
         <div className="p-6">
@@ -263,18 +265,16 @@ export default function SuperAdminReports() {
         </div>
         {payments.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
-            <CreditCard className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-            Nuk ka pagesa te regjistruara
-          </div>
+            <CreditCard className="w-10 h-10 mx-auto mb-3 text-gray-300" />{t('common.nukKaPagesaTeRegjistruara')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kompania</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.company')}</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shuma</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Metoda</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statusi</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Data</th>
                 </tr>
               </thead>

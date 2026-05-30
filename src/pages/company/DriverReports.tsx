@@ -14,6 +14,7 @@ import {
   Package,
   TrendingUp,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -88,6 +89,7 @@ function deriveInitials(name: string | null | undefined): string {
 }
 
 export default function DriverReports() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
   const [driver, setDriver] = useState<DriverProfile | null>(null);
@@ -327,7 +329,7 @@ export default function DriverReports() {
         {loading ? (
           <div className="py-8 text-center text-sm text-slate-500">Duke llogaritur...</div>
         ) : daily.length === 0 ? (
-          <div className="py-8 text-center text-sm text-slate-500">Nuk ka te dhena per kete periudhe.</div>
+          <div className="py-8 text-center text-sm text-slate-500">{t('common.nukKaTeDhenaPerKete')}</div>
         ) : (
           <div className="space-y-1.5">
             {daily.map((d) => (
@@ -353,7 +355,7 @@ export default function DriverReports() {
           <h2 className="text-sm font-semibold text-slate-900">Dergesat ne kete periudhe</h2>
         </div>
         {deliveries.length === 0 ? (
-          <div className="p-6 text-center text-sm text-slate-500">Nuk ka dergesa.</div>
+          <div className="p-6 text-center text-sm text-slate-500">{t('common.noDeliveries')}</div>
         ) : (
           <div className="divide-y divide-slate-100">
             {deliveries.map((d) => (

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
 import EmailPreviewPane from "./EmailPreviewPane";
+import { useTranslation } from '../../../i18n';
 
 interface Props {
   open: boolean;
@@ -82,6 +83,7 @@ function buildSampleData(
 }
 
 export default function TestSendDialog({ open, onClose, templateCode, defaultLocale = "sq", defaultData = {} }: Props) {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [email, setEmail] = useState("");
   const [locale, setLocale] = useState<"sq" | "de" | "en">(defaultLocale);
@@ -211,7 +213,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
       >
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-slate-900">Dergo email</h3>
+            <h3 className="text-base font-semibold text-slate-900">{t('common.dergoEmail')}</h3>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               {template && <span className="truncate text-sm text-slate-700">{template.name}</span>}
               {catMeta && (
@@ -245,13 +247,11 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
 
           <div className="flex items-start gap-2 rounded-lg border border-teal-100 bg-teal-50 p-3 text-xs text-teal-800">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
-              Email-i dergohet me logon, ngjyrat dhe tekstin e markes automatikisht. Variablat plotesohen me shembuj te arsyeshem.
-            </div>
+            <div>{t('common.emailIDergohetMeLogonNgjyrat')}</div>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-700">Adresa e marresit</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.adresaEMarresit')}</label>
             <input
               type="email"
               value={email}
@@ -315,9 +315,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
                   rows={6}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
                 />
-                <p className="mt-1 text-xs text-slate-500">
-                  Plotesuar automatikisht nga variablat e template-it. Modifiko vetem nese duhet.
-                </p>
+                <p className="mt-1 text-xs text-slate-500">{t('common.plotesuarAutomatikishtNgaVariablatETemplate')}</p>
               </div>
             )}
           </div>
@@ -357,9 +355,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
                       {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                       Dergo tani me onboarding@resend.dev (test)
                     </button>
-                    <p className="mt-1 text-[11px] text-red-700">
-                      Perdor adresen e testit te Resend per te pare si duket email-i. Per prodhim, verifiko domain-in.
-                    </p>
+                    <p className="mt-1 text-[11px] text-red-700">{t('common.perdorAdresenETestitTeResend')}</p>
                   </div>
                 </div>
               )}
@@ -369,9 +365,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
                 </div>
               )}
               {!result.ok && result.errorType === "testing_restriction" && (
-                <div className="mt-2 border-t border-red-200 pt-2 text-xs text-red-800">
-                  Resend ne testim lejon dergim vetem te adresa e pronarit te llogarise. Verifiko domain-in per te derguar kudo.
-                </div>
+                <div className="mt-2 border-t border-red-200 pt-2 text-xs text-red-800">{t('common.resendNeTestimLejonDergimVetem')}</div>
               )}
             </div>
           )}

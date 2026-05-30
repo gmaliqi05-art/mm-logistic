@@ -12,6 +12,7 @@ import {
   FileText,
   Globe,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
@@ -202,6 +203,7 @@ function labelsForCountry(countryCode: string | null): CountryLabels {
 }
 
 export default function GermanFinancials() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { ctx, loading: complianceLoading } = useCompliance();
   const labels = useMemo(() => labelsForCountry(ctx.country_code), [ctx.country_code]);
@@ -539,7 +541,7 @@ export default function GermanFinancials() {
     return (
       <div className="p-8 text-center">
         <Globe className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Shteti i kompanise nuk eshte konfiguruar</h2>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">{t('common.shtetiIKompaniseNukEshteKonfiguruar')}</h2>
         <p className="text-sm text-gray-600">
           Ju lutem shkoni te <span className="font-medium">Cilesimet</span> dhe zgjidhni shtetin e kompanise per te aktivizuar raportet financiare.
         </p>
@@ -603,8 +605,7 @@ export default function GermanFinancials() {
               onClick={exportCSV}
               className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white rounded text-sm hover:bg-emerald-700"
             >
-              <Download className="w-4 h-4" /> Eksporto CSV
-            </button>
+              <Download className="w-4 h-4" />{t('common.eksportoCsv')}</button>
             <button
               onClick={() => window.print()}
               className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50"
@@ -808,11 +809,11 @@ export default function GermanFinancials() {
                     <tr className="border-b-2 border-gray-300 bg-gray-50">
                       <th className="text-left py-2 px-3">Emri</th>
                       <th className="text-left py-2 px-3">Data</th>
-                      <th className="text-right py-2 px-3">Vlera fillestare</th>
+                      <th className="text-right py-2 px-3">{t('common.vleraFillestare')}</th>
                       <th className="text-right py-2 px-3">Jetezgjatja</th>
                       <th className="text-right py-2 px-3">Amortizim vjetor</th>
                       <th className="text-right py-2 px-3">Akumuluar</th>
-                      <th className="text-right py-2 px-3">Vlera kontabile</th>
+                      <th className="text-right py-2 px-3">{t('common.vleraKontabile')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -828,7 +829,7 @@ export default function GermanFinancials() {
                       </tr>
                     ))}
                     {afaRows.length === 0 && (
-                      <tr><td colSpan={7} className="py-6 text-center text-gray-500">Nuk ka asete fikse te regjistruara.</td></tr>
+                      <tr><td colSpan={7} className="py-6 text-center text-gray-500">{t('common.nukKaAseteFikseTeRegjistruara')}</td></tr>
                     )}
                   </tbody>
                 </table>
