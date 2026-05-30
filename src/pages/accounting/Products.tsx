@@ -447,7 +447,7 @@ export default function Products() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Njesia</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cmimi Neto</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.netPrice')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">TVSH</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stoku</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Min</th>
@@ -640,7 +640,7 @@ export default function Products() {
                           className="w-32 h-32 object-cover rounded-xl"
                         />
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500">Kliko ose terhiq per te ndryshuar</span>
+                          <span className="text-sm text-gray-500">{t('common.clickOrDragToChange')}</span>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -721,7 +721,7 @@ export default function Products() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cmimi Neto</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.netPrice')}</label>
                     <input
                       type="number"
                       value={formData.price_net}
