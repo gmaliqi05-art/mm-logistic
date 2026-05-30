@@ -866,7 +866,7 @@ export default function Invoices() {
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.customer')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.date')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Afati</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Monedha</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.monedha')}</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.total')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fletedergesa</th>
@@ -998,7 +998,7 @@ export default function Invoices() {
                           <button
                             onClick={() => handleXRechnung(invoice)}
                             className="p-2 text-gray-400 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors"
-                            title="Eksporto XRechnung (XML)"
+                            title={t('common.eksportoXrechnungXml')}
                           >
                             <FileCode2 className="w-4 h-4" />
                           </button>
@@ -1257,7 +1257,7 @@ export default function Invoices() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Monedha</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.monedha')}</label>
                     <select
                       value={form.currency}
                       onChange={(e) => setForm({ ...form, currency: e.target.value as AccCurrency })}
@@ -1269,7 +1269,7 @@ export default function Invoices() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Llogaria bankare</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.llogariaBankare2')}</label>
                     <select
                       value={form.bank_account_id}
                       onChange={(e) => setForm({ ...form, bank_account_id: e.target.value })}
@@ -1287,7 +1287,7 @@ export default function Invoices() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Klienti *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.klienti')}</label>
                     <input
                       type="text"
                       value={contactSearch}
@@ -1497,7 +1497,7 @@ export default function Invoices() {
                         <span className="font-medium text-red-600">-{formatCurrency(formDiscountAmount, form.currency)}</span>
                       </div>
                       <div className="border-t border-gray-200 pt-2 flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-700">Totali:</span>
+                        <span className="text-sm font-semibold text-gray-700">{t('common.totali')}</span>
                         <span className="text-lg font-bold text-emerald-700">{formatCurrency(formGrandTotal, form.currency)}</span>
                       </div>
                     </div>
@@ -1578,7 +1578,7 @@ export default function Invoices() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Gjuha e email-it</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.gjuhaEEmailIt')}</label>
                     <select
                       value={emailLocale}
                       onChange={(e) => setEmailLocale(e.target.value as 'sq' | 'de' | 'en' | 'fr')}

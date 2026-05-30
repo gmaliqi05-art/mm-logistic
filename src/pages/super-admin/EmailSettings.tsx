@@ -130,7 +130,7 @@ export default function EmailSettings() {
             <Settings className="h-6 w-6 text-teal-600" />
             Parametrat e emailit
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Identiteti i markes, adresat dhe automatizimi i fushatave.</p>
+          <p className="mt-1 text-sm text-slate-500">{t('common.identitetiIMarkesAdresatDheAutomatizimi')}</p>
         </div>
         <button
           type="button"
@@ -213,9 +213,7 @@ export default function EmailSettings() {
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <Clock className="h-4 w-4 text-teal-600" />
-              Automatizimi (pg_cron)
-            </h2>
+              <Clock className="h-4 w-4 text-teal-600" />{t('common.automatizimiPgCron')}</h2>
             <p className="mb-4 text-xs text-slate-500">
               Konfigurimi per fushata te planifikuara. Cron-u thiret cdo 5 minuta dhe kontrollon fushatat e gatshme.
             </p>

@@ -370,9 +370,7 @@ export default function LoginPage() {
                 <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-slate-50 px-3 text-slate-400 font-medium uppercase tracking-wider">
-                  Llogari Demo
-                </span>
+                <span className="bg-slate-50 px-3 text-slate-400 font-medium uppercase tracking-wider">{t('common.llogariDemo')}</span>
               </div>
             </div>
 

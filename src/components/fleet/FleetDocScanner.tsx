@@ -295,7 +295,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
           {step === 'choose' && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span>Kategoria:</span>
+                <span>{t('common.kategoria2')}</span>
                 <span className="font-semibold text-slate-900">{categories.find(c => c.value === category)?.label || 'Tjeter'}</span>
                 {!defaultCategory && (
                   <button onClick={() => setStep('category')} className="ml-auto text-teal-600 hover:underline">{t('common.edit')}</button>

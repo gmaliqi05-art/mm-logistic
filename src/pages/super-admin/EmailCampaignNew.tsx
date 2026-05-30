@@ -234,7 +234,7 @@ export default function EmailCampaignNew() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700">Pershkrim (opsional)</label>
+                <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.pershkrimOpsional')}</label>
                 <input
                   type="text"
                   value={description}
@@ -272,7 +272,7 @@ export default function EmailCampaignNew() {
 
             {mode === "template" && (
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-700">Template-i</label>
+                <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.templateI')}</label>
                 <select
                   value={templateCode}
                   onChange={(e) => setTemplateCode(e.target.value)}
@@ -342,7 +342,7 @@ export default function EmailCampaignNew() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-700">Permbajtja (WYSIWYG)</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.permbajtjaWysiwyg')}</label>
                   <EmailRichTextEditor
                     value={adHoc[`body_html_${contentLocale}` as keyof AdHocContent]}
                     onChange={(v) => updateAdHoc(`body_html_${contentLocale}` as keyof AdHocContent, v)}
@@ -372,7 +372,7 @@ export default function EmailCampaignNew() {
             )}
 
             <div className="rounded-lg bg-slate-50 p-4">
-              <label className="mb-2 block text-xs font-medium text-slate-700">Gjuha e dergimit</label>
+              <label className="mb-2 block text-xs font-medium text-slate-700">{t('common.gjuhaEDergimit')}</label>
               <div className="flex flex-wrap items-center gap-3">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="radio" checked={localeMode === "per_user"} onChange={() => setLocaleMode("per_user")} />
@@ -433,7 +433,7 @@ export default function EmailCampaignNew() {
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-medium text-slate-700">Kur te dergohet?</label>
+              <label className="mb-2 block text-xs font-medium text-slate-700">{t('common.kurTeDergohet')}</label>
               <div className="grid gap-2 sm:grid-cols-2">
                 <button
                   type="button"

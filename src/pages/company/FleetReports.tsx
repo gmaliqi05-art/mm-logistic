@@ -215,7 +215,7 @@ export default function CompanyFleetReports() {
           <h2 className="text-sm font-semibold text-slate-900">{t('common.perShofer')}</h2>
         </div>
         {loading ? (
-          <div className="p-6 text-center text-sm text-slate-500">Duke llogaritur...</div>
+          <div className="p-6 text-center text-sm text-slate-500">{t('common.dukeLlogaritur')}</div>
         ) : rows.length === 0 ? (
           <div className="p-6 text-center text-sm text-slate-500">{t('common.nukKaTeDhenaPerKete')}</div>
         ) : (

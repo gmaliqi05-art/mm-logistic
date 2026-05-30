@@ -945,7 +945,7 @@ export default function CompanyDeliveryNotes() {
               <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg">
                 <Building2 className="w-4 h-4 text-slate-500 flex-shrink-0" />
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Derguesi (Kompania jone)</span>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">{t('common.derguesiKompaniaJone')}</span>
                   <p className="text-sm font-semibold text-slate-800">{(profile as any)?.company?.name || '—'}</p>
                 </div>
               </div>
@@ -1305,7 +1305,7 @@ export default function CompanyDeliveryNotes() {
                       </select>
                     </div>
                     <div className="flex items-center justify-between rounded-md bg-white border border-teal-200 px-3 py-2">
-                      <span className="text-xs text-gray-600">Total (vleresim live)</span>
+                      <span className="text-xs text-gray-600">{t('common.totalVleresimLive')}</span>
                       <span className="text-sm font-bold text-teal-900">
                         {form.items
                           .filter((i) => i.category_id)
@@ -1908,7 +1908,7 @@ function PartnerSearchField({ contacts, form, setForm, onCreated }: PartnerSearc
 
   return (
     <div ref={ref} className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">Kompania Partnere (Klient/Furnitor)</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.kompaniaPartnereKlientFurnitor')}</label>
       {form.partner_id ? (
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 border border-teal-200 bg-teal-50 rounded-lg">
           <div className="min-w-0">

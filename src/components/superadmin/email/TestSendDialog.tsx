@@ -262,7 +262,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-700">Gjuha e email-it</label>
+            <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.gjuhaEEmailIt')}</label>
             <div className="flex gap-2">
               {(["sq", "de", "en"] as const).map((l) => (
                 <button

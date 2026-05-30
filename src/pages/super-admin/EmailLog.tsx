@@ -176,9 +176,9 @@ export default function EmailLog() {
               <tr>
                 <th className="px-4 py-3">Koha</th>
                 <th className="px-4 py-3">Marres</th>
-                <th className="px-4 py-3">Template</th>
+                <th className="px-4 py-3">{t('common.template')}</th>
                 <th className="px-4 py-3">Subject</th>
-                <th className="px-4 py-3">Gjuha</th>
+                <th className="px-4 py-3">{t('common.gjuha2')}</th>
                 <th className="px-4 py-3">{t('common.status')}</th>
                 <th className="px-4 py-3 text-right">{t('common.detaje')}</th>
               </tr>

@@ -40,8 +40,7 @@ export default function AccountingUpgrade() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <Link to="/company" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
-        <ArrowLeft className="w-4 h-4" /> Kthehu ne Dashboard
-      </Link>
+        <ArrowLeft className="w-4 h-4" />{t('common.kthehuNeDashboard')}</Link>
 
       <div className="rounded-3xl overflow-hidden shadow-lg border border-teal-200">
         <div className="bg-gradient-to-br from-teal-600 to-emerald-700 text-white p-8 sm:p-10">

@@ -373,9 +373,7 @@ export default function EmailTemplateEditor() {
                   checked={tpl.is_active}
                   onChange={(e) => update("is_active", e.target.checked)}
                   className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-                />
-                Template aktiv (dergohet kur thirret)
-              </label>
+                />{t('common.templateAktivDergohetKurThirret')}</label>
             </div>
           </div>
         </div>

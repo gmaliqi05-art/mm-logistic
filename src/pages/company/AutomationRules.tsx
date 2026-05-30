@@ -153,10 +153,8 @@ export default function AutomationRules() {
             <Zap className="w-5 h-5 text-teal-700" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-gray-900">Dergim automatik i fatures</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Kur finalizoni nje fature, email-i dergohet automatikisht tek klienti (pa dialog konfirmimi)
-            </p>
+            <h3 className="text-base font-semibold text-gray-900">{t('common.dergimAutomatikIFatures')}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{t('common.kurFinalizoniNjeFatureEmailI')}</p>
           </div>
         </div>
 
@@ -172,7 +170,7 @@ export default function AutomationRules() {
 
         <div className="ml-14 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Template per faturen</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.templatePerFaturen')}</label>
             <select
               value={settings.invoice_template_code}
               onChange={(e) => setSettings(s => ({ ...s, invoice_template_code: e.target.value }))}
@@ -184,7 +182,7 @@ export default function AutomationRules() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Gjuha default</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.gjuhaDefault')}</label>
             <select
               value={settings.default_locale}
               onChange={(e) => setSettings(s => ({ ...s, default_locale: e.target.value }))}
@@ -225,7 +223,7 @@ export default function AutomationRules() {
         {settings.auto_reminder_enabled && (
           <div className="ml-14 space-y-4">
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Kur te dergohen rikujtimet:</p>
+              <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{t('common.kurTeDergohenRikujtimet')}</p>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -266,7 +264,7 @@ export default function AutomationRules() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Template per rikujtim (dita 0-14)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.templatePerRikujtimDita')}</label>
                 <select
                   value={settings.reminder_template_code}
                   onChange={(e) => setSettings(s => ({ ...s, reminder_template_code: e.target.value }))}
@@ -279,7 +277,7 @@ export default function AutomationRules() {
               </div>
               {settings.reminder_day_30 && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Template per rikujtim te fundit (dita 30)</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.templatePerRikujtimTeFunditDita')}</label>
                   <select
                     value={settings.final_reminder_template_code}
                     onChange={(e) => setSettings(s => ({ ...s, final_reminder_template_code: e.target.value }))}
@@ -304,9 +302,7 @@ export default function AutomationRules() {
           </div>
           <div className="flex-1">
             <h3 className="text-base font-semibold text-gray-900">Ora e dergimit</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Email-et automatike dergohen vetem brenda ketij orari
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">{t('common.emailEtAutomatikeDergohenVetemBrenda')}</p>
           </div>
         </div>
 

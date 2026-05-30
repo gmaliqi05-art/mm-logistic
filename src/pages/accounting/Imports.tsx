@@ -290,9 +290,8 @@ export default function Imports() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Ship className="w-6 h-6 text-emerald-600" /> Importet (jashte BE)
-          </h1>
-          <p className="text-sm text-gray-600 mt-1">Menaxho importet me kode HS, taksa doganore dhe EUSt (TVSH importi)</p>
+            <Ship className="w-6 h-6 text-emerald-600" />{t('common.importetJashteBe')}</h1>
+          <p className="text-sm text-gray-600 mt-1">{t('common.menaxhoImportetMeKodeHsTaksa')}</p>
         </div>
         <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
           <Plus className="w-4 h-4" /> Import i ri
@@ -456,7 +455,7 @@ export default function Imports() {
                         <th className="px-2 py-1.5 text-right">{t('common.vleraDoganore')}</th>
                         <th className="px-2 py-1.5 text-right">Takse %</th>
                         <th className="px-2 py-1.5 text-right">Takse €</th>
-                        <th className="px-2 py-1.5 text-right">TVSH %</th>
+                        <th className="px-2 py-1.5 text-right">{t('common.tvsh2')}</th>
                         <th className="px-2 py-1.5 text-right">EUSt €</th>
                         <th></th>
                       </tr>

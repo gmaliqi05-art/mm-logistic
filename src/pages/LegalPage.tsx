@@ -60,10 +60,8 @@ export default function LegalPage({ documentKey }: LegalPageProps) {
         <div className="text-center">
           <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
           <h1 className="text-xl font-bold text-slate-800 mb-2">Dokumenti nuk u gjet</h1>
-          <p className="text-slate-500 mb-6">Faqja ligjore e kerkuar nuk ekziston.</p>
-          <Link to="/" className="text-teal-600 hover:text-teal-700 font-medium">
-            Kthehu ne faqen kryesore
-          </Link>
+          <p className="text-slate-500 mb-6">{t('common.faqjaLigjoreEKerkuarNukEkziston')}</p>
+          <Link to="/" className="text-teal-600 hover:text-teal-700 font-medium">{t('common.kthehuNeFaqenKryesore')}</Link>
         </div>
       </div>
     );
@@ -172,9 +170,7 @@ export default function LegalPage({ documentKey }: LegalPageProps) {
             <p className="text-slate-500 text-sm">
               &copy; {new Date().getFullYear()} MM Logistic. Te gjitha te drejtat e rezervuara.
             </p>
-            <Link to="/" className="text-slate-500 hover:text-teal-600 text-sm transition-colors">
-              Kthehu ne faqen kryesore
-            </Link>
+            <Link to="/" className="text-slate-500 hover:text-teal-600 text-sm transition-colors">{t('common.kthehuNeFaqenKryesore')}</Link>
           </div>
         </div>
       </footer>

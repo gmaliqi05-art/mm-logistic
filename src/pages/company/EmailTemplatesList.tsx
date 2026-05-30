@@ -238,7 +238,7 @@ export default function EmailTemplatesList() {
         <div className="space-y-8">
           {invoiceTemplates.length > 0 && (
             <TemplateSection
-              title="Template per faturat"
+              title={t('common.templatePerFaturat')}
               icon={<Receipt className="w-4 h-4 text-teal-600" />}
               templates={invoiceTemplates}
               profile={profile}
@@ -257,7 +257,7 @@ export default function EmailTemplatesList() {
           )}
           {customTemplates.length > 0 && (
             <TemplateSection
-              title="Template te personalizuara"
+              title={t('common.templateTePersonalizuara')}
               icon={<FileText className="w-4 h-4 text-amber-600" />}
               templates={customTemplates}
               profile={profile}
@@ -276,7 +276,7 @@ export default function EmailTemplatesList() {
           )}
           {otherGlobalTemplates.length > 0 && (
             <TemplateSection
-              title="Template te tjera te sistemit"
+              title={t('common.templateTeTjeraTeSistemit')}
               icon={<Globe className="w-4 h-4 text-slate-500" />}
               templates={otherGlobalTemplates}
               profile={profile}

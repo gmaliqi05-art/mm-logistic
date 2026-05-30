@@ -432,9 +432,7 @@ export default function AccountingDashboard() {
           <p className="text-xl lg:text-2xl font-bold text-emerald-700 mt-2">
             {formatCurrency(stats.monthlyInvoicedSales)}
           </p>
-          <p className="text-[11px] text-gray-500 mt-1">
-            Vlera e plote e faturave te leshuara (jo cash flow)
-          </p>
+          <p className="text-[11px] text-gray-500 mt-1">{t('common.vleraEPloteEFaturaveTe')}</p>
         </div>
 
         <div className="bg-white rounded-xl border border-blue-200 p-5">
@@ -448,9 +446,7 @@ export default function AccountingDashboard() {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-            Fatura te hapura (jo te vonuara)
-          </p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.faturaTeHapuraJoTeVonuara')}</p>
           <p className="text-xl lg:text-2xl font-bold text-slate-800 mt-2">
             {formatCurrency(stats.openSentTotal)}
           </p>

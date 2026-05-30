@@ -535,7 +535,7 @@ export default function Transactions() {
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Lloji *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.lloji')}</label>
                     <select
                       value={form.transaction_type}
                       onChange={(e) => setForm({ ...form, transaction_type: e.target.value as AccTransactionType })}
@@ -547,7 +547,7 @@ export default function Transactions() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shuma *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.shuma2')}</label>
                     <input
                       type="number"
                       value={form.amount}
@@ -558,7 +558,7 @@ export default function Transactions() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Monedha</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.monedha')}</label>
                     <select
                       value={form.currency}
                       onChange={(e) => setForm({ ...form, currency: e.target.value })}
@@ -579,7 +579,7 @@ export default function Transactions() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.pershkrimi')}</label>
                     <input
                       type="text"
                       value={form.description}

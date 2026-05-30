@@ -483,9 +483,7 @@ export default function ProductDetail() {
           to="/accounting/products"
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Kthehu te Produktet
-        </Link>
+          <ArrowLeft className="w-4 h-4" />{t('common.kthehuTeProduktet')}</Link>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-16 text-center">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <p className="text-gray-500 font-medium">{t('common.productNotFound')}</p>
@@ -510,9 +508,7 @@ export default function ProductDetail() {
         to="/accounting/products"
         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Kthehu te Produktet
-      </Link>
+        <ArrowLeft className="w-4 h-4" />{t('common.kthehuTeProduktet')}</Link>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
@@ -592,7 +588,7 @@ export default function ProductDetail() {
 
             <div className="flex flex-wrap items-center gap-4">
               <div>
-                <span className="text-sm text-gray-500">Cmimi Neto:</span>{' '}
+                <span className="text-sm text-gray-500">{t('common.cmimiNeto2')}</span>{' '}
                 <span className="text-lg font-semibold text-gray-900">
                   {formatCurrency(product.price_net)}
                 </span>
@@ -604,7 +600,7 @@ export default function ProductDetail() {
 
             <div className="flex flex-wrap items-center gap-4">
               <div>
-                <span className="text-sm text-gray-500">Stoku:</span>{' '}
+                <span className="text-sm text-gray-500">{t('common.stoku2')}</span>{' '}
                 <span className="text-lg font-semibold text-gray-900">{product.current_stock}</span>
                 <span className="text-sm text-gray-400"> / Min: {product.min_stock}</span>
               </div>

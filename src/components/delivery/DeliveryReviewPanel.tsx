@@ -1490,7 +1490,7 @@ function ReviewModal({
             <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 flex items-center gap-2 text-sm text-sky-800">
               <Sparkles className="w-4 h-4 flex-shrink-0 text-sky-600" />
               <div>
-                <p className="font-semibold text-sky-900">Shqyrtim automatik</p>
+                <p className="font-semibold text-sky-900">{t('common.shqyrtimAutomatik')}</p>
                 <p className="text-xs text-sky-700 mt-0.5">{t('common.kyDokumentUMiratuaAutomatikishtSepse')}</p>
               </div>
             </div>
@@ -2080,7 +2080,7 @@ function PartnerSnapshot({
     return (
       <div className="flex items-start gap-3 py-1.5 border-b border-gray-100">
         <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide w-28 flex-shrink-0 pt-0.5">Partner</p>
-        <p className="text-sm text-gray-900 break-words flex-1">Kompania jone (transfer i brendshem)</p>
+        <p className="text-sm text-gray-900 break-words flex-1">{t('common.kompaniaJoneTransferIBrendshem')}</p>
       </div>
     );
   }
@@ -2123,7 +2123,7 @@ function PartnerSnapshot({
             <p><span className="text-gray-500">VAT:</span> <span className="font-semibold">{partnerVat}</span></p>
           )}
           {partnerAddress && (
-            <p className="break-words"><span className="text-gray-500">Adresa:</span> {partnerAddress}</p>
+            <p className="break-words"><span className="text-gray-500">{t('common.adresa')}</span> {partnerAddress}</p>
           )}
           {partnerEmail && (
             <p className="break-words"><span className="text-gray-500">Email:</span> {partnerEmail}</p>

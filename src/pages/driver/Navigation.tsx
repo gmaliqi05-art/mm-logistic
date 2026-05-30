@@ -191,8 +191,7 @@ export default function DriverNavigation() {
     <div className="p-4 max-w-5xl mx-auto space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <NavigationIcon className="w-6 h-6 text-teal-600" /> Navigimi (LKW)
-        </h1>
+          <NavigationIcon className="w-6 h-6 text-teal-600" />{t('common.navigimiLkw')}</h1>
         <p className="text-sm text-slate-600 mt-1">{t('common.rrugaECaktuarNgaKompaniaPer')}</p>
       </div>
 
@@ -259,7 +258,7 @@ export default function DriverNavigation() {
 
       {selectedAlt && selectedAlt.country_breakdown.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-2">Vendet qe pershkohen</h3>
+          <h3 className="text-sm font-semibold text-slate-900 mb-2">{t('common.vendetQePershkohen')}</h3>
           <div className="space-y-1.5">
             {selectedAlt.country_breakdown.map((c) => (
               <div key={c.country_code} className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 last:border-0">

@@ -64,9 +64,7 @@ export default function StockDeductionConfirmModal({ items, noteNumber, partnerN
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <p className="text-sm text-slate-600">
-            Artikujt e meposhtme do te zbriten nga stoku dhe do te krijohet nje fature e re:
-          </p>
+          <p className="text-sm text-slate-600">{t('common.artikujtEMeposhtmeDoTeZbriten')}</p>
 
           <div className="border border-slate-200 rounded-xl overflow-hidden">
             <table className="w-full text-sm">

@@ -310,7 +310,7 @@ export default function CompanySettings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Numri i TVSH-se (VAT)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.numriITvshSeVat')}</label>
                   <input
                     type="text"
                     value={vatNumber}
@@ -320,7 +320,7 @@ export default function CompanySettings() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Numri i tatimit (Tax ID)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.numriITatimitTaxId')}</label>
                   <input
                     type="text"
                     value={taxNumber}
@@ -343,7 +343,7 @@ export default function CompanySettings() {
                   <p className="text-xs text-gray-500 mt-1">P.sh. RE-2026-0001</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Monedha default</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.monedhaDefault')}</label>
                   <select
                     value={defaultCurrency}
                     onChange={(e) => setDefaultCurrency(e.target.value)}
@@ -357,7 +357,7 @@ export default function CompanySettings() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">TVSH default (%)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.tvshDefault')}</label>
                   <input
                     type="number"
                     min={0}

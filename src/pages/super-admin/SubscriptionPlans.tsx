@@ -570,9 +570,7 @@ export default function SubscriptionPlans() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Cmimi Vjetor (€)
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.cmimiVjetor')}</label>
                   <div className="relative">
                     <input
                       type="number"
@@ -654,9 +652,7 @@ export default function SubscriptionPlans() {
                   </div>
                   {formData.is_addon && (
                     <div>
-                      <label className="block text-sm font-medium text-emerald-800 mb-1.5">
-                        Cmimi Addon (kur lidhet me logjistike)
-                      </label>
+                      <label className="block text-sm font-medium text-emerald-800 mb-1.5">{t('common.cmimiAddonKurLidhetMeLogjistike')}</label>
                       <div className="relative w-48">
                         <input
                           type="number"

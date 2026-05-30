@@ -1216,7 +1216,7 @@ export default function InvoiceBuilder() {
                         <input type="number" step="0.01" value={it.unit_price} onChange={(e) => updateItem(it.id, { unit_price: Number(e.target.value) })} className={inputCls} />
                       </div>
                       <div className="col-span-2">
-                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">TVSH %</span>
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('common.tvsh2')}</span>
                         <select value={it.vat_rate} onChange={(e) => updateItem(it.id, { vat_rate: Number(e.target.value) })} className={selectCls}>
                           {availableVatRates.map((r) => <option key={r} value={r}>{r}%</option>)}
                         </select>

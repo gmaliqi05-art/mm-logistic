@@ -599,7 +599,7 @@ export default function AccDeliveryNotes() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Klienti *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.klienti')}</label>
                     <select
                       value={form.contact_id}
                       onChange={(e) => handleContactChange(e.target.value)}

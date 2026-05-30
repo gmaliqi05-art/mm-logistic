@@ -261,8 +261,7 @@ export default function PartnerDetail() {
     return (
       <div className="space-y-4">
         <Link to="/company/partners" className="inline-flex items-center gap-1 text-sm text-teal-700 hover:text-teal-900">
-          <ArrowLeft className="w-4 h-4" /> Kthehu tek partneret
-        </Link>
+          <ArrowLeft className="w-4 h-4" />{t('common.kthehuTekPartneret')}</Link>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error ?? tp('notFound')}</div>
       </div>
     );

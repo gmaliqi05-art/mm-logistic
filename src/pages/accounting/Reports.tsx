@@ -1011,7 +1011,7 @@ export default function Reports() {
           <button
             onClick={handleExportDatev}
             className="inline-flex items-center gap-2 px-4 py-2.5 text-white bg-slate-800 rounded-lg hover:bg-slate-900 transition-colors font-medium text-sm"
-            title="Eksport per kontabilist (DATEV)"
+            title={t('common.eksportPerKontabilistDatev')}
           >
             <Download className="w-4 h-4" />
             DATEV
