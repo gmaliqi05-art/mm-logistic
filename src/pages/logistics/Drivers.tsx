@@ -3,6 +3,7 @@ import { Truck, Phone, Mail, Activity } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface DriverRow {
   id: string;
@@ -16,6 +17,7 @@ interface DriverRow {
 
 export default function LogisticsDrivers() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<DriverRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -96,7 +98,7 @@ export default function LogisticsDrivers() {
       {drivers.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-16 text-center">
           <Truck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 text-sm">Nuk ka shoferë te regjistruar</p>
+          <p className="text-gray-500 text-sm">{t('common.noDriversRegistered')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

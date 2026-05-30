@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, type AccCurrency } from '../../types/accounting';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import ScanReviewModal from '../../components/accounting/ScanReviewModal';
+import { useTranslation } from '../../i18n';
 
 interface ScanRow {
   id: string;
@@ -52,6 +53,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function Scans() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [rows, setRows] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showScan, setShowScan] = useState(false);
@@ -86,7 +88,7 @@ export default function Scans() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Skanimet</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('common.scanResults')}</h1>
           <p className="text-gray-500 mt-1">Historiku i dokumenteve te skanuara</p>
         </div>
         <div className="flex gap-2">
@@ -110,8 +112,8 @@ export default function Scans() {
       {rows.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
           <ScanLine className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600 font-medium">Ende asnje skanim</p>
-          <p className="text-slate-400 text-sm mt-1">Ngarko nje dokument per te filluar</p>
+          <p className="text-slate-600 font-medium">{t('common.noScanYet')}</p>
+          <p className="text-slate-400 text-sm mt-1">{t('common.uploadDocToStart')}</p>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -123,7 +125,7 @@ export default function Scans() {
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Lloji</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Furnizuesi / Klienti</th>
                   <th className="text-right font-semibold text-slate-700 px-4 py-3">Totali</th>
-                  <th className="text-left font-semibold text-slate-700 px-4 py-3">Statusi</th>
+                  <th className="text-left font-semibold text-slate-700 px-4 py-3">{t('common.status')}</th>
                   <th className="text-left font-semibold text-slate-700 px-4 py-3">Data</th>
                 </tr>
               </thead>

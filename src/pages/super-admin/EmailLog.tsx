@@ -181,7 +181,7 @@ export default function EmailLog() {
                 <th className="px-4 py-3">Template</th>
                 <th className="px-4 py-3">Subject</th>
                 <th className="px-4 py-3">Gjuha</th>
-                <th className="px-4 py-3">Statusi</th>
+                <th className="px-4 py-3">{t('common.status')}</th>
                 <th className="px-4 py-3 text-right">Detaje</th>
               </tr>
             </thead>
@@ -251,7 +251,7 @@ export default function EmailLog() {
               )}
               {detail.metadata && Object.keys(detail.metadata).length > 0 && (
                 <div>
-                  <div className="mb-1 text-xs font-medium text-slate-500">Metadata</div>
+                  <div className="mb-1 text-xs font-medium text-slate-500">{t('common.metadata')}</div>
                   <pre className="max-h-64 overflow-y-auto rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-700">
                     {JSON.stringify(detail.metadata, null, 2)}
                   </pre>
