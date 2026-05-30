@@ -324,7 +324,7 @@ export default function EmailTemplateEditor() {
         <div className="space-y-5">
           {/* Basic info */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Informacionet baze</h3>
+            <h3 className="text-sm font-semibold text-gray-900">{t('common.informacionetBaze')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.name')}</label>
@@ -506,9 +506,7 @@ export default function EmailTemplateEditor() {
                   onChange={(e) => setData((d) => ({ ...d, is_active: e.target.checked }))}
                   className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
-                <span className="text-sm font-medium text-gray-700">
-                  Template aktiv (dergohet kur thirret)
-                </span>
+                <span className="text-sm font-medium text-gray-700">{t('common.templateAktivDergohetKurThirret')}</span>
               </label>
             </div>
           )}

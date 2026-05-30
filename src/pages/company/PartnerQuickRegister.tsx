@@ -87,7 +87,7 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
         <div className="p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="block sm:col-span-2">
-              <span className="text-xs font-medium text-gray-700">Emri i Kompanise *</span>
+              <span className="text-xs font-medium text-gray-700">{t('common.emriIKompanise2')}</span>
               <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </label>
             <label className="block">

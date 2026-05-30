@@ -203,7 +203,7 @@ export default function HRWorkHours() {
           />
         </div>
         <div className="flex gap-4 items-center ml-auto">
-          <span className="text-sm text-gray-600">Total: <strong>{totalHours.toFixed(1)}h</strong></span>
+          <span className="text-sm text-gray-600">{t('common.total3')}<strong>{totalHours.toFixed(1)}h</strong></span>
           <span className="text-sm text-teal-700">{t('hr.attendance.overtime')}: <strong>+{totalOvertime.toFixed(1)}h</strong></span>
         </div>
       </div>

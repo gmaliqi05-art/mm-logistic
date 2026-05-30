@@ -564,7 +564,7 @@ export default function CompanyReports() {
       )}
 
       {activeTab === 'movements' && (
-        <Card title="Levizjet e kompanise" icon={TrendingUp}>
+        <Card title={t('common.levizjetEKompanise')} icon={TrendingUp}>
           {filteredMovements.length === 0 ? (
             <EmptyState icon={TrendingUp} label="Asnje levizje ne kete periudhe." />
           ) : (
@@ -666,7 +666,7 @@ export default function CompanyReports() {
             )}
           </Card>
 
-          <Card title="Hyrje / Dalje defekt (levizje)" icon={AlertTriangle} hint="Te gjitha levizjet me gjendjen defekt — kush e regjistroi dhe nga/per kend.">
+          <Card title={t('common.hyrjeDaljeDefektLevizje')} icon={AlertTriangle} hint="Te gjitha levizjet me gjendjen defekt — kush e regjistroi dhe nga/per kend.">
             {(() => {
               const damagedMoves = filteredMovements.filter(m => m.condition === 'damaged' && m.source_type === 'stock_movement');
               if (damagedMoves.length === 0) return <EmptyState icon={AlertTriangle} label="Asnje levizje defekt ne kete periudhe." />;

@@ -223,8 +223,7 @@ export default function DriverReports() {
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-4">
       <Link to={`/company/drivers/${id}`} className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-teal-600">
-        <ArrowLeft className="w-4 h-4" /> Kthehu te shoferi
-      </Link>
+        <ArrowLeft className="w-4 h-4" />{t('common.kthehuTeShoferi')}</Link>
 
       <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
         <div className="w-14 h-14 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 overflow-hidden">
@@ -324,10 +323,10 @@ export default function DriverReports() {
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp className="w-4 h-4 text-teal-600" />
-          <h2 className="text-sm font-semibold text-slate-900">Km per dite</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{t('common.kmPerDay')}</h2>
         </div>
         {loading ? (
-          <div className="py-8 text-center text-sm text-slate-500">Duke llogaritur...</div>
+          <div className="py-8 text-center text-sm text-slate-500">{t('common.dukeLlogaritur')}</div>
         ) : daily.length === 0 ? (
           <div className="py-8 text-center text-sm text-slate-500">{t('common.nukKaTeDhenaPerKete')}</div>
         ) : (

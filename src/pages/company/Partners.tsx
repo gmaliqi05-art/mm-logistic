@@ -415,9 +415,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
               <UserPlus className="w-5 h-5 text-teal-600 flex-shrink-0" />
               <span className="truncate">{editing ? 'Modifiko Kompanine' : 'Regjistro Kompani te Re'}</span>
             </h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Informacioni do perdoret ne fletedergesa, fletmarrje dhe fatura.
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">{t('common.informacioniDoPerdoretNeFletedergesaFletmarrje')}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 flex-shrink-0 ml-2" aria-label={t('companyAdmin.partners.closeLabel')}>
             <X className="w-5 h-5" />

@@ -297,7 +297,7 @@ export default function DriverCVSummary({ driverId, companyName, depotName }: Pr
 
       {/* Identity Documents */}
       {identityDocs.length > 0 && (
-        <CVSection title="Dokumentet e Identitetit" icon={IdCard}>
+        <CVSection title={t('common.dokumentetEIdentitetit')} icon={IdCard}>
           {identityDocs.map((doc) => {
             const meta = ID_META[doc.document_type] || { title: doc.document_type, icon: IdCard };
             const { status, days } = expiryStatus(doc.expiry_date);

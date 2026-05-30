@@ -79,7 +79,7 @@ export default function DriverDetail() {
   if (!driver) return (
     <div className="text-center p-12">
       <p className="text-gray-500">{t('common.shoferiNukUGjet')}</p>
-      <button onClick={() => navigate('/company/drivers')} className="mt-4 text-teal-600">Kthehu te shoferet</button>
+      <button onClick={() => navigate('/company/drivers')} className="mt-4 text-teal-600">{t('common.kthehuTeShoferet')}</button>
     </div>
   );
 
@@ -141,7 +141,7 @@ export default function DriverDetail() {
           <TabBtn active={tab === 'license'} onClick={() => setTab('license')} icon={<CreditCard className="w-4 h-4" />}>Patenta (FeV)</TabBtn>
           <TabBtn active={tab === 'qualifications'} onClick={() => setTab('qualifications')} icon={<GraduationCap className="w-4 h-4" />}>Kualifikime</TabBtn>
           <TabBtn active={tab === 'medical'} onClick={() => setTab('medical')} icon={<Stethoscope className="w-4 h-4" />}>Mjeksor</TabBtn>
-          <TabBtn active={tab === 'identity'} onClick={() => setTab('identity')} icon={<IdCard className="w-4 h-4" />}>Identiteti</TabBtn>
+          <TabBtn active={tab === 'identity'} onClick={() => setTab('identity')} icon={<IdCard className="w-4 h-4" />}>{t('common.identiteti')}</TabBtn>
           <TabBtn active={tab === 'vehicles'} onClick={() => setTab('vehicles')} icon={<TruckIcon className="w-4 h-4" />}>Mjetet</TabBtn>
           <TabBtn active={tab === 'cv'} onClick={() => setTab('cv')} icon={<ClipboardList className="w-4 h-4" />}>CV</TabBtn>
         </div>
@@ -403,7 +403,7 @@ function LicenseAddForm({ companyId, driverId, onDone }: { companyId: string; dr
         <MiniField label="Skadon me *" type="date" value={expiry} onChange={setExpiry} />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-700 mb-2">Kategorite (FeV)</label>
+        <label className="block text-xs font-medium text-gray-700 mb-2">{t('common.kategoriteFev')}</label>
         <div className="flex flex-wrap gap-1.5">
           {LICENSE_CATEGORIES.map(cat => (
             <button key={cat} type="button" onClick={() => toggle(cat)}

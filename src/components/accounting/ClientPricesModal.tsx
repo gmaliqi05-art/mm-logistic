@@ -265,7 +265,7 @@ export default function ClientPricesModal({ contactId, contactName, companyId, o
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Cmimi per klientin (EUR)</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.cmimiPerKlientinEur')}</label>
                       <input
                         type="number"
                         step="0.01"

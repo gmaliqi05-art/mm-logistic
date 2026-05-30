@@ -376,7 +376,7 @@ export default function Stock() {
                   <td colSpan={6} className="px-6 py-16 text-center">
                     <CornerDownLeft className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p className="text-gray-500 font-medium">{t('common.asnjeLevizjeStoku')}</p>
-                    <p className="text-gray-400 text-sm mt-1">Levizjet e stokut do te shfaqen ketu</p>
+                    <p className="text-gray-400 text-sm mt-1">{t('common.levizjetEStokutDoTeShfaqen')}</p>
                   </td>
                 </tr>
               ) : (

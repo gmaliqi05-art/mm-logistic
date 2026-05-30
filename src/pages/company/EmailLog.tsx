@@ -129,7 +129,7 @@ export default function EmailLog() {
         <div className="text-center py-16">
           <Mail className="w-12 h-12 mx-auto text-gray-300 mb-3" />
           <p className="text-sm text-gray-500">{t('common.nukKaEmailTeDerguaraAkoma')}</p>
-          <p className="text-xs text-gray-400 mt-1">Email-et qe dergoni klienteve do te shfaqen ketu</p>
+          <p className="text-xs text-gray-400 mt-1">{t('common.emailEtQeDergoniKlienteveDo')}</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -138,7 +138,7 @@ export default function EmailLog() {
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Destinatari</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Template</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">{t('common.template')}</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">{t('common.status')}</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">{t('common.date')}</th>
                   <th className="px-4 py-3 w-10"></th>
@@ -190,12 +190,12 @@ export default function EmailLog() {
                     <span className="ml-2 text-gray-900">{d.subject}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-600">Gjuha:</span>
+                    <span className="font-medium text-gray-600">{t('common.gjuha')}</span>
                     <span className="ml-2 text-gray-900">{d.locale?.toUpperCase()}</span>
                   </div>
                   {d.sent_at && (
                     <div>
-                      <span className="font-medium text-gray-600">Derguar me:</span>
+                      <span className="font-medium text-gray-600">{t('common.derguarMe')}</span>
                       <span className="ml-2 text-gray-900">{formatDate(d.sent_at)}</span>
                     </div>
                   )}

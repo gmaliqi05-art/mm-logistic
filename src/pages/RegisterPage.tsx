@@ -663,7 +663,7 @@ function BusinessTypeSelector({ businessType, onChange }: { businessType: Busine
               <p className="text-sm text-slate-500">{desc}</p>
               {type === 'both' && isActive && (
                 <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-                  <p className="text-xs text-emerald-700 font-medium">Cmimi i kontabilitetit me ulje deri ne 50%</p>
+                  <p className="text-xs text-emerald-700 font-medium">{t('common.cmimiIKontabilitetitMeUljeDeri')}</p>
                 </div>
               )}
             </button>

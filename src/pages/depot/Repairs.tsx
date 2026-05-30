@@ -484,9 +484,7 @@ function ReportsTab({
                   Produkti
                 </th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">{t('common.kategoria')}</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Sasia (paleta)
-                </th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.sasiaPaleta')}</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
                   % e totalit
                 </th>

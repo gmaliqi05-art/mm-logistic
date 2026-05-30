@@ -131,7 +131,7 @@ export default function DepotDamage() {
       <div className="p-6">
         <div className="max-w-md mx-auto bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-lg flex items-start gap-2">
           <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" />
-          <p className="text-sm">Llogaria juaj nuk ka depo te caktuar. Kontaktoni administratorin.</p>
+          <p className="text-sm">{t('common.llogariaJuajNukKaDepoTe')}</p>
         </div>
       </div>
     );

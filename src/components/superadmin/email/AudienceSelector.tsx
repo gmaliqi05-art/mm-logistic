@@ -135,7 +135,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={BUSINESS_TYPES} selected={value.business_types ?? []} onChange={(v) => onChange({ ...value, business_types: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">Gjuha e perdoruesit</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.gjuhaEPerdoruesit')}</label>
         <CheckGroup options={LOCALES} selected={value.locales ?? []} onChange={(v) => onChange({ ...value, locales: v })} />
       </div>
       <div>
@@ -143,7 +143,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={SUBSCRIPTION_STATUSES} selected={value.subscription_statuses ?? []} onChange={(v) => onChange({ ...value, subscription_statuses: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">Kompani specifike (opsional)</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.kompaniSpecifikeOpsional')}</label>
         <input
           type="text"
           value={search}

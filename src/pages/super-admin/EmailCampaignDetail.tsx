@@ -279,7 +279,7 @@ export default function EmailCampaignDetail() {
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3">{t('common.email')}</th>
-                  <th className="px-4 py-3">Gjuha</th>
+                  <th className="px-4 py-3">{t('common.gjuha2')}</th>
                   <th className="px-4 py-3">{t('common.status')}</th>
                   <th className="px-4 py-3">{t('common.error')}</th>
                   <th className="px-4 py-3">{t('common.dergua')}</th>

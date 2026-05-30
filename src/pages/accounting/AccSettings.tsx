@@ -328,7 +328,7 @@ export default function AccSettings() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">{t('common.teDhenatEKompanise')}</h2>
-            <p className="text-xs text-gray-500">Informacioni qe shfaqet ne fatura dhe dokumente</p>
+            <p className="text-xs text-gray-500">{t('common.informacioniQeShfaqetNeFaturaDhe')}</p>
           </div>
         </div>
         <div className="p-6">
@@ -463,7 +463,7 @@ export default function AccSettings() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">{t('common.sekuencatEFaturave')}</h2>
-            <p className="text-xs text-gray-500">Numrat e rradhes per dokumente te ndryshme</p>
+            <p className="text-xs text-gray-500">{t('common.numratERradhesPerDokumenteTe')}</p>
           </div>
         </div>
         <div className="p-6">
@@ -515,7 +515,7 @@ export default function AccSettings() {
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Monedha e Parazgjedhur</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.monedhaEParazgjedhur')}</label>
               <div className="flex items-center gap-2">
                 <select
                   value={defaultCurrency}

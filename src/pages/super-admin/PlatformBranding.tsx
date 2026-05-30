@@ -178,7 +178,7 @@ export default function PlatformBranding() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <LogoUploadCard
-          title="Logo Kryesore (Transparente)"
+          title={t('common.logoKryesoreTransparente')}
           subtitle="Perdoret ne navbar, sidebar, login, favicon dhe PWA. Duhet te kete sfond transparent."
           previewBg="bg-gray-50"
           logoUrl={logoUrl}
@@ -246,8 +246,8 @@ export default function PlatformBranding() {
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-blue-900 mb-1">Ku perdoret secila logo</h3>
             <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-              <li><strong>Logo Kryesore (transparente)</strong>: navbar, sidebar, login, register, fatura, favicon, PWA home screen</li>
-              <li><strong>Logo per Rrjete Sociale (me sfond)</strong>: kur linku ndahet ne Facebook, WhatsApp, Twitter, LinkedIn, iMessage</li>
+              <li><strong>{t('common.logoKryesoreTransparente2')}</strong>: navbar, sidebar, login, register, fatura, favicon, PWA home screen</li>
+              <li><strong>{t('common.logoPerRrjeteSocialeMeSfond')}</strong>: kur linku ndahet ne Facebook, WhatsApp, Twitter, LinkedIn, iMessage</li>
             </ul>
             <p className="text-sm text-blue-700 mt-2">{t('common.pasRuajtjesBejCtrlFPer')}</p>
           </div>

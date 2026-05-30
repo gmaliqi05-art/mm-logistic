@@ -350,9 +350,7 @@ export default function BankAccounts() {
           onClick={openCreate}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm"
         >
-          <Plus className="w-4 h-4" />
-          Shto Llogari
-        </button>
+          <Plus className="w-4 h-4" />{t('common.shtoLlogari')}</button>
       </div>
 
       {error && (
@@ -411,7 +409,7 @@ export default function BankAccounts() {
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Monedha</span>
+                  <span className="text-xs text-gray-500">{t('common.monedha')}</span>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                     account.currency === 'EUR' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
                   }`}>
@@ -518,7 +516,7 @@ export default function BankAccounts() {
 
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Emri i Llogarise *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.emriILlogarise')}</label>
                 <input
                   type="text"
                   value={form.name}
@@ -549,7 +547,7 @@ export default function BankAccounts() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Monedha</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.monedha')}</label>
                   <select
                     value={form.currency}
                     onChange={(e) => setForm({ ...form, currency: e.target.value as AccCurrency })}
@@ -590,9 +588,7 @@ export default function BankAccounts() {
                   onChange={(e) => setForm({ ...form, is_default: e.target.checked })}
                   className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
                 />
-                <label htmlFor="is_default" className="text-sm font-medium text-gray-700">
-                  Vendos si llogari kryesore (default)
-                </label>
+                <label htmlFor="is_default" className="text-sm font-medium text-gray-700">{t('common.vendosSiLlogariKryesoreDefault')}</label>
               </div>
             </div>
 

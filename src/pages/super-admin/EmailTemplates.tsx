@@ -91,18 +91,14 @@ export default function EmailTemplates() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900 sm:text-2xl">
-            <Mail className="h-6 w-6 text-teal-600" />
-            Template-t e emailit
-          </h1>
+            <Mail className="h-6 w-6 text-teal-600" />{tr('common.templateTEEmailit')}</h1>
           <p className="mt-1 text-sm text-slate-500">Editoni permbajtjen, gjuhet dhe dergimin e emaileve.</p>
         </div>
         <Link
           to="/super-admin/email/templates/new"
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 sm:w-auto"
         >
-          <Plus className="h-4 w-4" />
-          Template i ri
-        </Link>
+          <Plus className="h-4 w-4" />{tr('common.templateIRi')}</Link>
       </div>
 
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">

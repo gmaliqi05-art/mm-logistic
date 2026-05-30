@@ -152,7 +152,7 @@ export default function EmailBranding() {
                 <Palette className="w-5 h-5 text-teal-700" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-gray-900">Identiteti i email-it</h3>
+                <h3 className="text-base font-semibold text-gray-900">{t('common.identitetiIEmailIt')}</h3>
                 <p className="text-sm text-gray-500 mt-0.5">
                   Personalizoni pamjen e email-eve qe dergoni tek klientet tuaj
                 </p>
@@ -205,10 +205,8 @@ export default function EmailBranding() {
                 <Upload className="w-5 h-5 text-blue-700" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-gray-900">Logo per email</h3>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Logo qe shfaqet ne header-in e cdo email-i (rekomanduar: 200x60px, PNG/SVG)
-                </p>
+                <h3 className="text-base font-semibold text-gray-900">{t('common.logoPerEmail')}</h3>
+                <p className="text-sm text-gray-500 mt-0.5">{t('common.logoQeShfaqetNeHeaderIn')}</p>
               </div>
             </div>
 
@@ -347,7 +345,7 @@ export default function EmailBranding() {
 
                 {/* Body */}
                 <div className="px-6 py-8 bg-white">
-                  <h2 className="text-lg font-bold text-gray-900 mb-3">Fatura INV-2026-0042</h2>
+                  <h2 className="text-lg font-bold text-gray-900 mb-3">{t('common.faturaInv')}</h2>
                   <p className="text-sm text-gray-600 mb-4">
                     Ju dergojme faturen <strong>INV-2026-0042</strong> me total <strong>1.250,00 EUR</strong>.
                   </p>

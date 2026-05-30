@@ -777,7 +777,7 @@ function CategoriesContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">TVSH %</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.tvsh2')}</label>
                       <select
                         value={formVat}
                         onChange={(e) => setFormVat(Number(e.target.value))}
