@@ -175,7 +175,7 @@ export default function EmailCampaignDetail() {
           <div className="mt-1 text-2xl font-bold text-emerald-700">{campaign.sent_count}</div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-xs font-medium text-slate-500">Deshtuan</div>
+          <div className="text-xs font-medium text-slate-500">{t('common.failed')}</div>
           <div className="mt-1 text-2xl font-bold text-red-700">{campaign.failed_count}</div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

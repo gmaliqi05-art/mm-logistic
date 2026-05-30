@@ -978,7 +978,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
                 <div className="flex items-start gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-teal-700 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-bold text-teal-800 uppercase tracking-wide">Ku eshte tani</div>
+                    <div className="text-[10px] font-bold text-teal-800 uppercase tracking-wide">{t('common.whereIsNow')}</div>
                     <div className="text-xs font-semibold text-slate-800 break-words">
                       {activeDriver.current_address ?? (
                         <span className="text-slate-500 font-normal">Duke marre adresen...</span>

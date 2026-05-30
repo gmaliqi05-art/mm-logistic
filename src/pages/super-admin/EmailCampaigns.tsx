@@ -126,7 +126,7 @@ export default function EmailCampaigns() {
                     </div>
                     <div>
                       <div className="font-semibold text-red-700">{c.failed_count}</div>
-                      <div className="text-slate-500">Deshtuan</div>
+                      <div className="text-slate-500">{t('common.failed')}</div>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
@@ -161,7 +161,7 @@ export default function EmailCampaigns() {
                 <th className="px-4 py-3">{t('common.status')}</th>
                 <th className="px-4 py-3">Marres</th>
                 <th className="px-4 py-3">Dergua</th>
-                <th className="px-4 py-3">Deshtuan</th>
+                <th className="px-4 py-3">{t('common.failed')}</th>
                 <th className="px-4 py-3">Planifikuar</th>
                 <th className="px-4 py-3 text-right">Veprime</th>
               </tr>

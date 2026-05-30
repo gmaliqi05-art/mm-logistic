@@ -254,7 +254,7 @@ export default function EmailCampaignNew() {
                     mode === "adhoc" ? "border-teal-500 bg-teal-50" : "border-slate-300 bg-white hover:bg-slate-50"
                   }`}
                 >
-                  <div className="text-sm font-semibold text-slate-900">Permbajtje ad-hoc</div>
+                  <div className="text-sm font-semibold text-slate-900">{t('common.adhocContent')}</div>
                   <div className="text-xs text-slate-500">{t('common.writeDirectlyForCampaign')}</div>
                 </button>
                 <button
@@ -264,7 +264,7 @@ export default function EmailCampaignNew() {
                     mode === "template" ? "border-teal-500 bg-teal-50" : "border-slate-300 bg-white hover:bg-slate-50"
                   }`}
                 >
-                  <div className="text-sm font-semibold text-slate-900">Perdor template ekzistues</div>
+                  <div className="text-sm font-semibold text-slate-900">{t('common.useExistingTemplate')}</div>
                   <div className="text-xs text-slate-500">Kategori marketing ose sistem.</div>
                 </button>
               </div>
@@ -289,7 +289,7 @@ export default function EmailCampaignNew() {
             {mode === "adhoc" && (
               <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-900">Permbajtja</span>
+                  <span className="text-sm font-semibold text-slate-900">{t('common.content')}</span>
                   <div className="flex gap-1 rounded-lg border border-slate-300 bg-white p-0.5">
                     {(["sq", "de", "en"] as const).map((l) => (
                       <button
@@ -458,7 +458,7 @@ export default function EmailCampaignNew() {
                   <Clock className="h-5 w-5 text-teal-600" />
                   <div>
                     <div className="text-sm font-semibold text-slate-900">Planifiko</div>
-                    <div className="text-xs text-slate-500">Dergohet automatikisht ne oren e zgjedhur.</div>
+                    <div className="text-xs text-slate-500">{t('common.sentAutoAtChosenTime')}</div>
                   </div>
                 </button>
               </div>

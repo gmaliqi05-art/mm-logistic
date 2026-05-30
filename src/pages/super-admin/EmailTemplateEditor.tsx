@@ -109,7 +109,7 @@ export default function EmailTemplateEditor() {
       preheader: "Lexoni me shume...",
       heading: "Titulli kryesor",
       intro: "Paragrafi hyres.",
-      body_html: "<p>Permbajtja e fushates.</p>",
+      body_html: "<p>{t('common.campaignContent')}</p>",
       cta_label: "Meso me shume",
       cta_url: "https://example.com",
     };
@@ -259,7 +259,7 @@ export default function EmailTemplateEditor() {
 
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
-                <h2 className="text-sm font-semibold text-slate-900">Permbajtja</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{t('common.content')}</h2>
                 <div className="flex gap-1 rounded-lg border border-slate-300 p-0.5">
                   {(["sq", "de", "en"] as const).map((l) => (
                     <button
@@ -313,7 +313,7 @@ export default function EmailTemplateEditor() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-slate-700">Permbajtja</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.content')}</label>
                   <EmailRichTextEditor
                     value={String(tpl[field("body_html")] ?? "")}
                     onChange={(v) => update(field("body_html"), v)}

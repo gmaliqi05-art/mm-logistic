@@ -148,7 +148,7 @@ export default function PlatformBranding() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Logo dhe Branding i Platformës</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('common.logoBrandingTitle')}</h1>
         <p className="text-gray-500 mt-1">{t('common.managePlatformLogos')}</p>
       </div>
 
@@ -224,7 +224,7 @@ export default function PlatformBranding() {
               maxLength={10}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
-            <p className="text-xs text-gray-500 mt-1.5">Perdoret ne hapesira te vogla ose sidebar te mbyllur</p>
+            <p className="text-xs text-gray-500 mt-1.5">{t('common.smallSpaceOrClosedSidebar')}</p>
           </div>
         </div>
       </div>

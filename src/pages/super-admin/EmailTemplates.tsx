@@ -206,7 +206,7 @@ export default function EmailTemplates() {
                   <th className="px-4 py-3">Kodi</th>
                   <th className="px-4 py-3">Kategoria</th>
                   <th className="px-4 py-3">{tr('common.status')}</th>
-                  <th className="px-4 py-3">Perditesuar</th>
+                  <th className="px-4 py-3">{tr('common.updated')}</th>
                   <th className="px-4 py-3 text-right">Veprime</th>
                 </tr>
               </thead>
