@@ -1141,7 +1141,7 @@ export default function CompanyDeliveryNotes() {
                         className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                         placeholder="p.sh. REF-2026-0012 (jepet nga kompania qe mallin)"
                       />
-                      <p className="mt-1 text-xs text-orange-700">Shoferi e tregon kete numer kur shkon te merr mallin per t'u identifikuar.</p>
+                      <p className="mt-1 text-xs text-orange-700">{t('common.shoferiETregonKeteNumerKur')}</p>
                     </div>
                   )}
                 </div>

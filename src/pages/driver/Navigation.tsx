@@ -193,7 +193,7 @@ export default function DriverNavigation() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <NavigationIcon className="w-6 h-6 text-teal-600" /> Navigimi (LKW)
         </h1>
-        <p className="text-sm text-slate-600 mt-1">Rruga e caktuar nga kompania per kamiona.</p>
+        <p className="text-sm text-slate-600 mt-1">{t('common.rrugaECaktuarNgaKompaniaPer')}</p>
       </div>
 
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center gap-2 text-sm text-teal-900">

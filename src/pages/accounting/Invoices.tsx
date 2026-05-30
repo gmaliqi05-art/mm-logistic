@@ -756,8 +756,8 @@ export default function Invoices() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Faturat</h1>
-          <p className="text-gray-500 mt-1">Menaxhoni faturat e shitjes</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('common.faturat')}</h1>
+          <p className="text-gray-500 mt-1">{t('common.menaxhoniFaturatEShitjes')}</p>
         </div>
         <div className="flex items-center gap-2">
           <a
@@ -828,7 +828,7 @@ export default function Invoices() {
             onChange={(e) => setCurrencyFilter(e.target.value as '' | AccCurrency)}
             className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
           >
-            <option value="">Te gjitha monedhat</option>
+            <option value="">{t('common.teGjithaMonedhat')}</option>
             {ACC_CURRENCIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -933,9 +933,7 @@ export default function Invoices() {
                           if (s === 'missing') {
                             return (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700" title={t('common.nukEkzistonFletedergeseELidhur')}>
-                                <PackageX className="w-3 h-3" />
-                                Pa fletedergese
-                              </span>
+                                <PackageX className="w-3 h-3" />{t('common.paFletedergese')}</span>
                             );
                           }
                           return (
@@ -1078,9 +1076,7 @@ export default function Invoices() {
                       if (s === 'missing') {
                         return (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                            <PackageX className="w-3 h-3" />
-                            Pa fletedergese
-                          </span>
+                            <PackageX className="w-3 h-3" />{t('common.paFletedergese')}</span>
                         );
                       }
                       return (
@@ -1200,9 +1196,7 @@ export default function Invoices() {
               <p className="text-sm text-gray-700 leading-relaxed">
                 Deshironi te krijoni automatikisht nje fletedergese per kete fature? Fletedergesa do te lidhet me faturen, do te kete te njejtat artikuj dhe mund ti dergohet shoferit ose puntoreve te depos per ekzekutimin e dergeses.
               </p>
-              <p className="text-xs text-gray-500 mt-3 italic">
-                Shenim: Vetem fletedergesa mund ti dergohet shoferit/depos. Fatura eshte dokument financiar dhe nuk del nga moduli i kontabilitetit.
-              </p>
+              <p className="text-xs text-gray-500 mt-3 italic">{t('common.shenimVetemFletedergesaMundTiDergohet')}</p>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
               <button
@@ -1364,7 +1358,7 @@ export default function Invoices() {
                       <div key={item.id} className="bg-gray-50 rounded-xl p-4 space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                           <div className="sm:col-span-5">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Produkti / Pershkrimi</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.produktiPershkrimi')}</label>
                             <div className="space-y-2">
                               <select
                                 value={item.product_id}
@@ -1428,7 +1422,7 @@ export default function Invoices() {
                             />
                           </div>
                           <div className="sm:col-span-1">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">TVSH</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.tvsh')}</label>
                             <select
                               value={item.vat_rate}
                               onChange={(e) => updateItem(idx, 'vat_rate', Number(e.target.value))}

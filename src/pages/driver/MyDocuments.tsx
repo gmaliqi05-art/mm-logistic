@@ -371,9 +371,7 @@ export default function DriverMyDocuments() {
         )}
       </section>
 
-      <p className="text-xs text-gray-500">
-        Do te njoftoheni automatikisht 90 / 60 / 30 / 14 / 7 dite para skadences se cdo dokumenti.
-      </p>
+      <p className="text-xs text-gray-500">{t('common.doTeNjoftoheniAutomatikishtDitePara')}</p>
       </>
       )}
 

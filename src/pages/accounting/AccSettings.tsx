@@ -283,7 +283,7 @@ export default function AccSettings() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Konfigurimet e Kontabilitetit</h1>
-        <p className="text-gray-500 mt-1">Menaxho te dhenat e kompanise dhe preferencat</p>
+        <p className="text-gray-500 mt-1">{t('common.menaxhoTeDhenatEKompaniseDhe')}</p>
       </div>
 
       {error && (
@@ -462,7 +462,7 @@ export default function AccSettings() {
             <Hash className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Sekuencat e Faturave</h2>
+            <h2 className="text-base font-semibold text-gray-900">{t('common.sekuencatEFaturave')}</h2>
             <p className="text-xs text-gray-500">Numrat e rradhes per dokumente te ndryshme</p>
           </div>
         </div>
@@ -490,7 +490,7 @@ export default function AccSettings() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500">Fatura e radhes</p>
+                    <p className="text-xs text-gray-500">{t('common.faturaERadhes')}</p>
                     <p className="text-sm font-semibold text-emerald-600">
                       {formatSequenceNumber(seq)}
                     </p>

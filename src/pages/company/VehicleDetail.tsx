@@ -140,7 +140,7 @@ export default function VehicleDetail() {
   if (loading) return <PageSkeleton rows={6} cols={5} showStats={true} />;
   if (!vehicle) return (
     <div className="text-center p-12">
-      <p className="text-gray-500">Mjeti nuk u gjet.</p>
+      <p className="text-gray-500">{t('common.mjetiNukUGjet')}</p>
       <button onClick={() => navigate('/company/vehicles')} className="mt-4 text-teal-600">← Kthehu</button>
     </div>
   );
@@ -308,7 +308,7 @@ export default function VehicleDetail() {
             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
               <FileText className="w-4 h-4 text-teal-600" /> Dokumente te skanuara
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">PDF-te origjinale te ruajtura per arkivim GoBD</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('common.pdfTeOrigjinaleTeRuajturaPer')}</p>
           </div>
           <button onClick={() => setScannerCat('other')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
             <ScanLine className="w-3.5 h-3.5" />{t('common.skanoTeRi')}</button>

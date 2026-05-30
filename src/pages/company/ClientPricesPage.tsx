@@ -217,7 +217,7 @@ export default function ClientPricesPage() {
             onChange={(e) => setFilterProduct(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
-            <option value="">Te gjitha produktet</option>
+            <option value="">{t('common.teGjithaProduktet')}</option>
             {catalog.map(p => (
               <option key={`${p.source}:${p.id}`} value={`${p.source}:${p.id}`}>
                 {p.name} {p.sku ? `(${p.sku})` : ''} [{p.source === 'accounting' ? 'Kont.' : 'Stok'}]

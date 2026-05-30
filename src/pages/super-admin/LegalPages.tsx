@@ -171,7 +171,7 @@ export default function LegalPages() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <FileText className="w-6 h-6 text-teal-600" />{t('common.faqeLigjore')}</h1>
-          <p className="text-gray-500 mt-1 text-sm">Menaxho dokumentet ligjore te platformes</p>
+          <p className="text-gray-500 mt-1 text-sm">{t('common.menaxhoDokumentetLigjoreTePlatformes')}</p>
         </div>
         <a
           href="/legal"

@@ -386,7 +386,7 @@ export default function AccDeliveryNotes() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Fletedaljet</h1>
-          <p className="text-gray-500 mt-1">Menaxho fletedaljet e dorezimit</p>
+          <p className="text-gray-500 mt-1">{t('common.menaxhoFletedaljetEDorezimit')}</p>
         </div>
         <button
           onClick={openCreate}
@@ -631,13 +631,13 @@ export default function AccDeliveryNotes() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Fatura e Lidhur</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.faturaELidhur')}</label>
                     <select
                       value={form.invoice_id}
                       onChange={(e) => setForm({ ...form, invoice_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">Pa fature</option>
+                      <option value="">{t('common.paFature')}</option>
                       {invoices.map((inv) => (
                         <option key={inv.id} value={inv.id}>{inv.invoice_number}</option>
                       ))}

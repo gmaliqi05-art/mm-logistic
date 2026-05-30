@@ -400,7 +400,7 @@ export default function Transactions() {
             onChange={(e) => setFilterPayment(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
-            <option value="">Te gjitha metodat</option>
+            <option value="">{t('common.teGjithaMetodat')}</option>
             <option value="bank_transfer">{t('common.transferBankar')}</option>
             <option value="cash">Cash</option>
             <option value="card">Karte</option>
@@ -417,9 +417,9 @@ export default function Transactions() {
               <tr className="border-b border-gray-100">
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.date')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.description')}</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kontakti</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.kontakti')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.type')}</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shuma</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.shuma')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Metoda</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Referenca</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veprime</th>
@@ -589,13 +589,13 @@ export default function Transactions() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kontakti</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.kontakti')}</label>
                     <select
                       value={form.contact_id}
                       onChange={(e) => setForm({ ...form, contact_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">Pa kontakt</option>
+                      <option value="">{t('common.paKontakt')}</option>
                       {contacts.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -608,7 +608,7 @@ export default function Transactions() {
                       onChange={(e) => setForm({ ...form, category_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">Pa kategori</option>
+                      <option value="">{t('common.paKategori')}</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -621,7 +621,7 @@ export default function Transactions() {
                       onChange={(e) => setForm({ ...form, bank_account_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">Pa llogari</option>
+                      <option value="">{t('common.paLlogari')}</option>
                       {bankAccounts.map((b) => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
@@ -634,7 +634,7 @@ export default function Transactions() {
                       onChange={(e) => setForm({ ...form, payment_method: e.target.value as AccPaymentMethod })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">Pa metode</option>
+                      <option value="">{t('common.paMetode')}</option>
                       <option value="bank_transfer">{t('common.transferBankar')}</option>
                       <option value="cash">Cash</option>
                       <option value="card">Karte</option>

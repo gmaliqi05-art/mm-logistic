@@ -153,7 +153,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         />
         <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white">
           {filteredCompanies.length === 0 ? (
-            <div className="p-3 text-xs text-slate-500">Pa kompani.</div>
+            <div className="p-3 text-xs text-slate-500">{t('common.paKompani')}</div>
           ) : (
             filteredCompanies.map((c) => {
               const selected = (value.company_ids ?? []).includes(c.id);

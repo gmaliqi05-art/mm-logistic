@@ -280,7 +280,7 @@ export default function CompanyOverdueDocuments() {
         <div className="rounded-xl border border-dashed border-gray-200 bg-white p-10 text-center">
           <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500" />
           <p className="mt-3 text-gray-700 font-medium">{t('common.asnjeDokumentIVonuar')}</p>
-          <p className="text-sm text-gray-500">Te gjitha fletedergesat dhe fletmarrjet jane ne afat.</p>
+          <p className="text-sm text-gray-500">{t('common.teGjithaFletedergesatDheFletmarrjetJane')}</p>
         </div>
       ) : (
         <ul className="space-y-3">

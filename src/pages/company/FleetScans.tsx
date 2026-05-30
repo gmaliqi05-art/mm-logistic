@@ -101,8 +101,7 @@ export default function FleetScans() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <ScanLine className="w-7 h-7 text-teal-600" /> Skanime Flote / Shofer
-          </h1>
+            <ScanLine className="w-7 h-7 text-teal-600" />{t('common.skanimeFloteShofer')}</h1>
           <p className="text-sm text-slate-500 mt-1">{t('common.dokumentetESkanuaraArkivohenAutomatikishtPer')}</p>
         </div>
         <div className="flex gap-2">
@@ -151,7 +150,7 @@ export default function FleetScans() {
       ) : filtered.length === 0 ? (
         <div className="py-16 text-center border border-dashed border-slate-200 rounded-xl">
           <ScanLine className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <p className="text-sm text-slate-500">Ende nuk ka skanime</p>
+          <p className="text-sm text-slate-500">{t('common.endeNukKaSkanime')}</p>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -194,7 +193,7 @@ export default function FleetScans() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => downloadFile(row)}
-                            title="Shiko PDF"
+                            title={t('common.shikoPdf')}
                             className="p-1.5 text-slate-500 hover:text-teal-600 hover:bg-teal-50 rounded"
                           >
                             <Download className="w-4 h-4" />

@@ -340,9 +340,7 @@ export default function AutomationRules() {
           </div>
           <div className="flex-1">
             <h3 className="text-base font-semibold text-gray-900">Kopje per administratorin</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Merrni nje kopje (CC) te cdo email-i qe dergohet automatikisht
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">{t('common.merrniNjeKopjeCcTeCdo')}</p>
           </div>
         </div>
 
@@ -389,7 +387,7 @@ export default function AutomationRules() {
           <div className="space-y-4">
             <TimelineStep
               icon={<FileText className="w-3.5 h-3.5" />}
-              title="Fatura krijohet dhe finalizohet"
+              title={t('common.faturaKrijohetDheFinalizohet')}
               description={settings.auto_send_on_finalize
                 ? 'Email me PDF dergohet automatikisht tek klienti'
                 : 'Hapet dialogu per dergim manual te fatures'
@@ -430,7 +428,7 @@ export default function AutomationRules() {
             )}
             <TimelineStep
               icon={<CheckCircle2 className="w-3.5 h-3.5" />}
-              title="Fatura paguhet"
+              title={t('common.faturaPaguhet')}
               description="Statusi ndryshohet ne 'paguar', ndalojne rikujtimet"
               active={false}
             />

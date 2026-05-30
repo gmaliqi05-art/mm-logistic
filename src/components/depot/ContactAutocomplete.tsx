@@ -151,7 +151,7 @@ export default function ContactAutocomplete({
         <p className="text-[11px] text-emerald-700 mt-1">Kontakt nga lista (regjistrohet i lidhur me partnerin)</p>
       )}
       {!contactId && partnerText.trim() && (
-        <p className="text-[11px] text-amber-700 mt-1">Tekst i lire — nuk eshte i lidhur me asnje partner</p>
+        <p className="text-[11px] text-amber-700 mt-1">{t('common.tekstILireNukEshteI')}</p>
       )}
 
       {open && (

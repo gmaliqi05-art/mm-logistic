@@ -234,7 +234,7 @@ export default function Contacts() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Kontaktet</h1>
-          <p className="text-gray-500 mt-1">Menaxhoni klientet, furnitoret dhe kontaktet e biznesit</p>
+          <p className="text-gray-500 mt-1">{t('common.menaxhoniKlientetFurnitoretDheKontaktetE')}</p>
         </div>
         <button
           onClick={openAdd}
@@ -507,7 +507,7 @@ export default function Contacts() {
                       value={form.address}
                       onChange={(e) => updateForm('address', e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Rruga, numri"
+                      placeholder={t('common.rrugaNumri')}
                     />
                   </div>
                   <div>
@@ -545,9 +545,7 @@ export default function Contacts() {
 
               <div className="border-t border-gray-100 pt-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <Globe className="w-4 h-4" />
-                  Kontakti
-                </h3>
+                  <Globe className="w-4 h-4" />{t('common.kontakti')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.email')}</label>
@@ -587,13 +585,13 @@ export default function Contacts() {
                   <CreditCard className="w-4 h-4" />{t('common.teDhenaTatimoreDheBankare')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nr. TVSH</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.nrTvsh')}</label>
                     <input
                       type="text"
                       value={form.vat_number}
                       onChange={(e) => updateForm('vat_number', e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Nr. TVSH"
+                      placeholder={t('common.nrTvsh')}
                     />
                   </div>
                   <div>

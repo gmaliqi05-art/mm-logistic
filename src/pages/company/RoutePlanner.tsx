@@ -435,7 +435,7 @@ export default function CompanyRoutePlanner() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase">Cmimi EUR/L</label>
+            <label className="text-xs font-semibold text-slate-600 uppercase">{t('common.cmimiEurL')}</label>
             <input
               type="number"
               step="0.01"
@@ -533,7 +533,7 @@ export default function CompanyRoutePlanner() {
               disabled={assigning || assigned}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white disabled:opacity-70 ${assigned ? 'bg-emerald-600' : 'bg-slate-900 hover:bg-slate-800'}`}
             >
-              {assigned ? <><Check className="w-4 h-4" /> Rruga u dergua te shoferi</> : <><Send className="w-4 h-4" /> {assigning ? 'Duke dërguar...' : 'Cakto kete rruge per shoferin'}</>}
+              {assigned ? <><Check className="w-4 h-4" />{t('common.rrugaUDerguaTeShoferi')}</> : <><Send className="w-4 h-4" /> {assigning ? 'Duke dërguar...' : 'Cakto kete rruge per shoferin'}</>}
             </button>
           )}
         </div>

@@ -156,9 +156,7 @@ export default function ProductDetail() {
   const getStockBadge = (p: AccProduct) => {
     if (p.current_stock <= 0) {
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-          Pa Stok
-        </span>
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">{t('common.paStok')}</span>
       );
     }
     if (p.current_stock <= p.min_stock) {
@@ -743,7 +741,7 @@ export default function ProductDetail() {
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 font-medium">Fatura</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('common.fatura')}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{uniqueInvoices}</p>
                 </div>
               </div>
@@ -755,9 +753,7 @@ export default function ProductDetail() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100">
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Fatura
-                        </th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.fatura')}</th>
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.customer')}</th>
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
@@ -889,7 +885,7 @@ export default function ProductDetail() {
                   onChange={(e) => setMovementTypeFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 >
-                  <option value="all">Te gjitha tipet</option>
+                  <option value="all">{t('common.teGjithaTipet')}</option>
                   <option value="in">{t('common.hyrje')}</option>
                   <option value="out">{t('common.dalje')}</option>
                   <option value="adjustment">Rregullim</option>
@@ -1187,9 +1183,7 @@ export default function ProductDetail() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Shkalla TVSH
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.shkallaTvsh')}</label>
                     <select
                       value={formData.vat_rate}
                       onChange={(e) => setFormData({ ...formData, vat_rate: Number(e.target.value) })}
@@ -1211,7 +1205,7 @@ export default function ProductDetail() {
                         onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                       >
-                        <option value="">Pa kategori</option>
+                        <option value="">{t('common.paKategori')}</option>
                         {categories.map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.name}

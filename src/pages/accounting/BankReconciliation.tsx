@@ -166,7 +166,7 @@ export default function BankReconciliation() {
             <FileCheck2 className="w-6 h-6 text-emerald-600" />
             Pajtimi i ekstrakteve bankare
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Kontrollo sugjerimet automatike dhe konfirmoji me transaksionet e regjistruara.</p>
+          <p className="text-gray-500 text-sm mt-1">{t('common.reviewAutoSuggestions')}</p>
         </div>
       </div>
 

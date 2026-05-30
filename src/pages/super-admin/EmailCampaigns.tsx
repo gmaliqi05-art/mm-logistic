@@ -92,9 +92,7 @@ export default function EmailCampaigns() {
       {loading ? (
         <div className="flex items-center justify-center p-10"><Loader2 className="h-6 w-6 animate-spin text-teal-600" /></div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
-          Pa fushata.
-        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">{t('common.paFushata')}</div>
       ) : (
         <>
           <div className="grid gap-3 xl:hidden">

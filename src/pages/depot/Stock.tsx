@@ -540,7 +540,7 @@ export default function DepotStock() {
           onChange={(e) => setFilterCategory(e.target.value)}
           className="px-2 py-1.5 rounded-lg border border-slate-200 text-xs bg-white sm:max-w-[160px]"
         >
-          <option value="">Te gjitha kategorite</option>
+          <option value="">{t('common.teGjithaKategorite')}</option>
           {sortedCategories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
@@ -550,7 +550,7 @@ export default function DepotStock() {
           onChange={(e) => setFilterCondition(e.target.value)}
           className="px-2 py-1.5 rounded-lg border border-slate-200 text-xs bg-white sm:max-w-[140px]"
         >
-          <option value="">Te gjitha gjendjet</option>
+          <option value="">{t('common.teGjithaGjendjet')}</option>
           {CONDITIONS.map((c) => (
             <option key={c.key} value={c.key}>{c.label}</option>
           ))}

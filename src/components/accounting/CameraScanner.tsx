@@ -684,9 +684,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
                 </div>
                 {autoCrop && searchTimedOut && !liveQuad && (
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/90 text-white text-xs font-semibold shadow-lg">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    Nuk po dallohet dokumenti — fotografo manualisht ose fik Auto
-                  </div>
+                    <AlertTriangle className="w-3.5 h-3.5" />{t('common.nukPoDallohetDokumentiFotografoManualisht')}</div>
                 )}
               </div>
             )}
@@ -710,9 +708,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
                   </>
                 ) : (
                   <>
-                    <ScanLine className="w-3.5 h-3.5 text-slate-300" />
-                    Pa auto-prerje
-                  </>
+                    <ScanLine className="w-3.5 h-3.5 text-slate-300" />{t('common.paAutoPrerje')}</>
                 )}
               </div>
               <div className="flex items-center gap-2 flex-wrap justify-center">

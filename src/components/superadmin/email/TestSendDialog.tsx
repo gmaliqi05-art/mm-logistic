@@ -360,8 +360,7 @@ export default function TestSendDialog({ open, onClose, templateCode, defaultLoc
                 </div>
               )}
               {!result.ok && result.errorType === "invalid_api_key" && (
-                <div className="mt-2 border-t border-red-200 pt-2 text-xs text-red-800">
-                  Kontrollo <code className="rounded bg-red-100 px-1">RESEND_API_KEY</code> ne secrets e Supabase.
+                <div className="mt-2 border-t border-red-200 pt-2 text-xs text-red-800">{t('common.kontrollo')}<code className="rounded bg-red-100 px-1">RESEND_API_KEY</code> ne secrets e Supabase.
                 </div>
               )}
               {!result.ok && result.errorType === "testing_restriction" && (

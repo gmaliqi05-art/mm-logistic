@@ -356,9 +356,7 @@ export default function CompanyDrivers() {
                     </select>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg leading-relaxed">
-                  Patenta, kualifikimet (Kod 95, ADR) dhe te dhenat mjeksore mund te shtohen pasi te krijohet shoferi duke klikuar ne emrin e tij.
-                </p>
+                <p className="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg leading-relaxed">{t('common.patentaKualifikimetKodAdrDheTe')}</p>
               </div>
               <div className="flex-shrink-0 flex items-center justify-end gap-2 px-4 sm:px-5 py-3 border-t border-gray-100">
                 <button onClick={() => setShowModal(false)} className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg">{t('common.cancel')}</button>

@@ -286,7 +286,7 @@ export default function FixedAssets() {
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">TVSH</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t('common.tvsh')}</label>
                   <input type="number" step="0.01" value={form.vat_amount} onChange={(e) => setForm({ ...form, vat_amount: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
                 </div>

@@ -283,7 +283,7 @@ export default function BankAccounts() {
             <div className="py-16 text-center">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500 font-medium">{t('common.asnjeTransaksion')}</p>
-              <p className="text-gray-400 text-sm mt-1">Kjo llogari nuk ka transaksione</p>
+              <p className="text-gray-400 text-sm mt-1">{t('common.kjoLlogariNukKaTransaksione')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -292,9 +292,9 @@ export default function BankAccounts() {
                   <tr className="border-b border-gray-100">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.date')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.description')}</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kontakti</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.kontakti')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.type')}</th>
-                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shuma</th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.shuma')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -344,7 +344,7 @@ export default function BankAccounts() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('common.llogariteBankare')}</h1>
-          <p className="text-gray-500 mt-1">Menaxho llogarite bankare te biznesit</p>
+          <p className="text-gray-500 mt-1">{t('common.menaxhoLlogariteBankareTeBiznesit')}</p>
         </div>
         <button
           onClick={openCreate}
@@ -472,7 +472,7 @@ export default function BankAccounts() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-600">Ngarkoni nje skedar CAMT.053 (XML) ose MT940 (.sta / .txt). Sistemi do te nxjerre transaksionet dhe te sugjeroje perputhjet.</p>
+              <p className="text-sm text-gray-600">{t('common.ngarkoniNjeSkedarCamtXmlOse')}</p>
               <input
                 type="file"
                 accept=".xml,.sta,.txt,.mt940"

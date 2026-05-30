@@ -136,7 +136,7 @@ export default function Products() {
 
   const getStockBadge = (product: AccProduct) => {
     if (product.current_stock <= 0) {
-      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Pa Stok</span>;
+      return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">{t('common.paStok')}</span>;
     }
     if (product.current_stock <= product.min_stock) {
       return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Stok i Ulet</span>;
@@ -373,7 +373,7 @@ export default function Products() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Produktet</h1>
-          <p className="text-gray-500 mt-1">Menaxho produktet dhe sherbimet</p>
+          <p className="text-gray-500 mt-1">{t('common.menaxhoProduktetDheSherbimet')}</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -411,7 +411,7 @@ export default function Products() {
             onChange={(e) => setFilterCategory(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
-            <option value="">Te gjitha kategorite</option>
+            <option value="">{t('common.teGjithaKategorite')}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -421,17 +421,17 @@ export default function Products() {
             onChange={(e) => setFilterStock(e.target.value as StockFilter)}
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
-            <option value="all">Te gjitha stokut</option>
+            <option value="all">{t('common.teGjithaStokut')}</option>
             <option value="in-stock">Ne Stok</option>
             <option value="low-stock">Stok i Ulet</option>
-            <option value="out-of-stock">Pa Stok</option>
+            <option value="out-of-stock">{t('common.paStok')}</option>
           </select>
           <select
             value={filterVat}
             onChange={(e) => setFilterVat(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
-            <option value="">Te gjitha TVSH</option>
+            <option value="">{t('common.teGjithaTvsh')}</option>
             {vatRates.map((v) => (
               <option key={`${v.rate_type}-${v.value}`} value={v.value}>{v.label}</option>
             ))}
@@ -448,7 +448,7 @@ export default function Products() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Njesia</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.netPrice')}</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">TVSH</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.tvsh')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.stoku')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Min</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
@@ -733,7 +733,7 @@ export default function Products() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shkalla TVSH</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.shkallaTvsh')}</label>
                     <select
                       value={formData.vat_rate}
                       onChange={(e) => setFormData({ ...formData, vat_rate: Number(e.target.value) })}
@@ -753,7 +753,7 @@ export default function Products() {
                         onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                       >
-                        <option value="">Pa kategori</option>
+                        <option value="">{t('common.paKategori')}</option>
                         {categories.map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}

@@ -119,7 +119,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-2">
-        <p className="text-sm text-gray-600">Te gjitha dokumentet ruhen me dy anet (ku eshte e nevojshme) per verifikim te plote.</p>
+        <p className="text-sm text-gray-600">{t('common.teGjithaDokumentetRuhenMeDy')}</p>
         {canEdit && (
           <div className="flex flex-wrap gap-1.5">
             {(Object.keys(DOC_META) as DocumentType[]).map((t) => {
