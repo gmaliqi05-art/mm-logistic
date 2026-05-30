@@ -112,7 +112,7 @@ export default function EmailTemplates() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko sipas emrit ose kodit..."
+            placeholder={tr('common.kerkoSipasEmritOseKodit')}
             className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
           />
         </div>
@@ -137,9 +137,7 @@ export default function EmailTemplates() {
           <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
-          Nuk u gjet template.
-        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">{tr('common.nukUGjetTemplate')}</div>
       ) : (
         <>
           <div className="grid gap-3 xl:hidden">
@@ -204,7 +202,7 @@ export default function EmailTemplates() {
                 <tr>
                   <th className="px-4 py-3">{tr('common.name')}</th>
                   <th className="px-4 py-3">Kodi</th>
-                  <th className="px-4 py-3">Kategoria</th>
+                  <th className="px-4 py-3">{tr('common.kategoria')}</th>
                   <th className="px-4 py-3">{tr('common.status')}</th>
                   <th className="px-4 py-3">{tr('common.updated')}</th>
                   <th className="px-4 py-3 text-right">Veprime</th>
@@ -254,7 +252,7 @@ export default function EmailTemplates() {
                           type="button"
                           onClick={() => setTestCode(t.code)}
                           className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-teal-600"
-                          title="Dergo test"
+                          title={tr('common.dergoTest')}
                         >
                           <Send className="h-4 w-4" />
                         </button>

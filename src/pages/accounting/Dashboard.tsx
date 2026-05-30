@@ -444,9 +444,7 @@ export default function AccountingDashboard() {
           <p className="text-xl lg:text-2xl font-bold text-blue-700 mt-2">
             {formatCurrency(stats.monthlyPurchases)}
           </p>
-          <p className="text-[11px] text-gray-500 mt-1">
-            Vlera e plote e blerjeve te regjistruara
-          </p>
+          <p className="text-[11px] text-gray-500 mt-1">{t('common.vleraEPloteEBlerjeveTe')}</p>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5">

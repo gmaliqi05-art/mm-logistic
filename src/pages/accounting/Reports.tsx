@@ -800,7 +800,7 @@ export default function Reports() {
             <tr className="border-b border-gray-100">
               <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.customer')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nr. Faturave</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Te Ardhurat Totale</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.teArdhuratTotale')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">%</th>
             </tr>
           </thead>
@@ -809,7 +809,7 @@ export default function Reports() {
               <tr>
                 <td colSpan={4} className="px-6 py-16 text-center">
                   <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500 font-medium">Asnje te dhene per kete periudhe</p>
+                  <p className="text-gray-500 font-medium">{t('common.asnjeTeDhenePerKetePeriudhe')}</p>
                 </td>
               </tr>
             ) : (
@@ -836,7 +836,7 @@ export default function Reports() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100">
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kategoria</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.kategoria')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Transaksione</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.total')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">%</th>
@@ -848,7 +848,7 @@ export default function Reports() {
               <tr>
                 <td colSpan={5} className="px-6 py-16 text-center">
                   <FolderOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500 font-medium">Asnje te dhene per kete periudhe</p>
+                  <p className="text-gray-500 font-medium">{t('common.asnjeTeDhenePerKetePeriudhe')}</p>
                 </td>
               </tr>
             ) : (
@@ -898,7 +898,7 @@ export default function Reports() {
       {vatBreakdowns.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700">Ndarja sipas Shkalles se TVSH-se</h3>
+            <h3 className="text-sm font-semibold text-gray-700">{t('common.ndarjaSipasShkallesSeTvshSe')}</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -948,7 +948,7 @@ export default function Reports() {
               <tr>
                 <td colSpan={6} className="px-6 py-16 text-center">
                   <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500 font-medium">Asnje te dhene per kete periudhe</p>
+                  <p className="text-gray-500 font-medium">{t('common.asnjeTeDhenePerKetePeriudhe')}</p>
                 </td>
               </tr>
             ) : (

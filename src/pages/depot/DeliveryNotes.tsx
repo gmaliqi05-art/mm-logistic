@@ -165,7 +165,7 @@ export default function DepotDeliveryNotes() {
           {filtered.length === 0 ? (
             <div className="p-12 text-center">
               <FileText className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-sm text-gray-400">Nuk ka fletedergesa aktive</p>
+              <p className="text-sm text-gray-400">{t('common.nukKaFletedergesaAktive')}</p>
             </div>
           ) : (
             filtered.map((n) => {

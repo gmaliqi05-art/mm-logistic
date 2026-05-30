@@ -322,9 +322,7 @@ export default function PaymentSettings() {
           <p>
             Per Stripe, perdorni celesat test (pk_test_/sk_test_) per provim dhe celesat live per prodhim.
           </p>
-          <p>
-            Sigurohuni qe webhook-u i Stripe eshte konfiguruar per te derguar evente ne edge function-in tone.
-          </p>
+          <p>{t('common.sigurohuniQeWebhookUIStripe')}</p>
         </div>
       </div>
     </div>

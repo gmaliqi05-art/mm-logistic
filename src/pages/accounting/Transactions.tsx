@@ -294,9 +294,7 @@ export default function Transactions() {
             onClick={exportCSV}
             className="inline-flex items-center gap-2 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm"
           >
-            <Download className="w-4 h-4" />
-            Eksporto CSV
-          </button>
+            <Download className="w-4 h-4" />{t('common.eksportoCsv')}</button>
           <button
             onClick={openCreate}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium text-sm"
@@ -343,7 +341,7 @@ export default function Transactions() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Bilanci</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.bilanci')}</p>
               <p className={`text-2xl font-bold mt-2 ${balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 {formatCurrency(balance)}
               </p>
@@ -403,7 +401,7 @@ export default function Transactions() {
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
             <option value="">Te gjitha metodat</option>
-            <option value="bank_transfer">Transfer Bankar</option>
+            <option value="bank_transfer">{t('common.transferBankar')}</option>
             <option value="cash">Cash</option>
             <option value="card">Karte</option>
             <option value="paypal">PayPal</option>
@@ -587,7 +585,7 @@ export default function Transactions() {
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Pershkrimi i transaksionit"
+                      placeholder={t('common.pershkrimiITransaksionit')}
                     />
                   </div>
                   <div>
@@ -604,7 +602,7 @@ export default function Transactions() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.kategoria')}</label>
                     <select
                       value={form.category_id}
                       onChange={(e) => setForm({ ...form, category_id: e.target.value })}
@@ -617,7 +615,7 @@ export default function Transactions() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Llogaria Bankare</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.llogariaBankare')}</label>
                     <select
                       value={form.bank_account_id}
                       onChange={(e) => setForm({ ...form, bank_account_id: e.target.value })}
@@ -637,7 +635,7 @@ export default function Transactions() {
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
                       <option value="">Pa metode</option>
-                      <option value="bank_transfer">Transfer Bankar</option>
+                      <option value="bank_transfer">{t('common.transferBankar')}</option>
                       <option value="cash">Cash</option>
                       <option value="card">Karte</option>
                       <option value="paypal">PayPal</option>
@@ -661,7 +659,7 @@ export default function Transactions() {
                       onChange={(e) => setForm({ ...form, notes: e.target.value })}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder="Shenime shtese..."
+                      placeholder={t('common.shenimeShtese2')}
                     />
                   </div>
                 </div>

@@ -279,7 +279,7 @@ export default function CompanyOverdueDocuments() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-200 bg-white p-10 text-center">
           <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500" />
-          <p className="mt-3 text-gray-700 font-medium">Asnje dokument i vonuar</p>
+          <p className="mt-3 text-gray-700 font-medium">{t('common.asnjeDokumentIVonuar')}</p>
           <p className="text-sm text-gray-500">Te gjitha fletedergesat dhe fletmarrjet jane ne afat.</p>
         </div>
       ) : (
@@ -334,9 +334,7 @@ export default function CompanyOverdueDocuments() {
                       </span>
                       {n.assigned_driver_id && (
                         <span className="inline-flex items-center gap-1">
-                          <User className="w-3.5 h-3.5 text-gray-400" />
-                          Shoferi i caktuar
-                        </span>
+                          <User className="w-3.5 h-3.5 text-gray-400" />{t('common.shoferiICaktuar')}</span>
                       )}
                     </div>
                   </div>

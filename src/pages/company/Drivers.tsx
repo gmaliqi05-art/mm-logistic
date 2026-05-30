@@ -206,8 +206,7 @@ export default function CompanyDrivers() {
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowScanner(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 font-medium">
-            <ScanLine className="w-4 h-4" /> Skano dokument
-          </button>
+            <ScanLine className="w-4 h-4" />{t('common.skanoDokument2')}</button>
           <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
             <Plus className="w-4 h-4" />
             {t('company.drivers.addDriver')}

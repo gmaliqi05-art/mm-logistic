@@ -193,7 +193,7 @@ export default function EmailBranding() {
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   placeholder="p.sh. finance@kompania-juaj.com"
                 />
-                <p className="text-[11px] text-gray-400 mt-1">Adresa ku klientet mund te pergjigjen</p>
+                <p className="text-[11px] text-gray-400 mt-1">{t('common.adresaKuKlientetMundTePergjigjen')}</p>
               </div>
             </div>
           </div>
@@ -306,8 +306,7 @@ export default function EmailBranding() {
               </button>
               {saved && (
                 <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-                  <CheckCircle2 className="w-4 h-4" /> Ruajtur
-                </span>
+                  <CheckCircle2 className="w-4 h-4" />{t('common.ruajtur')}</span>
               )}
               <button
                 onClick={handleSave}

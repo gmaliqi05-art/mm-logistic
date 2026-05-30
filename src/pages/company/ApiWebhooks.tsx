@@ -155,7 +155,7 @@ export default function ApiWebhooks() {
           <Key className="w-6 h-6 text-emerald-600" />
           API & Webhooks
         </h1>
-        <p className="text-gray-500 text-sm mt-1">Menaxho celesat e API-t publike dhe webhooks per integrime me sisteme te jashtme.</p>
+        <p className="text-gray-500 text-sm mt-1">{t('common.menaxhoCelesatEApiTPublike')}</p>
       </div>
 
       {error && (
@@ -187,7 +187,7 @@ export default function ApiWebhooks() {
       ) : tab === 'keys' ? (
         <div className="space-y-6">
           <div className="bg-white border border-gray-100 rounded-xl p-5">
-            <h2 className="font-semibold text-gray-900 mb-3">Krijo celes te ri</h2>
+            <h2 className="font-semibold text-gray-900 mb-3">{t('common.krijoCelesTeRi')}</h2>
             <div className="flex gap-2">
               <input
                 value={newKeyName}
@@ -207,9 +207,7 @@ export default function ApiWebhooks() {
             {revealKey && (
               <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4">
                 <div className="text-sm font-semibold text-amber-900 flex items-center gap-2 mb-2">
-                  <ShieldCheck className="w-4 h-4" />
-                  Ruaj kete celes tani. Nuk do te tregohet me asnjehere.
-                </div>
+                  <ShieldCheck className="w-4 h-4" />{t('common.ruajKeteCelesTaniNukDo')}</div>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 bg-white border border-amber-300 rounded px-3 py-2 text-xs font-mono break-all">{revealKey}</code>
                   <button
@@ -226,7 +224,7 @@ export default function ApiWebhooks() {
 
           <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
             {keys.length === 0 ? (
-              <div className="p-10 text-center text-gray-500 text-sm">Asnje celes i krijuar.</div>
+              <div className="p-10 text-center text-gray-500 text-sm">{t('common.asnjeCelesIKrijuar')}</div>
             ) : (
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -306,15 +304,13 @@ export default function ApiWebhooks() {
                 disabled={!hookUrl.trim() || hookEvents.length === 0}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 text-sm font-medium"
               >
-                <Plus className="w-4 h-4" />
-                Ruaj webhook
-              </button>
+                <Plus className="w-4 h-4" />{t('common.ruajWebhook')}</button>
             </div>
           </div>
 
           <div className="bg-white border border-gray-100 rounded-xl overflow-hidden">
             {hooks.length === 0 ? (
-              <div className="p-10 text-center text-gray-500 text-sm">Asnje webhook i konfiguruar.</div>
+              <div className="p-10 text-center text-gray-500 text-sm">{t('common.asnjeWebhookIKonfiguruar')}</div>
             ) : (
               <table className="w-full">
                 <thead className="bg-gray-50">

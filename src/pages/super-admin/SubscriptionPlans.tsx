@@ -307,7 +307,7 @@ export default function SubscriptionPlans() {
                       onClick={() => nextPlan && swapSortOrder(plan, nextPlan)}
                       disabled={!nextPlan}
                       className="p-1.5 rounded-lg text-gray-400 hover:bg-teal-50 hover:text-teal-600 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
-                      title="Leviz poshte"
+                      title={t('common.levizPoshte')}
                     >
                       <ChevronDown className="w-4 h-4" />
                     </button>
@@ -670,9 +670,7 @@ export default function SubscriptionPlans() {
                           className="w-full px-3 py-2.5 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white"
                         />
                       </div>
-                      <p className="text-xs text-emerald-700 mt-1.5">
-                        Ky cmim aplikohet kur kompania ka tashme plan logjistike dhe shton kontabilitetin si addon
-                      </p>
+                      <p className="text-xs text-emerald-700 mt-1.5">{t('common.kyCmimAplikohetKurKompaniaKa')}</p>
                     </div>
                   )}
                 </div>
@@ -713,9 +711,7 @@ export default function SubscriptionPlans() {
                     />
                   </div>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Opsionale. Nese lihen bosh, sistemi krijon cmimin dinamikisht nga databaza.
-                </p>
+                <p className="text-xs text-slate-500">{t('common.opsionaleNeseLihenBoshSistemiKrijon')}</p>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
@@ -780,7 +776,7 @@ export default function SubscriptionPlans() {
                           onClick={() => moveFeature(idx, 1)}
                           disabled={idx === (formData.features as string[]).length - 1}
                           className="p-0.5 text-gray-400 hover:text-teal-600 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
-                          title="Leviz poshte"
+                          title={t('common.levizPoshte')}
                         >
                           <ArrowDown className="w-3 h-3" />
                         </button>

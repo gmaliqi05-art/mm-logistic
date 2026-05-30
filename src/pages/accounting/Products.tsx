@@ -449,7 +449,7 @@ export default function Products() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Njesia</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.netPrice')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">TVSH</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stoku</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.stoku')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Min</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veprime</th>
@@ -716,7 +716,7 @@ export default function Products() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder="Pershkrimi i produktit"
+                      placeholder={t('common.pershkrimiIProduktit')}
                     />
                   </div>
 
@@ -746,7 +746,7 @@ export default function Products() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.kategoria')}</label>
                     <div className="flex items-center gap-2">
                       <select
                         value={formData.category_id}
@@ -794,7 +794,7 @@ export default function Products() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Stoku Minimal</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.stokuMinimal')}</label>
                     <input
                       type="number"
                       value={formData.min_stock}

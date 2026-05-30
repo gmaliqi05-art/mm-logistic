@@ -143,9 +143,7 @@ export default function DepotDamage() {
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
           <AlertTriangle className="w-6 h-6 text-amber-600" /> Raportim demtimi
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Regjistroni paletat qe demtohen ne stok. Sasia leviz automatikisht nga stoku i gatshem ne stokun e demtuar.
-        </p>
+        <p className="text-sm text-slate-500 mt-1">{t('common.regjistroniPaletatQeDemtohenNeStok')}</p>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
@@ -157,7 +155,7 @@ export default function DepotDamage() {
               onChange={(e) => setProductId(e.target.value)}
               className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              <option value="">Zgjidhni produktin...</option>
+              <option value="">{t('common.zgjidhniProduktin')}</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
@@ -180,7 +178,7 @@ export default function DepotDamage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500">Sasia e demtuar</span>
+            <span className="text-[11px] uppercase tracking-wide text-slate-500">{t('common.sasiaEDemtuar')}</span>
             <input
               type="number"
               min={0}
@@ -209,8 +207,7 @@ export default function DepotDamage() {
         )}
         {success && (
           <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" /> Demtimi u regjistrua. Stoku u perditesua.
-          </div>
+            <CheckCircle2 className="w-4 h-4" />{t('common.demtimiURegjistruaStokuUPerditesua')}</div>
         )}
 
         <div className="flex justify-end">
@@ -232,7 +229,7 @@ export default function DepotDamage() {
         {loading ? (
           <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 text-slate-400 animate-spin" /></div>
         ) : history.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500 text-center">Asnje demtim i raportuar ende.</div>
+          <div className="p-6 text-sm text-slate-500 text-center">{t('common.asnjeDemtimIRaportuarEnde')}</div>
         ) : (
           <ul className="divide-y divide-slate-100">
             {history.map((h) => (

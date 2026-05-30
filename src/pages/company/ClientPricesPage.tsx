@@ -161,16 +161,12 @@ export default function ClientPricesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Tag className="w-4 h-4" />
-            Cmime totale
-          </div>
+            <Tag className="w-4 h-4" />{t('common.cmimeTotale')}</div>
           <p className="text-2xl font-bold text-gray-900 mt-1">{prices.length}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Users className="w-4 h-4" />
-            Kliente me cmim
-          </div>
+            <Users className="w-4 h-4" />{t('common.klienteMeCmim')}</div>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {new Set(prices.map(p => p.contact_id)).size}
           </p>
@@ -233,9 +229,7 @@ export default function ClientPricesPage() {
           onClick={() => setAddMode(true)}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium text-sm"
         >
-          <Plus className="w-4 h-4" />
-          Shto Cmim
-        </button>
+          <Plus className="w-4 h-4" />{t('common.shtoCmim')}</button>
       </div>
 
       {/* Add form */}
@@ -320,7 +314,7 @@ export default function ClientPricesPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-12">
             <Tag className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-            <p className="text-sm text-gray-500">Nuk ka cmime te personalizuara</p>
+            <p className="text-sm text-gray-500">{t('common.nukKaCmimeTePersonalizuara')}</p>
             <p className="text-xs text-gray-400 mt-1">Shtoni cmime te vecanta per kliente specifike</p>
           </div>
         ) : (
@@ -331,8 +325,8 @@ export default function ClientPricesPage() {
                   <th className="text-left px-4 py-3 font-medium text-gray-600">{t('common.customer')}</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Produkti</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Burimi</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">Cmimi standard</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">Cmimi klienti</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-600">{t('common.cmimiStandard')}</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-600">{t('common.cmimiKlienti')}</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600">Diferenca</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Shenim</th>
                   <th className="w-12"></th>

@@ -76,10 +76,8 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
         <div className="flex items-start justify-between p-4 border-b border-gray-100">
           <div>
             <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-teal-600" />
-              Regjistro Kompani te Re
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Kompania do ruhet dhe do perdoret ne kete fletedergese.</p>
+              <UserPlus className="w-5 h-5 text-teal-600" />{t('common.regjistroKompaniTeRe')}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">{t('common.kompaniaDoRuhetDheDoPerdoret')}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
@@ -95,7 +93,7 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Tipi</span>
               <select value={contactType} onChange={(e) => setContactType(e.target.value as any)} className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
-                <option value="customer">Klient</option>
+                <option value="customer">{t('common.klient')}</option>
                 <option value="supplier">Furnitor</option>
                 <option value="both">Te dyja</option>
               </select>

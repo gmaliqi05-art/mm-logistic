@@ -323,15 +323,15 @@ export default function Imports() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-2 px-3 font-medium">Numri</th>
+                  <th className="text-left py-2 px-3 font-medium">{t('common.numri')}</th>
                   <th className="text-left py-2 px-3 font-medium">{t('common.date')}</th>
                   <th className="text-left py-2 px-3 font-medium">{t('common.supplier')}</th>
                   <th className="text-left py-2 px-3 font-medium">Vendi</th>
                   <th className="text-left py-2 px-3 font-medium">Incoterms</th>
-                  <th className="text-right py-2 px-3 font-medium">Vlera doganore</th>
+                  <th className="text-right py-2 px-3 font-medium">{t('common.vleraDoganore')}</th>
                   <th className="text-right py-2 px-3 font-medium">Takse</th>
                   <th className="text-right py-2 px-3 font-medium">EUSt</th>
-                  <th className="text-right py-2 px-3 font-medium">Total landed</th>
+                  <th className="text-right py-2 px-3 font-medium">{t('common.totalLanded')}</th>
                   <th className="text-center py-2 px-3 font-medium">{t('common.status')}</th>
                   <th className="text-right py-2 px-3 font-medium">Veprime</th>
                 </tr>
@@ -379,7 +379,7 @@ export default function Imports() {
             <div className="p-4 space-y-4">
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Numri i importit</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.numriIImportit')}</label>
                   <input type="text" value={form.import_number} onChange={e => setForm({ ...form, import_number: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm" />
                 </div>
@@ -451,9 +451,9 @@ export default function Imports() {
                         <th className="px-2 py-1.5 text-left">Produkti</th>
                         <th className="px-2 py-1.5 text-left">Kodi HS</th>
                         <th className="px-2 py-1.5 text-right">{t('common.quantity')}</th>
-                        <th className="px-2 py-1.5 text-right">Cmim valute</th>
-                        <th className="px-2 py-1.5 text-right">Cmim EUR</th>
-                        <th className="px-2 py-1.5 text-right">Vlera doganore</th>
+                        <th className="px-2 py-1.5 text-right">{t('common.cmimValute')}</th>
+                        <th className="px-2 py-1.5 text-right">{t('common.cmimEur')}</th>
+                        <th className="px-2 py-1.5 text-right">{t('common.vleraDoganore')}</th>
                         <th className="px-2 py-1.5 text-right">Takse %</th>
                         <th className="px-2 py-1.5 text-right">Takse €</th>
                         <th className="px-2 py-1.5 text-right">TVSH %</th>
@@ -470,7 +470,7 @@ export default function Imports() {
                               <option value="">— pa produkt —</option>
                               {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
-                            <input type="text" placeholder="Pershkrim" value={it.description}
+                            <input type="text" placeholder={t('common.pershkrim')} value={it.description}
                               onChange={e => updateItem(idx, { description: e.target.value })}
                               className="w-full mt-1 px-1 py-1 border border-gray-200 rounded text-xs" />
                           </td>

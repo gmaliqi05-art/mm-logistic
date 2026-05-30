@@ -265,7 +265,7 @@ export default function EmailCampaignNew() {
                   }`}
                 >
                   <div className="text-sm font-semibold text-slate-900">{t('common.useExistingTemplate')}</div>
-                  <div className="text-xs text-slate-500">Kategori marketing ose sistem.</div>
+                  <div className="text-xs text-slate-500">{t('common.kategoriMarketingOseSistem')}</div>
                 </button>
               </div>
             </div>
@@ -278,7 +278,7 @@ export default function EmailCampaignNew() {
                   onChange={(e) => setTemplateCode(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
                 >
-                  <option value="">Zgjidh template...</option>
+                  <option value="">{t('common.zgjidhTemplate')}</option>
                   {templates.map((t) => (
                     <option key={t.code} value={t.code}>{t.name} ({t.code})</option>
                   ))}
@@ -389,8 +389,8 @@ export default function EmailCampaignNew() {
                     className="rounded border border-slate-300 px-2 py-1 text-sm"
                   >
                     <option value="sq">Shqip</option>
-                    <option value="de">Gjermanisht</option>
-                    <option value="en">Anglisht</option>
+                    <option value="de">{t('common.gjermanisht')}</option>
+                    <option value="en">{t('common.anglisht')}</option>
                   </select>
                 )}
               </div>
@@ -405,7 +405,7 @@ export default function EmailCampaignNew() {
         {step === 3 && (
           <div className="space-y-5">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">Dergo nje test perpara</h3>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">{t('common.dergoNjeTestPerpara')}</h3>
               <div className="flex flex-wrap gap-2">
                 <input
                   type="email"
@@ -444,7 +444,7 @@ export default function EmailCampaignNew() {
                 >
                   <Send className="h-5 w-5 text-teal-600" />
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">Dergo menjehere</div>
+                    <div className="text-sm font-semibold text-slate-900">{t('common.dergoMenjehere')}</div>
                     <div className="text-xs text-slate-500">Fillon menjehere pas krijimit.</div>
                   </div>
                 </button>

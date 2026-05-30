@@ -133,16 +133,12 @@ export default function FixedAssets() {
             onClick={() => setShowScan(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm"
           >
-            <Sparkles className="w-4 h-4" />
-            Skano Dokument
-          </button>
+            <Sparkles className="w-4 h-4" />{t('common.skanoDokument')}</button>
           <button
             onClick={() => setShowManual(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm"
           >
-            <Plus className="w-4 h-4" />
-            Shto manualisht
-          </button>
+            <Plus className="w-4 h-4" />{t('common.shtoManualisht')}</button>
         </div>
       </div>
 
@@ -152,7 +148,7 @@ export default function FixedAssets() {
           <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalCost)}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase">Vlera aktuale libri</p>
+          <p className="text-xs font-medium text-gray-500 uppercase">{t('common.vleraAktualeLibri')}</p>
           <p className="text-2xl font-bold text-emerald-600 mt-2">{formatCurrency(totalBookValue)}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -176,12 +172,12 @@ export default function FixedAssets() {
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.name')}</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Kategoria</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.kategoria')}</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.purchaseDate')}</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Kosto</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Jeta</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Zhvl. mujore</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Vlera libri</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.vleraLibri')}</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Veprime</th>
                 </tr>
               </thead>
@@ -271,7 +267,7 @@ export default function FixedAssets() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Kategoria</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t('common.kategoria')}</label>
                   <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
                     {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

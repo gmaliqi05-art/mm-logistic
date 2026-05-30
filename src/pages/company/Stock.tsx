@@ -983,7 +983,7 @@ export default function CompanyStock() {
                     .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 {productsForCategory(reassignTarget.categoryId).length === 0 && (
-                  <p className="text-xs text-amber-700 mt-1.5">Nuk ka produkte ne kete kategori. Shto produkte ne Kategorit.</p>
+                  <p className="text-xs text-amber-700 mt-1.5">{t('common.nukKaProdukteNeKeteKategori')}</p>
                 )}
               </div>
             </div>

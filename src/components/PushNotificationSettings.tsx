@@ -50,12 +50,8 @@ export default function PushNotificationSettings() {
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-yellow-900 mb-1">
-              Njoftimet Push nuk mbështeten
-            </h3>
-            <p className="text-sm text-yellow-700">
-              Shfletuesi juaj nuk mbështet njoftimet push. Ju lutem përdorni një shfletues modern si Chrome, Firefox, Edge ose Safari.
-            </p>
+            <h3 className="text-sm font-semibold text-yellow-900 mb-1">{t('common.njoftimetPushNukMbeshteten')}</h3>
+            <p className="text-sm text-yellow-700">{t('common.shfletuesiJuajNukMbeshtetNjoftimetPush')}</p>
           </div>
         </div>
       </div>
@@ -92,9 +88,7 @@ export default function PushNotificationSettings() {
                   : 'Aktivizoni njoftimet për të marrë njoftime në kohë reale.'}
               </p>
               {permission === 'denied' && (
-                <p className="text-sm text-red-600 mt-2">
-                  Lejet për njoftime janë refuzuar. Ju lutem aktivizoni lejet në cilësimet e shfletuesit tuaj.
-                </p>
+                <p className="text-sm text-red-600 mt-2">{t('common.lejetPerNjoftimeJaneRefuzuarJu')}</p>
               )}
             </div>
           </div>
@@ -167,9 +161,7 @@ export default function PushNotificationSettings() {
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-blue-900 mb-1">
-              Si funksionojnë njoftimet push?
-            </h3>
+            <h3 className="text-sm font-semibold text-blue-900 mb-1">{t('common.siFunksionojneNjoftimetPush')}</h3>
             <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
               <li>{t('common.pushAppClosedHint')}</li>
               <li>{t('common.pushChatHint')}</li>

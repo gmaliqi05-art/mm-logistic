@@ -573,9 +573,7 @@ export default function ProductDetail() {
                   onClick={openAdjustModal}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
                 >
-                  <Package className="w-4 h-4" />
-                  Rregullim Stoku
-                </button>
+                  <Package className="w-4 h-4" />{t('common.rregullimStoku')}</button>
                 <button
                   onClick={toggleActive}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -646,7 +644,7 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">Vlera e Stokut</p>
+                  <p className="text-sm text-emerald-600 font-medium">{t('common.vleraEStokut')}</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">
                     {formatCurrency(stockValue)}
                   </p>
@@ -656,13 +654,13 @@ export default function ProductDetail() {
                   <p className="text-2xl font-bold text-gray-900 mt-1">{product.current_stock}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 font-medium">Stoku Minimal</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('common.stokuMinimal')}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{product.min_stock}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Niveli i Stokut</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">{t('common.niveliIStokut')}</p>
                 <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${stockBarColor}`}
@@ -678,13 +676,9 @@ export default function ProductDetail() {
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Levizjet e Fundit te Stokut
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('common.levizjetEFunditTeStokut')}</h3>
                 {recentMovements.length === 0 ? (
-                  <p className="text-sm text-gray-400 py-4 text-center">
-                    Nuk ka levizje stoku
-                  </p>
+                  <p className="text-sm text-gray-400 py-4 text-center">{t('common.nukKaLevizjeStoku')}</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -755,9 +749,7 @@ export default function ProductDetail() {
               </div>
 
               {filteredSalesItems.length === 0 ? (
-                <p className="text-sm text-gray-400 py-4 text-center">
-                  Nuk ka shitje per kete produkt
-                </p>
+                <p className="text-sm text-gray-400 py-4 text-center">{t('common.nukKaShitjePerKeteProdukt')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -769,9 +761,7 @@ export default function ProductDetail() {
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.customer')}</th>
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Cmimi
-                        </th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.cmimi')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.total')}</th>
                       </tr>
                     </thead>
@@ -835,9 +825,7 @@ export default function ProductDetail() {
               </div>
 
               {filteredPurchaseItems.length === 0 ? (
-                <p className="text-sm text-gray-400 py-4 text-center">
-                  Nuk ka blerje per kete produkt
-                </p>
+                <p className="text-sm text-gray-400 py-4 text-center">{t('common.nukKaBlerjePerKeteProdukt')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -849,9 +837,7 @@ export default function ProductDetail() {
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.supplier')}</th>
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Cmimi
-                        </th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.cmimi')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.total')}</th>
                       </tr>
                     </thead>
@@ -904,17 +890,15 @@ export default function ProductDetail() {
                   className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                 >
                   <option value="all">Te gjitha tipet</option>
-                  <option value="in">Hyrje</option>
-                  <option value="out">Dalje</option>
+                  <option value="in">{t('common.hyrje')}</option>
+                  <option value="out">{t('common.dalje')}</option>
                   <option value="adjustment">Rregullim</option>
                   <option value="return">Kthim</option>
                 </select>
               </div>
 
               {allMovementsFiltered.length === 0 ? (
-                <p className="text-sm text-gray-400 py-4 text-center">
-                  Nuk ka levizje stoku
-                </p>
+                <p className="text-sm text-gray-400 py-4 text-center">{t('common.nukKaLevizjeStoku')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -925,9 +909,7 @@ export default function ProductDetail() {
                           Tipi
                         </th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Cmimi
-                        </th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.cmimi')}</th>
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Ref. Tipi
                         </th>
@@ -990,7 +972,7 @@ export default function ProductDetail() {
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
               <div className="border-b border-gray-100 px-6 py-4 rounded-t-2xl">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Rregullim Stoku</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">{t('common.rregullimStoku')}</h2>
                   <button
                     onClick={closeAdjustModal}
                     className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1007,9 +989,7 @@ export default function ProductDetail() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sasia e Re
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.sasiaERe')}</label>
                   <input
                     type="number"
                     value={adjustNewQty}
@@ -1188,7 +1168,7 @@ export default function ProductDetail() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder="Pershkrimi i produktit"
+                      placeholder={t('common.pershkrimiIProduktit')}
                     />
                   </div>
 
@@ -1224,9 +1204,7 @@ export default function ProductDetail() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Kategoria
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.kategoria')}</label>
                     <div className="flex items-center gap-2">
                       <select
                         value={formData.category_id}
@@ -1276,9 +1254,7 @@ export default function ProductDetail() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Stoku Minimal
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.stokuMinimal')}</label>
                     <input
                       type="number"
                       value={formData.min_stock}

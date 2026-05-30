@@ -765,7 +765,7 @@ function CategoriesContent() {
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Cmimi neto</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.cmimiNeto')}</label>
                       <input
                         type="number"
                         step="0.01"
@@ -833,9 +833,7 @@ function CategoriesContent() {
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
                       placeholder="Europalette B Qualität, EUR-Flachpalette gebraucht"
                     />
-                    <p className="text-[11px] text-gray-500 mt-1">
-                      Ndaj me presje. Nese ndonje nga keto tekste gjendet ne fature, produkti identifikohet automatikisht.
-                    </p>
+                    <p className="text-[11px] text-gray-500 mt-1">{t('common.ndajMePresjeNeseNdonjeNga')}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -848,9 +846,7 @@ function CategoriesContent() {
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
                       placeholder="gebraucht, tauschfähig, Klasse B"
                     />
-                    <p className="text-[11px] text-gray-500 mt-1">
-                      Ndaj me presje. Cdo fjale kyce qe gjendet shton besueshmeri ne identifikim.
-                    </p>
+                    <p className="text-[11px] text-gray-500 mt-1">{t('common.ndajMePresjeCdoFjaleKyce')}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -867,9 +863,7 @@ function CategoriesContent() {
                       <p className="text-[11px] text-gray-500 mt-1">Format: GGGxLLL (mm)</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Kushti default
-                      </label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.kushtiDefault')}</label>
                       <select
                         value={formProdDefaultCondition}
                         onChange={(e) => setFormProdDefaultCondition(e.target.value)}
@@ -879,7 +873,7 @@ function CategoriesContent() {
                           <option key={c.value} value={c.value}>{c.label}</option>
                         ))}
                       </select>
-                      <p className="text-[11px] text-gray-500 mt-1">Vendoset automatikisht kur zgjidhet produkti.</p>
+                      <p className="text-[11px] text-gray-500 mt-1">{t('common.vendosetAutomatikishtKurZgjidhetProdukti')}</p>
                     </div>
                   </div>
                 </div>

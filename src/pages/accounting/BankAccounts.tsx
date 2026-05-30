@@ -282,7 +282,7 @@ export default function BankAccounts() {
           ) : accountTransactions.length === 0 ? (
             <div className="py-16 text-center">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 font-medium">Asnje transaksion</p>
+              <p className="text-gray-500 font-medium">{t('common.asnjeTransaksion')}</p>
               <p className="text-gray-400 text-sm mt-1">Kjo llogari nuk ka transaksione</p>
             </div>
           ) : (
@@ -343,7 +343,7 @@ export default function BankAccounts() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Llogarite Bankare</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('common.llogariteBankare')}</h1>
           <p className="text-gray-500 mt-1">Menaxho llogarite bankare te biznesit</p>
         </div>
         <button
@@ -368,7 +368,7 @@ export default function BankAccounts() {
       {accounts.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center">
           <Landmark className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 font-medium">Asnje llogari bankare</p>
+          <p className="text-gray-500 font-medium">{t('common.asnjeLlogariBankare')}</p>
           <p className="text-gray-400 text-sm mt-1">Shto llogarite e para bankare per te filluar</p>
         </div>
       ) : (
@@ -420,7 +420,7 @@ export default function BankAccounts() {
                 </div>
                 <div className="pt-2 border-t border-gray-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Bilanci Fillestar</span>
+                    <span className="text-xs text-gray-500">{t('common.bilanciFillestar')}</span>
                     <span className="text-sm font-bold text-gray-900">
                       {formatCurrency(account.opening_balance, account.currency)}
                     </span>
@@ -438,9 +438,7 @@ export default function BankAccounts() {
                   onClick={() => openImport(account.id)}
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
                 >
-                  <Upload className="w-3.5 h-3.5" />
-                  Importo ekstrakt
-                </button>
+                  <Upload className="w-3.5 h-3.5" />{t('common.importoEkstrakt')}</button>
                 <Link
                   to={`/accounting/bank-reconciliation?account=${account.id}`}
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
@@ -468,7 +466,7 @@ export default function BankAccounts() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setImportOpen(false)} />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Importo ekstrakt bankar</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t('common.importoEkstraktBankar')}</h2>
               <button onClick={() => setImportOpen(false)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
@@ -496,9 +494,7 @@ export default function BankAccounts() {
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
               >
                 {importing && <Loader2 className="w-4 h-4 animate-spin" />}
-                <Upload className="w-4 h-4" />
-                Importo
-              </button>
+                <Upload className="w-4 h-4" />{t('common.importo')}</button>
             </div>
           </div>
         </div>
@@ -576,7 +572,7 @@ export default function BankAccounts() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bilanci Fillestar</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.bilanciFillestar')}</label>
                 <input
                   type="number"
                   value={form.opening_balance}

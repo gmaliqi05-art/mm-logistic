@@ -202,9 +202,7 @@ export default function Compliance() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Perputhshmeria ligjore</h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Te gjitha afatet per mjete dhe shofera sipas StVZO, FeV, BKrFQG, PflVG dhe ArbMedVV.
-          </p>
+          <p className="text-gray-500 mt-1 text-sm">{t('common.teGjithaAfatetPerMjeteDhe')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -216,8 +214,7 @@ export default function Compliance() {
             {t('common.checkNow') || 'Kontrollo tani'}
           </button>
           <button onClick={exportCsv} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium">
-            <Download className="w-4 h-4" /> Eksporto CSV
-          </button>
+            <Download className="w-4 h-4" />{t('common.eksportoCsv')}</button>
         </div>
       </div>
       {checkMessage && (
@@ -271,9 +268,7 @@ export default function Compliance() {
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 ? (
                 <tr><td colSpan={4} className="px-5 py-12 text-center text-gray-400">
-                  <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                  Asnje regjistrim per filtrat e zgjedhur.
-                </td></tr>
+                  <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-gray-300" />{t('common.asnjeRegjistrimPerFiltratEZgjedhur')}</td></tr>
               ) : filtered.map((r, idx) => (
                 <tr key={idx} className="hover:bg-gray-50">
                   <td className="px-5 py-3">

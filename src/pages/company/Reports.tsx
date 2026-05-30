@@ -405,7 +405,7 @@ export default function CompanyReports() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Raportet e Kompanise</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('common.raportetEKompanise')}</h1>
           <p className="text-gray-500 mt-1">Stoku, levizjet, sortimi dhe riparimi — vetem per kompanine tuaj.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -441,12 +441,10 @@ export default function CompanyReports() {
               onClick={exportActiveTab}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100"
             >
-              <Download className="w-4 h-4" /> Eksporto CSV
-            </button>
+              <Download className="w-4 h-4" />{t('common.eksportoCsv')}</button>
           ) : (
             <div className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-              <Crown className="w-4 h-4" /> Eksport premium
-            </div>
+              <Crown className="w-4 h-4" />{t('common.eksportPremium')}</div>
           )}
         </div>
       </div>
@@ -482,7 +480,7 @@ export default function CompanyReports() {
             <StatCard icon={Truck} color="bg-slate-600" label="Shofere" value={driverCount} />
           </div>
 
-          <Card title="Stoku sipas depos" icon={Package}>
+          <Card title={t('common.stokuSipasDepos')} icon={Package}>
             {stockByDepot.length === 0 ? (
               <EmptyState icon={Warehouse} label="Pa te dhena stoku." />
             ) : (
@@ -505,7 +503,7 @@ export default function CompanyReports() {
             )}
           </Card>
 
-          <Card title="Fletedokumente sipas statusit" icon={FileText}>
+          <Card title={t('common.fletedokumenteSipasStatusit')} icon={FileText}>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
               {Object.entries(noteStatusCounts).map(([status, count]) => (
                 <div key={status} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
@@ -522,7 +520,7 @@ export default function CompanyReports() {
       )}
 
       {activeTab === 'stock' && (
-        <Card title="Stoku i kompanise" icon={Package}>
+        <Card title={t('common.stokuIKompanise')} icon={Package}>
           {stockByCategory.length === 0 ? (
             <EmptyState icon={Package} label="Nuk ka stok ne kete filter." />
           ) : (
@@ -579,7 +577,7 @@ export default function CompanyReports() {
                     <th className="text-left px-3 py-2">Tipi</th>
                     <th className="text-left px-3 py-2">Gjendja</th>
                     <th className="text-left px-3 py-2">Depoja</th>
-                    <th className="text-left px-3 py-2">Punetori</th>
+                    <th className="text-left px-3 py-2">{t('common.punetori')}</th>
                     <th className="text-left px-3 py-2">Nga / Per</th>
                     <th className="text-right px-3 py-2">Sasi</th>
                     <th className="text-left px-3 py-2">Flow</th>
@@ -637,7 +635,7 @@ export default function CompanyReports() {
 
       {activeTab === 'damage' && (
         <div className="space-y-6">
-          <Card title="Stoku aktual i demtuar" icon={AlertTriangle}>
+          <Card title={t('common.stokuAktualIDemtuar')} icon={AlertTriangle}>
             {stockRows.filter((s) => s.condition === 'damaged' && (s.quantity ?? 0) > 0).length === 0 ? (
               <EmptyState icon={AlertTriangle} label="Asnje palete e demtuar ne stok." />
             ) : (
@@ -646,7 +644,7 @@ export default function CompanyReports() {
                   <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
                     <tr>
                       <th className="text-left px-3 py-2">Depoja</th>
-                      <th className="text-left px-3 py-2">Kategoria</th>
+                      <th className="text-left px-3 py-2">{t('common.kategoria')}</th>
                       <th className="text-left px-3 py-2">Produkti</th>
                       <th className="text-right px-3 py-2">Sasi</th>
                     </tr>
@@ -681,7 +679,7 @@ export default function CompanyReports() {
                         <th className="text-left px-3 py-2">Tipi</th>
                         <th className="text-left px-3 py-2">Depoja</th>
                         <th className="text-right px-3 py-2">Sasi</th>
-                        <th className="text-left px-3 py-2">Punetori</th>
+                        <th className="text-left px-3 py-2">{t('common.punetori')}</th>
                         <th className="text-left px-3 py-2">Nga / Per</th>
                       </tr>
                     </thead>
@@ -725,7 +723,7 @@ export default function CompanyReports() {
                       <th className="text-left px-3 py-2">Produkti</th>
                       <th className="text-left px-3 py-2">Gjendja burim</th>
                       <th className="text-right px-3 py-2">Sasi</th>
-                      <th className="text-left px-3 py-2">Punetori</th>
+                      <th className="text-left px-3 py-2">{t('common.punetori')}</th>
                       <th className="text-left px-3 py-2">Arsyeja</th>
                     </tr>
                   </thead>
@@ -750,7 +748,7 @@ export default function CompanyReports() {
       )}
 
       {activeTab === 'partners' && (
-        <Card title="Permbledhje e partnereve" icon={Users} hint="Transfertat interne jane te perjashtuara. Kliko nje partner per kartele te plote.">
+        <Card title={t('common.permbledhjeEPartnereve')} icon={Users} hint="Transfertat interne jane te perjashtuara. Kliko nje partner per kartele te plote.">
           {partnerRows.length === 0 ? (
             <EmptyState icon={Users} label="Pa levizje me partneret ne kete periudhe." />
           ) : (
@@ -765,8 +763,8 @@ export default function CompanyReports() {
                   <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
                     <tr>
                       <th className="text-left px-3 py-2">Partneri</th>
-                      <th className="text-right px-3 py-2">Hyrje</th>
-                      <th className="text-right px-3 py-2">Dalje</th>
+                      <th className="text-right px-3 py-2">{t('common.hyrje')}</th>
+                      <th className="text-right px-3 py-2">{t('common.dalje')}</th>
                       <th className="text-right px-3 py-2">Balanca</th>
                       <th className="text-right px-3 py-2">{t('common.total')}</th>
                     </tr>
@@ -820,7 +818,7 @@ function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
 
   if (rows.length === 0) {
     return (
-      <Card title="Skanimet AI" icon={Sparkles}>
+      <Card title={t('common.skanimetAi')} icon={Sparkles}>
         <EmptyState icon={Sparkles} label="Asnje dokument i skanuar ne kete periudhe." />
       </Card>
     );
@@ -834,7 +832,7 @@ function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
           <p className="text-2xl font-bold text-gray-900 mt-1">{rows.length}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-xs text-gray-500">Sasia totale</p>
+          <p className="text-xs text-gray-500">{t('common.sasiaTotale')}</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{totalQty.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
@@ -850,7 +848,7 @@ function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
       </div>
 
       {byPartner.length > 0 && (
-        <Card title="Top partneret sipas sasise" icon={Users}>
+        <Card title={t('common.topPartneretSipasSasise')} icon={Users}>
           <div className="space-y-2">
             {byPartner.map((p, i) => {
               const pct = totalQty > 0 ? (p.qty / totalQty) * 100 : 0;
@@ -881,7 +879,7 @@ function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
                 <th className="text-left px-3 py-2">Nr. Dok</th>
                 <th className="text-left px-3 py-2">Partneri</th>
                 <th className="text-left px-3 py-2">Tipi</th>
-                <th className="text-right px-3 py-2">Sasia totale</th>
+                <th className="text-right px-3 py-2">{t('common.sasiaTotale')}</th>
                 <th className="text-right px-3 py-2">Artikuj</th>
                 <th className="text-right px-3 py-2">{t('common.date')}</th>
               </tr>

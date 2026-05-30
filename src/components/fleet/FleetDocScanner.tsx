@@ -259,7 +259,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
               <h2 className="text-lg font-bold text-slate-900">
                 {mode === 'vehicle' ? 'Skano dokument te mjetit' : 'Skano dokument te shoferit'}
               </h2>
-              <p className="text-xs text-slate-500">AI ekstrakton te dhenat automatikisht</p>
+              <p className="text-xs text-slate-500">{t('common.aiEkstraktonTeDhenatAutomatikisht')}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg">
@@ -308,14 +308,14 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                 >
                   <Camera className="w-8 h-8 text-teal-600 mb-2" />
                   <p className="text-sm font-semibold text-slate-900">{t('common.scanWithCamera')}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Fotografo dokumentin me telefon</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t('common.fotografoDokumentinMeTelefon')}</p>
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
                 >
                   <Upload className="w-8 h-8 text-teal-600 mb-2" />
-                  <p className="text-sm font-semibold text-slate-900">Ngarko skedar</p>
+                  <p className="text-sm font-semibold text-slate-900">{t('common.ngarkoSkedar')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">PDF ose foto nga kompjuteri</p>
                 </button>
               </div>
@@ -349,14 +349,14 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                 >
                   <Camera className="w-8 h-8 text-teal-600 mb-2" />
                   <p className="text-sm font-semibold text-slate-900">{t('common.scanWithCamera')}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Fotografo anen e pasme</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{t('common.fotografoAnenEPasme')}</p>
                 </button>
                 <button
                   onClick={() => fileInputBackRef.current?.click()}
                   className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
                 >
                   <Upload className="w-8 h-8 text-teal-600 mb-2" />
-                  <p className="text-sm font-semibold text-slate-900">Ngarko skedar</p>
+                  <p className="text-sm font-semibold text-slate-900">{t('common.ngarkoSkedar')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">Foto e anes se pasme</p>
                 </button>
               </div>
@@ -492,8 +492,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                         onClick={() => setStep('choose_back')}
                         className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-white border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors"
                       >
-                        <Camera className="w-4 h-4" /> Skano
-                      </button>
+                        <Camera className="w-4 h-4" />{t('common.skano')}</button>
                     )}
                   </div>
                 </div>

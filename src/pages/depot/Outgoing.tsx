@@ -715,9 +715,7 @@ export default function DepotOutgoing() {
                   <tr key={m.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700">
-                        <ArrowDownCircle className="w-3 h-3" />
-                        Dalje
-                      </span>
+                        <ArrowDownCircle className="w-3 h-3" />{t('common.dalje')}</span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="font-medium">{(m.product as any)?.name ?? (m.category as any)?.name ?? '-'}</div>

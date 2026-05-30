@@ -300,8 +300,7 @@ export default function CompanyRoutePlanner() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="text-xs font-semibold text-slate-600 uppercase flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" /> Shoferi
-            </label>
+              <User className="w-3.5 h-3.5" />{t('common.shoferi')}</label>
             <select
               value={driverId}
               onChange={(e) => setDriverId(e.target.value)}
@@ -314,7 +313,7 @@ export default function CompanyRoutePlanner() {
               ))}
             </select>
             {driverLocked && (
-              <p className="text-[11px] text-slate-500 mt-1">Shoferi eshte marre nga transporti i zgjedhur.</p>
+              <p className="text-[11px] text-slate-500 mt-1">{t('common.shoferiEshteMarreNgaTransportiI')}</p>
             )}
           </div>
           <div>
@@ -343,7 +342,7 @@ export default function CompanyRoutePlanner() {
                 <input
                   value={originText}
                   onChange={(e) => { setOriginText(e.target.value); setOrigin(null); }}
-                  placeholder="Adresa e nisjes"
+                  placeholder={t('common.adresaENisjes')}
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
                 />
               </div>
@@ -365,7 +364,7 @@ export default function CompanyRoutePlanner() {
                 <input
                   value={destText}
                   onChange={(e) => { setDestText(e.target.value); setDest(null); }}
-                  placeholder="Adresa e destinacionit"
+                  placeholder={t('common.adresaEDestinacionit')}
                   className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 outline-none text-sm"
                 />
               </div>
@@ -500,7 +499,7 @@ export default function CompanyRoutePlanner() {
                     <div className="flex justify-between"><span className="text-slate-500">Taksa</span><span className="font-semibold">{formatCurrency(opt.toll_eur, "EUR")}</span></div>
                     <div className="flex justify-between"><span className="text-slate-500">Karburant</span><span className="font-semibold">{formatCurrency(opt.fuel_eur, "EUR")}</span></div>
                     <div className="flex justify-between pt-1.5 border-t border-slate-200">
-                      <span className="text-slate-700 font-semibold">Total</span>
+                      <span className="text-slate-700 font-semibold">{t('common.total2')}</span>
                       <span className="font-bold text-teal-700">{formatCurrency(opt.total_eur, "EUR")}</span>
                     </div>
                   </div>
