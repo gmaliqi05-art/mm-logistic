@@ -18,6 +18,7 @@ import {
   Clock,
   Image,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 
 interface DriverProfile {
@@ -117,6 +118,7 @@ interface Props {
 }
 
 export default function DriverCVSummary({ driverId, companyName, depotName }: Props) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [driver, setDriver] = useState<DriverProfile | null>(null);
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -163,7 +165,7 @@ export default function DriverCVSummary({ driverId, companyName, depotName }: Pr
   }
 
   if (!driver) {
-    return <p className="text-center text-gray-500 py-8">Shoferi nuk u gjet.</p>;
+    return <p className="text-center text-gray-500 py-8">{t('common.shoferiNukUGjet')}</p>;
   }
 
   const initial = driver.full_name?.charAt(0).toUpperCase() ?? 'U';
@@ -184,7 +186,7 @@ export default function DriverCVSummary({ driverId, companyName, depotName }: Pr
             </div>
             <div className="min-w-0 pb-1">
               <h2 className="text-lg font-bold text-gray-900 truncate">{driver.full_name || 'Pa emer'}</h2>
-              <p className="text-xs text-gray-500">Shofer</p>
+              <p className="text-xs text-gray-500">{t('common.shofer')}</p>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -324,7 +326,7 @@ export default function DriverCVSummary({ driverId, companyName, depotName }: Pr
       {licenses.length === 0 && qualifications.length === 0 && medicals.length === 0 && identityDocs.length === 0 && (
         <div className="text-center py-12 border border-dashed border-gray-200 rounded-xl">
           <User className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Asnje dokument i regjistruar per kete shofer.</p>
+          <p className="text-sm text-gray-500">{t('common.asnjeDokumentIRegjistruarPerKete')}</p>
         </div>
       )}
     </div>

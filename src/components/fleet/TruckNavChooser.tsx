@@ -1,5 +1,6 @@
 import { Info, Navigation, Truck, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   destLat: number;
@@ -51,6 +52,7 @@ function detectPlatform(): Platform {
 }
 
 export default function TruckNavChooser({ destLat, destLng, label, onClose }: Props) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [launching, setLaunching] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -138,7 +140,7 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-teal-600" />
-            <h2 className="text-lg font-bold text-slate-900">Navigim per Kamiona</h2>
+            <h2 className="text-lg font-bold text-slate-900">{t('common.navigimPerKamiona')}</h2>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100" aria-label="Mbyll">
             <X className="w-5 h-5 text-slate-500" />

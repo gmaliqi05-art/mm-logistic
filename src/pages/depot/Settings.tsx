@@ -3,8 +3,10 @@ import { Settings as SettingsIcon, User, Bell, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
+import { useTranslation } from '../../i18n';
 
 export default function DepotSettings() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [companyName, setCompanyName] = useState('');
   const [depotName, setDepotName] = useState('');
@@ -56,7 +58,7 @@ export default function DepotSettings() {
             <span className="text-sm font-medium text-gray-900">{profile?.email ?? '-'}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">Kompania</span>
+            <span className="text-sm text-gray-500">{t('common.company')}</span>
             <span className="text-sm font-medium text-gray-900">{companyName || '-'}</span>
           </div>
           <div className="flex items-center justify-between">

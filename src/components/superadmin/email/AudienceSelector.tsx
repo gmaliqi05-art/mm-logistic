@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import { Users, Loader2 } from "lucide-react";
+import { useTranslation } from '../../../i18n';
 
 export interface AudienceFilter {
   roles?: string[];
@@ -76,6 +77,7 @@ function CheckGroup({
 }
 
 export default function AudienceSelector({ value, onChange }: Props) {
+  const { t } = useTranslation();
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   const [search, setSearch] = useState("");
   const [count, setCount] = useState<number | null>(null);
@@ -129,7 +131,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={ROLES} selected={value.roles ?? []} onChange={(v) => onChange({ ...value, roles: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">Lloji i biznesit</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.llojiIBiznesit')}</label>
         <CheckGroup options={BUSINESS_TYPES} selected={value.business_types ?? []} onChange={(v) => onChange({ ...value, business_types: v })} />
       </div>
       <div>
@@ -137,7 +139,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={LOCALES} selected={value.locales ?? []} onChange={(v) => onChange({ ...value, locales: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">Statusi i abonimit</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.subscriptionStatus')}</label>
         <CheckGroup options={SUBSCRIPTION_STATUSES} selected={value.subscription_statuses ?? []} onChange={(v) => onChange({ ...value, subscription_statuses: v })} />
       </div>
       <div>
@@ -183,18 +185,14 @@ export default function AudienceSelector({ value, onChange }: Props) {
             checked={value.active_only !== false}
             onChange={(e) => onChange({ ...value, active_only: e.target.checked })}
             className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-          />
-          Vetem perdorues aktive
-        </label>
+          />{t('common.vetemPerdoruesAktive')}</label>
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"
             checked={value.marketing_opt_in_only ?? false}
             onChange={(e) => onChange({ ...value, marketing_opt_in_only: e.target.checked })}
             className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-          />
-          Vetem ata qe nuk kane cregjistruar marketingun
-        </label>
+          />{t('common.vetemAtaQeNukKaneCregjistruar')}</label>
       </div>
       <div className="border-t border-slate-200 pt-4">
         <button

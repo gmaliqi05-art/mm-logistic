@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Loader2, Tag, Package, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatCurrency } from '../../types/accounting';
+import { useTranslation } from '../../i18n';
 
 interface CatalogProduct {
   id: string;
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function ClientPricesModal({ contactId, contactName, companyId, onClose }: Props) {
+  const { t } = useTranslation();
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [prices, setPrices] = useState<ClientPrice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,9 +152,7 @@ export default function ClientPricesModal({ contactId, contactName, companyId, o
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Tag className="w-5 h-5 text-emerald-600" />
-              Cmime te personalizuara
-            </h2>
+              <Tag className="w-5 h-5 text-emerald-600" />{t('common.cmimeTePersonalizuara')}</h2>
             <p className="text-sm text-gray-500 mt-0.5">per: {contactName}</p>
           </div>
           <button
@@ -186,8 +186,8 @@ export default function ClientPricesModal({ contactId, contactName, companyId, o
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="text-left px-4 py-2.5 font-medium text-gray-600">Produkti</th>
-                        <th className="text-right px-4 py-2.5 font-medium text-gray-600">Cmimi standard</th>
-                        <th className="text-right px-4 py-2.5 font-medium text-gray-600">Cmimi klienti</th>
+                        <th className="text-right px-4 py-2.5 font-medium text-gray-600">{t('common.cmimiStandard')}</th>
+                        <th className="text-right px-4 py-2.5 font-medium text-gray-600">{t('common.cmimiKlienti')}</th>
                         <th className="w-12"></th>
                       </tr>
                     </thead>
@@ -234,8 +234,8 @@ export default function ClientPricesModal({ contactId, contactName, companyId, o
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <Package className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">Nuk ka cmime te personalizuara per kete klient.</p>
-                  <p className="text-xs text-gray-400 mt-1">Shtoni cmime te vecanta per produkte specifike.</p>
+                  <p className="text-sm">{t('common.nukKaCmimeTePersonalizuaraPer')}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('common.shtoniCmimeTeVecantaPerProdukte')}</p>
                 </div>
               )}
 
@@ -290,9 +290,7 @@ export default function ClientPricesModal({ contactId, contactName, companyId, o
                     <button
                       onClick={() => setAddingProduct(false)}
                       className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      Anulo
-                    </button>
+                    >{t('common.cancel')}</button>
                     <button
                       onClick={handleAdd}
                       disabled={saving || !selectedProductId || !newPrice}

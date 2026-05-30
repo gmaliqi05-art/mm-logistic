@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Camera, X, RotateCcw, Check, Loader2, AlertTriangle, Zap, ZapOff, FlipHorizontal, Crop, ScanLine, ScanSearch, FileText, Palette, Droplet, Gauge } from 'lucide-react';
 import { canvasToBlob, applyScanFilter, detectPaperSize, estimateTextStats, otsuThreshold, type ScanFilter, type PaperSize } from '../../utils/scanProcessor';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   onCapture: (file: File) => void;
@@ -11,6 +12,7 @@ type Pt = { x: number; y: number };
 type Quad = [Pt, Pt, Pt, Pt];
 
 export default function CameraScanner({ onCapture, onClose }: Props) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rawCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -555,7 +557,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       <div className="flex items-center justify-between px-4 py-3 bg-black/80 text-white">
         <div className="flex items-center gap-2">
           <Camera className="w-5 h-5 text-teal-400" />
-          <span className="font-semibold text-sm">Skano me kamere</span>
+          <span className="font-semibold text-sm">{t('common.scanWithCamera')}</span>
         </div>
         <div className="flex items-center gap-2">
           {!previewUrl && (
@@ -677,9 +679,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
                     )
                   ) : (
                     <>
-                      <Camera className="w-3.5 h-3.5 text-slate-300" />
-                      Vendos dokumentin dhe fotografo
-                    </>
+                      <Camera className="w-3.5 h-3.5 text-slate-300" />{t('common.vendosDokumentinDheFotografo')}</>
                   )}
                 </div>
                 {autoCrop && searchTimedOut && !liveQuad && (
@@ -808,8 +808,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
                 onClick={retake}
                 className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium inline-flex items-center gap-2 text-sm"
               >
-                <RotateCcw className="w-4 h-4" /> Fotografo perseri
-              </button>
+                <RotateCcw className="w-4 h-4" />{t('common.fotografoPerseri')}</button>
               <button
                 onClick={confirm}
                 className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold inline-flex items-center gap-2 text-sm"

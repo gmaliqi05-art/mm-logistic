@@ -240,8 +240,8 @@ export default function Compliance() {
           <select value={filterEntity} onChange={(e) => setFilterEntity(e.target.value as 'all' | 'vehicle' | 'driver')}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
             <option value="all">{t('common.allEntities')}</option>
-            <option value="vehicle">Vetem mjete</option>
-            <option value="driver">Vetem shofere</option>
+            <option value="vehicle">{t('common.vetemMjete')}</option>
+            <option value="driver">{t('common.vetemShofere')}</option>
           </select>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as ExpiryLevel | 'all')}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">

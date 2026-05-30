@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AlertTriangle, Loader2, Package, X, FileText } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 
 interface StockItem {
   product_name: string;
@@ -28,6 +29,7 @@ const CONDITION_LABELS: Record<string, string> = {
 };
 
 export default function StockDeductionConfirmModal({ items, noteNumber, partnerName, onConfirm, onCancel }: Props) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasInsufficient = items.some((i) => i.stock_available !== null && i.stock_available < i.quantity);
@@ -52,7 +54,7 @@ export default function StockDeductionConfirmModal({ items, noteNumber, partnerN
               <FileText className="w-5 h-5 text-sky-700" />
             </div>
             <div>
-              <h2 className="font-bold text-slate-900">Shkarko stokun dhe krijo faturen</h2>
+              <h2 className="font-bold text-slate-900">{t('common.shkarkoStokunDheKrijoFaturen')}</h2>
               <p className="text-xs text-slate-500 mt-0.5">Fletedergesa {noteNumber}{partnerName ? ` — ${partnerName}` : ''}</p>
             </div>
           </div>
@@ -71,7 +73,7 @@ export default function StockDeductionConfirmModal({ items, noteNumber, partnerN
               <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider">
                 <tr>
                   <th className="text-left px-3 py-2.5">Artikulli</th>
-                  <th className="text-right px-3 py-2.5">Sasia</th>
+                  <th className="text-right px-3 py-2.5">{t('common.quantity')}</th>
                   <th className="text-right px-3 py-2.5">Ne stok</th>
                 </tr>
               </thead>
@@ -107,8 +109,8 @@ export default function StockDeductionConfirmModal({ items, noteNumber, partnerN
             <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
               <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-amber-800">
-                <p className="font-semibold">Stoku i pamjaftueshem</p>
-                <p className="mt-0.5">Disa artikuj kane stok me te ulet se sasia e kerkuar. Stoku do te shkoj ne negativ.</p>
+                <p className="font-semibold">{t('common.stokuIPamjaftueshem')}</p>
+                <p className="mt-0.5">{t('common.disaArtikujKaneStokMeTe')}</p>
               </div>
             </div>
           )}
@@ -123,9 +125,7 @@ export default function StockDeductionConfirmModal({ items, noteNumber, partnerN
             onClick={onCancel}
             disabled={loading}
             className="px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-50"
-          >
-            Anulo
-          </button>
+          >{t('common.cancel')}</button>
           <button
             onClick={handleConfirm}
             disabled={loading}

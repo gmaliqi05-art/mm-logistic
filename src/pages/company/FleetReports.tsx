@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BarChart3, Calendar, Clock, MapPin, Pause, Route as RouteIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 
 interface LocPoint {
   driver_id: string;
@@ -66,6 +67,7 @@ const STATIONARY_KMH = 3;
 const GAP_MIN = 20;
 
 export default function CompanyFleetReports() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [preset, setPreset] = useState<Preset>('today');
   const [customFrom, setCustomFrom] = useState('');
@@ -210,18 +212,18 @@ export default function CompanyFleetReports() {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-2">
           <MapPin className="w-4 h-4 text-teal-600" />
-          <h2 className="text-sm font-semibold text-slate-900">Per shofer</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{t('common.perShofer')}</h2>
         </div>
         {loading ? (
           <div className="p-6 text-center text-sm text-slate-500">Duke llogaritur...</div>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-center text-sm text-slate-500">Nuk ka te dhena per kete periudhe.</div>
+          <div className="p-6 text-center text-sm text-slate-500">{t('common.nukKaTeDhenaPerKete')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-600">
                 <tr>
-                  <th className="text-left px-4 py-2.5 font-semibold">Shoferi</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">{t('common.shoferi')}</th>
                   <th className="text-right px-4 py-2.5 font-semibold">Distanca</th>
                   <th className="text-right px-4 py-2.5 font-semibold">Aktive</th>
                   <th className="text-right px-4 py-2.5 font-semibold">Ndalur</th>

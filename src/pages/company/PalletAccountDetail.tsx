@@ -4,6 +4,7 @@ import { ArrowLeft, Download, Plus, TrendingUp, TrendingDown, Loader2 } from 'lu
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../utils/logger';
+import { useTranslation } from '../../i18n';
 
 interface AccountHeader {
   id: string;
@@ -27,6 +28,7 @@ interface Transaction {
 }
 
 export default function PalletAccountDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
   const [header, setHeader] = useState<AccountHeader | null>(null);
@@ -176,7 +178,7 @@ export default function PalletAccountDetail() {
           <div className="text-3xl font-bold text-slate-900">{header.opening_balance}</div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="text-xs text-slate-500 uppercase tracking-wide">Total transactions</div>
+          <div className="text-xs text-slate-500 uppercase tracking-wide">{t('common.totalTransactions')}</div>
           <div className="text-3xl font-bold text-slate-900">{txns.length}</div>
         </div>
       </div>

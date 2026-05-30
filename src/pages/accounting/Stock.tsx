@@ -13,6 +13,7 @@ import {
   DollarSign,
   ShieldAlert,
 } from 'lucide-react';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
@@ -30,6 +31,7 @@ interface AdjustmentModal {
 type StockFilter = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 
 export default function Stock() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
 
 
@@ -184,7 +186,7 @@ export default function Stock() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Menaxhimi i Stokut</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('common.menaxhimiIStokut')}</h1>
         <p className="text-gray-500 mt-1">Kontrollo inventarin dhe levizjet e stokut</p>
       </div>
 
@@ -202,7 +204,7 @@ export default function Stock() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Totali Produkteve</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.totaliProdukteve')}</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">{totalProducts}</p>
             </div>
             <div className="bg-emerald-500 p-2.5 rounded-xl">
@@ -213,7 +215,7 @@ export default function Stock() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vlera e Stokut</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.vleraEStokut')}</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalStockValue)}</p>
             </div>
             <div className="bg-blue-500 p-2.5 rounded-xl">
@@ -287,10 +289,10 @@ export default function Stock() {
               <tr className="border-b border-gray-100">
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">SKU</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stoku</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.stoku')}</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Min</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vlera</th>
-                <th className="text-center px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statusi</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.vlera')}</th>
+                <th className="text-center px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veprime</th>
               </tr>
             </thead>
@@ -299,8 +301,8 @@ export default function Stock() {
                 <tr>
                   <td colSpan={7} className="px-6 py-16 text-center">
                     <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Nuk ka produkte</p>
-                    <p className="text-gray-400 text-sm mt-1">Asnje produkt nuk perputhet me filtrat</p>
+                    <p className="text-gray-500 font-medium">{t('common.nukKaProdukte')}</p>
+                    <p className="text-gray-400 text-sm mt-1">{t('common.asnjeProduktNukPerputhetMeFiltrat')}</p>
                   </td>
                 </tr>
               ) : (
@@ -361,8 +363,8 @@ export default function Stock() {
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lloji</th>
-                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sasia</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.type')}</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.quantity')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Referenca</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shenime</th>
@@ -373,7 +375,7 @@ export default function Stock() {
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
                     <CornerDownLeft className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Asnje levizje stoku</p>
+                    <p className="text-gray-500 font-medium">{t('common.asnjeLevizjeStoku')}</p>
                     <p className="text-gray-400 text-sm mt-1">Levizjet e stokut do te shfaqen ketu</p>
                   </td>
                 </tr>
@@ -416,7 +418,7 @@ export default function Stock() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setAdjustmentModal(null)} />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Rregullim Stoku</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t('common.rregullimStoku')}</h2>
               <button
                 onClick={() => setAdjustmentModal(null)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -430,11 +432,11 @@ export default function Stock() {
                 <p className="text-sm text-gray-900 mt-1">{adjustmentModal.product.name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700">Sasia Aktuale</p>
+                <p className="text-sm font-medium text-gray-700">{t('common.currentQuantity')}</p>
                 <p className="text-lg font-bold text-gray-900 mt-1">{adjustmentModal.product.current_stock}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sasia e Re</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.sasiaERe')}</label>
                 <input
                   type="number"
                   value={adjustmentModal.newQty}
@@ -471,9 +473,7 @@ export default function Stock() {
               <button
                 onClick={() => setAdjustmentModal(null)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Anulo
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={handleAdjustment}
                 disabled={saving || adjustmentModal.newQty === adjustmentModal.product.current_stock}

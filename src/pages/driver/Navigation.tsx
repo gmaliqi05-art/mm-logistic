@@ -6,6 +6,7 @@ import { Clock, MapPin, Navigation as NavigationIcon, Route, Truck } from 'lucid
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import TruckNavChooser from '../../components/fleet/TruckNavChooser';
+import { useTranslation } from '../../i18n';
 
 interface CountrySegment {
   country_code: string;
@@ -60,6 +61,7 @@ function FitToRoute({ geometry }: { geometry: [number, number][] }) {
 }
 
 export default function DriverNavigation() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [delivery, setDelivery] = useState<AssignedDelivery | null>(null);
   const [loading, setLoading] = useState(true);
@@ -174,8 +176,8 @@ export default function DriverNavigation() {
       <div className="p-4 max-w-2xl mx-auto">
         <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
           <NavigationIcon className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <h2 className="text-lg font-semibold text-slate-900">Nuk ka rrugen e caktuar</h2>
-          <p className="text-sm text-slate-600 mt-1">Kompania ende nuk te ka caktuar nje rruge per transportin tend.</p>
+          <h2 className="text-lg font-semibold text-slate-900">{t('common.nukKaRrugenECaktuar')}</h2>
+          <p className="text-sm text-slate-600 mt-1">{t('common.kompaniaEndeNukTeKaCaktuar')}</p>
         </div>
       </div>
     );
@@ -196,7 +198,7 @@ export default function DriverNavigation() {
 
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center gap-2 text-sm text-teal-900">
         <Truck className="w-4 h-4" />
-        <span>Vetem rruge te lejuara per kamiona - caktuar nga kompania.</span>
+        <span>{t('common.truckOnlyRoutesCompanyAssigned')}</span>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">

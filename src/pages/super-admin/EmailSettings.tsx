@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Settings, Save, Loader2, CheckCircle2, AlertCircle, Clock, Mail } from "lucide-react";
+import { useTranslation } from '../../i18n';
 
 type BrandKey = {
   key: string;
@@ -26,6 +27,7 @@ const COLOR_KEYS = [
 ] as const;
 
 export default function EmailSettings() {
+  const { t } = useTranslation();
   const [values, setValues] = useState<Record<string, string>>({});
   // Note: service_role_key is NEVER fetched into client state. The
   // DB column stores it for pg_cron to read server-side, but pulling
@@ -278,9 +280,7 @@ export default function EmailSettings() {
               </div>
               <div className="bg-white px-5 py-6">
                 <h3 className="mb-2 text-lg font-semibold" style={{ color: secondary }}>Titulli i emailit</h3>
-                <p className="mb-4 text-sm text-slate-600">
-                  Kjo eshte nje preview se si do te duken emailet tuaja me ngjyrat aktuale.
-                </p>
+                <p className="mb-4 text-sm text-slate-600">{t('common.kjoEshteNjePreviewSeSi')}</p>
                 <button
                   type="button"
                   className="rounded-lg px-4 py-2 text-sm font-medium text-white"

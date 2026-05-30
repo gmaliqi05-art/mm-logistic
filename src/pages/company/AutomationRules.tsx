@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Save, CheckCircle2, AlertTriangle, Mail, Bell, Clock, Zap, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface Settings {
   auto_send_on_finalize: boolean;
@@ -43,6 +44,7 @@ interface TemplateOption {
 }
 
 export default function AutomationRules() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
@@ -165,9 +167,7 @@ export default function AutomationRules() {
             onChange={(e) => setSettings(s => ({ ...s, auto_send_on_finalize: e.target.checked }))}
             className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
           />
-          <span className="text-sm font-medium text-gray-700">
-            Dergo faturen automatikisht me email pas finalizimit
-          </span>
+          <span className="text-sm font-medium text-gray-700">{t('common.dergoFaturenAutomatikishtMeEmailPas')}</span>
         </label>
 
         <div className="ml-14 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -191,8 +191,8 @@ export default function AutomationRules() {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               <option value="sq">Shqip</option>
-              <option value="de">Gjermanisht</option>
-              <option value="en">Anglisht</option>
+              <option value="de">{t('common.gjermanisht')}</option>
+              <option value="en">{t('common.anglisht')}</option>
             </select>
           </div>
         </div>
@@ -206,9 +206,7 @@ export default function AutomationRules() {
           </div>
           <div className="flex-1">
             <h3 className="text-base font-semibold text-gray-900">Rikujtim automatik pagese</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Sistemet dergon automatikisht email rikujtimi per faturat e pa paguara
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">{t('common.sistemetDergonAutomatikishtEmailRikujtimiPer')}</p>
           </div>
         </div>
 
@@ -356,14 +354,12 @@ export default function AutomationRules() {
               onChange={(e) => setSettings(s => ({ ...s, cc_admin_on_invoice: e.target.checked }))}
               className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
             />
-            <span className="text-sm font-medium text-gray-700">
-              Dergo kopje te email-it tek unë
-            </span>
+            <span className="text-sm font-medium text-gray-700">{t('common.dergoKopjeTeEmailItTek')}</span>
           </label>
 
           {settings.cc_admin_on_invoice && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Adresa CC</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.adresaCc')}</label>
               <input
                 type="email"
                 value={settings.cc_email}

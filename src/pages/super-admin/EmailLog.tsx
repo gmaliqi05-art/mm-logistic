@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Mail, Search, Loader2, CheckCircle2, XCircle, Eye, X } from "lucide-react";
+import { useTranslation } from '../../i18n';
 
 interface Delivery {
   id: string;
@@ -34,6 +35,7 @@ const RANGES = [
 ];
 
 export default function EmailLog() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -162,9 +164,7 @@ export default function EmailLog() {
                     onClick={() => setDetail(d)}
                     className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600"
                   >
-                    <Eye className="h-3.5 w-3.5" />
-                    Detaje
-                  </button>
+                    <Eye className="h-3.5 w-3.5" />{t('common.detaje')}</button>
                 </div>
               </div>
             ))}
@@ -179,8 +179,8 @@ export default function EmailLog() {
                 <th className="px-4 py-3">Template</th>
                 <th className="px-4 py-3">Subject</th>
                 <th className="px-4 py-3">Gjuha</th>
-                <th className="px-4 py-3">Statusi</th>
-                <th className="px-4 py-3 text-right">Detaje</th>
+                <th className="px-4 py-3">{t('common.status')}</th>
+                <th className="px-4 py-3 text-right">{t('common.detaje')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -206,7 +206,7 @@ export default function EmailLog() {
                         type="button"
                         onClick={() => setDetail(d)}
                         className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-teal-600"
-                        title="Detaje"
+                        title={t('common.detaje')}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -226,7 +226,7 @@ export default function EmailLog() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-              <h2 className="text-lg font-semibold text-slate-900">Detajet e dergeses</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{t('common.detajetEDergeses')}</h2>
               <button type="button" onClick={() => setDetail(null)} className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
                 <X className="h-5 w-5" />
               </button>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, Plus, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 interface Contact {
   id: string;
@@ -35,6 +36,7 @@ export default function ContactAutocomplete({
   placeholder,
   label,
 }: Props) {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [open, setOpen] = useState(false);
@@ -159,7 +161,7 @@ export default function ContactAutocomplete({
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-3 text-sm text-gray-500">Asnje kontakt qe perputhet.</div>
+            <div className="p-3 text-sm text-gray-500">{t('common.asnjeKontaktQePerputhet')}</div>
           ) : (
             <ul className="divide-y divide-gray-100">
               {filtered.map((c) => (

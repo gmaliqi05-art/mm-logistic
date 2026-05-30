@@ -3,6 +3,7 @@ import { X, Calculator, Check, Sparkles, Loader2, CreditCard } from 'lucide-reac
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   onClose: () => void;
@@ -19,6 +20,7 @@ const FEATURES = [
 ];
 
 export default function AccountingUpgradeModal({ onClose, onActivated }: Props) {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { refreshSubscription } = useSubscription();
   const [activating, setActivating] = useState(false);
@@ -118,7 +120,7 @@ export default function AccountingUpgradeModal({ onClose, onActivated }: Props) 
         <div className="p-6 space-y-5">
           <div className="flex items-end gap-4">
             <div className="flex-1 p-4 rounded-xl border-2 border-slate-200 bg-slate-50">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Vetem kontabilitet</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{t('common.vetemKontabilitet')}</p>
               <div className="mt-1 flex items-baseline gap-1">
                 <span className="text-2xl font-bold text-slate-400 line-through">{fullPrice}EUR</span>
                 <span className="text-sm text-slate-400">/muaj</span>
