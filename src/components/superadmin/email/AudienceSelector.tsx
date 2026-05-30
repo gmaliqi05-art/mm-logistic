@@ -139,7 +139,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
         <CheckGroup options={LOCALES} selected={value.locales ?? []} onChange={(v) => onChange({ ...value, locales: v })} />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-slate-700">Statusi i abonimit</label>
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">{t('common.subscriptionStatus')}</label>
         <CheckGroup options={SUBSCRIPTION_STATUSES} selected={value.subscription_statuses ?? []} onChange={(v) => onChange({ ...value, subscription_statuses: v })} />
       </div>
       <div>

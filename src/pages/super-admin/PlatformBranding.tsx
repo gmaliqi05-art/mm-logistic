@@ -149,7 +149,7 @@ export default function PlatformBranding() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Logo dhe Branding i Platformës</h1>
-        <p className="text-gray-500 mt-1">Menaxhoni logot e platformës për UI dhe rrjete sociale</p>
+        <p className="text-gray-500 mt-1">{t('common.managePlatformLogos')}</p>
       </div>
 
       {error && (
