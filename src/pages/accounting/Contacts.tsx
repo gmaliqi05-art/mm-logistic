@@ -472,7 +472,7 @@ export default function Contacts() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Lloji i kontaktit</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.contactType')}</label>
                   <select
                     value={form.contact_type}
                     onChange={(e) => updateForm('contact_type', e.target.value)}
