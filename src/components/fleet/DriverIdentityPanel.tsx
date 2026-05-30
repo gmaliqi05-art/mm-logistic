@@ -88,7 +88,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 p-4">
-        <div className="text-xs uppercase tracking-wider text-teal-700 font-semibold">Statusi i rezidences</div>
+        <div className="text-xs uppercase tracking-wider text-teal-700 font-semibold">{t('common.residencyStatus')}</div>
         <p className="text-sm text-gray-700 mt-1">
           Percakton cilet dokumente identiteti kerkohen. Ndryshimi lejohet vetem nga administratori.
         </p>

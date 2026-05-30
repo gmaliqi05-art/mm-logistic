@@ -198,7 +198,7 @@ export default function DriverNavigation() {
 
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center gap-2 text-sm text-teal-900">
         <Truck className="w-4 h-4" />
-        <span>Vetem rruge te lejuara per kamiona - caktuar nga kompania.</span>
+        <span>{t('common.truckOnlyRoutesCompanyAssigned')}</span>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
