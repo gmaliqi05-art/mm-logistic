@@ -255,7 +255,7 @@ export default function EmailCampaignNew() {
                   }`}
                 >
                   <div className="text-sm font-semibold text-slate-900">Permbajtje ad-hoc</div>
-                  <div className="text-xs text-slate-500">Shkruaj drejtperdrejt per kete fushate.</div>
+                  <div className="text-xs text-slate-500">{t('common.writeDirectlyForCampaign')}</div>
                 </button>
                 <button
                   type="button"
@@ -464,7 +464,7 @@ export default function EmailCampaignNew() {
               </div>
               {schedule === "later" && (
                 <div className="mt-3">
-                  <label className="mb-1 block text-xs font-medium text-slate-700">Data dhe ora</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.dateAndTime')}</label>
                   <input
                     type="datetime-local"
                     value={scheduledAt}
