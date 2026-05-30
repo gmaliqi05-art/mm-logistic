@@ -511,7 +511,7 @@ export default function AccSettings() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">Preferencat e Parazgjedhura</h2>
-            <p className="text-xs text-gray-500">Vlerat standarde per dokumente te reja</p>
+            <p className="text-xs text-gray-500">{t('common.defaultsForNewDocs')}</p>
           </div>
         </div>
         <div className="p-6">

@@ -215,7 +215,7 @@ export default function Stock() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vlera e Stokut</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.stockValue')}</p>
               <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalStockValue)}</p>
             </div>
             <div className="bg-blue-500 p-2.5 rounded-xl">

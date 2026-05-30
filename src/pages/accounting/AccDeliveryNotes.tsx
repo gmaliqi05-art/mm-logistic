@@ -689,7 +689,7 @@ export default function AccDeliveryNotes() {
                             )}
                           </div>
                           <div className="sm:col-span-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Pershkrimi</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.description')}</label>
                             <input
                               type="text"
                               value={item.description}
