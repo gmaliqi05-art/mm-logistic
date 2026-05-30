@@ -648,7 +648,7 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">Vlera e Stokut</p>
+                  <p className="text-sm text-emerald-600 font-medium">{t('common.stockValue')}</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">
                     {formatCurrency(stockValue)}
                   </p>

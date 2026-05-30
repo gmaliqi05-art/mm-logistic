@@ -126,7 +126,7 @@ export default function FixedAssets() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Asetet Fikse / Investimet</h1>
-          <p className="text-gray-500 mt-1">Regjistri i aseteve dhe zhvleresimi linear mujor</p>
+          <p className="text-gray-500 mt-1">{t('common.assetRegistryDescription')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -152,11 +152,11 @@ export default function FixedAssets() {
           <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalCost)}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase">Vlera aktuale libri</p>
+          <p className="text-xs font-medium text-gray-500 uppercase">{t('common.currentBookValue')}</p>
           <p className="text-2xl font-bold text-emerald-600 mt-2">{formatCurrency(totalBookValue)}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-xs font-medium text-gray-500 uppercase">Zhvleresim mujor</p>
+          <p className="text-xs font-medium text-gray-500 uppercase">{t('common.monthlyDepreciation')}</p>
           <p className="text-2xl font-bold text-amber-600 mt-2">{formatCurrency(totalMonthlyDep)}</p>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function FixedAssets() {
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Kosto</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Jeta</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Zhvl. mujore</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Vlera libri</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.bookValue')}</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Veprime</th>
                 </tr>
               </thead>

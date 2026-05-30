@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { Mail, Search, Loader2, CheckCircle2, XCircle, Eye, X } from "lucide-react";
+import { useTranslation } from "../../i18n";
 
 interface Delivery {
   id: string;
@@ -34,6 +35,7 @@ const RANGES = [
 ];
 
 export default function EmailLog() {
+  const { t } = useTranslation();
   const [items, setItems] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -86,7 +88,7 @@ export default function EmailLog() {
           <Mail className="h-6 w-6 text-teal-600" />
           Log-u i emaileve
         </h1>
-        <p className="mt-1 text-sm text-slate-500">Historia dhe statusi i cdo emaili te derguar.</p>
+        <p className="mt-1 text-sm text-slate-500">{t('common.emailLogSubtitle')}</p>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -226,7 +228,7 @@ export default function EmailLog() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-              <h2 className="text-lg font-semibold text-slate-900">Detajet e dergeses</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{t('common.deliveryDetails')}</h2>
               <button type="button" onClick={() => setDetail(null)} className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
                 <X className="h-5 w-5" />
               </button>

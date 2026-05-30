@@ -710,7 +710,7 @@ export default function Products() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.description')}</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}

@@ -259,7 +259,7 @@ export default function DriverNavigation() {
 
       {selectedAlt && selectedAlt.country_breakdown.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-2">Vendet qe pershkohen</h3>
+          <h3 className="text-sm font-semibold text-slate-900 mb-2">{t('common.placesPassed')}</h3>
           <div className="space-y-1.5">
             {selectedAlt.country_breakdown.map((c) => (
               <div key={c.country_code} className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 last:border-0">
