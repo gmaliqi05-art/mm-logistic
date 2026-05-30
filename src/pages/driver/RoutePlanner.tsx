@@ -131,7 +131,7 @@ export default function DriverRoutePlanner() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-sm">
           <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
           <div className="flex-1">
-            <div className="font-semibold text-amber-900">GPS nuk eshte aktiv</div>
+            <div className="font-semibold text-amber-900">{t('common.gpsNotActive')}</div>
             <div className="text-amber-800 text-xs mt-0.5">{gpsError}</div>
             <Link to="/driver/tracking" className="inline-block mt-1 text-xs font-semibold text-teal-700 underline">
               Hap tracking-un

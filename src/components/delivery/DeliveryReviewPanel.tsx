@@ -1702,7 +1702,7 @@ function ReviewModal({
 
               {note.notes && (
                 <div>
-                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Shenime</p>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">{t('common.notes')}</p>
                   <pre className="text-xs text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap font-sans border border-gray-100">{note.notes}</pre>
                 </div>
               )}
@@ -1711,9 +1711,7 @@ function ReviewModal({
 
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
-              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
-                Artikujt
-              </p>
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">{t('common.lineItems')}</p>
               <div className="flex items-center gap-2">
                 {itemsDirty && (
                   <button
@@ -1903,9 +1901,7 @@ function ReviewModal({
               <button
                 onClick={() => setNegConfirm(null)}
                 className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100"
-              >
-                Anulo
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={negConfirm.onConfirm}
                 className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700"
@@ -1938,15 +1934,11 @@ function ReviewModal({
               <button
                 onClick={() => setWarningModal(null)}
                 className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100"
-              >
-                Anulo
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={warningModal.onConfirm}
                 className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-lg hover:bg-amber-700"
-              >
-                Vazhdo
-              </button>
+              >{t('common.continue')}</button>
             </div>
           </div>
         </div>
@@ -1994,9 +1986,7 @@ function ReviewModal({
               <button
                 onClick={() => { setShowSortingRedirect(false); onDone(); }}
                 className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-100"
-              >
-                Mbyll
-              </button>
+              >{t('common.close')}</button>
               <button
                 onClick={() => { setShowSortingRedirect(false); navigate('/depot/sorting'); }}
                 className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700"
@@ -2486,7 +2476,7 @@ function SplitRow({
           value={row.quantity || ''}
           onChange={(e) => onUpdate(row._key, { quantity: parseInt(e.target.value) || 0 })}
           className="col-span-2 bg-white border border-gray-200 rounded-lg px-2 py-2 text-xs text-right font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500"
-          placeholder="Sasia"
+          placeholder={t('common.quantity')}
         />
       </div>
 
@@ -2514,9 +2504,7 @@ function SplitRow({
             type="button"
             onClick={() => { setCreateMode(null); setCreateCatName(''); }}
             className="inline-flex items-center px-2 py-1.5 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-          >
-            Anulo
-          </button>
+          >{t('common.cancel')}</button>
         </div>
       )}
 
@@ -2544,9 +2532,7 @@ function SplitRow({
             type="button"
             onClick={() => { setCreateMode(null); setCreateProdName(''); }}
             className="inline-flex items-center px-2 py-1.5 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-          >
-            Anulo
-          </button>
+          >{t('common.cancel')}</button>
         </div>
       )}
 

@@ -779,9 +779,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
                     setFollowId(a.driver_id);
                   }}
                   className="text-[11px] font-semibold underline whitespace-nowrap"
-                >
-                  Shiko
-                </button>
+                >{t('common.view')}</button>
               </div>
             );
           })}
@@ -1062,14 +1060,13 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
                     <button
                       onClick={() => { setExtendOpen(null); setExtendText(''); }}
                       className="text-xs px-2 py-1 rounded-md text-slate-600 hover:bg-slate-200"
-                    >Anulo</button>
+                    >{t('common.cancel')}</button>
                     <button
                       disabled={extendSaving || !extendText.trim()}
                       onClick={() => submitExtension(activeDriver)}
                       className="text-xs px-3 py-1 rounded-md bg-teal-600 text-white disabled:opacity-50 inline-flex items-center gap-1"
                     >
-                      <Send className="w-3 h-3" /> Dergo
-                    </button>
+                      <Send className="w-3 h-3" />{t('common.send')}</button>
                   </div>
                 </div>
               )}

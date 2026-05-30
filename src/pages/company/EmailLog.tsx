@@ -111,7 +111,7 @@ export default function EmailLog() {
               onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
               className="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              <option value="all">Te gjitha</option>
+              <option value="all">{t('common.all')}</option>
               <option value="sent">Te derguara</option>
               <option value="failed">Te deshtuara</option>
               <option value="queued">Ne radhe</option>
@@ -139,8 +139,8 @@ export default function EmailLog() {
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Destinatari</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Template</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Statusi</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">Data</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">{t('common.status')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase">{t('common.date')}</th>
                   <th className="px-4 py-3 w-10"></th>
                 </tr>
               </thead>

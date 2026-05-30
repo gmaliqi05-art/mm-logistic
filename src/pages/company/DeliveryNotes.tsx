@@ -1023,7 +1023,7 @@ export default function CompanyDeliveryNotes() {
               {/* Data dhe Ora - always visible */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Data</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.date')}</label>
                   <input
                     type="date"
                     value={form.type === 'pickup' ? form.scheduled_pickup_date : form.scheduled_delivery_date}
@@ -1296,7 +1296,7 @@ export default function CompanyDeliveryNotes() {
                 <div className="pl-2 border-l-2 border-slate-200">
                   <div className="border border-teal-100 bg-teal-50/50 rounded-lg p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-teal-900">Lloji</span>
+                      <span className="text-sm font-semibold text-teal-900">{t('common.type')}</span>
                       <select
                         value={form.pallet_type}
                         onChange={(e) => setForm({ ...form, pallet_type: e.target.value })}
@@ -1919,7 +1919,7 @@ function PartnerSearchField({ contacts, form, setForm, onCreated }: PartnerSearc
             <p className="text-sm font-semibold text-teal-900 truncate">{selectedLabel}</p>
             <p className="text-[11px] text-teal-700">Adresa u plotesua automatikisht.</p>
           </div>
-          <button type="button" onClick={clear} className="text-xs text-teal-800 hover:underline shrink-0">Ndrysho</button>
+          <button type="button" onClick={clear} className="text-xs text-teal-800 hover:underline shrink-0">{t('common.edit')}</button>
         </div>
       ) : (
         <>

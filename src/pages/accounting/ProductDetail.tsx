@@ -490,7 +490,7 @@ export default function ProductDetail() {
         </Link>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-16 text-center">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 font-medium">Produkti nuk u gjet</p>
+          <p className="text-gray-500 font-medium">{t('common.productNotFound')}</p>
         </div>
       </div>
     );
@@ -568,9 +568,7 @@ export default function ProductDetail() {
                   onClick={openEditModal}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
-                  <Edit3 className="w-4 h-4" />
-                  Ndrysho
-                </button>
+                  <Edit3 className="w-4 h-4" />{t('common.edit')}</button>
                 <button
                   onClick={openAdjustModal}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
@@ -654,7 +652,7 @@ export default function ProductDetail() {
                   </p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-600 font-medium">Sasia Aktuale</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('common.currentQuantity')}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{product.current_stock}</p>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-4">
@@ -692,21 +690,15 @@ export default function ProductDetail() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-100">
-                          <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                            Data
-                          </th>
+                          <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
                           <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                             Tipi
                           </th>
-                          <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                            Sasia
-                          </th>
+                          <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
                           <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                             Referenca
                           </th>
-                          <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                            Shenime
-                          </th>
+                          <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.notes')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
@@ -746,12 +738,12 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">Totali i Shitur</p>
+                  <p className="text-sm text-emerald-600 font-medium">{t('common.totalSold')}</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">{totalUnitsSold}</p>
                   <p className="text-xs text-emerald-500 mt-0.5">njesi</p>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-4">
-                  <p className="text-sm text-emerald-600 font-medium">Te Ardhurat</p>
+                  <p className="text-sm text-emerald-600 font-medium">{t('common.revenue')}</p>
                   <p className="text-2xl font-bold text-emerald-700 mt-1">
                     {formatCurrency(totalRevenue)}
                   </p>
@@ -774,21 +766,13 @@ export default function ProductDetail() {
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Fatura
                         </th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Klienti
-                        </th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Data
-                        </th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Sasia
-                        </th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.customer')}</th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Cmimi
                         </th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Totali
-                        </th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.total')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -834,12 +818,12 @@ export default function ProductDetail() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-sm text-blue-600 font-medium">Totali i Blere</p>
+                  <p className="text-sm text-blue-600 font-medium">{t('common.totalBought')}</p>
                   <p className="text-2xl font-bold text-blue-700 mt-1">{totalUnitsPurchased}</p>
                   <p className="text-xs text-blue-500 mt-0.5">njesi</p>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-sm text-blue-600 font-medium">Kostoja Totale</p>
+                  <p className="text-sm text-blue-600 font-medium">{t('common.totalCost')}</p>
                   <p className="text-2xl font-bold text-blue-700 mt-1">
                     {formatCurrency(totalCost)}
                   </p>
@@ -862,21 +846,13 @@ export default function ProductDetail() {
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Blerja
                         </th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Furnitori
-                        </th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Data
-                        </th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Sasia
-                        </th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.supplier')}</th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Cmimi
                         </th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Totali
-                        </th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.total')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -944,15 +920,11 @@ export default function ProductDetail() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100">
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Data
-                        </th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.date')}</th>
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Tipi
                         </th>
-                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Sasia
-                        </th>
+                        <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.quantity')}</th>
                         <th className="text-right px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Cmimi
                         </th>
@@ -962,9 +934,7 @@ export default function ProductDetail() {
                         <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
                           Ref. ID
                         </th>
-                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                          Shenime
-                        </th>
+                        <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 uppercase">{t('common.notes')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -1032,7 +1002,7 @@ export default function ProductDetail() {
 
               <div className="p-6 space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-500">Sasia Aktuale</p>
+                  <p className="text-sm text-gray-500">{t('common.currentQuantity')}</p>
                   <p className="text-2xl font-bold text-gray-900">{product.current_stock}</p>
                 </div>
 
@@ -1082,9 +1052,7 @@ export default function ProductDetail() {
                 <button
                   onClick={closeAdjustModal}
                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                >
-                  Anulo
-                </button>
+                >{t('common.cancel')}</button>
                 <button
                   onClick={handleSaveAdjustment}
                   disabled={savingAdjust || !adjustReason.trim()}
@@ -1140,9 +1108,7 @@ export default function ProductDetail() {
                           className="w-32 h-32 object-cover rounded-xl"
                         />
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500">
-                            Kliko ose terhiq per te ndryshuar
-                          </span>
+                          <span className="text-sm text-gray-500">{t('common.clickOrDragToChange')}</span>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -1216,9 +1182,7 @@ export default function ProductDetail() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Pershkrimi
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.description')}</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -1229,9 +1193,7 @@ export default function ProductDetail() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cmimi Neto
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.netPrice')}</label>
                     <input
                       type="number"
                       value={formData.price_net}
@@ -1334,9 +1296,7 @@ export default function ProductDetail() {
                 <button
                   onClick={closeEditModal}
                   className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                >
-                  Anulo
-                </button>
+                >{t('common.cancel')}</button>
                 <button
                   onClick={handleSaveEdit}
                   disabled={saving || uploadingImage}

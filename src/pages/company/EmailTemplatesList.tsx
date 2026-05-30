@@ -222,7 +222,7 @@ export default function EmailTemplatesList() {
             onChange={(e) => setFilter(e.target.value as any)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
-            <option value="all">Te gjitha</option>
+            <option value="all">{t('common.all')}</option>
             <option value="invoice">Per faturat</option>
             <option value="custom">Te personalizuara</option>
           </select>

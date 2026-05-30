@@ -298,7 +298,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                 <span>Kategoria:</span>
                 <span className="font-semibold text-slate-900">{categories.find(c => c.value === category)?.label || 'Tjeter'}</span>
                 {!defaultCategory && (
-                  <button onClick={() => setStep('category')} className="ml-auto text-teal-600 hover:underline">Ndrysho</button>
+                  <button onClick={() => setStep('category')} className="ml-auto text-teal-600 hover:underline">{t('common.edit')}</button>
                 )}
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -307,7 +307,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                   className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
                 >
                   <Camera className="w-8 h-8 text-teal-600 mb-2" />
-                  <p className="text-sm font-semibold text-slate-900">Skano me kamere</p>
+                  <p className="text-sm font-semibold text-slate-900">{t('common.scanWithCamera')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">Fotografo dokumentin me telefon</p>
                 </button>
                 <button
@@ -348,7 +348,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                   className="p-6 border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-left transition-colors"
                 >
                   <Camera className="w-8 h-8 text-teal-600 mb-2" />
-                  <p className="text-sm font-semibold text-slate-900">Skano me kamere</p>
+                  <p className="text-sm font-semibold text-slate-900">{t('common.scanWithCamera')}</p>
                   <p className="text-xs text-slate-500 mt-0.5">Fotografo anen e pasme</p>
                 </button>
                 <button
@@ -412,7 +412,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
 
               <div className="grid lg:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">Dokumenti</p>
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase mb-2">{t('common.document')}</p>
                   <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
                     {fileMime === 'application/pdf' ? (
                       <iframe src={fileUrl} className="w-full h-80" title="Preview" />
@@ -515,9 +515,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
             <button
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-100"
-            >
-              Anulo
-            </button>
+            >{t('common.cancel')}</button>
             {step === 'review' && extracted && (
               <button
                 onClick={handleSave}

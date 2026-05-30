@@ -464,7 +464,7 @@ export default function EmailCampaignNew() {
               </div>
               {schedule === "later" && (
                 <div className="mt-3">
-                  <label className="mb-1 block text-xs font-medium text-slate-700">Data dhe ora</label>
+                  <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.dateAndTime')}</label>
                   <input
                     type="datetime-local"
                     value={scheduledAt}
@@ -500,8 +500,7 @@ export default function EmailCampaignNew() {
             onClick={() => setStep((s) => s + 1)}
             disabled={(step === 1 && !canNext1) || (step === 2 && !canNext2)}
             className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
-          >
-            Vazhdo <ArrowRight className="h-4 w-4" />
+          >{t('common.continue')}<ArrowRight className="h-4 w-4" />
           </button>
         ) : (
           <button

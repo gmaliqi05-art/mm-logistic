@@ -691,7 +691,7 @@ function TrailerLoadEditor({
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold text-gray-900">Artikujt</h3>
+          <h3 className="text-sm font-bold text-gray-900">{t('common.lineItems')}</h3>
           <button
             onClick={() => setItems((p) => [...p, emptyDraft()])}
             className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-800"
@@ -753,9 +753,7 @@ function TrailerLoadEditor({
                     />
                   </div>
                   <div className="col-span-5 md:col-span-1">
-                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                      Sasia
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">{t('common.quantity')}</label>
                     <input
                       type="number"
                       inputMode="numeric"
@@ -783,9 +781,7 @@ function TrailerLoadEditor({
       </div>
 
       <div>
-        <label className="block text-[11px] font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-          Shenime
-        </label>
+        <label className="block text-[11px] font-semibold text-gray-700 mb-1 uppercase tracking-wide">{t('common.notes')}</label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -926,9 +922,7 @@ function RegisterPlateModal({
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            Anulo
-          </button>
+          >{t('common.cancel')}</button>
           <button
             onClick={() => save(true)}
             disabled={saving}

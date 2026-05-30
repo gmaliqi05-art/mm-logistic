@@ -231,10 +231,10 @@ export default function ApiWebhooks() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Emri</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.name')}</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Prefix</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Perdor fund.</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Statusi</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.status')}</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -321,7 +321,7 @@ export default function ApiWebhooks() {
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">URL</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Events</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Statusi</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.status')}</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Dest. fund.</th>
                     <th className="px-4 py-3"></th>
                   </tr>
@@ -347,8 +347,7 @@ export default function ApiWebhooks() {
                       <td className="px-4 py-3 text-xs text-gray-500">{w.last_delivery_at ? new Date(w.last_delivery_at).toLocaleString('de-DE') : '-'}</td>
                       <td className="px-4 py-3 text-right">
                         <button onClick={() => deleteWebhook(w.id)} className="text-red-600 text-xs inline-flex items-center gap-1">
-                          <Trash2 className="w-3.5 h-3.5" /> Fshi
-                        </button>
+                          <Trash2 className="w-3.5 h-3.5" />{t('common.delete')}</button>
                       </td>
                     </tr>
                   ))}

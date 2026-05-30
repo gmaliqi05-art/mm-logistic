@@ -263,7 +263,7 @@ export default function CompanyOverdueDocuments() {
             onChange={(e) => setTypeFilter(e.target.value as '' | NoteType)}
             className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
-            <option value="">Te gjitha</option>
+            <option value="">{t('common.all')}</option>
             <option value="delivery">Fletedergesa</option>
             <option value="pickup">Fletmarrje</option>
           </select>
@@ -358,9 +358,7 @@ export default function CompanyOverdueDocuments() {
                       disabled={actionId === n.id}
                       className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-red-200 text-red-700 text-sm font-semibold hover:bg-red-50 disabled:opacity-60"
                     >
-                      <XCircle className="w-4 h-4" />
-                      Anulo
-                    </button>
+                      <XCircle className="w-4 h-4" />{t('common.cancel')}</button>
                   </div>
                 </div>
               </li>

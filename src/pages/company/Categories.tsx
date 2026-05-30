@@ -581,9 +581,7 @@ function CategoriesContent() {
                             </p>
                             {inactive && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 flex-shrink-0">
-                                <EyeOff className="w-3 h-3" />
-                                Joaktiv
-                              </span>
+                                <EyeOff className="w-3 h-3" />{t('common.inactive')}</span>
                             )}
                           </div>
                           <p className="text-xs text-gray-500 truncate">

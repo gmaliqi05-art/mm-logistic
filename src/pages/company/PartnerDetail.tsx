@@ -481,12 +481,12 @@ export default function PartnerDetail() {
             <table className="w-full text-sm min-w-[780px]">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-2 text-left whitespace-nowrap">Data</th>
-                  <th className="px-4 py-2 text-left">Dokumenti</th>
+                  <th className="px-4 py-2 text-left whitespace-nowrap">{t('common.date')}</th>
+                  <th className="px-4 py-2 text-left">{t('common.document')}</th>
                   <th className="px-4 py-2 text-left">Drejtimi</th>
                   <th className="px-4 py-2 text-left">Kategori</th>
                   <th className="px-4 py-2 text-left">Produkti</th>
-                  <th className="px-4 py-2 text-right">Sasia</th>
+                  <th className="px-4 py-2 text-right">{t('common.quantity')}</th>
                   <th className="px-4 py-2 text-right" />
                 </tr>
               </thead>
@@ -514,9 +514,7 @@ export default function PartnerDetail() {
                           <Link
                             to={`/company/delivery-notes?open=${r.delivery_note_id}`}
                             className="inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:text-teal-900"
-                          >
-                            Shiko
-                            <ExternalLink className="w-3.5 h-3.5" />
+                          >{t('common.view')}<ExternalLink className="w-3.5 h-3.5" />
                           </Link>
                         )}
                       </td>

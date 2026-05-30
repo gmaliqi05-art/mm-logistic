@@ -142,7 +142,7 @@ export default function EmailCampaigns() {
                         type="button"
                         onClick={() => remove(c)}
                         className="rounded-md border border-slate-200 px-2 py-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                        title="Fshi"
+                        title={t('common.delete')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -158,7 +158,7 @@ export default function EmailCampaigns() {
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Fushata</th>
-                <th className="px-4 py-3">Statusi</th>
+                <th className="px-4 py-3">{t('common.status')}</th>
                 <th className="px-4 py-3">Marres</th>
                 <th className="px-4 py-3">Dergua</th>
                 <th className="px-4 py-3">{t('common.failed')}</th>
@@ -196,7 +196,7 @@ export default function EmailCampaigns() {
                             type="button"
                             onClick={() => remove(c)}
                             className="rounded-md p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                            title="Fshi"
+                            title={t('common.delete')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

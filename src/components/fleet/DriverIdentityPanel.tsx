@@ -88,7 +88,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 p-4">
-        <div className="text-xs uppercase tracking-wider text-teal-700 font-semibold">Statusi i rezidences</div>
+        <div className="text-xs uppercase tracking-wider text-teal-700 font-semibold">{t('common.residencyStatus')}</div>
         <p className="text-sm text-gray-700 mt-1">
           Percakton cilet dokumente identiteti kerkohen. Ndryshimi lejohet vetem nga administratori.
         </p>
@@ -317,7 +317,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
             <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">{t('fleet.driverIdentity.addDocument')}</div>
             <h3 className="font-bold text-gray-900">{meta.label}</h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 text-sm">Mbyll</button>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 text-sm">{t('common.close')}</button>
         </div>
         <div className="p-5 space-y-3">
           <p className="text-xs text-gray-500">{meta.hint}</p>
@@ -375,7 +375,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
           {err && <div className="text-sm text-red-600">{err}</div>}
 
           <div className="flex items-center justify-end gap-2 pt-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium">Anulo</button>
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium">{t('common.cancel')}</button>
             <button
               onClick={save}
               disabled={saving || !capturedFront}

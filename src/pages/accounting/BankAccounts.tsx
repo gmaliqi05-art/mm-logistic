@@ -275,7 +275,7 @@ export default function BankAccounts() {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Transaksionet e Llogarise</h2>
+            <h2 className="font-semibold text-gray-900">{t('common.accountTransactions')}</h2>
           </div>
           {loadingTx ? (
             <PageSkeleton rows={6} cols={4} showStats={false} />
@@ -290,10 +290,10 @@ export default function BankAccounts() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pershkrimi</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.date')}</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.description')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kontakti</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lloji</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.type')}</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shuma</th>
                   </tr>
                 </thead>
@@ -433,9 +433,7 @@ export default function BankAccounts() {
                   onClick={() => openEdit(account)}
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                 >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  Ndrysho
-                </button>
+                  <Edit3 className="w-3.5 h-3.5" />{t('common.edit')}</button>
                 <button
                   onClick={() => openImport(account.id)}
                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -491,9 +489,7 @@ export default function BankAccounts() {
               )}
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button onClick={() => setImportOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
-                Mbyll
-              </button>
+              <button onClick={() => setImportOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">{t('common.close')}</button>
               <button
                 onClick={handleImport}
                 disabled={importing || !importContent}
@@ -608,9 +604,7 @@ export default function BankAccounts() {
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Anulo
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name.trim()}

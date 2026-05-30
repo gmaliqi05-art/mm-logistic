@@ -236,7 +236,7 @@ export default function EmailTemplateEditor() {
                     </select>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-slate-700">Emri</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.name')}</label>
                     <input
                       type="text"
                       value={tpl.name}

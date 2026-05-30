@@ -478,7 +478,7 @@ export default function DepotStock() {
 
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-white rounded-xl border border-slate-200 p-2.5">
-          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Sasia</p>
+          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">{t('common.quantity')}</p>
           <p className="text-xl font-bold text-slate-900 mt-0.5 tabular-nums">{totals.qty.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl border border-emerald-200 p-2.5">
@@ -584,7 +584,7 @@ export default function DepotStock() {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-lg font-bold text-slate-900 tabular-nums leading-none">{g.totalQty.toLocaleString()}</p>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-500 mt-0.5">cope</p>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500 mt-0.5">{t('common.pieces')}</p>
                   </div>
                 </button>
                 {open && (
