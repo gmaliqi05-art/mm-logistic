@@ -428,7 +428,7 @@ export default function DepotStock() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{t('depot.stock.title')}</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Gjendja fizike sipas kategorise, produktit dhe vleres</p>
+          <p className="text-gray-500 text-sm mt-0.5">{t('common.gjendjaFizikeSipasKategoriseProduktitDhe')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -490,7 +490,7 @@ export default function DepotStock() {
           onClick={() => setShowDefektPanel((p) => !p)}
           className={`bg-white rounded-xl border p-2.5 text-left transition-colors ${showDefektPanel ? 'border-rose-400 ring-2 ring-rose-200' : 'border-rose-200 hover:border-rose-300'}`}
         >
-          <p className="text-[10px] font-medium text-rose-600 uppercase tracking-wide">Defekt</p>
+          <p className="text-[10px] font-medium text-rose-600 uppercase tracking-wide">{t('common.defekt')}</p>
           <p className="text-xl font-bold text-rose-700 mt-0.5 tabular-nums">{(totals.byCond['damaged'] ?? 0).toLocaleString()}</p>
         </button>
       </div>
@@ -498,11 +498,11 @@ export default function DepotStock() {
       {showDefektPanel && (
         <div className="bg-rose-50 rounded-xl border border-rose-200 overflow-hidden">
           <div className="px-3 py-2 border-b border-rose-200 flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-rose-800 uppercase tracking-wide">Detajet e defekteve sipas kategorise</h3>
+            <h3 className="text-xs font-semibold text-rose-800 uppercase tracking-wide">{t('common.detajetEDefekteveSipasKategorise')}</h3>
             <button onClick={() => setShowDefektPanel(false)} className="text-rose-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
           </div>
           {defektByCategory.length === 0 ? (
-            <div className="p-4 text-center text-sm text-rose-400">Nuk ka stok defekt</div>
+            <div className="p-4 text-center text-sm text-rose-400">{t('common.nukKaStokDefekt')}</div>
           ) : (
             <div className="divide-y divide-rose-100">
               {defektByCategory.map((cat) => (
@@ -559,9 +559,7 @@ export default function DepotStock() {
 
       {grouped.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400">
-          <Package className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-          Asnje stok per filtrat e zgjedhur
-        </div>
+          <Package className="w-10 h-10 mx-auto mb-3 text-slate-300" />{t('common.asnjeStokPerFiltratEZgjedhur')}</div>
       ) : (
         <div className="space-y-3">
           {grouped.map((g) => {
@@ -746,7 +744,7 @@ export default function DepotStock() {
                   onChange={(e) => setFormQuantity(e.target.value)}
                   required
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
-                  placeholder="Vendos sasine"
+                  placeholder={t('common.vendosSasine')}
                 />
               </div>
 
@@ -759,7 +757,7 @@ export default function DepotStock() {
                       onChange={(e) => setFormConditionBefore(e.target.value)}
                       className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                     >
-                      <option value="damaged">Defekt</option>
+                      <option value="damaged">{t('common.defekt')}</option>
                       <option value="good">Te mira</option>
                     </select>
                   </div>
@@ -785,7 +783,7 @@ export default function DepotStock() {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                   >
                     <option value="good">Te mira</option>
-                    <option value="damaged">Defekt</option>
+                    <option value="damaged">{t('common.defekt')}</option>
                   </select>
                 </div>
               )}
@@ -810,7 +808,7 @@ export default function DepotStock() {
                   onChange={(e) => setFormNotes(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
-                  placeholder="Shenime shtese..."
+                  placeholder={t('common.shenimeShtese2')}
                 />
               </div>
 

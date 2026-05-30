@@ -357,9 +357,7 @@ export default function DepotReceiving() {
             onClick={() => setShowPalletScanner(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
           >
-            <Sparkles className="w-4 h-4" />
-            Skano paleten
-          </button>
+            <Sparkles className="w-4 h-4" />{t('common.skanoPaleten')}</button>
           <button
             onClick={() => setShowScanner(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium"
@@ -376,7 +374,7 @@ export default function DepotReceiving() {
         onScan={handlePalletScan}
         context="receiving"
         continuous
-        title="Skano paletat per pranim"
+        title={t('common.skanoPaletatPerPranim')}
       />
 
       {aiNotice && (
@@ -570,7 +568,7 @@ export default function DepotReceiving() {
                   onChange={(e) => setReceivingNotes(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm resize-none"
-                  placeholder="Shenime shtese per pranimin..."
+                  placeholder={t('common.shenimeShtesePerPranimin')}
                 />
               </div>
 

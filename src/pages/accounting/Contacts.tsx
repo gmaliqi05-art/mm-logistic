@@ -263,7 +263,7 @@ export default function Contacts() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Kërko kontakte..."
+              placeholder={t('common.kerkoKontakte')}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
             />
           </div>
@@ -272,10 +272,10 @@ export default function Contacts() {
             onChange={(e) => setFilterType(e.target.value as FilterType)}
             className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
           >
-            <option value="all">Të gjithë llojet</option>
-            <option value="customer">Klient</option>
+            <option value="all">{t('common.teGjitheLlojet')}</option>
+            <option value="customer">{t('common.klient')}</option>
             <option value="supplier">Furnitor</option>
-            <option value="both">Të dyja</option>
+            <option value="both">{t('common.teDyja')}</option>
           </select>
           <button
             onClick={() => setShowActive(!showActive)}
@@ -317,7 +317,7 @@ export default function Contacts() {
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefon</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qyteti</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shteti</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ditë pagese</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.ditePagese')}</th>
                     <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Veprime</th>
                   </tr>
                 </thead>
@@ -385,7 +385,7 @@ export default function Contacts() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => { setPricesContactId(contact.id); setPricesContactName(contact.name); }}
-                      title="Cmime te personalizuara"
+                      title={t('common.cmimeTePersonalizuara')}
                       className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                     >
                       <Tag className="w-4 h-4" />
@@ -478,14 +478,14 @@ export default function Contacts() {
                     onChange={(e) => updateForm('contact_type', e.target.value)}
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                   >
-                    <option value="customer">Klient</option>
+                    <option value="customer">{t('common.klient')}</option>
                     <option value="supplier">Furnitor</option>
-                    <option value="both">Të dyja</option>
+                    <option value="both">{t('common.teDyja')}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Ditë pagese</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.ditePagese')}</label>
                   <input
                     type="number"
                     min={0}
@@ -584,9 +584,7 @@ export default function Contacts() {
 
               <div className="border-t border-gray-100 pt-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  Të dhëna tatimore dhe bankare
-                </h3>
+                  <CreditCard className="w-4 h-4" />{t('common.teDhenaTatimoreDheBankare')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Nr. TVSH</label>
@@ -629,26 +627,26 @@ export default function Contacts() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Emri i bankës</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.emriIBankes')}</label>
                     <input
                       type="text"
                       value={form.bank_name}
                       onChange={(e) => updateForm('bank_name', e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Emri i bankës"
+                      placeholder={t('common.emriIBankes')}
                     />
                   </div>
                 </div>
               </div>
 
               <div className="border-t border-gray-100 pt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Shënime</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.shenime')}</label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => updateForm('notes', e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                  placeholder="Shënime shtesë..."
+                  placeholder={t('common.shenimeShtese')}
                 />
               </div>
             </div>

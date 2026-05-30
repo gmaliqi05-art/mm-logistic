@@ -63,7 +63,7 @@ export default function EmailCampaigns() {
             <Megaphone className="h-6 w-6 text-teal-600" />
             Fushata emaili
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Dergoni njoftime dhe emaile marketingu te perdoruesit.</p>
+          <p className="mt-1 text-sm text-slate-500">{t('common.dergoniNjoftimeDheEmaileMarketinguTe')}</p>
         </div>
         <Link
           to="/super-admin/email/campaigns/new"
@@ -122,7 +122,7 @@ export default function EmailCampaigns() {
                     </div>
                     <div>
                       <div className="font-semibold text-emerald-700">{c.sent_count}</div>
-                      <div className="text-slate-500">Dergua</div>
+                      <div className="text-slate-500">{t('common.dergua')}</div>
                     </div>
                     <div>
                       <div className="font-semibold text-red-700">{c.failed_count}</div>
@@ -135,9 +135,7 @@ export default function EmailCampaigns() {
                       <Link
                         to={`/super-admin/email/campaigns/${c.id}`}
                         className="rounded-md border border-slate-200 px-2.5 py-1 font-medium text-slate-700 hover:bg-slate-50 hover:text-teal-600"
-                      >
-                        Detaje
-                      </Link>
+                      >{t('common.detaje')}</Link>
                       <button
                         type="button"
                         onClick={() => remove(c)}
@@ -160,7 +158,7 @@ export default function EmailCampaigns() {
                 <th className="px-4 py-3">Fushata</th>
                 <th className="px-4 py-3">{t('common.status')}</th>
                 <th className="px-4 py-3">Marres</th>
-                <th className="px-4 py-3">Dergua</th>
+                <th className="px-4 py-3">{t('common.dergua')}</th>
                 <th className="px-4 py-3">{t('common.failed')}</th>
                 <th className="px-4 py-3">Planifikuar</th>
                 <th className="px-4 py-3 text-right">Veprime</th>

@@ -188,7 +188,7 @@ export default function PlatformBranding() {
           recommendation="Rekomandohet: 512x512px, PNG me sfond transparent"
         />
         <LogoUploadCard
-          title="Logo per Rrjete Sociale"
+          title={t('common.logoPerRrjeteSociale')}
           subtitle="Perdoret kur linku ndahet ne Facebook, WhatsApp, Twitter, LinkedIn. Duhet te kete sfond."
           previewBg="bg-slate-900"
           logoUrl={logoSocialUrl}

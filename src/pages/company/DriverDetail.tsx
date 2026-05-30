@@ -78,7 +78,7 @@ export default function DriverDetail() {
   if (loading) return <PageSkeleton rows={6} cols={5} showStats={true} />;
   if (!driver) return (
     <div className="text-center p-12">
-      <p className="text-gray-500">Shoferi nuk u gjet.</p>
+      <p className="text-gray-500">{t('common.shoferiNukUGjet')}</p>
       <button onClick={() => navigate('/company/drivers')} className="mt-4 text-teal-600">Kthehu te shoferet</button>
     </div>
   );
@@ -96,8 +96,7 @@ export default function DriverDetail() {
   return (
     <div className="space-y-6">
       <Link to="/company/drivers" className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-teal-600">
-        <ArrowLeft className="w-4 h-4" /> Shoferet
-      </Link>
+        <ArrowLeft className="w-4 h-4" />{t('common.shoferet')}</Link>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -154,8 +153,7 @@ export default function DriverDetail() {
                 <p className="text-sm text-gray-600">Patenta sipas FeV (Fahrerlaubnis-Verordnung). Kategorite e zakonshme per kamione: C1, C1E, C, CE.</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('fuehrerschein')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
-                    <ScanLine className="w-3.5 h-3.5" /> Skano
-                  </button>
+                    <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>
                   <button onClick={() => setAddMode('license')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
                     <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
@@ -164,7 +162,7 @@ export default function DriverDetail() {
                 <LicenseAddForm companyId={profile!.company_id!} driverId={id!} onDone={() => { setAddMode(null); fetchAll(); }} />
               )}
               {licenses.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Asnje patente e regjistruar.</p>
+                <p className="text-sm text-gray-400 text-center py-8">{t('common.asnjePatenteERegjistruar')}</p>
               ) : (
                 <div className="space-y-2">
                   {licenses.map(l => (
@@ -196,8 +194,7 @@ export default function DriverDetail() {
                 <p className="text-sm text-gray-600">Kod 95 (BKrFQG): 35 ore trajnim cdo 5 vjet. ADR per mallra te rrezikshme.</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('kod95')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
-                    <ScanLine className="w-3.5 h-3.5" /> Skano
-                  </button>
+                    <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>
                   <button onClick={() => setAddMode('qualification')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
                     <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
@@ -206,7 +203,7 @@ export default function DriverDetail() {
                 <QualAddForm companyId={profile!.company_id!} driverId={id!} onDone={() => { setAddMode(null); fetchAll(); }} />
               )}
               {quals.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Asnje kualifikim i regjistruar.</p>
+                <p className="text-sm text-gray-400 text-center py-8">{t('common.asnjeKualifikimIRegjistruar')}</p>
               ) : (
                 <div className="space-y-2">
                   {quals.map(q => (
@@ -233,8 +230,7 @@ export default function DriverDetail() {
                 <p className="text-sm text-gray-600">Ekzaminimi G25 (Fahr-, Steuer- und Überwachungstätigkeiten) behet nga mjeku i pune.</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('g25_medical')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
-                    <ScanLine className="w-3.5 h-3.5" /> Skano
-                  </button>
+                    <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>
                   <button onClick={() => setAddMode('medical')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
                     <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
@@ -243,7 +239,7 @@ export default function DriverDetail() {
                 <MedicalAddForm companyId={profile!.company_id!} driverId={id!} onDone={() => { setAddMode(null); fetchAll(); }} />
               )}
               {medicals.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Asnje ekzaminim i regjistruar.</p>
+                <p className="text-sm text-gray-400 text-center py-8">{t('common.asnjeEkzaminimIRegjistruar')}</p>
               ) : (
                 <div className="space-y-2">
                   {medicals.map(m => (
@@ -276,9 +272,9 @@ export default function DriverDetail() {
 
           {tab === 'vehicles' && (
             <>
-              <p className="text-sm text-gray-600">Mjetet ku shoferi eshte caktuar. Caktimi behet nga faqja e mjetit.</p>
+              <p className="text-sm text-gray-600">{t('common.mjetetKuShoferiEshteCaktuarCaktimi')}</p>
               {assignments.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Asnje mjet i caktuar.</p>
+                <p className="text-sm text-gray-400 text-center py-8">{t('common.asnjeMjetICaktuar')}</p>
               ) : (
                 <div className="space-y-2">
                   {assignments.map(a => (
@@ -315,11 +311,10 @@ export default function DriverDetail() {
             <p className="text-xs text-gray-500 mt-0.5">PDF-te origjinale te arkivuara</p>
           </div>
           <button onClick={() => setScannerCat('other')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-            <ScanLine className="w-3.5 h-3.5" /> Skano te ri
-          </button>
+            <ScanLine className="w-3.5 h-3.5" />{t('common.skanoTeRi')}</button>
         </div>
         {scans.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-6">Asnje dokument i skanuar.</p>
+          <p className="text-xs text-gray-400 text-center py-6">{t('common.asnjeDokumentISkanuar')}</p>
         ) : (
           <div className="divide-y divide-gray-100">
             {scans.map(s => (
@@ -496,7 +491,7 @@ function MedicalAddForm({ companyId, driverId, onDone }: { companyId: string; dr
     <div className="p-4 bg-gray-50 rounded-lg space-y-3">
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">Lloji i ekzaminimit</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('common.llojiIEkzaminimit')}</label>
           <select value={exam} onChange={(e) => setExam(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
             <option value="g25">G25 (Fahr-, Steuer-, Überwachung)</option>
             <option value="g37">G37 (Ekran)</option>

@@ -223,7 +223,7 @@ export default function EmailTemplatesList() {
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
             <option value="all">{t('common.all')}</option>
-            <option value="invoice">Per faturat</option>
+            <option value="invoice">{t('common.perFaturat')}</option>
             <option value="custom">Te personalizuara</option>
           </select>
         </div>
@@ -231,9 +231,7 @@ export default function EmailTemplatesList() {
           onClick={() => navigate('/company/email/templates/new')}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium text-sm"
         >
-          <Plus className="w-4 h-4" />
-          Krijo Template
-        </button>
+          <Plus className="w-4 h-4" />{t('common.krijoTemplate')}</button>
       </div>
 
       {filter === 'all' && !search.trim() ? (
@@ -301,7 +299,7 @@ export default function EmailTemplatesList() {
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <FileText className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">Nuk u gjeten template</p>
+              <p className="text-sm">{t('common.nukUGjetenTemplate')}</p>
             </div>
           ) : (
             filtered.map((tpl) => (
@@ -395,9 +393,7 @@ function TemplateCard({ tpl, profile, navigate, onToggle, onDuplicate, testingId
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-semibold text-gray-900">{tpl.name}</h3>
             {isOwn ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-teal-50 text-teal-700 border border-teal-200">
-                Kompania juaj
-              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-teal-50 text-teal-700 border border-teal-200">{t('common.kompaniaJuaj')}</span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-50 text-slate-600 border border-slate-200">
                 <Globe className="w-3 h-3" /> Globale
@@ -439,7 +435,7 @@ function TemplateCard({ tpl, profile, navigate, onToggle, onDuplicate, testingId
               setTestEmail(profile?.email || '');
             }}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Dergo test"
+            title={t('common.dergoTest')}
           >
             <Send className="w-4 h-4" />
           </button>

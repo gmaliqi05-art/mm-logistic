@@ -452,7 +452,7 @@ export default function AccDeliveryNotes() {
                 <tr>
                   <td colSpan={8} className="px-6 py-16 text-center">
                     <Truck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 font-medium">Asnje fletedalje</p>
+                    <p className="text-gray-500 font-medium">{t('common.asnjeFletedalje')}</p>
                     <p className="text-gray-400 text-sm mt-1">Shto fletedaljen e pare per te filluar</p>
                   </td>
                 </tr>
@@ -605,7 +605,7 @@ export default function AccDeliveryNotes() {
                       onChange={(e) => handleContactChange(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="">Zgjidh klientin</option>
+                      <option value="">{t('common.zgjidhKlientin')}</option>
                       {contacts.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -621,13 +621,13 @@ export default function AccDeliveryNotes() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Adresa e Dergimit</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.adresaEDergimit')}</label>
                     <textarea
                       value={form.shipping_address}
                       onChange={(e) => setForm({ ...form, shipping_address: e.target.value })}
                       rows={2}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm resize-none"
-                      placeholder="Adresa e plote e dergimit"
+                      placeholder={t('common.adresaEPloteEDergimit')}
                     />
                   </div>
                   <div>
@@ -650,7 +650,7 @@ export default function AccDeliveryNotes() {
                       value={form.notes}
                       onChange={(e) => setForm({ ...form, notes: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="Shenime shtese"
+                      placeholder={t('common.shenimeShtese3')}
                     />
                   </div>
                 </div>
@@ -677,7 +677,7 @@ export default function AccDeliveryNotes() {
                               onChange={(e) => handleProductChange(index, e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                             >
-                              <option value="">Zgjidh produktin</option>
+                              <option value="">{t('common.zgjidhProduktin')}</option>
                               {products.map((p) => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                               ))}

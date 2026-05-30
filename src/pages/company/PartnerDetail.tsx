@@ -473,9 +473,7 @@ export default function PartnerDetail() {
         </div>
         {rows.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
-            <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-            Nuk ka levizje per kete partner
-          </div>
+            <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />{t('common.nukKaLevizjePerKetePartner')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[780px]">
@@ -484,7 +482,7 @@ export default function PartnerDetail() {
                   <th className="px-4 py-2 text-left whitespace-nowrap">{t('common.date')}</th>
                   <th className="px-4 py-2 text-left">{t('common.document')}</th>
                   <th className="px-4 py-2 text-left">Drejtimi</th>
-                  <th className="px-4 py-2 text-left">Kategori</th>
+                  <th className="px-4 py-2 text-left">{t('common.kategori')}</th>
                   <th className="px-4 py-2 text-left">Produkti</th>
                   <th className="px-4 py-2 text-right">{t('common.quantity')}</th>
                   <th className="px-4 py-2 text-right" />

@@ -145,7 +145,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
       ) : docs.length === 0 ? (
         <div className="text-center py-10 border border-dashed border-gray-200 rounded-xl">
           <IdCard className="w-10 h-10 text-gray-300 mx-auto" />
-          <p className="text-sm text-gray-500 mt-2">Asnje dokument identiteti i regjistruar.</p>
+          <p className="text-sm text-gray-500 mt-2">{t('common.asnjeDokumentIdentitetiIRegjistruar')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -328,8 +328,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
             className="w-full inline-flex items-center justify-between gap-2 px-4 py-3 rounded-lg border border-dashed border-teal-300 text-teal-700 bg-teal-50 hover:bg-teal-100"
           >
             <span className="inline-flex items-center gap-2 text-sm font-semibold">
-              <ScanLine className="w-4 h-4" /> Skano te dyja anet
-            </span>
+              <ScanLine className="w-4 h-4" />{t('common.skanoTeDyjaAnet')}</span>
             <span className="text-xs">
               {capturedFront ? 'Perpara ✓' : 'Perpara'} · {capturedBack ? 'Pas ✓' : meta.allowSkipBack ? 'Pas (opsional)' : 'Pas'}
             </span>
@@ -384,7 +383,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
               {saving ? 'Duke ruajtur…' : 'Ruaj dokumentin'}
             </button>
           </div>
-          {!capturedFront && <p className="text-xs text-gray-500 text-right">Skano te pakten anen e perparme per te ruajtur.</p>}
+          {!capturedFront && <p className="text-xs text-gray-500 text-right">{t('common.skanoTePaktenAnenEPerparme')}</p>}
         </div>
       </div>
     </div>

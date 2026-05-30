@@ -811,7 +811,7 @@ export default function CompanyDeliveryNotes() {
                     ? 'bg-teal-600 text-white border-teal-600'
                     : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                 }`}
-                title="Rendit sipas kompanise partnere"
+                title={t('common.renditSipasKompanisePartnere')}
               >
                 Sipas Partnerit
               </button>
@@ -1015,9 +1015,7 @@ export default function CompanyDeliveryNotes() {
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                   placeholder="p.sh. Emer kompanie, emer personi, numer reference, etj."
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Vetem per identifikim nga shoferi. Nuk regjistrohet ne raporte apo fatura.
-                </p>
+                <p className="mt-1 text-xs text-gray-500">{t('common.vetemPerIdentifikimNgaShoferiNuk')}</p>
               </div>
 
               {/* Data dhe Ora - always visible */}
@@ -1242,9 +1240,7 @@ export default function CompanyDeliveryNotes() {
                         onClick={() => setShowScanner(true)}
                         className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-teal-500 text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors text-sm font-medium"
                       >
-                        <Camera className="w-4 h-4" />
-                        Skano Dokument
-                      </button>
+                        <Camera className="w-4 h-4" />{t('common.skanoDokument')}</button>
                     </div>
                   )}
                 </div>
@@ -1317,7 +1313,7 @@ export default function CompanyDeliveryNotes() {
                         paleta
                       </span>
                     </div>
-                    <p className="text-[11px] text-teal-800">Regjistri i paletave azhurnohet automatikisht kur porosia konfirmohet.</p>
+                    <p className="text-[11px] text-teal-800">{t('common.regjistriIPaletaveAzhurnohetAutomatikishtKur')}</p>
                   </div>
                 </div>
               )}
@@ -1433,14 +1429,14 @@ export default function CompanyDeliveryNotes() {
 
               {(selectedNote as any).partner_name && (
                 <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
-                  <p className="text-xs text-teal-700 uppercase tracking-wider">Kompania Partnere</p>
+                  <p className="text-xs text-teal-700 uppercase tracking-wider">{t('common.kompaniaPartnere')}</p>
                   <p className="text-sm font-semibold text-teal-900 mt-1">{(selectedNote as any).partner_name}</p>
                 </div>
               )}
 
               {selectedNote.type === 'pickup' && (selectedNote as any).reference_number && (
                 <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-xs text-orange-700 uppercase tracking-wider">Numri i References</p>
+                  <p className="text-xs text-orange-700 uppercase tracking-wider">{t('common.numriIReferences')}</p>
                   <p className="text-base font-bold text-orange-900 tracking-wider mt-1">{(selectedNote as any).reference_number}</p>
                 </div>
               )}
@@ -1917,7 +1913,7 @@ function PartnerSearchField({ contacts, form, setForm, onCreated }: PartnerSearc
         <div className="flex items-center justify-between gap-2 px-3 py-2.5 border border-teal-200 bg-teal-50 rounded-lg">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-teal-900 truncate">{selectedLabel}</p>
-            <p className="text-[11px] text-teal-700">Adresa u plotesua automatikisht.</p>
+            <p className="text-[11px] text-teal-700">{t('common.adresaUPlotesuaAutomatikisht')}</p>
           </div>
           <button type="button" onClick={clear} className="text-xs text-teal-800 hover:underline shrink-0">{t('common.edit')}</button>
         </div>
@@ -1966,9 +1962,7 @@ function PartnerSearchField({ contacts, form, setForm, onCreated }: PartnerSearc
                 onClick={() => { setShowRegister(true); setOpen(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2.5 border-t border-gray-100 bg-gray-50 text-sm font-semibold text-teal-700 hover:bg-teal-50"
               >
-                <Plus className="w-4 h-4" />
-                Regjistro Kompani te Re
-              </button>
+                <Plus className="w-4 h-4" />{t('common.regjistroKompaniTeRe')}</button>
             </div>
           )}
         </>

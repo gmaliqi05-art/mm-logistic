@@ -299,7 +299,7 @@ export default function TrailersManager({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko sipas targe, titulli ose shoferit"
+            placeholder={t('common.kerkoSipasTargeTitulliOseShoferit')}
             className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none"
           />
         </div>
@@ -319,7 +319,7 @@ export default function TrailersManager({
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-dashed border-gray-300 p-10 text-center">
           <Truck className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 mb-3">Asnje rimorkio e regjistruar ende</p>
+          <p className="text-sm text-gray-500 mb-3">{t('common.asnjeRimorkioERegjistruarEnde')}</p>
           {canRegister && (
             <button
               onClick={() => setRegisterOpen(true)}
@@ -671,9 +671,7 @@ function TrailerLoadEditor({
           />
         </div>
         <div>
-          <label className="block text-[11px] font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-            Shoferi
-          </label>
+          <label className="block text-[11px] font-semibold text-gray-700 mb-1 uppercase tracking-wide">{t('common.shoferi')}</label>
           <select
             value={assignedDriverId}
             onChange={(e) => setAssignedDriverId(e.target.value)}
@@ -707,9 +705,7 @@ function TrailerLoadEditor({
               <div key={idx} className="bg-white border border-gray-200 rounded-lg p-2.5">
                 <div className="grid grid-cols-12 gap-2">
                   <div className="col-span-12 md:col-span-4">
-                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">
-                      Kategoria
-                    </label>
+                    <label className="block text-[10px] uppercase tracking-wide text-gray-500 font-semibold mb-0.5">{t('common.kategoria')}</label>
                     <select
                       value={item.category_id}
                       onChange={(e) => onCategoryChange(idx, e.target.value)}
@@ -892,7 +888,7 @@ function RegisterPlateModal({
         </div>
         <div className="px-5 py-4 space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Numri i tabeles</label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1.5">{t('common.numriITabeles')}</label>
             <input
               autoFocus
               value={plate}
@@ -900,9 +896,7 @@ function RegisterPlateModal({
               placeholder="LÖ QK 3006"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none font-mono uppercase tracking-wider font-bold text-lg"
             />
-            <p className="text-[11px] text-gray-500 mt-1.5">
-              Pasi regjistron tabelen, klikon mbi te per te shtuar ngarkesen.
-            </p>
+            <p className="text-[11px] text-gray-500 mt-1.5">{t('common.pasiRegjistronTabelenKlikonMbiTe')}</p>
           </div>
 
           {plate && (

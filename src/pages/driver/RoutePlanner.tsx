@@ -117,9 +117,7 @@ export default function DriverRoutePlanner() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Route className="w-6 h-6 text-teal-600" /> Planifiko Rrugen
         </h1>
-        <p className="text-sm text-slate-600 mt-1">
-          Nisja merret automatikisht nga GPS. Vendos vetem destinacionin.
-        </p>
+        <p className="text-sm text-slate-600 mt-1">{t('common.nisjaMerretAutomatikishtNgaGpsVendos')}</p>
       </div>
 
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center gap-2 text-sm text-teal-900">

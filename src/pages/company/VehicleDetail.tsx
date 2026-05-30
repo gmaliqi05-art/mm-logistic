@@ -188,7 +188,7 @@ export default function VehicleDetail() {
           <TabButton active={tab === 'inspections'} onClick={() => setTab('inspections')} icon={<ClipboardCheck className="w-4 h-4" />}>Inspektimet</TabButton>
           <TabButton active={tab === 'insurance'} onClick={() => setTab('insurance')} icon={<ShieldCheck className="w-4 h-4" />}>Sigurimet</TabButton>
           <TabButton active={tab === 'taxes'} onClick={() => setTab('taxes')} icon={<Receipt className="w-4 h-4" />}>Kfz-Steuer</TabButton>
-          <TabButton active={tab === 'drivers'} onClick={() => setTab('drivers')} icon={<UsersIcon className="w-4 h-4" />}>Shoferet</TabButton>
+          <TabButton active={tab === 'drivers'} onClick={() => setTab('drivers')} icon={<UsersIcon className="w-4 h-4" />}>{t('common.shoferet')}</TabButton>
         </div>
 
         <div className="p-5 space-y-4">
@@ -198,8 +198,7 @@ export default function VehicleDetail() {
                 <p className="text-sm text-gray-600">HU/TUV cdo 2 vjet, AU bashke me HU, UVV vjetore, SP (rimorkio {'>'}10t) cdo 6 muaj.</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('hu_tuv')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
-                    <ScanLine className="w-3.5 h-3.5" /> Skano
-                  </button>
+                    <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>
                   <button onClick={() => setAddForm({ type: 'hu_tuv', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
                     <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
@@ -221,11 +220,10 @@ export default function VehicleDetail() {
           {tab === 'insurance' && (
             <>
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">Haftpflicht eshte i detyrueshem sipas PflVG.</p>
+                <p className="text-sm text-gray-600">{t('common.haftpflichtEshteIDetyrueshemSipasPflvg')}</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('haftpflicht')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
-                    <ScanLine className="w-3.5 h-3.5" /> Skano
-                  </button>
+                    <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>
                   <button onClick={() => setAddForm({ type: 'haftpflicht', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
                     <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
@@ -247,11 +245,10 @@ export default function VehicleDetail() {
           {tab === 'taxes' && (
             <>
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">Kfz-Steuer paguhet vjetore pranë Hauptzollamt.</p>
+                <p className="text-sm text-gray-600">{t('common.kfzSteuerPaguhetVjetorePraneHauptzollamt')}</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('kfz_steuer')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
-                    <ScanLine className="w-3.5 h-3.5" /> Skano
-                  </button>
+                    <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>
                   <button onClick={() => setAddForm({ type: 'tax', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
                     <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
@@ -270,7 +267,7 @@ export default function VehicleDetail() {
           {tab === 'drivers' && (
             <>
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">Shoferet e caktuar per kete mjet.</p>
+                <p className="text-sm text-gray-600">{t('common.shoferetECaktuarPerKeteMjet')}</p>
                 <button onClick={() => setAddForm({ type: 'assign', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
                   <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
               </div>
@@ -278,7 +275,7 @@ export default function VehicleDetail() {
                 <div className="flex gap-2 p-3 bg-gray-50 rounded-lg">
                   <select value={addForm.value} onChange={(e) => setAddForm({ ...addForm, value: e.target.value })}
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-                    <option value="">Zgjidh shoferin</option>
+                    <option value="">{t('common.zgjidhShoferin')}</option>
                     {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
                   </select>
                   <button onClick={() => addAssignment(addForm.value)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">{t('common.save')}</button>
@@ -286,7 +283,7 @@ export default function VehicleDetail() {
                 </div>
               )}
               <div className="space-y-2">
-                {assignments.length === 0 && <p className="text-sm text-gray-400 text-center py-8">Asnje shofer i caktuar.</p>}
+                {assignments.length === 0 && <p className="text-sm text-gray-400 text-center py-8">{t('common.asnjeShoferICaktuar')}</p>}
                 {assignments.map(a => (
                   <div key={a.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
@@ -314,11 +311,10 @@ export default function VehicleDetail() {
             <p className="text-xs text-gray-500 mt-0.5">PDF-te origjinale te ruajtura per arkivim GoBD</p>
           </div>
           <button onClick={() => setScannerCat('other')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-            <ScanLine className="w-3.5 h-3.5" /> Skano te ri
-          </button>
+            <ScanLine className="w-3.5 h-3.5" />{t('common.skanoTeRi')}</button>
         </div>
         {scans.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-6">Asnje dokument i skanuar.</p>
+          <p className="text-xs text-gray-400 text-center py-6">{t('common.asnjeDokumentISkanuar')}</p>
         ) : (
           <div className="divide-y divide-gray-100">
             {scans.map(s => (
@@ -370,7 +366,8 @@ function TabButton({ active, onClick, icon, children }: { active: boolean; onCli
 }
 
 function ItemList({ items, onDelete }: { items: Array<{ id: string; title: string; subtitle: string; date: string }>; onDelete: (id: string) => void }) {
-  if (items.length === 0) return <p className="text-sm text-gray-400 text-center py-8">Asnje regjistrim.</p>;
+  const { t } = useTranslation();
+  if (items.length === 0) return <p className="text-sm text-gray-400 text-center py-8">{t('common.asnjeRegjistrim')}</p>;
   return (
     <div className="space-y-2">
       {items.map(it => (

@@ -549,9 +549,7 @@ export default function DepotSorting() {
           <div className="bg-white border border-gray-100 rounded-xl p-8 text-center text-gray-400 text-sm">
             <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
             <p className="font-medium text-gray-500">{t('depot.sorting.noActiveBatches')}</p>
-            <p className="mt-1 text-xs text-gray-400">
-              Sortimet shfaqen automatikisht kur regjistrohet nje fletmarrje me artikuj per sortim.
-            </p>
+            <p className="mt-1 text-xs text-gray-400">{t('common.sortimetShfaqenAutomatikishtKurRegjistrohetNje')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -683,8 +681,7 @@ export default function DepotSorting() {
                       disabled={submitting}
                       className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-50"
                     >
-                      <Send className="w-3 h-3" /> Dergo raportin
-                    </button>
+                      <Send className="w-3 h-3" />{t('common.dergoRaportin')}</button>
                   )}
                   {isCompleted && b.report_sent_at && (
                     <div className="flex items-center gap-1.5 text-[11px] text-teal-700">
@@ -874,12 +871,11 @@ function SortingItemsGrid({
   setItemInputs: (r: ItemInput[]) => void;
   isClassMode: boolean;
 }) {
+  const { t } = useTranslation();
   if (itemInputs.length === 0) {
     return (
       <div className="text-center py-6 text-gray-400 text-sm">
-        <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-        Nuk ka produkte per kete kategori
-      </div>
+        <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />{t('common.nukKaProduktePerKeteKategori')}</div>
     );
   }
 

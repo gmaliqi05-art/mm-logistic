@@ -170,9 +170,7 @@ export default function LegalPages() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-teal-600" />
-            Faqe Ligjore
-          </h1>
+            <FileText className="w-6 h-6 text-teal-600" />{t('common.faqeLigjore')}</h1>
           <p className="text-gray-500 mt-1 text-sm">Menaxho dokumentet ligjore te platformes</p>
         </div>
         <a
@@ -289,16 +287,12 @@ export default function LegalPages() {
                 ) : (
                   <div className="text-center py-12">
                     <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">
-                      Nuk ka permbajtje per kete dokument ne gjuhen e zgjedhur
-                    </p>
+                    <p className="text-gray-500 mb-4">{t('common.nukKaPermbajtjePerKeteDokument')}</p>
                     <button
                       onClick={openEdit}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
                     >
-                      <Plus className="w-4 h-4" />
-                      Krijo Dokument
-                    </button>
+                      <Plus className="w-4 h-4" />{t('common.krijoDokument')}</button>
                   </div>
                 )}
               </div>
@@ -381,7 +375,7 @@ export default function LegalPages() {
                           value={section.content}
                           onChange={(e) => updateSection(idx, 'content', e.target.value)}
                           rows={4}
-                          placeholder="Permbajtja e seksionit..."
+                          placeholder={t('common.permbajtjaESeksionit')}
                           className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
                         />
                       </div>

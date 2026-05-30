@@ -103,23 +103,19 @@ export default function FleetScans() {
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <ScanLine className="w-7 h-7 text-teal-600" /> Skanime Flote / Shofer
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Dokumentet e skanuara arkivohen automatikisht per perputhje me GoBD
-          </p>
+          <p className="text-sm text-slate-500 mt-1">{t('common.dokumentetESkanuaraArkivohenAutomatikishtPer')}</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowScanner('vehicle')}
             className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-700"
           >
-            <Truck className="w-4 h-4" /> Skano dokument mjeti
-          </button>
+            <Truck className="w-4 h-4" />{t('common.skanoDokumentMjeti')}</button>
           <button
             onClick={() => setShowScanner('driver')}
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-800"
           >
-            <UserCircle className="w-4 h-4" /> Skano dokument shoferi
-          </button>
+            <UserCircle className="w-4 h-4" />{t('common.skanoDokumentShoferi')}</button>
         </div>
       </div>
 
@@ -164,7 +160,7 @@ export default function FleetScans() {
               <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-3 py-2.5">{t('common.type')}</th>
-                  <th className="px-3 py-2.5">Kategoria</th>
+                  <th className="px-3 py-2.5">{t('common.kategoria')}</th>
                   <th className="px-3 py-2.5">{t('common.file')}</th>
                   <th className="px-3 py-2.5">{t('common.status')}</th>
                   <th className="px-3 py-2.5">{t('common.date')}</th>

@@ -287,8 +287,7 @@ export default function EmailTemplateEditor() {
         <div className="flex items-center gap-2">
           {saved && (
             <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Ruajtur
-            </span>
+              <CheckCircle2 className="w-3.5 h-3.5" />{t('common.ruajtur')}</span>
           )}
           <button
             onClick={() => setShowPreview(!showPreview)}
@@ -350,7 +349,7 @@ export default function EmailTemplateEditor() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Kategoria</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.kategoria')}</label>
                 <select
                   value={data.category}
                   onChange={(e) => setData((d) => ({ ...d, category: e.target.value }))}
@@ -448,7 +447,7 @@ export default function EmailTemplateEditor() {
                   onChange={(e) => setField('body_html', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-teal-500 resize-y disabled:bg-gray-50"
-                  placeholder="<p>Permbajtja kryesore e email-it...</p>"
+                  placeholder="<p>{t('common.permbajtjaKryesoreEEmailIt')}</p>"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

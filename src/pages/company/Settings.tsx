@@ -478,10 +478,8 @@ export default function CompanySettings() {
               <div className="flex items-start gap-3">
                 <ShieldCheck className="w-5 h-5 text-teal-600 mt-0.5" />
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">Statusi i Pajtueshmerise</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Paketa e rregullave qe aplikohen per kontabilitetin dhe TVSH-ne sipas vendit te kompanise.
-                  </p>
+                  <h2 className="text-sm font-semibold text-slate-900">{t('common.statusiIPajtueshmerise')}</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">{t('common.paketaERregullaveQeAplikohenPer')}</p>
                 </div>
               </div>
               <ComplianceHealthCard />
@@ -512,9 +510,7 @@ export default function CompanySettings() {
               <Trash2 className="w-4 h-4" />
               Fshi llogarine
             </a>
-            <p className="text-xs text-gray-400 mt-1 ml-6">
-              Fshini llogarine tuaj dhe te gjitha te dhenat e lidhura perfundimisht
-            </p>
+            <p className="text-xs text-gray-400 mt-1 ml-6">{t('common.fshiniLlogarineTuajDheTeGjitha')}</p>
           </div>
         </div>
       </div>

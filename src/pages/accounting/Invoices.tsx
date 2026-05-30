@@ -927,14 +927,12 @@ export default function Invoices() {
                           if (s === 'moved') {
                             return (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">
-                                <PackageCheck className="w-3 h-3" />
-                                Stoku i levizur
-                              </span>
+                                <PackageCheck className="w-3 h-3" />{t('common.stokuILevizur')}</span>
                             );
                           }
                           if (s === 'missing') {
                             return (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700" title="Nuk ekziston fletedergese e lidhur">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700" title={t('common.nukEkzistonFletedergeseELidhur')}>
                                 <PackageX className="w-3 h-3" />
                                 Pa fletedergese
                               </span>
@@ -1023,7 +1021,7 @@ export default function Invoices() {
                                 setEmailSent(false);
                               }}
                               className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                              title="Dergo me email"
+                              title={t('common.dergoMeEmail')}
                             >
                               <Mail className="w-4 h-4" />
                             </button>
@@ -1074,9 +1072,7 @@ export default function Invoices() {
                       if (s === 'moved') {
                         return (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-700">
-                            <PackageCheck className="w-3 h-3" />
-                            Stoku i levizur
-                          </span>
+                            <PackageCheck className="w-3 h-3" />{t('common.stokuILevizur')}</span>
                         );
                       }
                       if (s === 'missing') {
@@ -1255,7 +1251,7 @@ export default function Invoices() {
               <div className="p-6 space-y-6 overflow-y-auto flex-1">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Lloji i fatures</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.llojiIFatures')}</label>
                     <select
                       value={form.invoice_type}
                       onChange={(e) => setForm({ ...form, invoice_type: e.target.value as AccInvoiceType })}
@@ -1360,9 +1356,7 @@ export default function Invoices() {
                       onClick={addItem}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      Shto rresht
-                    </button>
+                      <Plus className="w-3.5 h-3.5" />{t('common.shtoRresht')}</button>
                   </div>
 
                   <div className="space-y-3">
@@ -1423,7 +1417,7 @@ export default function Invoices() {
                             </select>
                           </div>
                           <div className="sm:col-span-1">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Cmimi</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.cmimi')}</label>
                             <input
                               type="number"
                               min="0"
@@ -1558,9 +1552,7 @@ export default function Invoices() {
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-5 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Send className="w-5 h-5 text-teal-600" />
-                Dergo faturen me Email
-              </h3>
+                <Send className="w-5 h-5 text-teal-600" />{t('common.dergoFaturenMeEmail')}</h3>
               <p className="text-sm text-gray-500 mt-1">
                 {emailInvoice.invoice_number} - {formatCurrency(emailInvoice.total, emailInvoice.currency)}
               </p>
@@ -1599,9 +1591,9 @@ export default function Invoices() {
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="sq">Shqip</option>
-                      <option value="de">Gjermanisht</option>
-                      <option value="en">Anglisht</option>
-                      <option value="fr">Frengjisht</option>
+                      <option value="de">{t('common.gjermanisht')}</option>
+                      <option value="en">{t('common.anglisht')}</option>
+                      <option value="fr">{t('common.frengjisht')}</option>
                     </select>
                   </div>
                   {emailInvoice.sent_at && (

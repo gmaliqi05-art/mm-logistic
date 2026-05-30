@@ -182,9 +182,7 @@ export default function EmailTemplateEditor() {
             disabled={isNew}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
-            <Send className="h-4 w-4" />
-            Dergo test
-          </button>
+            <Send className="h-4 w-4" />{t('common.dergoTest')}</button>
           <button
             type="button"
             onClick={save}
@@ -224,7 +222,7 @@ export default function EmailTemplateEditor() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">Kategoria</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.kategoria')}</label>
                     <select
                       value={tpl.category}
                       onChange={(e) => update("category", e.target.value as TemplateRow["category"])}
@@ -245,7 +243,7 @@ export default function EmailTemplateEditor() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="mb-1 block text-xs font-medium text-slate-700">Pershkrim</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-700">{t('common.pershkrim')}</label>
                     <textarea
                       value={tpl.description}
                       onChange={(e) => update("description", e.target.value)}
@@ -317,7 +315,7 @@ export default function EmailTemplateEditor() {
                   <EmailRichTextEditor
                     value={String(tpl[field("body_html")] ?? "")}
                     onChange={(v) => update(field("body_html"), v)}
-                    placeholder="Shkruani permbajtjen kryesore..."
+                    placeholder={t('common.shkruaniPermbajtjenKryesore')}
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -346,8 +344,7 @@ export default function EmailTemplateEditor() {
 
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <h2 className="mb-2 text-sm font-semibold text-slate-900">Variablat e disponueshme</h2>
-              <p className="mb-3 text-xs text-slate-500">
-                Klikoni per te kopjuar. Perdorni <code>{"{{variable}}"}</code> kudo ne subject, heading, intro, body ose CTA URL.
+              <p className="mb-3 text-xs text-slate-500">{t('common.klikoniPerTeKopjuarPerdorni')}<code>{"{{variable}}"}</code> kudo ne subject, heading, intro, body ose CTA URL.
               </p>
               <VariableChipList variables={tpl.variables || []} />
               {!tpl.is_system && (

@@ -333,20 +333,19 @@ function DepoistDashboard() {
             ))}
           </div>
           <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-600">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Hyrje</span>
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-rose-500" /> Dalje</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />{t('common.hyrje')}</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-rose-500" />{t('common.dalje')}</span>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900 text-sm">Kategorite kryesore</h2>
-            <Link to="/depot/stock" className="text-xs text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">
-              Stoku <ArrowRight className="w-3.5 h-3.5" />
+            <h2 className="font-semibold text-gray-900 text-sm">{t('common.kategoriteKryesore')}</h2>
+            <Link to="/depot/stock" className="text-xs text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">{t('common.stoku')}<ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
           {topCategories.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">Asnje stok i regjistruar</div>
+            <div className="py-8 text-center text-xs text-slate-400">{t('common.asnjeStokIRegjistruar')}</div>
           ) : (
             <ul className="space-y-2">
               {topCategories.map((c) => (

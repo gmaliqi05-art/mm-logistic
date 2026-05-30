@@ -113,7 +113,7 @@ export default function EmailLog() {
             >
               <option value="all">{t('common.all')}</option>
               <option value="sent">Te derguara</option>
-              <option value="failed">Te deshtuara</option>
+              <option value="failed">{t('common.teDeshtuara')}</option>
               <option value="queued">Ne radhe</option>
             </select>
           </div>
@@ -128,7 +128,7 @@ export default function EmailLog() {
       {filtered.length === 0 ? (
         <div className="text-center py-16">
           <Mail className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p className="text-sm text-gray-500">Nuk ka email te derguara akoma</p>
+          <p className="text-sm text-gray-500">{t('common.nukKaEmailTeDerguaraAkoma')}</p>
           <p className="text-xs text-gray-400 mt-1">Email-et qe dergoni klienteve do te shfaqen ketu</p>
         </div>
       ) : (

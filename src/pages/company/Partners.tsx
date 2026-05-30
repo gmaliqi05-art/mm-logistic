@@ -223,20 +223,14 @@ export default function CompanyPartners() {
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-teal-600" />
-            Kompanite Partnere
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Klientet dhe furnitoret e regjistruar qe perdoren ne fletedergesa dhe fatura.
-          </p>
+            <Building2 className="w-6 h-6 text-teal-600" />{t('common.kompanitePartnere')}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{t('common.klientetDheFurnitoretERegjistruarQe')}</p>
         </div>
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 shadow-sm"
         >
-          <Plus className="w-4 h-4" />
-          Regjistro Kompani te Re
-        </button>
+          <Plus className="w-4 h-4" />{t('common.regjistroKompaniTeRe')}</button>
       </header>
 
       <div className="flex flex-col sm:flex-row gap-2">
@@ -255,7 +249,7 @@ export default function CompanyPartners() {
           className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
         >
           <option value="">{t('common.all')}</option>
-          <option value="customer">Klient</option>
+          <option value="customer">{t('common.klient')}</option>
           <option value="supplier">Furnitor</option>
           <option value="both">Te dyja</option>
         </select>
@@ -272,7 +266,7 @@ export default function CompanyPartners() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-200 bg-white p-10 text-center">
           <Building2 className="w-10 h-10 mx-auto text-gray-300" />
-          <p className="mt-3 text-gray-700 font-medium">Asnje kompani e regjistruar</p>
+          <p className="mt-3 text-gray-700 font-medium">{t('common.asnjeKompaniERegjistruar')}</p>
           <p className="text-sm text-gray-500">Klikoni “Regjistro Kompani te Re” per te shtuar nje partner.</p>
         </div>
       ) : (
@@ -446,7 +440,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
                 onChange={(e) => setForm({ ...form, contact_type: e.target.value as PartnerType })}
                 className="input"
               >
-                <option value="customer">Klient</option>
+                <option value="customer">{t('common.klient')}</option>
                 <option value="supplier">Furnitor</option>
                 <option value="both">Te dyja</option>
               </select>

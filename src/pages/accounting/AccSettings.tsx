@@ -327,14 +327,14 @@ export default function AccSettings() {
             <Building2 className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Te Dhenat e Kompanise</h2>
+            <h2 className="text-base font-semibold text-gray-900">{t('common.teDhenatEKompanise')}</h2>
             <p className="text-xs text-gray-500">Informacioni qe shfaqet ne fatura dhe dokumente</p>
           </div>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Emri i Kompanise</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.emriIKompanise')}</label>
               <input
                 type="text"
                 value={companyForm.name}
@@ -355,7 +355,7 @@ export default function AccSettings() {
               <div className="flex items-start gap-2 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
                 <Lock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium mb-0.5">Shteti eshte i kyçur sipas regjistrimit</p>
+                  <p className="font-medium mb-0.5">{t('common.shtetiEshteIKycurSipasRegjistrimit')}</p>
                   <p>
                     Shteti percakton ligjet e kontabilitetit (TVSH, plani i llogarive, autoriteti tatimor, monedha)
                     dhe nuk mund te ndryshohet ketu. Per ta ndryshuar, kontaktoni Super Adminin. Qyteti, kodi postar dhe
@@ -375,9 +375,7 @@ export default function AccSettings() {
                       </>
                     ) : (
                       <span className="flex items-center gap-2 text-gray-400">
-                        <Globe className="w-4 h-4" />
-                        Nuk eshte caktuar
-                      </span>
+                        <Globe className="w-4 h-4" />{t('common.nukEshteCaktuar')}</span>
                     )}
                   </div>
                 </div>
@@ -398,7 +396,7 @@ export default function AccSettings() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Numri i TVSH-se</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.numriITvshSe')}</label>
               <input
                 type="text"
                 value={companyForm.vat_number}
@@ -408,7 +406,7 @@ export default function AccSettings() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Numri Fiskal</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.numriFiskal')}</label>
               <input
                 type="text"
                 value={companyForm.tax_number}
@@ -470,7 +468,7 @@ export default function AccSettings() {
         </div>
         <div className="p-6">
           {sequences.length === 0 ? (
-            <p className="text-sm text-gray-500">Asnje sekuence e konfiguruar.</p>
+            <p className="text-sm text-gray-500">{t('common.asnjeSekuenceEKonfiguruar')}</p>
           ) : (
             <div className="space-y-3">
               {sequences.map((seq) => (
@@ -511,7 +509,7 @@ export default function AccSettings() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">Preferencat e Parazgjedhura</h2>
-            <p className="text-xs text-gray-500">Vlerat standarde per dokumente te reja</p>
+            <p className="text-xs text-gray-500">{t('common.vleratStandardePerDokumenteTeReja')}</p>
           </div>
         </div>
         <div className="p-6">
@@ -552,13 +550,13 @@ export default function AccSettings() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Llogaria Bankare e Parazgjedhur</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.llogariaBankareEParazgjedhur')}</label>
               <select
                 value={defaultBankAccountId}
                 onChange={(e) => handleBankAccountChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
               >
-                <option value="">Asnjera</option>
+                <option value="">{t('common.asnjera')}</option>
                 {bankAccounts.map((ba) => (
                   <option key={ba.id} value={ba.id}>
                     {ba.name} ({ba.iban})
@@ -567,9 +565,7 @@ export default function AccSettings() {
               </select>
             </div>
           </div>
-          <p className="mt-3 text-xs text-gray-400">
-            Keto preferenca ruhen ne pajisjen tuaj dhe aplikohen automatikisht kur krijoni dokumente te reja.
-          </p>
+          <p className="mt-3 text-xs text-gray-400">{t('common.ketoPreferencaRuhenNePajisjenTuaj')}</p>
         </div>
       </div>
     </div>

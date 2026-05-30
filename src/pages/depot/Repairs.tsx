@@ -235,7 +235,7 @@ export default function DepotRepairs() {
     <div className="space-y-6 pb-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{t('depot.repairs.title')}</h1>
-        <p className="text-gray-500 mt-1">Stoku defekt sipas kategorise dhe historiku i reparimeve</p>
+        <p className="text-gray-500 mt-1">{t('common.stokuDefektSipasKategoriseDheHistoriku')}</p>
       </div>
 
       {error && (
@@ -375,13 +375,14 @@ function TabButton({
 }
 
 function DamagedTab({ rows, onRepair }: { rows: DamagedStockRow[]; onRepair: (stockId: string) => void }) {
+  const { t } = useTranslation();
   const total = rows.reduce((s, r) => s + r.quantity, 0);
 
   if (rows.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
         <CheckCircle className="w-10 h-10 mx-auto mb-3 text-emerald-300" />
-        <p className="text-sm text-slate-400">Nuk ka paleta defekte ne stok.</p>
+        <p className="text-sm text-slate-400">{t('common.nukKaPaletaDefekteNeStok')}</p>
       </div>
     );
   }
@@ -392,12 +393,8 @@ function DamagedTab({ rows, onRepair }: { rows: DamagedStockRow[]; onRepair: (st
         <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
           <AlertOctagon className="w-4 h-4" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-900">
-          Paleta Defekte ne Stok
-        </h3>
-        <p className="text-xs text-slate-500 hidden sm:block">
-          Klikoni nje rresht per te raportuar reparimin
-        </p>
+        <h3 className="text-sm font-semibold text-slate-900">{t('common.paletaDefekteNeStok')}</h3>
+        <p className="text-xs text-slate-500 hidden sm:block">{t('common.klikoniNjeRreshtPerTeRaportuar')}</p>
         <span className="ml-auto inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
           {total.toLocaleString()}
         </span>
@@ -436,7 +433,7 @@ function DamagedTab({ rows, onRepair }: { rows: DamagedStockRow[]; onRepair: (st
       </div>
 
       <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-        <p className="text-sm text-slate-600">Totali defekt ne stok</p>
+        <p className="text-sm text-slate-600">{t('common.totaliDefektNeStok')}</p>
         <p className="text-lg font-bold text-amber-700">{total.toLocaleString()} paleta</p>
       </div>
     </div>
@@ -461,7 +458,7 @@ function ReportsTab({
         <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center">
           <TrendingUp className="w-4 h-4" />
         </div>
-        <h3 className="text-sm font-semibold text-slate-900">Paleta te Reparuara sipas Produktit</h3>
+        <h3 className="text-sm font-semibold text-slate-900">{t('common.paletaTeReparuaraSipasProduktit')}</h3>
         <div className="ml-auto relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -476,7 +473,7 @@ function ReportsTab({
       {rows.length === 0 ? (
         <div className="p-12 text-center">
           <Package className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-          <p className="text-sm text-slate-400">Asnje raport reparimi i regjistruar.</p>
+          <p className="text-sm text-slate-400">{t('common.asnjeRaportReparimiIRegjistruar')}</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -486,9 +483,7 @@ function ReportsTab({
                 <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Produkti
                 </th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                  Kategoria
-                </th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">{t('common.kategoria')}</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Sasia (paleta)
                 </th>

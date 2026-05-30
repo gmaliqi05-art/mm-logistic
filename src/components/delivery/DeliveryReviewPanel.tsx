@@ -1492,7 +1492,7 @@ function ReviewModal({
               <Sparkles className="w-4 h-4 flex-shrink-0 text-sky-600" />
               <div>
                 <p className="font-semibold text-sky-900">Shqyrtim automatik</p>
-                <p className="text-xs text-sky-700 mt-0.5">Ky dokument u miratua automatikisht sepse partneri eshte i njohur. Mund te editoni te dhenat nese nevojitet.</p>
+                <p className="text-xs text-sky-700 mt-0.5">{t('common.kyDokumentUMiratuaAutomatikishtSepse')}</p>
               </div>
             </div>
           )}
@@ -1615,8 +1615,8 @@ function ReviewModal({
                 <>
                 {noScanFlag && (
                   <div className="mb-2 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-amber-800">Shoferi e mbylli pa skanim</p>
-                    <p className="text-[11px] text-amber-700 mt-0.5">Ngarkoni dokumentin qe ju erdhi me email kur te vij.</p>
+                    <p className="text-xs font-semibold text-amber-800">{t('common.shoferiEMbylliPaSkanim')}</p>
+                    <p className="text-[11px] text-amber-700 mt-0.5">{t('common.ngarkoniDokumentinQeJuErdhiMe')}</p>
                   </div>
                 )}
                 <label className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/40 hover:bg-sky-50 transition-colors p-6 text-center cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
@@ -1683,7 +1683,7 @@ function ReviewModal({
                     <table className="w-full text-xs">
                       <thead className="bg-slate-100 text-left">
                         <tr>
-                          <th className="px-2.5 py-1.5 font-semibold text-slate-600">Pershkrim</th>
+                          <th className="px-2.5 py-1.5 font-semibold text-slate-600">{t('common.pershkrim')}</th>
                           <th className="px-2.5 py-1.5 font-semibold text-slate-600 text-right">Sasi</th>
                         </tr>
                       </thead>
@@ -1793,7 +1793,7 @@ function ReviewModal({
                 onChange={(e) => setReason(e.target.value)}
                 rows={2}
                 className="w-full bg-white border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                placeholder="Shkruani arsyen..."
+                placeholder={t('common.shkruaniArsyen')}
               />
             </div>
           )}

@@ -171,7 +171,7 @@ export default function EmailCampaignDetail() {
           <div className="mt-1 text-2xl font-bold text-slate-900">{campaign.total_recipients}</div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-xs font-medium text-slate-500">Dergua</div>
+          <div className="text-xs font-medium text-slate-500">{t('common.dergua')}</div>
           <div className="mt-1 text-2xl font-bold text-emerald-700">{campaign.sent_count}</div>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -282,7 +282,7 @@ export default function EmailCampaignDetail() {
                   <th className="px-4 py-3">Gjuha</th>
                   <th className="px-4 py-3">{t('common.status')}</th>
                   <th className="px-4 py-3">{t('common.error')}</th>
-                  <th className="px-4 py-3">Dergua</th>
+                  <th className="px-4 py-3">{t('common.dergua')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
