@@ -459,7 +459,7 @@ function ReviewModal({
     }
   }
 
-  async function triggerAiScan(file: File, storagePath: string) {
+  async function triggerAiScan(file: File, _storagePath: string) {
     try {
       const companyId = profile?.company_id;
       if (!companyId) return;
@@ -1924,7 +1924,7 @@ function ReviewModal({
               <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-gray-900">Paralajmerime</h4>
-                <p className="text-xs text-gray-600 mt-1">Shqyrtoni paralajmerimet me poshte para se te vazhdoni.</p>
+                <p className="text-xs text-gray-600 mt-1">{t('common.reviewWarningsBeforeProceeding')}</p>
               </div>
             </div>
             <div className="p-5 space-y-2 max-h-80 overflow-y-auto">
@@ -1958,8 +1958,8 @@ function ReviewModal({
             <div className="bg-emerald-50 border-b border-emerald-100 px-5 py-4 flex items-start gap-3">
               <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-gray-900">Dergesa u regjistrua ne stok</h4>
-                <p className="text-sm text-gray-600 mt-1">Deshironi te krijoni fature per kete dergese?</p>
+                <h4 className="font-bold text-gray-900">{t('common.deliveryRegisteredToStock')}</h4>
+                <p className="text-sm text-gray-600 mt-1">{t('common.createInvoiceForDelivery')}</p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-4">

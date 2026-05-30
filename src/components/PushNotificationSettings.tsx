@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Bell, BellOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useTranslation } from '../i18n';
 
 export default function PushNotificationSettings() {
+  const { t } = useTranslation();
   const {
     isSupported,
     isSubscribed,
@@ -112,7 +114,7 @@ export default function PushNotificationSettings() {
             {updating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Duke përditësuar...</span>
+                <span>{t('common.updatingDots')}</span>
               </>
             ) : (
               <>
@@ -169,10 +171,10 @@ export default function PushNotificationSettings() {
               Si funksionojnë njoftimet push?
             </h3>
             <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-              <li>Merrni njoftime edhe kur aplikacioni është mbyllur</li>
-              <li>Njoftohen për mesazhe të reja në chat</li>
-              <li>Njoftohen për dokumente të reja të dërguara</li>
-              <li>Njoftohen për fletëdërgesa të reja</li>
+              <li>{t('common.pushAppClosedHint')}</li>
+              <li>{t('common.pushChatHint')}</li>
+              <li>{t('common.pushDocsHint')}</li>
+              <li>{t('common.pushDeliveriesHint')}</li>
             </ul>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowDownLeft, ArrowUpRight, FileText, Receipt, Loader2, Eye, EyeOff, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   companyId: string | null;
@@ -20,6 +21,7 @@ interface Snapshot {
 const OVERDUE_STATUSES = ['overdue', 'partial', 'received', 'sent'];
 
 export default function FinanceSnapshot({ companyId }: Props) {
+  const { t } = useTranslation();
   const [data, setData] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
@@ -171,7 +173,7 @@ export default function FinanceSnapshot({ companyId }: Props) {
     <div className="bg-white rounded-xl border border-slate-200">
       <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
         <Receipt className="w-4 h-4 text-slate-500" />
-        <h2 className="text-sm font-semibold text-slate-900">Permbledhje financiare</h2>
+        <h2 className="text-sm font-semibold text-slate-900">{t('common.financialSummary')}</h2>
         <span className="ml-auto text-[11px] text-slate-500 hidden sm:inline">30 ditet e fundit</span>
         <button
           type="button"

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { Mail, Search, Plus, CreditCard as Edit3, Send, Copy, Power, Loader2, Tag } from "lucide-react";
 import TestSendDialog from "../../components/superadmin/email/TestSendDialog";
+import { useTranslation } from "../../i18n";
 
 interface Template {
   id: string;
@@ -28,6 +29,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 
 export default function EmailTemplates() {
+  const { t: tr } = useTranslation();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -203,8 +205,8 @@ export default function EmailTemplates() {
                   <th className="px-4 py-3">Emri</th>
                   <th className="px-4 py-3">Kodi</th>
                   <th className="px-4 py-3">Kategoria</th>
-                  <th className="px-4 py-3">Statusi</th>
-                  <th className="px-4 py-3">Perditesuar</th>
+                  <th className="px-4 py-3">{tr('common.status')}</th>
+                  <th className="px-4 py-3">{tr('common.updated')}</th>
                   <th className="px-4 py-3 text-right">Veprime</th>
                 </tr>
               </thead>

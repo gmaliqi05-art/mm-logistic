@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, Plus, CreditCard as Edit3, Save, X, Loader2, AlertTriangle, Check, Globe as Globe2, Trash2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageSkeleton } from '../../components/ui/Skeleton';
+import { useTranslation } from '../../i18n';
 interface LegalDocument {
   id: string;
   slug: string;
@@ -40,6 +41,7 @@ const LANGUAGES = [
 ];
 
 export default function LegalPages() {
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -334,7 +336,7 @@ export default function LegalPages() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Perditesuar me</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.updatedAt')}</label>
                     <input
                       type="text"
                       value={editLastUpdated}

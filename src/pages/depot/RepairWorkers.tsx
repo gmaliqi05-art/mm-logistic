@@ -28,7 +28,7 @@ function getWorkerBatchSize(workerId: string): number {
   } catch { return DEFAULT_BATCH_SIZE; }
 }
 function setWorkerBatchSize(workerId: string, size: number) {
-  try { localStorage.setItem(`repair_batch_${workerId}`, String(Math.max(1, size))); } catch {}
+  try { localStorage.setItem(`repair_batch_${workerId}`, String(Math.max(1, size))); } catch { /* quota / private mode */ }
 }
 
 interface WorkerRow extends Profile {
