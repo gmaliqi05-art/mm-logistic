@@ -251,7 +251,7 @@ export default function CompanyDrivers() {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase">Patenta</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase hidden lg:table-cell">Kod 95</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase hidden lg:table-cell">G25</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase">Statusi</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase">{t('common.status')}</th>
                 <th className="w-28" />
               </tr>
             </thead>

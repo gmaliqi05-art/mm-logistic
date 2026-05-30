@@ -278,10 +278,10 @@ export default function EmailCampaignDetail() {
             <table className="w-full">
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">{t('common.email')}</th>
                   <th className="px-4 py-3">Gjuha</th>
-                  <th className="px-4 py-3">Statusi</th>
-                  <th className="px-4 py-3">Gabim</th>
+                  <th className="px-4 py-3">{t('common.status')}</th>
+                  <th className="px-4 py-3">{t('common.error')}</th>
                   <th className="px-4 py-3">Dergua</th>
                 </tr>
               </thead>

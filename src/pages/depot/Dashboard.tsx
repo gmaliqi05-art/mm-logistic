@@ -368,9 +368,7 @@ function DepoistDashboard() {
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900 text-sm">{t('depot.dashboard.recentMovements')}</h2>
-            <Link to="/depot/reports" className="text-xs text-teal-700 hover:text-teal-900">
-              Te gjitha
-            </Link>
+            <Link to="/depot/reports" className="text-xs text-teal-700 hover:text-teal-900">{t('common.all')}</Link>
           </div>
           <div className="divide-y divide-gray-50">
             {recent.length === 0 ? (

@@ -1133,9 +1133,7 @@ export default function DepotRepairWorkers() {
                                         {p.name}
                                       </span>
                                       {pInactive && (
-                                        <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                                          Joaktiv
-                                        </span>
+                                        <span className="text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full flex-shrink-0">{t('common.inactive')}</span>
                                       )}
                                     </button>
                                   );
@@ -1154,9 +1152,7 @@ export default function DepotRepairWorkers() {
                 type="button"
                 onClick={() => setShowCategoryModal(false)}
                 className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700"
-              >
-                Mbyll
-              </button>
+              >{t('common.close')}</button>
             </div>
           </div>
         </div>

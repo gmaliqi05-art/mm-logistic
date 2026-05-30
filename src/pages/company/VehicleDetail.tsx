@@ -201,8 +201,7 @@ export default function VehicleDetail() {
                     <ScanLine className="w-3.5 h-3.5" /> Skano
                   </button>
                   <button onClick={() => setAddForm({ type: 'hu_tuv', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                    <Plus className="w-3.5 h-3.5" /> Shto
-                  </button>
+                    <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
               </div>
               {addForm && ['hu_tuv', 'au', 'uvv', 'sp', 'tacho'].includes(addForm.type) && (
@@ -228,8 +227,7 @@ export default function VehicleDetail() {
                     <ScanLine className="w-3.5 h-3.5" /> Skano
                   </button>
                   <button onClick={() => setAddForm({ type: 'haftpflicht', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                    <Plus className="w-3.5 h-3.5" /> Shto
-                  </button>
+                    <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
               </div>
               {addForm && ['haftpflicht', 'vollkasko', 'teilkasko', 'ladung'].includes(addForm.type) && (
@@ -255,8 +253,7 @@ export default function VehicleDetail() {
                     <ScanLine className="w-3.5 h-3.5" /> Skano
                   </button>
                   <button onClick={() => setAddForm({ type: 'tax', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                    <Plus className="w-3.5 h-3.5" /> Shto
-                  </button>
+                    <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
               </div>
               {addForm?.type === 'tax' && (
@@ -275,8 +272,7 @@ export default function VehicleDetail() {
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-600">Shoferet e caktuar per kete mjet.</p>
                 <button onClick={() => setAddForm({ type: 'assign', value: '', value2: '', provider: '' })} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                  <Plus className="w-3.5 h-3.5" /> Shto
-                </button>
+                  <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
               </div>
               {addForm?.type === 'assign' && (
                 <div className="flex gap-2 p-3 bg-gray-50 rounded-lg">
@@ -285,8 +281,8 @@ export default function VehicleDetail() {
                     <option value="">Zgjidh shoferin</option>
                     {drivers.map(d => <option key={d.id} value={d.id}>{d.full_name}</option>)}
                   </select>
-                  <button onClick={() => addAssignment(addForm.value)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">Ruaj</button>
-                  <button onClick={() => setAddForm(null)} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
+                  <button onClick={() => addAssignment(addForm.value)} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm">{t('common.save')}</button>
+                  <button onClick={() => setAddForm(null)} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('common.cancel')}</button>
                 </div>
               )}
               <div className="space-y-2">

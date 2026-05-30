@@ -343,7 +343,7 @@ export default function AccSettings() {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.address')}</label>
               <input
                 type="text"
                 value={companyForm.address}

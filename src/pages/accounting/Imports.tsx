@@ -324,15 +324,15 @@ export default function Imports() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left py-2 px-3 font-medium">Numri</th>
-                  <th className="text-left py-2 px-3 font-medium">Data</th>
-                  <th className="text-left py-2 px-3 font-medium">Furnitori</th>
+                  <th className="text-left py-2 px-3 font-medium">{t('common.date')}</th>
+                  <th className="text-left py-2 px-3 font-medium">{t('common.supplier')}</th>
                   <th className="text-left py-2 px-3 font-medium">Vendi</th>
                   <th className="text-left py-2 px-3 font-medium">Incoterms</th>
                   <th className="text-right py-2 px-3 font-medium">Vlera doganore</th>
                   <th className="text-right py-2 px-3 font-medium">Takse</th>
                   <th className="text-right py-2 px-3 font-medium">EUSt</th>
                   <th className="text-right py-2 px-3 font-medium">Total landed</th>
-                  <th className="text-center py-2 px-3 font-medium">Statusi</th>
+                  <th className="text-center py-2 px-3 font-medium">{t('common.status')}</th>
                   <th className="text-right py-2 px-3 font-medium">Veprime</th>
                 </tr>
               </thead>
@@ -384,12 +384,12 @@ export default function Imports() {
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Data</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.date')}</label>
                   <input type="date" value={form.import_date} onChange={e => setForm({ ...form, import_date: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Statusi</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.status')}</label>
                   <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm">
                     <option value="draft">Draft</option>
@@ -400,7 +400,7 @@ export default function Imports() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Furnitori</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.supplier')}</label>
                   <select value={form.supplier_id} onChange={e => setForm({ ...form, supplier_id: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm">
                     <option value="">— Zgjidh —</option>
@@ -450,7 +450,7 @@ export default function Imports() {
                       <tr>
                         <th className="px-2 py-1.5 text-left">Produkti</th>
                         <th className="px-2 py-1.5 text-left">Kodi HS</th>
-                        <th className="px-2 py-1.5 text-right">Sasia</th>
+                        <th className="px-2 py-1.5 text-right">{t('common.quantity')}</th>
                         <th className="px-2 py-1.5 text-right">Cmim valute</th>
                         <th className="px-2 py-1.5 text-right">Cmim EUR</th>
                         <th className="px-2 py-1.5 text-right">Vlera doganore</th>
@@ -553,7 +553,7 @@ export default function Imports() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Shenime</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">{t('common.notes')}</label>
                 <textarea rows={2} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-sm" />
               </div>

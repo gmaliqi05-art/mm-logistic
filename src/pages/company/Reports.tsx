@@ -574,7 +574,7 @@ export default function CompanyReports() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
                   <tr>
-                    <th className="text-left px-3 py-2">Data</th>
+                    <th className="text-left px-3 py-2">{t('common.date')}</th>
                     <th className="text-left px-3 py-2">Burimi</th>
                     <th className="text-left px-3 py-2">Tipi</th>
                     <th className="text-left px-3 py-2">Gjendja</th>
@@ -677,7 +677,7 @@ export default function CompanyReports() {
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
                       <tr>
-                        <th className="text-left px-3 py-2">Data</th>
+                        <th className="text-left px-3 py-2">{t('common.date')}</th>
                         <th className="text-left px-3 py-2">Tipi</th>
                         <th className="text-left px-3 py-2">Depoja</th>
                         <th className="text-right px-3 py-2">Sasi</th>
@@ -720,7 +720,7 @@ export default function CompanyReports() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] tracking-wide">
                     <tr>
-                      <th className="text-left px-3 py-2">Data</th>
+                      <th className="text-left px-3 py-2">{t('common.date')}</th>
                       <th className="text-left px-3 py-2">Depoja</th>
                       <th className="text-left px-3 py-2">Produkti</th>
                       <th className="text-left px-3 py-2">Gjendja burim</th>
@@ -768,7 +768,7 @@ export default function CompanyReports() {
                       <th className="text-right px-3 py-2">Hyrje</th>
                       <th className="text-right px-3 py-2">Dalje</th>
                       <th className="text-right px-3 py-2">Balanca</th>
-                      <th className="text-right px-3 py-2">Totali</th>
+                      <th className="text-right px-3 py-2">{t('common.total')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -799,6 +799,7 @@ export default function CompanyReports() {
 }
 
 function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
+  const { t } = useTranslation();
   const totalQty = rows.reduce((s, r) => s + r.total_quantity, 0);
   const inRows = rows.filter(r => r.type === 'pickup');
   const outRows = rows.filter(r => r.type !== 'pickup');
@@ -882,7 +883,7 @@ function ScansTab({ rows }: { rows: ScannedDocRow[] }) {
                 <th className="text-left px-3 py-2">Tipi</th>
                 <th className="text-right px-3 py-2">Sasia totale</th>
                 <th className="text-right px-3 py-2">Artikuj</th>
-                <th className="text-right px-3 py-2">Data</th>
+                <th className="text-right px-3 py-2">{t('common.date')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -959,12 +960,13 @@ function SourceBadge({ type }: { type: 'stock_movement' | 'sorting' | 'repair' }
 }
 
 function SortingOrRepairTable({ rows, depots }: { rows: MovementRow[]; depots: Array<{ id: string; name: string }> }) {
+  const { t } = useTranslation();
   if (rows.length === 0) return <EmptyState icon={Layers} label="Pa te dhena ne kete periudhe." />;
   const total = rows.reduce((s, r) => s + r.quantity_delta, 0);
   return (
     <div>
       <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-lg">
-        <span className="text-sm text-gray-600">Totali</span>
+        <span className="text-sm text-gray-600">{t('common.total')}</span>
         <span className="text-xl font-bold text-gray-900">{total}</span>
       </div>
       <div className="space-y-1 max-h-72 overflow-y-auto">

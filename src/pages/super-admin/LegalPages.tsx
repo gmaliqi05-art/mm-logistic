@@ -393,9 +393,7 @@ export default function LegalPages() {
                   <button
                     onClick={() => setEditing(false)}
                     className="px-5 py-2.5 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
-                  >
-                    Anulo
-                  </button>
+                  >{t('common.cancel')}</button>
                   <button
                     onClick={handleSave}
                     disabled={saving || !editTitle.trim()}

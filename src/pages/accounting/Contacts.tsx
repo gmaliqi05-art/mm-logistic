@@ -311,9 +311,9 @@ export default function Contacts() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Emri</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lloji</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.name')}</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.type')}</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.email')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Telefon</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Qyteti</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shteti</th>
@@ -472,7 +472,7 @@ export default function Contacts() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Lloji i kontaktit</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.contactType')}</label>
                   <select
                     value={form.contact_type}
                     onChange={(e) => updateForm('contact_type', e.target.value)}
@@ -498,12 +498,10 @@ export default function Contacts() {
 
               <div className="border-t border-gray-100 pt-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Adresa
-                </h3>
+                  <MapPin className="w-4 h-4" />{t('common.address')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Adresa</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.address')}</label>
                     <input
                       type="text"
                       value={form.address}
@@ -552,7 +550,7 @@ export default function Contacts() {
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.email')}</label>
                     <input
                       type="email"
                       value={form.email}
@@ -659,9 +657,7 @@ export default function Contacts() {
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Anulo
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name.trim()}

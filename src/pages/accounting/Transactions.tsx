@@ -321,7 +321,7 @@ export default function Transactions() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Te Ardhurat</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.revenue')}</p>
               <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(totalIncome)}</p>
             </div>
             <div className="bg-green-500 p-2.5 rounded-xl">
@@ -392,7 +392,7 @@ export default function Transactions() {
             onChange={(e) => setFilterType(e.target.value as FilterType)}
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
-            <option value="all">Te gjitha llojet</option>
+            <option value="all">{t('common.allTypes')}</option>
             <option value="income">Te ardhura</option>
             <option value="expense">Shpenzime</option>
             <option value="transfer">Transfer</option>
@@ -417,10 +417,10 @@ export default function Transactions() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pershkrimi</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.date')}</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.description')}</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kontakti</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Lloji</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.type')}</th>
                 <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shuma</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Metoda</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Referenca</th>
@@ -484,9 +484,7 @@ export default function Transactions() {
                         <button
                           onClick={() => openEdit(tx)}
                           className="text-sm text-emerald-600 hover:text-emerald-700 font-medium px-2"
-                        >
-                          Ndrysho
-                        </button>
+                        >{t('common.edit')}</button>
                       </div>
                     </td>
                   </tr>
@@ -657,7 +655,7 @@ export default function Transactions() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shenime</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.notes')}</label>
                     <textarea
                       value={form.notes}
                       onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -673,9 +671,7 @@ export default function Transactions() {
                 <button
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Anulo
-                </button>
+                >{t('common.cancel')}</button>
                 <button
                   onClick={handleSave}
                   disabled={saving}

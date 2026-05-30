@@ -283,8 +283,7 @@ export default function EmailTemplateEditor() {
           onClick={() => navigate('/company/email/templates')}
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
         >
-          <ArrowLeft className="w-4 h-4" /> Kthehu
-        </button>
+          <ArrowLeft className="w-4 h-4" />{t('common.back')}</button>
         <div className="flex items-center gap-2">
           {saved && (
             <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
@@ -331,7 +330,7 @@ export default function EmailTemplateEditor() {
             <h3 className="text-sm font-semibold text-gray-900">Informacionet baze</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Emri</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.name')}</label>
                 <input
                   type="text"
                   value={data.name}
@@ -363,7 +362,7 @@ export default function EmailTemplateEditor() {
                 </select>
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Pershkrimi</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.description')}</label>
                 <input
                   type="text"
                   value={data.description}
@@ -378,7 +377,7 @@ export default function EmailTemplateEditor() {
           {/* Locale tabs + content */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-900">Permbajtja</h3>
+              <h3 className="text-sm font-semibold text-gray-900">{t('common.content')}</h3>
               <div className="flex rounded-lg border border-gray-200 overflow-hidden">
                 {(['sq', 'de', 'en'] as Locale[]).map((loc) => (
                   <button

@@ -157,8 +157,7 @@ export default function DriverDetail() {
                     <ScanLine className="w-3.5 h-3.5" /> Skano
                   </button>
                   <button onClick={() => setAddMode('license')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                    <Plus className="w-3.5 h-3.5" /> Shto
-                  </button>
+                    <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
               </div>
               {addMode === 'license' && (
@@ -200,8 +199,7 @@ export default function DriverDetail() {
                     <ScanLine className="w-3.5 h-3.5" /> Skano
                   </button>
                   <button onClick={() => setAddMode('qualification')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                    <Plus className="w-3.5 h-3.5" /> Shto
-                  </button>
+                    <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
               </div>
               {addMode === 'qualification' && (
@@ -238,8 +236,7 @@ export default function DriverDetail() {
                     <ScanLine className="w-3.5 h-3.5" /> Skano
                   </button>
                   <button onClick={() => setAddMode('medical')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-600 text-white text-xs rounded-lg">
-                    <Plus className="w-3.5 h-3.5" /> Shto
-                  </button>
+                    <Plus className="w-3.5 h-3.5" />{t('common.add')}</button>
                 </div>
               </div>
               {addMode === 'medical' && (
@@ -378,6 +375,7 @@ function TabBtn({ active, onClick, icon, children }: { active: boolean; onClick:
 }
 
 function LicenseAddForm({ companyId, driverId, onDone }: { companyId: string; driverId: string; onDone: () => void }) {
+  const { t } = useTranslation();
   const [number, setNumber] = useState('');
   const [categories, setCategories] = useState<string[]>(['B']);
   const [issued, setIssued] = useState('');
@@ -421,14 +419,15 @@ function LicenseAddForm({ companyId, driverId, onDone }: { companyId: string; dr
         </div>
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
-        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">Ruaj</button>
+        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('common.cancel')}</button>
+        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">{t('common.save')}</button>
       </div>
     </div>
   );
 }
 
 function QualAddForm({ companyId, driverId, onDone }: { companyId: string; driverId: string; onDone: () => void }) {
+  const { t } = useTranslation();
   const [type, setType] = useState('kod95');
   const [issued, setIssued] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -451,7 +450,7 @@ function QualAddForm({ companyId, driverId, onDone }: { companyId: string; drive
     <div className="p-4 bg-gray-50 rounded-lg space-y-3">
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">Lloji</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('common.type')}</label>
           <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
             <option value="kod95">Kod 95 (BKrFQG)</option>
             <option value="adr">ADR (Mallra te rrezikshme)</option>
@@ -467,14 +466,15 @@ function QualAddForm({ companyId, driverId, onDone }: { companyId: string; drive
         <MiniField label="Skadon me *" type="date" value={expiry} onChange={setExpiry} />
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
-        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">Ruaj</button>
+        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('common.cancel')}</button>
+        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">{t('common.save')}</button>
       </div>
     </div>
   );
 }
 
 function MedicalAddForm({ companyId, driverId, onDone }: { companyId: string; driverId: string; onDone: () => void }) {
+  const { t } = useTranslation();
   const [exam, setExam] = useState('g25');
   const [doctor, setDoctor] = useState('');
   const [issued, setIssued] = useState('');
@@ -508,8 +508,8 @@ function MedicalAddForm({ companyId, driverId, onDone }: { companyId: string; dr
         <MiniField label="Skadon me *" type="date" value={expiry} onChange={setExpiry} />
       </div>
       <div className="flex gap-2 justify-end">
-        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">Anulo</button>
-        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">Ruaj</button>
+        <button onClick={onDone} className="px-3 py-2 bg-gray-200 rounded-lg text-sm">{t('common.cancel')}</button>
+        <button onClick={save} disabled={saving || !expiry} className="px-3 py-2 bg-teal-600 text-white rounded-lg text-sm disabled:opacity-50">{t('common.save')}</button>
       </div>
     </div>
   );

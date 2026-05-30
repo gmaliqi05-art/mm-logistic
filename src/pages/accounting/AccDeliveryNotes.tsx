@@ -517,7 +517,7 @@ export default function AccDeliveryNotes() {
                           <button
                             onClick={() => openEdit(note)}
                             className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="Ndrysho"
+                            title={t('common.edit')}
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -612,7 +612,7 @@ export default function AccDeliveryNotes() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.date')}</label>
                     <input
                       type="date"
                       value={form.note_date}
@@ -644,7 +644,7 @@ export default function AccDeliveryNotes() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Shenime</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.notes')}</label>
                     <input
                       type="text"
                       value={form.notes}
@@ -657,7 +657,7 @@ export default function AccDeliveryNotes() {
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-700">Artikujt</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">{t('common.lineItems')}</h3>
                     <button
                       onClick={addItem}
                       className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -689,17 +689,17 @@ export default function AccDeliveryNotes() {
                             )}
                           </div>
                           <div className="sm:col-span-3">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Pershkrimi</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.description')}</label>
                             <input
                               type="text"
                               value={item.description}
                               onChange={(e) => updateItem(index, 'description', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                              placeholder="Pershkrimi"
+                              placeholder={t('common.description')}
                             />
                           </div>
                           <div className="sm:col-span-2">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Sasia</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.quantity')}</label>
                             <input
                               type="number"
                               value={item.quantity}
@@ -741,9 +741,7 @@ export default function AccDeliveryNotes() {
                 <button
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Anulo
-                </button>
+                >{t('common.cancel')}</button>
                 <button
                   onClick={handleSave}
                   disabled={saving || !form.contact_id}

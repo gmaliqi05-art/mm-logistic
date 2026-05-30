@@ -454,6 +454,7 @@ function ReportsTab({
   setSearch: (v: string) => void;
   totalRepaired: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
@@ -543,9 +544,7 @@ function ReportsTab({
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-slate-200 bg-slate-50">
-                <td className="px-6 py-3 text-sm font-semibold text-slate-700" colSpan={2}>
-                  Totali
-                </td>
+                <td className="px-6 py-3 text-sm font-semibold text-slate-700" colSpan={2}>{t('common.total')}</td>
                 <td className="px-6 py-3 text-right">
                   <span className="text-lg font-bold text-teal-700">{totalRepaired}</span>
                 </td>

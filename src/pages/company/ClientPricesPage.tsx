@@ -244,7 +244,7 @@ export default function ClientPricesPage() {
           <h3 className="text-sm font-semibold text-teal-800">Shto cmim te personalizuar</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Klienti</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.customer')}</label>
               <select
                 value={newContactId}
                 onChange={(e) => setNewContactId(e.target.value)}
@@ -302,9 +302,7 @@ export default function ClientPricesPage() {
             <button
               onClick={() => setAddMode(false)}
               className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              Anulo
-            </button>
+            >{t('common.cancel')}</button>
             <button
               onClick={handleAdd}
               disabled={saving || !newContactId || !newProductKey || !newPrice}
@@ -330,7 +328,7 @@ export default function ClientPricesPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Klienti</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">{t('common.customer')}</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Produkti</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Burimi</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600">Cmimi standard</th>

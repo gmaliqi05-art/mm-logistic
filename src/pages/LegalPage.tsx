@@ -24,7 +24,7 @@ interface LegalPageProps {
 
 export default function LegalPage({ documentKey }: LegalPageProps) {
   const { slug } = useParams<{ slug: string }>();
-  const { tRaw } = useTranslation();
+  const { t, tRaw } = useTranslation();
 
   const key = (documentKey ?? slug ?? 'impressum') as LegalDocumentKey;
   const isValid = validKeys.includes(key);
@@ -86,9 +86,7 @@ export default function LegalPage({ documentKey }: LegalPageProps) {
                 to="/"
                 className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
               >
-                <ArrowLeft className="h-4 w-4" />
-                Kthehu
-              </Link>
+                <ArrowLeft className="h-4 w-4" />{t('common.back')}</Link>
             </div>
           </div>
         </div>

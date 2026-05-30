@@ -105,7 +105,7 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
               <input value={vat} onChange={(e) => setVat(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </label>
             <label className="block">
-              <span className="text-xs font-medium text-gray-700">Email</span>
+              <span className="text-xs font-medium text-gray-700">{t('common.email')}</span>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </label>
             <label className="block">
@@ -113,7 +113,7 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </label>
             <label className="block sm:col-span-2">
-              <span className="text-xs font-medium text-gray-700">Adresa</span>
+              <span className="text-xs font-medium text-gray-700">{t('common.address')}</span>
               <input value={address} onChange={(e) => setAddress(e.target.value)} className="mt-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
             </label>
             <label className="block">
@@ -135,7 +135,7 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
         </div>
 
         <div className="sticky bottom-0 bg-white p-3 border-t border-gray-100 flex justify-end gap-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <button onClick={onClose} className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">Mbyll</button>
+          <button onClick={onClose} className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">{t('common.close')}</button>
           <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:opacity-60">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Regjistro

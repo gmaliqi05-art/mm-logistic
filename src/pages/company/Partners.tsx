@@ -254,7 +254,7 @@ export default function CompanyPartners() {
           onChange={(e) => setFilterType(e.target.value as '' | PartnerType)}
           className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
         >
-          <option value="">Te gjitha</option>
+          <option value="">{t('common.all')}</option>
           <option value="customer">Klient</option>
           <option value="supplier">Furnitor</option>
           <option value="both">Te dyja</option>
@@ -307,7 +307,7 @@ export default function CompanyPartners() {
                     onClick={() => deletePartner(p)}
                     disabled={deletingId === p.id}
                     className="p-1.5 rounded-md border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
-                    title="Fshi"
+                    title={t('common.delete')}
                   >
                     {deletingId === p.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   </button>

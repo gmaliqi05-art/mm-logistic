@@ -242,7 +242,7 @@ export default function Compliance() {
           <Filter className="w-4 h-4 text-gray-400" />
           <select value={filterEntity} onChange={(e) => setFilterEntity(e.target.value as 'all' | 'vehicle' | 'driver')}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-            <option value="all">Te gjitha entitetet</option>
+            <option value="all">{t('common.allEntities')}</option>
             <option value="vehicle">Vetem mjete</option>
             <option value="driver">Vetem shofere</option>
           </select>
@@ -252,7 +252,7 @@ export default function Compliance() {
           </select>
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-            <option value="all">Te gjitha llojet</option>
+            <option value="all">{t('common.allTypes')}</option>
             {allTypes.map(tp => <option key={tp} value={tp}>{labelForType(tp)}</option>)}
           </select>
           <div className="ml-auto text-xs text-gray-500">{filtered.length} regjistrime</div>
@@ -263,9 +263,9 @@ export default function Compliance() {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Entiteti</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Lloji</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('common.type')}</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">Extra</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Statusi</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t('common.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

@@ -202,7 +202,7 @@ export default function EmailTemplates() {
             <table className="w-full">
               <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Emri</th>
+                  <th className="px-4 py-3">{tr('common.name')}</th>
                   <th className="px-4 py-3">Kodi</th>
                   <th className="px-4 py-3">Kategoria</th>
                   <th className="px-4 py-3">{tr('common.status')}</th>

@@ -863,12 +863,12 @@ export default function Invoices() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nr. Fatures</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Klienti</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.customer')}</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.date')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Afati</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Monedha</th>
-                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Totali</th>
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Statusi</th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.total')}</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.status')}</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fletedergesa</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Dergesa</th>
                     <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stok i levizur</th>
@@ -960,7 +960,7 @@ export default function Invoices() {
                           <button
                             onClick={() => openEdit(invoice)}
                             className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="Ndrysho"
+                            title={t('common.edit')}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -1355,7 +1355,7 @@ export default function Invoices() {
 
                 <div className="border-t border-gray-100 pt-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-700">Artikujt</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">{t('common.lineItems')}</h3>
                     <button
                       onClick={addItem}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -1400,7 +1400,7 @@ export default function Invoices() {
                             </div>
                           </div>
                           <div className="sm:col-span-1">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Sasia</label>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.quantity')}</label>
                             <input
                               type="number"
                               min="0"
@@ -1459,7 +1459,7 @@ export default function Invoices() {
                           </div>
                           <div className="sm:col-span-2 flex items-end gap-2">
                             <div className="flex-1">
-                              <label className="block text-xs font-medium text-gray-500 mb-1">Totali</label>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.total')}</label>
                               <div className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-900">
                                 {formatCurrency(calcLineTotal(item), form.currency)}
                               </div>
@@ -1517,7 +1517,7 @@ export default function Invoices() {
                 </div>
 
                 <div className="border-t border-gray-100 pt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Shenime</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.notes')}</label>
                   <textarea
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -1532,9 +1532,7 @@ export default function Invoices() {
                 <button
                   onClick={() => setShowModal(false)}
                   className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Anulo
-                </button>
+                >{t('common.cancel')}</button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
@@ -1693,9 +1691,7 @@ export default function Invoices() {
                 onClick={() => setDeleteConfirm(null)}
                 disabled={deleting}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-              >
-                Anulo
-              </button>
+              >{t('common.cancel')}</button>
               <button
                 onClick={() => handleDeleteInvoice(deleteConfirm)}
                 disabled={deleting}

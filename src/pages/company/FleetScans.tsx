@@ -163,11 +163,11 @@ export default function FleetScans() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-3 py-2.5">Lloji</th>
+                  <th className="px-3 py-2.5">{t('common.type')}</th>
                   <th className="px-3 py-2.5">Kategoria</th>
-                  <th className="px-3 py-2.5">Skedari</th>
-                  <th className="px-3 py-2.5">Statusi</th>
-                  <th className="px-3 py-2.5">Data</th>
+                  <th className="px-3 py-2.5">{t('common.file')}</th>
+                  <th className="px-3 py-2.5">{t('common.status')}</th>
+                  <th className="px-3 py-2.5">{t('common.date')}</th>
                   <th className="px-3 py-2.5"></th>
                 </tr>
               </thead>

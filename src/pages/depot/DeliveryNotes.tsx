@@ -153,7 +153,7 @@ export default function DepotDeliveryNotes() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
             >
-              <option value="">Te gjitha statuset</option>
+              <option value="">{t('common.allStatuses')}</option>
               {Object.entries(statusStyles).filter(([k]) => k !== 'draft').map(([k, s]) => (
                 <option key={k} value={k}>{s.label}</option>
               ))}

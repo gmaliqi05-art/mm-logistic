@@ -691,7 +691,7 @@ export default function Reports() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Te Ardhurat</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.revenue')}</p>
               <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(totalIncome)}</p>
             </div>
             <div className="bg-green-500 p-2.5 rounded-xl">
@@ -730,7 +730,7 @@ export default function Reports() {
         <div className="space-y-3">
           <div>
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-gray-600">Te Ardhurat</span>
+              <span className="text-gray-600">{t('common.revenue')}</span>
               <span className="font-medium text-green-600">{formatCurrency(totalIncome)}</span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-6">
@@ -765,7 +765,7 @@ export default function Reports() {
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Muaji</th>
-                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Te Ardhurat</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.revenue')}</th>
                   <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shpenzimet</th>
                   <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fitimi Neto</th>
                 </tr>
@@ -798,7 +798,7 @@ export default function Reports() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100">
-              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Klienti</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.customer')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nr. Faturave</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Te Ardhurat Totale</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">%</th>
@@ -838,7 +838,7 @@ export default function Reports() {
             <tr className="border-b border-gray-100">
               <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kategoria</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Transaksione</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Totali</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.total')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">%</th>
               <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-48"></th>
             </tr>
@@ -937,7 +937,7 @@ export default function Reports() {
             <tr className="border-b border-gray-100">
               <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produkti</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Njesi Shitur</th>
-              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Te Ardhurat</th>
+              <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.revenue')}</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Njesi Blere</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Kosto</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fitimi</th>
