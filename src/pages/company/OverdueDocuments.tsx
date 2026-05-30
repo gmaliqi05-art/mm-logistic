@@ -141,8 +141,8 @@ export default function CompanyOverdueDocuments() {
 
       if (qErr) throw qErr;
       setNotes((data ?? []) as OverdueNote[]);
-    } catch (e: any) {
-      setError(e?.message ?? 'Ngarkimi deshtoi');
+    } catch (e) {
+      setError((e as Error)?.message ?? 'Ngarkimi deshtoi');
     } finally {
       setLoading(false);
     }
@@ -164,8 +164,8 @@ export default function CompanyOverdueDocuments() {
       if (uErr) throw uErr;
       setBanner({ kind: 'success', text: `${note.note_number} u miratua dhe u mbyll.` });
       await fetchNotes();
-    } catch (e: any) {
-      setBanner({ kind: 'error', text: e?.message ?? 'Veprimi deshtoi' });
+    } catch (e) {
+      setBanner({ kind: 'error', text: (e as Error)?.message ?? 'Veprimi deshtoi' });
     } finally {
       setActionId(null);
     }
@@ -189,8 +189,8 @@ export default function CompanyOverdueDocuments() {
       setCancelFor(null);
       setCancelReason('');
       await fetchNotes();
-    } catch (e: any) {
-      setBanner({ kind: 'error', text: e?.message ?? 'Anulimi deshtoi' });
+    } catch (e) {
+      setBanner({ kind: 'error', text: (e as Error)?.message ?? 'Anulimi deshtoi' });
     } finally {
       setActionId(null);
     }

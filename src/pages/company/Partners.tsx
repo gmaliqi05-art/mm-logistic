@@ -109,8 +109,8 @@ export default function CompanyPartners() {
         .order('name');
       if (qErr) throw qErr;
       setPartners((data ?? []) as Partner[]);
-    } catch (e: any) {
-      setError(e?.message ?? t('companyAdmin.partners.errUploadFailed'));
+    } catch (e) {
+      setError((e as Error)?.message ?? t('companyAdmin.partners.errUploadFailed'));
     } finally {
       setLoading(false);
     }
@@ -175,8 +175,8 @@ export default function CompanyPartners() {
       setForm(emptyForm);
       setEditingId(null);
       await fetchPartners();
-    } catch (e: any) {
-      setError(e?.message ?? t('companyAdmin.partners.errSaveFailed'));
+    } catch (e) {
+      setError((e as Error)?.message ?? t('companyAdmin.partners.errSaveFailed'));
     } finally {
       setSaving(false);
     }
@@ -196,8 +196,8 @@ export default function CompanyPartners() {
         .eq('company_id', profile.company_id);
       if (dErr) throw dErr;
       setPartners((prev) => prev.filter((x) => x.id !== p.id));
-    } catch (e: any) {
-      setError(e?.message ?? 'Nuk u arrit te fshihet partneri.');
+    } catch (e) {
+      setError((e as Error)?.message ?? 'Nuk u arrit te fshihet partneri.');
     } finally {
       setDeletingId(null);
     }

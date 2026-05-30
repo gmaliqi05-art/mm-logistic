@@ -86,8 +86,8 @@ export default function AccountDeletion() {
       a.click();
       URL.revokeObjectURL(url);
       setExportDone(true);
-    } catch (e: any) {
-      setError(e.message || t('accountDeletion.errorExport'));
+    } catch (e) {
+      setError((e as Error).message || t('accountDeletion.errorExport'));
     } finally {
       setExporting(false);
     }
@@ -116,8 +116,8 @@ export default function AccountDeletion() {
 
       setScheduledDate(result.scheduled_for);
       setStep('success');
-    } catch (e: any) {
-      setError(e.message || t('accountDeletion.errorUnexpected'));
+    } catch (e) {
+      setError((e as Error).message || t('accountDeletion.errorUnexpected'));
     } finally {
       setLoading(false);
     }
@@ -145,8 +145,8 @@ export default function AccountDeletion() {
       }
 
       setPendingDeletion(null);
-    } catch (e: any) {
-      setError(e.message || t('common.error'));
+    } catch (e) {
+      setError((e as Error).message || t('common.error'));
     } finally {
       setCancelling(false);
     }

@@ -1058,8 +1058,8 @@ function ReviewModal({
       } else {
         navigate(`/company/invoices/new?delivery_note_id=${note.id}`);
       }
-    } catch (e: any) {
-      setError(e.message || 'Krijimi i fatures deshtoi');
+    } catch (e) {
+      setError((e as Error).message || 'Krijimi i fatures deshtoi');
       setShowStockDeduction(false);
     } finally {
       setCreatingInvoice(false);

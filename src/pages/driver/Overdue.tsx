@@ -111,8 +111,8 @@ export default function DriverOverdue() {
         .order('scheduled_delivery_at', { ascending: true, nullsFirst: false });
       if (qErr) throw qErr;
       setNotes((data ?? []) as OverdueRow[]);
-    } catch (e: any) {
-      setError(e?.message ?? 'Ngarkimi deshtoi');
+    } catch (e) {
+      setError((e as Error)?.message ?? 'Ngarkimi deshtoi');
     } finally {
       setLoading(false);
     }
@@ -139,8 +139,8 @@ export default function DriverOverdue() {
       if (qErr) throw qErr;
       if (!data) throw new Error(t('driver.overdue.documentNotFound') || 'Dokumenti nuk u gjet');
       setSelected(data as unknown as NoteRow);
-    } catch (e: any) {
-      setError(e?.message ?? 'Hapja deshtoi');
+    } catch (e) {
+      setError((e as Error)?.message ?? 'Hapja deshtoi');
     } finally {
       setOpeningId(null);
     }
