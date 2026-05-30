@@ -96,6 +96,7 @@ export const en: typeof sq = {
     pushDeliveriesHint: 'Notify on new delivery notes',
     reviewWarningsBeforeProceeding: 'Review the warnings below before proceeding.',
     deliveryRegisteredToStock: 'Delivery was recorded to stock',
+    createInvoiceForDelivery: 'Do you want to create an invoice for this delivery?',
     financialSummary: 'Financial summary',
     whereIsNow: 'Where it is now',
     updated: 'Updated',

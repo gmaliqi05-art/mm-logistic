@@ -94,6 +94,7 @@ export const sq = {
     pushDeliveriesHint: 'Njoftohen per fletedergesa te reja',
     reviewWarningsBeforeProceeding: 'Shqyrtoni paralajmerimet me poshte para se te vazhdoni.',
     deliveryRegisteredToStock: 'Dergesa u regjistrua ne stok',
+    createInvoiceForDelivery: 'Deshironi te krijoni fature per kete dergese?',
     financialSummary: 'Permbledhje financiare',
     whereIsNow: 'Ku eshte tani',
     updated: 'Perditesuar',

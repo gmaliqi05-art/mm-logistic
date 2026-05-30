@@ -96,6 +96,7 @@ export const de: typeof sq = {
     pushDeliveriesHint: 'Bei neuen Lieferscheinen benachrichtigen',
     reviewWarningsBeforeProceeding: 'Überprüfen Sie die untenstehenden Warnungen, bevor Sie fortfahren.',
     deliveryRegisteredToStock: 'Lieferung wurde im Bestand erfasst',
+    createInvoiceForDelivery: 'Möchten Sie eine Rechnung für diese Lieferung erstellen?',
     financialSummary: 'Finanzübersicht',
     whereIsNow: 'Wo es jetzt ist',
     updated: 'Aktualisiert',
