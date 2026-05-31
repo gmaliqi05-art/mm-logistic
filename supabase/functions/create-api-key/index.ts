@@ -1,11 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { requireCaller } from "../_shared/requireCaller.ts";
+import { parseJson, z } from "../_shared/schemas.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+const CreateApiKeyBody = z.object({
+  name: z.string().trim().min(1, "Emri mungon").max(100, "Emri shume i gjate"),
+  scopes: z
+    .array(z.enum(["read", "write", "admin"]))
+    .nonempty("Te pakten nje scope kerkohet")
+    .max(3, "Shume scope")
+    .default(["read"]),
+});
 
 async function sha256Hex(input: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -35,9 +45,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const body = await req.json();
-    const name = String(body.name || "").slice(0, 100);
-    const scopes = Array.isArray(body.scopes) ? body.scopes : ["read"];
+    const parsed = await parseJson(req, CreateApiKeyBody, corsHeaders);
+    if (!parsed.ok) return parsed.response;
+    const { name, scopes } = parsed.data;
 
     const token = "sk_live_" + randomToken(24);
     const key_hash = await sha256Hex(token);
