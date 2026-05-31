@@ -2,6 +2,68 @@
 
 Data: 7 Shkurt 2026
 
+---
+
+## 🟢 STATUS UPDATE — 31 Maj 2026
+
+Ky seksion permbledh ndryshimet e zbatuara pas audit-it origjinal. Permbajtja origjinale me poshte mbahet per arkive.
+
+### Mangesi te audit-it qe jane zgjidhur (Shkurt → Maj 2026)
+
+| Mangesia | Statusi | Vendndodhja ne kod |
+|---|---|---|
+| Storage bucket publik | ✅ Privatizuar + signed URLs | 5 migrime: `*_attachments_storage_bucket`, `*_tighten_attachments_storage_chat_scope`, `*_fleet_documents_storage_bucket`; hook `src/hooks/useSignedUrl.ts` |
+| Mungese 2FA/MFA | ✅ Faqe sigurie e dedikuar | `src/pages/SecuritySettings.tsx` |
+| Rate limiting i edge functions | ✅ Util ne shared | `supabase/functions/_shared/rateLimit.ts` |
+| Auth check ne edge functions | ✅ requireCaller | `supabase/functions/_shared/requireCaller.ts` |
+| Push notifications (mobile) | ✅ Web Push + APNs + FCM | `send-push-notification`, `send-apns-notification`, `send-fcm-notification`, `register-device-token` |
+| Email notifications | ✅ Te plote me templates + fushata | `send-email`, `send-email-campaign`, `send-invoice-email` |
+| PWA / offline / install | ✅ Manifest + Service Worker | `public/manifest.json`, `public/sw.js`, `InstallPromptBanner.tsx`, `PushEnableBanner.tsx` |
+| Stripe webhooks | ✅ Integrim i plote | `supabase/functions/stripe-webhook`, `stripe-checkout` |
+| Invoice / e-invoice gjenerim PDF | ✅ Te plota | `generate-invoice-pdf`, `generate-einvoice`, `generate-datev-export`, `generate-saft` |
+| GPS tracking ne kohe reale | ✅ Context + dy LiveMap pages | `src/contexts/DriverTrackingContext.tsx`, `src/pages/logistics/LiveMap.tsx`, `src/pages/company/LiveMapWithPlanner.tsx` |
+| API publike per integrime | ✅ Endpoint + celesa + webhooks | `api-v1`, `create-api-key`, `webhook-dispatcher` |
+| VAT number validation | ✅ Server-side VIES | `supabase/functions/validate-vat-number/index.ts` |
+| Bank reconciliation (CAMT/MT940) | ✅ Import + sugjerime | `import-bank-statement`, `fetch-ecb-rates` |
+| Document scanning (OCR) | ✅ Skanim me kamere | `scan-document`, `scan-fleet-document` |
+| Audit log konsistence | ✅ Migrim i dedikuar | `*_audit_round2_consistency_fixes.sql` |
+| Compliance expirations | ✅ Cron + njoftime | `check-compliance-expirations`, `complianceEngine.ts`, `fleetCompliance.ts` |
+
+### i18n (puna e Maj 2026 — PRs #127–#132)
+
+- 4 lokale (sq/en/de/fr) plotesisht te sinkronizuar
+- ~789 stringje hardcoded te rivendosur ne `useTranslation`
+- ~423 celesa te rinj `common.*` + ~529 celesa me perkthime te plota EN/DE/FR
+- `keys.test.ts` ruan parity te 4 lokaleve
+
+### Lint / cilesi kodi (PR #133)
+
+- `no-explicit-any` warnings: 366 → 347 (−19 nga catch blocks)
+- typecheck: clean
+- tests: 110/110 pass
+
+### Mangesi qe mbeten te hapura
+
+| Item | Prioritet | Kompleksitet | Komenti |
+|---|---|---|---|
+| Zod schema validation per edge functions kritike | 🟡 i mesem | i ulet | Endpoint si delivery / stock / register mund te perfitojne nga validim me schema |
+| Dark mode | 🟢 i ulet | i mesem | Kerkon design pass + audit Tailwind tokens |
+| Onboarding wizard per perdorues te rinj | 🟢 i ulet | i mesem | UX add-on |
+| ETA calculator i ndashem si util | 🟢 i ulet | i ulet | Eshte ad-hoc brenda LiveMap aktualisht |
+| Versionim dokumentesh | 🟢 i ulet | i larte | Tracking diff te ndryshimeve |
+| Enkriptim i te dhenave sensitive (email/tel) | 🟡 i mesem | i larte | Diskutim arkitekture nevojshem |
+| Bulk actions ne tabela | 🟢 i ulet | i mesem | UX add-on |
+
+### Riveleresim i pergjithshem
+
+Vleresimi origjinal i audit-it ishte **7/10**. Pas zgjidhjes se kritereve kritike te sigurise dhe shtimit te features te avancuara (GPS, push, fakturim, API), vleresimi aktual eshte rreth **9/10** per kompani te vogla/mesme.
+
+---
+
+## PERMBAJTJA ORIGJINALE E AUDIT-IT (Shkurt 2026)
+
+Permbajtja me poshte ruhet per arkive historike te vendimeve te marra ne ate moment.
+
 ## PËRMBLEDHJE EKZEKUTIVE
 
 Aplikacioni është një platformë funksionale për menaxhimin e flotës së transportit, e ndërtuar me React, TypeScript dhe Supabase. Sistemi është **i përshtatshëm për kompani të vogla/mesme transporti**, por ka **mangësi kritike në siguri dhe funksionalitete të avancuara**.
