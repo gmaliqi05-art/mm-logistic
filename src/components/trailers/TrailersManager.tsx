@@ -677,7 +677,7 @@ function TrailerLoadEditor({
             onChange={(e) => setAssignedDriverId(e.target.value)}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none text-sm"
           >
-            <option value="">— Pa shofer —</option>
+            <option value="">{t('common.dashNoDriver')}</option>
             {drivers.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.full_name}

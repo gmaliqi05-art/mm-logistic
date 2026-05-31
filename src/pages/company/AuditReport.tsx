@@ -13,6 +13,7 @@ import {
   Printer,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { supabase } from '../../lib/supabase';
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -58,6 +59,7 @@ function daysFromNow(date: string | null | undefined): number | null {
 }
 
 export default function CompanyAuditReport() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -553,7 +555,7 @@ export default function CompanyAuditReport() {
             <FileSearch className="w-3.5 h-3.5" />
             Operational Audit
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">Comprehensive Audit Report</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mt-1">{t('common.comprehensiveAuditReport')}</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             Generated {generatedAt.toLocaleString()} · Company, Driver, and Depot findings
           </p>
@@ -621,7 +623,7 @@ export default function CompanyAuditReport() {
             </li>
             <li className="flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 mt-0.5" />
-              <span className="text-gray-700">EU 561/2006: driver hours of service</span>
+              <span className="text-gray-700">{t('common.eu5612006DriverHoursOfService')}</span>
             </li>
             <li className="flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 mt-0.5" />
@@ -629,7 +631,7 @@ export default function CompanyAuditReport() {
             </li>
             <li className="flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 mt-0.5" />
-              <span className="text-gray-700">GDPR: tracking & personal data</span>
+              <span className="text-gray-700">{t('common.gdprTrackingPersonalData')}</span>
             </li>
           </ul>
         </div>
@@ -674,7 +676,7 @@ export default function CompanyAuditReport() {
               onChange={(e) => setDomainFilter(e.target.value as Domain | 'all')}
               className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm bg-white"
             >
-              <option value="all">All domains</option>
+              <option value="all">{t('common.allDomains')}</option>
               <option value="company">Company</option>
               <option value="driver">Driver</option>
               <option value="depot">Depot</option>
@@ -684,7 +686,7 @@ export default function CompanyAuditReport() {
               onChange={(e) => setSeverityFilter(e.target.value as Severity | 'all')}
               className="px-3 py-1.5 rounded-lg border border-gray-300 text-sm bg-white"
             >
-              <option value="all">All severities</option>
+              <option value="all">{t('common.allSeverities')}</option>
               <option value="critical">Critical</option>
               <option value="high">High</option>
               <option value="medium">Medium</option>
@@ -700,7 +702,7 @@ export default function CompanyAuditReport() {
           {!loading && filtered.length === 0 && (
             <div className="py-10 text-center">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-              <p className="mt-2 text-sm text-gray-600">No findings match the current filters. Your operation is in good standing.</p>
+              <p className="mt-2 text-sm text-gray-600">{t('common.noFindingsMatchFilters')}</p>
             </div>
           )}
           {filtered.map((f) => {
@@ -753,7 +755,7 @@ export default function CompanyAuditReport() {
                 </div>
                 <ul className="mt-2 space-y-2">
                   {items.length === 0 && (
-                    <li className="text-xs text-gray-500">No items scheduled.</li>
+                    <li className="text-xs text-gray-500">{t('common.noItemsScheduled')}</li>
                   )}
                   {items.map((f) => {
                     const meta = severityMeta[f.severity];

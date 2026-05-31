@@ -578,7 +578,7 @@ export default function CompanyReports() {
                     <th className="text-left px-3 py-2">Gjendja</th>
                     <th className="text-left px-3 py-2">Depoja</th>
                     <th className="text-left px-3 py-2">{t('common.punetori')}</th>
-                    <th className="text-left px-3 py-2">Nga / Per</th>
+                    <th className="text-left px-3 py-2">{t('common.fromTo')}</th>
                     <th className="text-right px-3 py-2">{t('common.sasi')}</th>
                     <th className="text-left px-3 py-2">Flow</th>
                   </tr>
@@ -680,7 +680,7 @@ export default function CompanyReports() {
                         <th className="text-left px-3 py-2">Depoja</th>
                         <th className="text-right px-3 py-2">{t('common.sasi')}</th>
                         <th className="text-left px-3 py-2">{t('common.punetori')}</th>
-                        <th className="text-left px-3 py-2">Nga / Per</th>
+                        <th className="text-left px-3 py-2">{t('common.fromTo')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">

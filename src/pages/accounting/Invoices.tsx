@@ -1324,7 +1324,7 @@ export default function Invoices() {
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Data e fatures</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.invoiceDate')}</label>
                     <input
                       type="date"
                       value={form.invoice_date}
@@ -1333,7 +1333,7 @@ export default function Invoices() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Afati i pageses</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.paymentDeadline')}</label>
                     <input
                       type="date"
                       value={form.due_date}
@@ -1557,7 +1557,7 @@ export default function Invoices() {
                   <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Mail className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <p className="text-lg font-semibold text-gray-900">Email u dergua!</p>
+                  <p className="text-lg font-semibold text-gray-900">{t('common.emailSentExcl')}</p>
                   <p className="text-sm text-gray-500 mt-1">Fatura PDF u dergua te {emailTo}</p>
                   {emailInvoice.sent_at && (
                     <p className="text-xs text-gray-400 mt-2">
@@ -1568,13 +1568,13 @@ export default function Invoices() {
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email i klientit *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.clientEmailAst')}</label>
                     <input
                       type="email"
                       value={emailTo}
                       onChange={(e) => setEmailTo(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      placeholder="email@shembull.com"
+                      placeholder={t('common.emailExamplePlaceholder')}
                     />
                   </div>
                   <div>
@@ -1669,7 +1669,7 @@ export default function Invoices() {
             <p className="text-sm text-gray-600 mb-6">
               Kjo veprim eshte i pakthyeshem. Fatura dhe artikujt e saj do te fshihen perfundimisht.
               {deleteConfirm.delivery_note_id && (
-                <span className="block mt-1 text-gray-500">Fletedergesa e lidhur do te lirohet per faturim te ri.</span>
+                <span className="block mt-1 text-gray-500">{t('common.linkedDeliveryNoteWillBeReleasedForReinvoice')}</span>
               )}
             </p>
             <div className="flex items-center justify-end gap-3">

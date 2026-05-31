@@ -401,7 +401,7 @@ export default function EmailTemplateEditor() {
                   onChange={(e) => setField('subject', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50"
-                  placeholder="p.sh. Fatura {{invoice_number}} - {{amount}}"
+                  placeholder={t('common.egInvoiceNumberAmount')}
                 />
               </div>
               <div>
@@ -412,7 +412,7 @@ export default function EmailTemplateEditor() {
                   onChange={(e) => setField('preheader', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50"
-                  placeholder="Tekst qe shfaqet ne inbox"
+                  placeholder={t('common.textShownInInbox')}
                 />
               </div>
               <div>
@@ -535,7 +535,7 @@ export default function EmailTemplateEditor() {
                 <iframe
                   srcDoc={previewHtml}
                   className="w-full h-full border-0"
-                  title="Email Preview"
+                  title={t('common.emailPreviewAttr')}
                   sandbox="allow-same-origin"
                 />
               ) : (

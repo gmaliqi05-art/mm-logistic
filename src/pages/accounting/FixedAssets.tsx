@@ -126,7 +126,7 @@ export default function FixedAssets() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Asetet Fikse / Investimet</h1>
-          <p className="text-gray-500 mt-1">Regjistri i aseteve dhe zhvleresimi linear mujor</p>
+          <p className="text-gray-500 mt-1">{t('common.assetsRegistryAndMonthlyDepreciation')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -254,7 +254,7 @@ export default function FixedAssets() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-slate-900">Shto Aset te Ri</h2>
+              <h2 className="text-lg font-bold text-slate-900">{t('common.addNewAsset')}</h2>
               <button onClick={() => setShowManual(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg">
                 <span className="text-xl">X</span>
               </button>

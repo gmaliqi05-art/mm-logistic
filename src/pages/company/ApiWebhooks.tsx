@@ -377,7 +377,7 @@ export default function ApiWebhooks() {
   "data": { "id": "...", "invoice_number": "...", "total": 123.45 },
   "timestamp": "2026-05-04T12:00:00Z"
 }`}</pre>
-            <p className="mt-2 text-xs text-gray-500">Secili request mban header <code>X-Webhook-Signature: sha256=&lt;hmac&gt;</code>, ku HMAC llogaritet me secret-in tend dhe body raw.</p>
+            <p className="mt-2 text-xs text-gray-500">Secili request mban header <code>X-Webhook-Signature: sha256=&lt;hmac&gt;</code>{t('common.whereHmacComputedWithSecretAndRawBody')}</p>
           </div>
         </div>
       )}

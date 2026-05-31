@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Loader2, MapPin, Search, X } from 'lucide-react';
 import { useCities, useCountries, usePostalCodes } from '../../hooks/useLocationData';
+import { useTranslation } from '../../i18n';
 import type { City, Country, LocationSelection, PostalCode } from '../../types/location';
 
 interface BaseSelectProps<T> {
@@ -68,16 +69,18 @@ export function CountrySelect({
   value,
   onChange,
   disabled,
-  placeholder = 'Select country',
+  placeholder,
   label,
   className,
   required,
 }: BaseSelectProps<Country>) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   useOutsideClick(wrapRef, () => setOpen(false));
   const { data, status, error } = useCountries(query);
+  const ph = placeholder ?? t('common.selectCountry');
 
   return (
     <Field label={label} required={required}>
@@ -100,7 +103,7 @@ export function CountrySelect({
             ) : (
               <span className="text-gray-400 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                {placeholder}
+                {ph}
               </span>
             )}
           </span>
@@ -108,7 +111,7 @@ export function CountrySelect({
             {value && !disabled && (
               <span
                 role="button"
-                aria-label="Clear"
+                aria-label={t('common.clear')}
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange(null);
@@ -133,8 +136,8 @@ export function CountrySelect({
                   autoFocus
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search country..."
-                  aria-label="Search country"
+                  placeholder={t('common.searchCountry')}
+                  aria-label={t('common.searchCountryAria')}
                   className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
@@ -180,17 +183,19 @@ export function CitySelect({
   value,
   onChange,
   disabled,
-  placeholder = 'Select city',
+  placeholder,
   label,
   className,
   required,
 }: BaseSelectProps<City> & { countryId: string | null }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   useOutsideClick(wrapRef, () => setOpen(false));
   const { data, status, error } = useCities(countryId, query);
   const isDisabled = disabled || !countryId;
+  const ph = placeholder ?? t('common.selectCity');
 
   return (
     <Field label={label} required={required}>
@@ -204,13 +209,13 @@ export function CitySelect({
           className="w-full flex items-center justify-between gap-2 px-3 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
         >
           <span className="truncate">
-            {value ? value.name : <span className="text-gray-400">{placeholder}</span>}
+            {value ? value.name : <span className="text-gray-400">{ph}</span>}
           </span>
           <span className="flex items-center gap-1 flex-shrink-0">
             {value && !isDisabled && (
               <span
                 role="button"
-                aria-label="Clear"
+                aria-label={t('common.clear')}
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange(null);
@@ -235,8 +240,8 @@ export function CitySelect({
                   autoFocus
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search city..."
-                  aria-label="Search city"
+                  placeholder={t('common.searchCity')}
+                  aria-label={t('common.searchCityAria')}
                   className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
@@ -280,17 +285,19 @@ export function PostalCodeSelect({
   value,
   onChange,
   disabled,
-  placeholder = 'Select postal code',
+  placeholder,
   label,
   className,
   required,
 }: BaseSelectProps<PostalCode> & { cityId: string | null }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   useOutsideClick(wrapRef, () => setOpen(false));
   const { data, status, error } = usePostalCodes(cityId, query);
   const isDisabled = disabled || !cityId;
+  const ph = placeholder ?? t('common.selectPostalCode');
 
   return (
     <Field label={label} required={required}>
@@ -312,14 +319,14 @@ export function PostalCodeSelect({
                 )}
               </>
             ) : (
-              <span className="text-gray-400">{placeholder}</span>
+              <span className="text-gray-400">{ph}</span>
             )}
           </span>
           <span className="flex items-center gap-1 flex-shrink-0">
             {value && !isDisabled && (
               <span
                 role="button"
-                aria-label="Clear"
+                aria-label={t('common.clear')}
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange(null);
@@ -344,8 +351,8 @@ export function PostalCodeSelect({
                   autoFocus
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search postal code..."
-                  aria-label="Search postal code"
+                  placeholder={t('common.searchPostalCode')}
+                  aria-label={t('common.searchPostalCodeAria')}
                   className="w-full pl-8 pr-2 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>

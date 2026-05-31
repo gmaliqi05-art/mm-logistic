@@ -231,7 +231,7 @@ export default function AutomationRules() {
                   onChange={(e) => setSettings(s => ({ ...s, reminder_day_0: e.target.checked }))}
                   className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-700">Diten e afatit te pageses (Dita 0)</span>
+                <span className="text-sm text-gray-700">{t('common.onPaymentDueDayDay0')}</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -240,7 +240,7 @@ export default function AutomationRules() {
                   onChange={(e) => setSettings(s => ({ ...s, reminder_day_7: e.target.checked }))}
                   className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-700">7 dite pas afatit (+7 dite vonese)</span>
+                <span className="text-sm text-gray-700">{t('common.sevenDaysAfterDue')}</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -249,7 +249,7 @@ export default function AutomationRules() {
                   onChange={(e) => setSettings(s => ({ ...s, reminder_day_14: e.target.checked }))}
                   className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-700">14 dite pas afatit (+14 dite vonese)</span>
+                <span className="text-sm text-gray-700">{t('common.fourteenDaysAfterDue')}</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -258,7 +258,7 @@ export default function AutomationRules() {
                   onChange={(e) => setSettings(s => ({ ...s, reminder_day_30: e.target.checked }))}
                   className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-700">30 dite pas afatit - Rikujtim i fundit (+30 dite vonese)</span>
+                <span className="text-sm text-gray-700">{t('common.thirtyDaysAfterDueFinal')}</span>
               </label>
             </div>
 
@@ -335,7 +335,7 @@ export default function AutomationRules() {
             <Mail className="w-5 h-5 text-slate-700" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-gray-900">Kopje per administratorin</h3>
+            <h3 className="text-base font-semibold text-gray-900">{t('common.copyToAdministrator')}</h3>
             <p className="text-sm text-gray-500 mt-0.5">{t('common.merrniNjeKopjeCcTeCdo')}</p>
           </div>
         </div>
@@ -401,7 +401,7 @@ export default function AutomationRules() {
             {settings.auto_reminder_enabled && settings.reminder_day_7 && (
               <TimelineStep
                 icon={<Bell className="w-3.5 h-3.5" />}
-                title="+7 dite pas afatit"
+                title={t('common.plus7DaysAfterDue')}
                 description="Rikujtim i dyte: Fatura eshte 7 dite ne vonese"
                 active
               />
@@ -409,7 +409,7 @@ export default function AutomationRules() {
             {settings.auto_reminder_enabled && settings.reminder_day_14 && (
               <TimelineStep
                 icon={<Bell className="w-3.5 h-3.5" />}
-                title="+14 dite pas afatit"
+                title={t('common.plus14DaysAfterDue')}
                 description="Rikujtim i trete: Fatura eshte 14 dite ne vonese"
                 active
               />
@@ -417,7 +417,7 @@ export default function AutomationRules() {
             {settings.auto_reminder_enabled && settings.reminder_day_30 && (
               <TimelineStep
                 icon={<AlertTriangle className="w-3.5 h-3.5" />}
-                title="+30 dite pas afatit"
+                title={t('common.plus30DaysAfterDue')}
                 description="Rikujtim i fundit: Paralajmerim para veprimit ligjor"
                 active
               />

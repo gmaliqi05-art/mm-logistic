@@ -8,6 +8,7 @@ import {
   type CounterpartySnapshot,
 } from '../../utils/counterpartyMatch';
 import { isOwnCompanyName } from '../../utils/companyName';
+import { useTranslation } from '../../i18n';
 
 interface Props {
   ownCompanyId: string;
@@ -54,6 +55,7 @@ function flowRoleToOurRole(role: FlowRole): string {
 }
 
 export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initial, aiSnapshot, onChanged, onRoleChange, disabled }: Props) {
+  const { t } = useTranslation();
   const [role, setRoleState] = useState<FlowRole>((initial.flow_role as FlowRole) ?? 'sender');
   const setRole = (next: FlowRole) => {
     setRoleState(next);
@@ -255,7 +257,7 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-900">Roli ne kete fletedokument</h3>
+        <h3 className="text-sm font-semibold text-slate-900">{t('common.roleInThisDocument')}</h3>
         <span className={`text-[11px] px-2 py-0.5 rounded-full border ${meta.tone}`}>
           {meta.touchesStock ? 'Prek stokun' : 'S\u0027prek stokun'}
         </span>
@@ -326,7 +328,7 @@ export default function FlowRoleSelector({ ownCompanyId, noteId, noteType, initi
                 <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <div>
                   <div className="font-semibold">Transferte interne</div>
-                  <div>Pala perputhet me kompanine tuaj. Fletedokumenti do te ruhet si transferte interne — stoku perditesohet normalisht dhe nuk krijohet asnje partner.</div>
+                  <div>{t('common.partyMatchesYourCompanyInternalTransfer')}</div>
                 </div>
               </div>
             )}

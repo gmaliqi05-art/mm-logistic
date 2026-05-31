@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Shield, ShieldCheck, ShieldOff, ArrowLeft, Loader2, KeyRound, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../i18n';
 import { logger } from '../utils/logger';
 
 interface Factor {
@@ -15,6 +16,7 @@ interface Factor {
 
 export default function SecuritySettings() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [factors, setFactors] = useState<Factor[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -82,7 +84,7 @@ export default function SecuritySettings() {
     }
     setEnrollment(null);
     setVerifyCode('');
-    setSuccess('Two-factor authentication enabled successfully.');
+    setSuccess(t('common.twoFactorEnabledSuccess'));
     await refresh();
   };
 
@@ -96,7 +98,7 @@ export default function SecuritySettings() {
   };
 
   const removeFactor = async (factorId: string) => {
-    if (!window.confirm('Remove this authenticator? You will lose 2FA protection.')) return;
+    if (!window.confirm(t('common.remove2faConfirm'))) return;
     setError(null);
     const { error: err } = await supabase.auth.mfa.unenroll({ factorId });
     if (err) {
@@ -126,7 +128,7 @@ export default function SecuritySettings() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Security</h1>
-                <p className="text-sm text-slate-300">Protect your account with two-factor authentication</p>
+                <p className="text-sm text-slate-300">{t('common.protectAccountWith2fa')}</p>
               </div>
             </div>
           </div>
@@ -136,8 +138,8 @@ export default function SecuritySettings() {
               <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
                 <AlertTriangle className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">
-                  <p className="font-semibold">Two-factor authentication is required for your role.</p>
-                  <p className="mt-1">Enable it now to keep access to administrative areas.</p>
+                  <p className="font-semibold">{t('common.twoFactorRequiredForRole')}</p>
+                  <p className="mt-1">{t('common.enableNowKeepAdminAccess')}</p>
                 </div>
               </div>
             )}
@@ -159,7 +161,7 @@ export default function SecuritySettings() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">Authenticator app (TOTP)</h2>
-                  <p className="text-sm text-slate-600 mt-1">Use Google Authenticator, 1Password, or Authy.</p>
+                  <p className="text-sm text-slate-600 mt-1">{t('common.useAuthenticatorApps')}</p>
                 </div>
                 {hasMfa ? (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
@@ -178,7 +180,7 @@ export default function SecuritySettings() {
                 </div>
               ) : enrollment ? (
                 <div className="space-y-4 p-5 rounded-xl border border-slate-200 bg-slate-50">
-                  <p className="text-sm text-slate-700">Scan the QR code with your authenticator app, then enter the 6-digit code.</p>
+                  <p className="text-sm text-slate-700">{t('common.scanQrAndEnterCode')}</p>
                   <div className="flex flex-col sm:flex-row gap-5 items-start">
                     <img src={enrollment.qr} alt="TOTP QR code" className="w-48 h-48 rounded-lg bg-white p-2 border border-slate-200" />
                     <div className="flex-1">

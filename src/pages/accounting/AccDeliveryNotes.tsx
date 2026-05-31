@@ -453,7 +453,7 @@ export default function AccDeliveryNotes() {
                   <td colSpan={8} className="px-6 py-16 text-center">
                     <Truck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                     <p className="text-gray-500 font-medium">{t('common.asnjeFletedalje')}</p>
-                    <p className="text-gray-400 text-sm mt-1">Shto fletedaljen e pare per te filluar</p>
+                    <p className="text-gray-400 text-sm mt-1">{t('common.addFirstDeliveryNoteToStart')}</p>
                   </td>
                 </tr>
               ) : (

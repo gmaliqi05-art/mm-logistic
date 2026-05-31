@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDriverTracking } from '../contexts/DriverTrackingContext';
+import { useTranslation } from '../i18n';
 
 export default function DriverTrackingIndicator() {
   const { profile } = useAuth();
   const { enabled, state, isWithinWorkingWindow, overtimeUntil } = useDriverTracking();
+  const { t } = useTranslation();
 
   if (!profile?.id || profile.role !== 'driver') return null;
 
@@ -14,13 +16,13 @@ export default function DriverTrackingIndicator() {
   const lastSentLabel = lastSent ? lastSent.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
   let iconColor = 'text-gray-400';
-  let title = 'GPS i fikur — klikoni per te aktivizuar';
+  let title = t('common.gpsOffClickToActivate');
   if (active) {
     iconColor = 'text-emerald-600';
-    title = `GPS aktiv${overtimeUntil ? ' (overtime)' : ''}${lastSentLabel ? ` · pika e fundit ${lastSentLabel}` : ''}`;
+    title = `${t('common.gpsActive')}${overtimeUntil ? ` (${t('common.overtime')})` : ''}${lastSentLabel ? ` · ${t('common.lastPoint')} ${lastSentLabel}` : ''}`;
   } else if (isWithinWorkingWindow) {
     iconColor = 'text-amber-600';
-    title = 'GPS i fikur — brenda orarit, aktivizoni ndjekjen';
+    title = t('common.gpsOffWithinShift');
   }
 
   return (

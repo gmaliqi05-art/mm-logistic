@@ -393,7 +393,7 @@ export default function Imports() {
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm">
                     <option value="draft">Draft</option>
                     <option value="cleared">Doganim perfunduar</option>
-                    <option value="received">Pranuar ne depo</option>
+                    <option value="received">{t('common.receivedInDepot')}</option>
                     <option value="posted">Regjistruar</option>
                     <option value="cancelled">Anuluar</option>
                   </select>

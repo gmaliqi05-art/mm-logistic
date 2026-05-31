@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Clock, Power, CheckCircle2, AlertTriangle, Infinity as InfinityIcon } from 'lucide-react';
 import { useDriverTracking } from '../contexts/DriverTrackingContext';
+import { useTranslation } from '../i18n';
 
 const PRESETS = [1, 2, 3, 4];
 const UNLIMITED_HOURS = 24;
 
 export default function DriverShiftEndModal() {
   const { shiftDialog, dismissShiftDialog, startOvertime, stopOvertime, shiftEndHour } = useDriverTracking();
+  const { t } = useTranslation();
   const [customHours, setCustomHours] = useState<string>('');
   const [busy, setBusy] = useState(false);
 
@@ -54,7 +56,7 @@ export default function DriverShiftEndModal() {
         </div>
 
         <div className="mt-5">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Vazhdo gjurmimin per</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{t('common.continueTrackingFor')}</div>
           <div className="grid grid-cols-4 gap-2">
             {PRESETS.map((h) => (
               <button

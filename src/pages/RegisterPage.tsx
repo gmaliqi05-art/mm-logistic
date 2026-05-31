@@ -385,7 +385,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      if (!selectedPlan) throw new Error('Plani nuk u gjet');
+      if (!selectedPlan) throw new Error(t('common.planNotFound'));
 
       const checkoutUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
       const checkoutRes = await fetch(checkoutUrl, {
@@ -1016,7 +1016,7 @@ function StepPlan({
       <div className="text-center py-12">
         <AlertCircle className="h-10 w-10 text-slate-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-slate-700">{t('common.nukKaPlaneTeDisponueshme')}</h3>
-        <p className="mt-2 text-sm text-slate-500">Kontaktoni administratorin per me shume informacion.</p>
+        <p className="mt-2 text-sm text-slate-500">{t('common.contactAdminForMoreInfo')}</p>
         <button
           type="button"
           onClick={onRetry}

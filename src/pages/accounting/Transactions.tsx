@@ -287,7 +287,7 @@ export default function Transactions() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Transaksionet</h1>
-          <p className="text-gray-500 mt-1">Ditari financiar i te ardhurave dhe shpenzimeve</p>
+          <p className="text-gray-500 mt-1">{t('common.financialJournalIncomeExpenses')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -372,7 +372,7 @@ export default function Transactions() {
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-              placeholder="Nga data"
+              placeholder={t('common.fromDate')}
             />
           </div>
           <div className="relative">
@@ -382,7 +382,7 @@ export default function Transactions() {
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-              placeholder="Deri ne date"
+              placeholder={t('common.toDate')}
             />
           </div>
           <select
@@ -570,7 +570,7 @@ export default function Transactions() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.dateAst')}</label>
                     <input
                       type="date"
                       value={form.transaction_date}

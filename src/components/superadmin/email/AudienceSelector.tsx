@@ -148,7 +148,7 @@ export default function AudienceSelector({ value, onChange }: Props) {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Kerko kompani..."
+          placeholder={t('common.searchCompanyEllipsis')}
           className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
         />
         <div className="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white">

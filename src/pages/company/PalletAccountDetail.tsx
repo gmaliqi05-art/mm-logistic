@@ -188,7 +188,7 @@ export default function PalletAccountDetail() {
           <h2 className="font-semibold text-slate-900">Ledger</h2>
         </div>
         {txns.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">No transactions yet.</div>
+          <div className="p-8 text-center text-sm text-slate-500">{t('common.noTransactionsYet')}</div>
         ) : (
           <table className="w-full">
             <thead className="bg-slate-50 text-xs text-slate-600 uppercase tracking-wide">
@@ -228,7 +228,7 @@ export default function PalletAccountDetail() {
             <h3 className="font-semibold text-slate-900">Manual adjustment</h3>
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase">Quantity (signed)</label>
-              <input type="number" value={adjQty} onChange={(e) => setAdjQty(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg mt-1" placeholder="+5 or -3" />
+              <input type="number" value={adjQty} onChange={(e) => setAdjQty(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg mt-1" placeholder={t('common.plus5OrMinus3')} />
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase">Reason</label>

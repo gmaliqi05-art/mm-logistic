@@ -336,7 +336,7 @@ export default function DepotRepairWorkers() {
       }
 
       if (!damagedRows || damagedRows.length === 0) {
-        throw new Error('Nuk ka stok defekt te disponueshem per kete kategori');
+        throw new Error(t('common.noDamagedStockAvailableForCategory'));
       }
       const stockRow = damagedRows[0];
       if (stockRow.quantity < qty) {
@@ -715,7 +715,7 @@ export default function DepotRepairWorkers() {
                         setEditingBatchValue(String(wBatch));
                       }}
                       className="absolute top-0.5 left-0.5 p-0.5 rounded text-slate-300 hover:text-teal-600 hover:bg-teal-50 transition-colors z-10"
-                      title="Ndrysho sasin per seri"
+                      title={t('common.changeQuantityPerSeries')}
                     >
                       <Settings className="w-2.5 h-2.5" />
                     </button>

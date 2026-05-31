@@ -115,7 +115,7 @@ export default function PushNotificationSettings() {
                 {isSubscribed ? (
                   <>
                     <BellOff className="w-4 h-4" />
-                    <span>Çaktivizo</span>
+                    <span>{t('common.deactivate')}</span>
                   </>
                 ) : (
                   <>
