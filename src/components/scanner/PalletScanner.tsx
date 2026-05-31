@@ -3,6 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { Camera, X, Keyboard, Zap, ZapOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
 
 interface Props {
@@ -16,8 +17,10 @@ interface Props {
 
 const SCANNER_ID = 'pallet-scanner-region';
 
-export default function PalletScanner({ open, onClose, onScan, context, continuous = false, title = 'Scan Pallet Code' }: Props) {
+export default function PalletScanner({ open, onClose, onScan, context, continuous = false, title }: Props) {
   const { profile } = useAuth();
+  const { t } = useTranslation();
+  const scannerTitle = title ?? t('common.scanPalletCode');
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState(false);
@@ -128,7 +131,7 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
               <Camera className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-slate-900">{title}</h2>
+              <h2 className="font-semibold text-slate-900">{scannerTitle}</h2>
               <p className="text-xs text-slate-500">{continuous ? 'Continuous mode' : 'Single scan'}</p>
             </div>
           </div>
@@ -162,13 +165,13 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
             </>
           ) : (
             <>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide">Enter code</label>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide">{t('common.enterCode')}</label>
               <input
                 autoFocus
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') submitManual(); }}
-                placeholder="EPAL / SSCC / product code"
+                placeholder={t('common.epalSsccProductCode')}
                 className="w-full px-3 py-3 border border-slate-300 rounded-lg font-mono text-sm"
               />
               <div className="flex gap-2">

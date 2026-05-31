@@ -227,7 +227,7 @@ export default function DriverDetail() {
           {tab === 'medical' && (
             <>
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">Ekzaminimi G25 (Fahr-, Steuer- und Überwachungstätigkeiten) behet nga mjeku i pune.</p>
+                <p className="text-sm text-gray-600">{t('common.g25ExamDoneByOccupationalPhysician')}</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('g25_medical')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
                     <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>

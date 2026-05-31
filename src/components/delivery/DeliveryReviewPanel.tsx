@@ -1976,7 +1976,7 @@ function ReviewModal({
               <CheckCircle2 className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-gray-900">U konfirmua me sukses</h4>
-                <p className="text-sm text-gray-600 mt-1">Artikujt per sortim jane derguar ne sortire. Deshironi te shkoni direkt te faqja e sortimit?</p>
+                <p className="text-sm text-gray-600 mt-1">{t('common.sortingItemsSentGoToSortPage')}</p>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-4">
@@ -2126,7 +2126,7 @@ function PartnerSnapshot({
             <p className="break-words"><span className="text-gray-500">{t('common.adresa')}</span> {partnerAddress}</p>
           )}
           {partnerEmail && (
-            <p className="break-words"><span className="text-gray-500">Email:</span> {partnerEmail}</p>
+            <p className="break-words"><span className="text-gray-500">{t('common.emailColon')}</span> {partnerEmail}</p>
           )}
           {partnerPhone && (
             <p><span className="text-gray-500">Telefoni:</span> {partnerPhone}</p>
@@ -2434,7 +2434,7 @@ function SplitRow({
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
-          <option value="__create__">+ Krijo kategori te re</option>
+          <option value="__create__">{t('common.createNewCategoryPlus')}</option>
         </select>
         <select
           value={row.product_id || ''}

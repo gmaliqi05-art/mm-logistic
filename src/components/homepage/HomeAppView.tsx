@@ -52,7 +52,7 @@ export default function HomeAppView({ onSecretClick }: Props) {
         <h1 className="mt-3 text-xl font-black tracking-tight">
           MM <span className="text-teal-400">LOGISTIC</span>
         </h1>
-        <p className="text-[10px] tracking-[0.25em] text-slate-500 uppercase mt-0.5">We care. We deliver</p>
+        <p className="text-[10px] tracking-[0.25em] text-slate-500 uppercase mt-0.5">{t('common.appSlogan')}</p>
       </div>
 
       {/* Title + Subtitle */}

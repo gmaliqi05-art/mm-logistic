@@ -128,12 +128,14 @@ interface TrailersManagerProps {
 }
 
 export default function TrailersManager({
-  title = 'Rimorkiot',
-  subtitle = 'Regjistro targat nje here, pastaj ngarko shpejt nga klikimi i tabeles',
+  title,
+  subtitle,
   canRegister = true,
 }: TrailersManagerProps) {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const effectiveTitle = title ?? t('common.trailers');
+  const effectiveSubtitle = subtitle ?? t('common.registerPlatesOnceQuickLoad');
   const [trailers, setTrailers] = useState<TrailerLoad[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -278,9 +280,9 @@ export default function TrailersManager({
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Truck className="w-6 h-6 text-teal-600" />
-            {title}
+            {effectiveTitle}
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
+          <p className="text-sm text-gray-500 mt-0.5">{effectiveSubtitle}</p>
         </div>
         {canRegister && (
           <button
