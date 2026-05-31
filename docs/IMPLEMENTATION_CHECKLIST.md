@@ -2,6 +2,8 @@
 
 Përdorni këtë checklist për të ndjekur progresin e implementimit të përmirësimeve.
 
+> **🟢 UPDATE — 31 Maj 2026:** Pjesa me e madhe e ketij checklist-i **eshte plotesuar**. Shih `docs/AUDIT_REPORT.md` (seksioni "STATUS UPDATE") per krahasimin e detajuar. Mos e perdor kete file si checklist aktiv pa krahasuar pikat me kodin aktual.
+
 ---
 
 ## FAZA 1: SIGURIA ⚠️ URGJENTE
