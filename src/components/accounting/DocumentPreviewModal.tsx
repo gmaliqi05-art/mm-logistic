@@ -93,7 +93,7 @@ export default function DocumentPreviewModal({
               <button
                 onClick={onPrint}
                 className="p-2 text-slate-500 hover:text-slate-900 hover:bg-white rounded-lg transition-colors"
-                title="Printo"
+                title={t('common.print')}
               >
                 <Printer className="w-5 h-5" />
               </button>
@@ -119,7 +119,7 @@ export default function DocumentPreviewModal({
           {items && items.length > 0 && (
             <div>
               <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Artikujt ({items.length})
+                {t('common.itemsCount')} ({items.length})
               </p>
               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
@@ -178,7 +178,7 @@ export default function DocumentPreviewModal({
 
           {notes && (
             <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Shenime</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{t('common.notesLabel')}</p>
               <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 whitespace-pre-wrap">{notes}</p>
             </div>
           )}
@@ -186,21 +186,21 @@ export default function DocumentPreviewModal({
           {documentUrl && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Dokumenti i bashkangjitur</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{t('common.attachedDocument')}</p>
                 <a
                   href={documentUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" /> Hap ne tab te ri
+                  <ExternalLink className="w-3.5 h-3.5" /> {t('common.openInNewTab')}
                 </a>
               </div>
               <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
                 {isImage ? (
-                  <img src={documentUrl} alt="Dokumenti" className="w-full max-h-[500px] object-contain" />
+                  <img src={documentUrl} alt={t('common.documentAlt')} className="w-full max-h-[500px] object-contain" />
                 ) : isPdf ? (
-                  <iframe src={documentUrl} className="w-full h-[500px]" title="Dokumenti" />
+                  <iframe src={documentUrl} className="w-full h-[500px]" title={t('common.documentAlt')} />
                 ) : (
                   <div className="p-6 flex items-center justify-center gap-3 text-slate-600">
                     <Download className="w-5 h-5" />

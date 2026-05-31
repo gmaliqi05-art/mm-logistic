@@ -169,13 +169,13 @@ export default function Transactions() {
   const balance = totalIncome - totalExpenses;
 
   const getTypeBadge = (type: AccTransactionType) => {
-    const styles: Record<AccTransactionType, { bg: string; label: string }> = {
-      income: { bg: 'bg-green-100 text-green-700', label: 'Te ardhura' },
-      expense: { bg: 'bg-red-100 text-red-700', label: 'Shpenzim' },
-      transfer: { bg: 'bg-blue-100 text-blue-700', label: 'Transfer' },
+    const styles: Record<AccTransactionType, { bg: string; labelKey: string }> = {
+      income: { bg: 'bg-green-100 text-green-700', labelKey: 'common.incomePlural' },
+      expense: { bg: 'bg-red-100 text-red-700', labelKey: 'common.expenseTrans' },
+      transfer: { bg: 'bg-blue-100 text-blue-700', labelKey: 'common.transferTrans' },
     };
     const s = styles[type];
-    return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.bg}`}>{s.label}</span>;
+    return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.bg}`}>{t(s.labelKey)}</span>;
   };
 
   const getPaymentBadge = (method: AccPaymentMethod) => {
@@ -258,7 +258,7 @@ export default function Transactions() {
   };
 
   const exportCSV = () => {
-    const headers = ['Data', 'Pershkrimi', 'Kontakti', 'Lloji', 'Shuma', 'Metoda', 'Referenca'];
+    const headers = [t('common.dateLabel'), t('common.pershkrimi'), t('common.contactLabel'), t('common.typeLabel'), t('common.amountLabel'), t('common.methodLabel'), t('common.referenceLabel')];
     const rows = filteredTransactions.map((tx) => [
       tx.transaction_date,
       tx.description,
@@ -330,7 +330,7 @@ export default function Transactions() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Shpenzimet</p>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('common.expensesPlural')}</p>
               <p className="text-2xl font-bold text-red-600 mt-2">{formatCurrency(totalExpenses)}</p>
             </div>
             <div className="bg-red-500 p-2.5 rounded-xl">
@@ -391,8 +391,8 @@ export default function Transactions() {
             className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
           >
             <option value="all">{t('common.allTypes')}</option>
-            <option value="income">Te ardhura</option>
-            <option value="expense">Shpenzime</option>
+            <option value="income">{t('common.incomePlural')}</option>
+            <option value="expense">{t('common.expensesPluralShort')}</option>
             <option value="transfer">Transfer</option>
           </select>
           <select
@@ -495,14 +495,14 @@ export default function Transactions() {
 
       {previewTx && (
         <DocumentPreviewModal
-          title={`Transaksion ${previewTx.reference_number || ''}`.trim()}
-          subtitle={previewTx.transaction_type === 'income' ? 'Te ardhur' : previewTx.transaction_type === 'expense' ? 'Shpenzim' : 'Transferte'}
+          title={`${t('common.transactionPrefix')} ${previewTx.reference_number || ''}`.trim()}
+          subtitle={previewTx.transaction_type === 'income' ? t('common.incomeTrans') : previewTx.transaction_type === 'expense' ? t('common.expenseTrans') : t('common.transferTrans')}
           accentColor={previewTx.transaction_type === 'income' ? 'emerald' : previewTx.transaction_type === 'expense' ? 'rose' : 'blue'}
           fields={[
-            { label: 'Data', value: previewTx.transaction_date },
-            { label: 'Lloji', value: previewTx.transaction_type },
-            { label: 'Pershkrim', value: previewTx.description, highlight: true },
-            { label: 'Metoda', value: previewTx.payment_method },
+            { label: t('common.dateLabel'), value: previewTx.transaction_date },
+            { label: t('common.typeLabel'), value: previewTx.transaction_type },
+            { label: t('common.descLabel'), value: previewTx.description, highlight: true },
+            { label: t('common.methodLabel'), value: previewTx.payment_method },
             { label: 'Referenca', value: previewTx.reference_number },
             { label: 'Vlera', value: formatCurrency(previewTx.amount, (previewTx as any).currency || 'EUR') },
           ]}
@@ -541,8 +541,8 @@ export default function Transactions() {
                       onChange={(e) => setForm({ ...form, transaction_type: e.target.value as AccTransactionType })}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                     >
-                      <option value="income">Te ardhura</option>
-                      <option value="expense">Shpenzim</option>
+                      <option value="income">{t('common.incomePlural')}</option>
+                      <option value="expense">{t('common.expensesPluralShort')}</option>
                       <option value="transfer">Transfer</option>
                     </select>
                   </div>

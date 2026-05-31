@@ -540,9 +540,9 @@ export default function AccDeliveryNotes() {
           statusClass={statusStyles[previewNote.status]}
           accentColor="emerald"
           fields={[
-            { label: 'Klienti', value: (previewNote.contact as any)?.name },
-            { label: 'Data', value: new Date(previewNote.note_date).toLocaleDateString('de-DE') },
-            { label: 'Adresa e Dergimit', value: previewNote.shipping_address, highlight: true },
+            { label: t('common.clientLabel'), value: (previewNote.contact as any)?.name },
+            { label: t('common.dateLabel'), value: new Date(previewNote.note_date).toLocaleDateString('de-DE') },
+            { label: t('common.shippingAddressLabel'), value: previewNote.shipping_address, highlight: true },
             { label: t('common.linkedInvoice'), value: invoices.find((i) => i.id === previewNote.invoice_id)?.invoice_number },
           ]}
           items={(previewNote.items || []).map((it: any) => ({

@@ -765,7 +765,7 @@ export default function Invoices() {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            Fature EU (e re)
+            {t('common.euInvoiceNew')}
           </a>
           <button
             onClick={openAdd}
@@ -843,7 +843,7 @@ export default function Invoices() {
             title={t('accounting.invoices.noInvoices') || 'Nuk u gjet asnje fature'}
             hint={t('accounting.invoices.noInvoicesHint') || 'Krijoni faturen e pare per te filluar'}
             action={{
-              label: t('accounting.invoices.newInvoice') || 'Fature e re',
+              label: t('accounting.invoices.newInvoice') || t('common.newInvoiceShort'),
               onClick: () => {
                 const target =
                   typeof window !== 'undefined' && window.location.pathname.startsWith('/company')
@@ -939,7 +939,7 @@ export default function Invoices() {
                           return (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
                               <PackageOpen className="w-3 h-3" />
-                              Fature derguar, malli ne pritje
+                              {t('common.invoiceSentMaterialPending')}
                             </span>
                           );
                         })()}
@@ -1146,14 +1146,14 @@ export default function Invoices() {
 
       {previewInvoice && (
         <DocumentPreviewModal
-          title={`Fature ${previewInvoice.invoice_number}`}
-          subtitle={previewInvoice.invoice_type === 'credit_note' ? 'Note Krediti' : previewInvoice.invoice_type === 'proforma' ? 'Proforme' : 'Fature dalese'}
+          title={`${t('common.invoicePrefix')} ${previewInvoice.invoice_number}`}
+          subtitle={previewInvoice.invoice_type === 'credit_note' ? t('common.creditNoteShort') : previewInvoice.invoice_type === 'proforma' ? t('common.proformaShort') : t('common.outgoingInvoice')}
           statusLabel={STATUS_LABELS[previewInvoice.status]}
           statusClass={STATUS_COLORS[previewInvoice.status]}
           accentColor="teal"
           fields={[
-            { label: 'Klienti', value: previewInvoice.contact?.name },
-            { label: 'Data', value: previewInvoice.invoice_date },
+            { label: t('common.clientLabel'), value: previewInvoice.contact?.name },
+            { label: t('common.dateLabel'), value: previewInvoice.invoice_date },
             { label: 'Afati', value: previewInvoice.due_date },
             { label: 'Monedha', value: previewInvoice.currency },
           ]}
@@ -1252,7 +1252,7 @@ export default function Invoices() {
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
                     >
                       <option value="invoice">Fature</option>
-                      <option value="credit_note">Note Kreditimi</option>
+                      <option value="credit_note">{t('common.creditNoteCreate')}</option>
                       <option value="proforma">Proforma</option>
                     </select>
                   </div>
