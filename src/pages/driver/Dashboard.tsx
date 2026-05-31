@@ -39,8 +39,6 @@ import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/
 import { notifyUsers } from '../../utils/notifications';
 import DriverPermissionsGate from '../../components/DriverPermissionsGate';
 import DriverTrailersWidget from '../../components/driver/DriverTrailersWidget';
-import DriverLocationMiniMap from '../../components/driver/DriverLocationMiniMap';
-import { useDriverTracking } from '../../contexts/DriverTrackingContext';
 import { LicensePlate } from '../../components/trailers/TrailersManager';
 
 export type T = (key: string) => string;
@@ -76,7 +74,6 @@ function getNoteDate(n: NoteRow): Date {
 export default function DriverDashboard() {
   const { profile } = useAuth();
   const { t } = useTranslation();
-  const { state: trackingState } = useDriverTracking();
   const { warnings: driverComplianceWarnings } = useDriverComplianceMap(profile?.company_id);
   const myCompliance = profile?.id ? driverComplianceWarnings[profile.id] : undefined;
   const [notes, setNotes] = useState<NoteRow[]>([]);
@@ -319,20 +316,6 @@ export default function DriverDashboard() {
             </div>
           </div>
         </Link>
-      )}
-
-      {trackingState.active && trackingState.lat != null && trackingState.lng != null && profile?.id && profile?.company_id && (
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">{t('driver.dashboard.myLocation')}</p>
-          <DriverLocationMiniMap
-            driverId={profile.id}
-            companyId={profile.company_id}
-            lat={trackingState.lat}
-            lng={trackingState.lng}
-            heading={trackingState.heading}
-            speed={trackingState.speed}
-          />
-        </div>
       )}
 
       {error && (

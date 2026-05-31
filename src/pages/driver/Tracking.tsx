@@ -6,6 +6,7 @@ import { useDriverTracking } from '../../contexts/DriverTrackingContext';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
 import DriverNavigation from './Navigation';
+import DriverLocationMiniMap from '../../components/driver/DriverLocationMiniMap';
 
 function formatCountdown(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -257,6 +258,20 @@ export default function DriverTracking() {
           </>
         )}
       </div>
+
+      {state.active && state.lat != null && state.lng != null && profile?.id && profile?.company_id && (
+        <div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">{t('driver.dashboard.myLocation')}</p>
+          <DriverLocationMiniMap
+            driverId={profile.id}
+            companyId={profile.company_id}
+            lat={state.lat}
+            lng={state.lng}
+            heading={state.heading}
+            speed={state.speed}
+          />
+        </div>
+      )}
 
       <Link
         to="/driver/route-planner"
