@@ -380,7 +380,7 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
               disabled={saving || !capturedFront}
               className="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold disabled:opacity-50"
             >
-              {saving ? 'Duke ruajtur…' : 'Ruaj dokumentin'}
+              {saving ? 'Duke ruajtur…' : t('common.saveDocument')}
             </button>
           </div>
           {!capturedFront && <p className="text-xs text-gray-500 text-right">{t('common.skanoTePaktenAnenEPerparme')}</p>}

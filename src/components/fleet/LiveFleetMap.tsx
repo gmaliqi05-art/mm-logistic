@@ -837,7 +837,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
                   mapRef.current?.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
                 }
               }}
-              title={routeToBaseFor === activeDriver.driver_id ? 'Fshi vijen ne depo' : 'Drejto ne depo'}
+              title={routeToBaseFor === activeDriver.driver_id ? t('common.clearLineToDepot') : t('common.routeToDepot')}
               className={`w-10 h-10 rounded-full shadow-lg border flex items-center justify-center transition-colors ${
                 routeToBaseFor === activeDriver.driver_id
                   ? 'bg-teal-600 border-teal-700 text-white hover:bg-teal-700'

@@ -1625,7 +1625,7 @@ function ReviewModal({
                     <Upload className="w-6 h-6 text-sky-500" />
                   )}
                   <p className="mt-2 text-xs font-semibold text-sky-700">
-                    {uploading ? 'Duke ngarkuar...' : 'Ngarko dokumentin'}
+                    {uploading ? 'Duke ngarkuar...' : t('common.uploadDocument')}
                   </p>
                   <p className="mt-0.5 text-[11px] text-gray-500">{t('common.imageOsePdfDeriMb')}</p>
                   <input
@@ -1823,7 +1823,7 @@ function ReviewModal({
               }`}
             >
               {creatingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-              {note.acc_invoice_id ? 'Shiko faturen' : 'Krijo fature'}
+              {note.acc_invoice_id ? 'Shiko faturen' : t('common.createInvoice')}
             </button>
           )}
           {role === 'company_admin' && !showRejectReason && (

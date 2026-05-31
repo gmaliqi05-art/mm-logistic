@@ -164,7 +164,7 @@ export default function CompanySettings() {
 
   const tabs: { key: TabKey; label: string; icon: typeof Building2 }[] = [
     { key: 'profile', label: 'Profili i kompanise', icon: Building2 },
-    { key: 'invoice', label: 'Fatura & te dhena ligjore', icon: FileText },
+    { key: 'invoice', label: t('common.invoiceAndLegalData'), icon: FileText },
     ...(accountingEnabled
       ? [{ key: 'compliance' as TabKey, label: 'Pajtueshmeria', icon: ShieldCheck }]
       : []),

@@ -1035,7 +1035,7 @@ export default function DepotRepairWorkers() {
                               }}
                               disabled={busy}
                               className="flex items-center justify-center flex-shrink-0 p-1 rounded hover:bg-white/60"
-                              title={checked ? 'C\'aktivizo kategorine' : 'Aktivizo kategorine'}
+                              title={checked ? 'C\'aktivizo kategorine' : t('common.activateCategory')}
                             >
                               <div
                                 className={`w-5 h-5 rounded-md border flex items-center justify-center ${

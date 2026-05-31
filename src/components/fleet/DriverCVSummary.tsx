@@ -87,12 +87,12 @@ function expiryStatus(date: string | null): { status: ExpiryStatus; days: number
   return { status: 'valid', days: d };
 }
 
-const STATUS_STYLES: Record<ExpiryStatus, { cls: string; label: string; Icon: typeof CheckCircle2 }> = {
-  valid: { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: 'Ne rregull', Icon: CheckCircle2 },
-  warn: { cls: 'bg-amber-50 text-amber-800 border-amber-200', label: 'Skadon se shpejti', Icon: Clock },
-  critical: { cls: 'bg-orange-50 text-orange-800 border-orange-200', label: 'Urgjent', Icon: AlertTriangle },
-  expired: { cls: 'bg-red-50 text-red-700 border-red-200', label: 'Skaduar', Icon: AlertTriangle },
-  unknown: { cls: 'bg-gray-50 text-gray-600 border-gray-200', label: 'Pa afat', Icon: Clock },
+const STATUS_STYLES: Record<ExpiryStatus, { cls: string; labelKey: string; Icon: typeof CheckCircle2 }> = {
+  valid: { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', labelKey: 'common.statusValid', Icon: CheckCircle2 },
+  warn: { cls: 'bg-amber-50 text-amber-800 border-amber-200', labelKey: 'common.statusExpiringSoon', Icon: Clock },
+  critical: { cls: 'bg-orange-50 text-orange-800 border-orange-200', labelKey: 'common.statusUrgent', Icon: AlertTriangle },
+  expired: { cls: 'bg-red-50 text-red-700 border-red-200', labelKey: 'common.statusExpired', Icon: AlertTriangle },
+  unknown: { cls: 'bg-gray-50 text-gray-600 border-gray-200', labelKey: 'common.noExpiry', Icon: Clock },
 };
 
 const QUAL_LABELS: Record<string, string> = {
@@ -363,6 +363,7 @@ function DocCard({
   photoUrls: Record<string, string>;
   onLoadPhoto: (path: string) => void;
 }) {
+  const { t } = useTranslation();
   const [showPhotos, setShowPhotos] = useState(false);
   const chip = STATUS_STYLES[status];
   const ChipIcon = chip.Icon;
@@ -402,7 +403,7 @@ function DocCard({
           )}
           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${chip.cls}`}>
             <ChipIcon className="w-3 h-3" />
-            {chip.label}
+            {t(chip.labelKey)}
           </span>
         </div>
       </div>

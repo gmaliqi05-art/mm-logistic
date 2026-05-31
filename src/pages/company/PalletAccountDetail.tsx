@@ -170,7 +170,7 @@ export default function PalletAccountDetail() {
             {header.current_balance > 0 ? '+' : ''}{header.current_balance}
           </div>
           <div className="text-xs text-slate-500 mt-1">
-            {header.current_balance > 0 ? 'Partner owes us' : header.current_balance < 0 ? 'We owe partner' : 'Balanced'}
+            {header.current_balance > 0 ? 'Partner owes us' : header.current_balance < 0 ? t('common.weOwePartner') : 'Balanced'}
           </div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4">

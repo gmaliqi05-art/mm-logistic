@@ -179,7 +179,7 @@ export default function CompanyFleetReports() {
               onClick={() => setPreset(p)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium ${preset === p ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
             >
-              {p === 'today' ? 'Sot' : p === 'yesterday' ? 'Dje' : p === 'week' ? 'Kjo jave' : p === 'month' ? 'Ky muaj' : p === 'year' ? 'Ky vit' : 'I personalizuar'}
+              {p === 'today' ? 'Sot' : p === 'yesterday' ? 'Dje' : p === 'week' ? 'Kjo jave' : p === 'month' ? 'Ky muaj' : p === 'year' ? t('common.thisYear') : 'I personalizuar'}
             </button>
           ))}
         </div>

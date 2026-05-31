@@ -223,7 +223,7 @@ export default function EmailBranding() {
               <div className="flex items-center gap-3">
                 <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors">
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  {uploading ? 'Duke ngarkuar...' : 'Ngarko logo'}
+                  {uploading ? 'Duke ngarkuar...' : t('common.uploadLogo')}
                   <input
                     type="file"
                     accept="image/*"

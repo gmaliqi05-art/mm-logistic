@@ -371,7 +371,7 @@ export default function Imports() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 overflow-y-auto">
           <div className="bg-white rounded-xl w-full max-w-6xl my-8 shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-semibold">{editing ? 'Ndrysho Importin' : 'Import i ri'}</h2>
+              <h2 className="text-lg font-semibold">{editing ? 'Ndrysho Importin' : t('common.newImport')}</h2>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
             </div>
 

@@ -951,7 +951,7 @@ export default function CompanyStock() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setReassignTarget(null)} />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">Cakto produktin</h2>
+              <h2 className="text-base font-semibold text-gray-900">{t('common.assignProduct')}</h2>
               <button onClick={() => setReassignTarget(null)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">
                 <X className="w-4 h-4" />
               </button>

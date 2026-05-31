@@ -424,7 +424,7 @@ function TemplateCard({ tpl, profile, navigate, onToggle, onDuplicate, testingId
           <button
             onClick={() => onDuplicate(tpl)}
             className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-            title={isOwn ? 'Dupliko' : 'Personalizo per kompanine'}
+            title={isOwn ? 'Dupliko' : t('common.customizeForCompany')}
           >
             <Copy className="w-4 h-4" />
           </button>

@@ -448,7 +448,7 @@ export default function Contacts() {
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900">
-                {editingId ? 'Ndrysho Kontaktin' : 'Shto Kontakt'}
+                {editingId ? 'Ndrysho Kontaktin' : t('common.addContact')}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
@@ -660,7 +660,7 @@ export default function Contacts() {
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {editingId ? 'Ruaj Ndryshimet' : 'Shto Kontakt'}
+                {editingId ? 'Ruaj Ndryshimet' : t('common.addContact')}
               </button>
             </div>
           </div>

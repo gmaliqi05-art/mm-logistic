@@ -247,7 +247,7 @@ export default function DriverReports() {
             driver.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
           }`}
         >
-          {driver.is_active ? 'Aktiv' : 'Jo aktiv'}
+          {driver.is_active ? 'Aktiv' : t('common.inactive')}
         </span>
       </div>
 
@@ -261,7 +261,7 @@ export default function DriverReports() {
                 preset === p ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              {p === 'today' ? 'Sot' : p === 'week' ? 'Kjo jave' : p === 'month' ? 'Ky muaj' : p === 'year' ? 'Ky vit' : 'I personalizuar'}
+              {p === 'today' ? 'Sot' : p === 'week' ? 'Kjo jave' : p === 'month' ? 'Ky muaj' : p === 'year' ? t('common.thisYear') : 'I personalizuar'}
             </button>
           ))}
         </div>

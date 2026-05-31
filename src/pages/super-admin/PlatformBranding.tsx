@@ -44,7 +44,7 @@ export default function PlatformBranding() {
         });
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gabim në ngarkim');
+      setError(err instanceof Error ? err.message : t('common.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function PlatformBranding() {
       if (variant === 'social') setLogoSocialUrl(urlData.publicUrl);
       else setLogoUrl(urlData.publicUrl);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Dështoi ngarkimi i logos');
+      setError(err instanceof Error ? err.message : t('common.logoUploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -103,11 +103,11 @@ export default function PlatformBranding() {
       setSuccess(null);
 
       const updates = [
-        { key: 'platform_logo', value: logoUrl, description: 'Platform logo (transparent) used in UI, favicon and PWA' },
-        { key: 'platform_logo_social', value: logoSocialUrl, description: 'Platform logo with background used for social share previews (OG/Twitter)' },
-        { key: 'platform_logo_icon', value: logoUrl, description: 'Platform logo variant used as favicon and PWA icon' },
-        { key: 'platform_name', value: platformName, description: 'Platform name' },
-        { key: 'platform_short_name', value: platformShortName, description: 'Platform short name' },
+        { key: 'platform_logo', value: logoUrl, description: t('common.platformLogoTransparentDesc') },
+        { key: 'platform_logo_social', value: logoSocialUrl, description: t('common.platformLogoSocialDesc') },
+        { key: 'platform_logo_icon', value: logoUrl, description: t('common.platformLogoFaviconDesc') },
+        { key: 'platform_name', value: platformName, description: t('common.platformName') },
+        { key: 'platform_short_name', value: platformShortName, description: t('common.platformShortName') },
       ];
 
       for (const update of updates) {
@@ -133,7 +133,7 @@ export default function PlatformBranding() {
 
       setSuccess('Cilësimet u ruajtën me sukses! Rifreskoni faqen (Ctrl+F5) për të parë ndryshimet.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gabim në ruajtje');
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
     } finally {
       setSaving(false);
     }
@@ -276,6 +276,7 @@ function LogoUploadCard({
   inputRef: React.RefObject<HTMLInputElement>;
   recommendation: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="p-5 border-b border-gray-100">
@@ -298,7 +299,7 @@ function LogoUploadCard({
           className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors"
         >
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          {uploading ? 'Duke ngarkuar...' : 'Ngarko Logo'}
+          {uploading ? t('common.uploading') : t('common.uploadLogo')}
         </button>
         <p className="text-xs text-gray-500 text-center">{recommendation}</p>
       </div>
