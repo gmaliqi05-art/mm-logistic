@@ -39,8 +39,8 @@ export default function StockDeductionConfirmModal({ items, noteNumber, partnerN
     setError(null);
     try {
       await onConfirm();
-    } catch (e: any) {
-      setError(e.message || 'Deshtoi');
+    } catch (e) {
+      setError((e as Error).message || 'Deshtoi');
       setLoading(false);
     }
   }

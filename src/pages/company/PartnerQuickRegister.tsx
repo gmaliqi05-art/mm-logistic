@@ -63,8 +63,8 @@ export default function PartnerQuickRegister({ companyId, defaultType = 'custome
       if (iErr) throw iErr;
       onCreated(data as QuickPartner);
       onClose();
-    } catch (e: any) {
-      setError(e?.message ?? t('companyAdmin.partnerQuickRegister.errRegistrationFailed'));
+    } catch (e) {
+      setError((e as Error)?.message ?? t('companyAdmin.partnerQuickRegister.errRegistrationFailed'));
     } finally {
       setSaving(false);
     }

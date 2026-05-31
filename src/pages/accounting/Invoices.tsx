@@ -1634,8 +1634,8 @@ export default function Invoices() {
                         setError(err.error || 'Dergimi i email-it deshtoi');
                         setEmailInvoice(null);
                       }
-                    } catch (e: any) {
-                      setError(e.message || 'Gabim gjate dergimit');
+                    } catch (e) {
+                      setError((e as Error).message || 'Gabim gjate dergimit');
                       setEmailInvoice(null);
                     } finally {
                       setEmailSending(false);

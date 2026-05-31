@@ -228,8 +228,8 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
           },
           body: JSON.stringify({ scanId: scan.id, role: 'accountant', docDirection, chosenKind }),
         });
-      } catch (netErr: any) {
-        throw new Error(`Nuk u lidh dot me skanuesin: ${netErr?.message || 'problem rrjeti'}`);
+      } catch (netErr) {
+        throw new Error(`Nuk u lidh dot me skanuesin: ${(netErr as Error)?.message || 'problem rrjeti'}`);
       }
       let json: any = null;
       try { json = await res.json(); } catch {

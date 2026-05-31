@@ -377,8 +377,8 @@ export default function InvoiceBuilder() {
         setNewContactForm({ name: '' });
         setEditingContact(false);
       }
-    } catch (e: any) {
-      setError(e.message || 'Regjistrimi deshtoi');
+    } catch (e) {
+      setError((e as Error).message || 'Regjistrimi deshtoi');
     } finally {
       setSavingContact(false);
     }
@@ -395,8 +395,8 @@ export default function InvoiceBuilder() {
       if (err) throw err;
       setContacts((prev) => prev.map((c) => c.id === contactId ? { ...c, ...fields } : c));
       setEditingContact(false);
-    } catch (e: any) {
-      setError(e.message || 'Ruajtja deshtoi');
+    } catch (e) {
+      setError((e as Error).message || 'Ruajtja deshtoi');
     } finally {
       setSavingContact(false);
     }
@@ -1407,8 +1407,8 @@ export default function InvoiceBuilder() {
                           const err = await resp.json().catch(() => ({}));
                           setError(err.error || 'Dergimi i email-it deshtoi');
                         }
-                      } catch (e: any) {
-                        setError(e.message || 'Gabim gjate dergimit');
+                      } catch (e) {
+                        setError((e as Error).message || 'Gabim gjate dergimit');
                       } finally {
                         setEmailSending(false);
                       }
