@@ -48,16 +48,16 @@ const emptyForm: ContactForm = {
 
 type FilterType = 'all' | AccContactType;
 
-function typeBadge(type: AccContactType) {
-  const map: Record<AccContactType, { bg: string; label: string }> = {
-    customer: { bg: 'bg-emerald-100 text-emerald-700', label: 'Klient' },
-    supplier: { bg: 'bg-blue-100 text-blue-700', label: 'Furnitor' },
-    both: { bg: 'bg-amber-100 text-amber-700', label: 'Të dyja' },
+function typeBadge(type: AccContactType, t: (key: string) => string) {
+  const map: Record<AccContactType, { bg: string; labelKey: string }> = {
+    customer: { bg: 'bg-emerald-100 text-emerald-700', labelKey: 'common.klient' },
+    supplier: { bg: 'bg-blue-100 text-blue-700', labelKey: 'common.furnitor' },
+    both: { bg: 'bg-amber-100 text-amber-700', labelKey: 'common.bothOptions' },
   };
   const badge = map[type];
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.bg}`}>
-      {badge.label}
+      {t(badge.labelKey)}
     </span>
   );
 }
@@ -332,7 +332,7 @@ export default function Contacts() {
                           <span className="text-sm font-medium text-gray-900">{contact.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">{typeBadge(contact.contact_type)}</td>
+                      <td className="px-6 py-4">{typeBadge(contact.contact_type, t)}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{contact.email || '-'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{contact.phone || '-'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{contact.city || '-'}</td>
@@ -379,7 +379,7 @@ export default function Contacts() {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-gray-900">{contact.name}</h3>
-                      <div className="mt-1">{typeBadge(contact.contact_type)}</div>
+                      <div className="mt-1">{typeBadge(contact.contact_type, t)}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">

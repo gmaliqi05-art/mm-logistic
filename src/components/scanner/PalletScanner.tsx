@@ -74,7 +74,7 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
         if (cancelled) await stop();
       } catch (err) {
         logger.error('scanner start failed', { error: err });
-        const msg = err instanceof Error ? err.message : 'Camera not available';
+        const msg = err instanceof Error ? err.message : t('common.cameraNotAvailable');
         setError(msg);
         setManual(true);
       }

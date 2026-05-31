@@ -743,7 +743,7 @@ export default function CompanyDeliveryNotes() {
         {([
           { key: 'all', label: 'Te gjitha' },
           { key: 'uninvoiced', label: 'Pa fature' },
-          { key: 'review', label: 'Per shqyrtim' },
+          { key: 'review', label: t('common.forReview') },
           { key: 'invoiced', label: 'Te faturuara' },
         ] as const).map((s) => (
           <button

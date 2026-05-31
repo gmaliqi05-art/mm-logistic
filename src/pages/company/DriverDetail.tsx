@@ -493,9 +493,9 @@ function MedicalAddForm({ companyId, driverId, onDone }: { companyId: string; dr
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1.5">{t('common.llojiIEkzaminimit')}</label>
           <select value={exam} onChange={(e) => setExam(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
-            <option value="g25">G25 (Fahr-, Steuer-, Überwachung)</option>
-            <option value="g37">G37 (Ekran)</option>
-            <option value="g41">G41 (Punime ne lartesi)</option>
+            <option value="g25">{t('common.g25Label')}</option>
+            <option value="g37">{t('common.g37Label')}</option>
+            <option value="g41">{t('common.g41Label')}</option>
           </select>
         </div>
         <MiniField label="Mjeku" value={doctor} onChange={setDoctor} />

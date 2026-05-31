@@ -895,7 +895,7 @@ function RegisterPlateModal({
               autoFocus
               value={plate}
               onChange={(e) => setPlate(e.target.value.toUpperCase())}
-              placeholder="LÖ QK 3006"
+              placeholder={t('common.platePlaceholderExample')}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none font-mono uppercase tracking-wider font-bold text-lg"
             />
             <p className="text-[11px] text-gray-500 mt-1.5">{t('common.pasiRegjistronTabelenKlikonMbiTe')}</p>

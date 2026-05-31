@@ -300,7 +300,7 @@ export default function EmailBranding() {
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
               >
                 <Eye className="w-4 h-4" />
-                {showPreview ? 'Fshih Preview' : 'Preview'}
+                {showPreview ? t('common.hidePreview') : 'Preview'}
               </button>
               {saved && (
                 <span className="inline-flex items-center gap-1 text-sm text-emerald-600">

@@ -411,16 +411,17 @@ function KpiCard({
 }
 
 function StatusPill({ status }: { status: string }) {
+  const { t } = useTranslation();
   const map: Record<string, { cls: string; label: string }> = {
     draft: { cls: 'bg-slate-100 text-slate-700', label: 'Draft' },
-    sent: { cls: 'bg-blue-100 text-blue-700', label: 'E derguar' },
-    in_transit: { cls: 'bg-teal-100 text-teal-700', label: 'Ne rruge' },
-    delivered: { cls: 'bg-emerald-100 text-emerald-700', label: 'Dorezuar' },
-    confirmed: { cls: 'bg-emerald-100 text-emerald-700', label: 'Konfirmuar' },
-    completed: { cls: 'bg-emerald-100 text-emerald-700', label: 'Perfunduar' },
-    cancelled: { cls: 'bg-red-100 text-red-700', label: 'Anuluar' },
-    pending_company_review: { cls: 'bg-amber-100 text-amber-700', label: 'Per shqyrtim' },
-    pending_stock_confirmation: { cls: 'bg-amber-100 text-amber-700', label: 'Konfirmim stoku' },
+    sent: { cls: 'bg-blue-100 text-blue-700', label: t('common.sentF') },
+    in_transit: { cls: 'bg-teal-100 text-teal-700', label: t('common.inTransit') },
+    delivered: { cls: 'bg-emerald-100 text-emerald-700', label: t('common.delivered') },
+    confirmed: { cls: 'bg-emerald-100 text-emerald-700', label: t('common.confirmed') },
+    completed: { cls: 'bg-emerald-100 text-emerald-700', label: t('common.completed') },
+    cancelled: { cls: 'bg-red-100 text-red-700', label: t('common.cancelled') },
+    pending_company_review: { cls: 'bg-amber-100 text-amber-700', label: t('common.forReview') },
+    pending_stock_confirmation: { cls: 'bg-amber-100 text-amber-700', label: t('common.stockConfirmation') },
   };
   const meta = map[status] ?? { cls: 'bg-slate-100 text-slate-700', label: status };
   return (

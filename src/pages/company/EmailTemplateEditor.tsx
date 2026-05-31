@@ -294,7 +294,7 @@ export default function EmailTemplateEditor() {
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium hover:bg-gray-50"
           >
             {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            {showPreview ? 'Fshih preview' : 'Preview'}
+            {showPreview ? t('common.hidePreview') : 'Preview'}
           </button>
           {!isReadOnly && (
             <button

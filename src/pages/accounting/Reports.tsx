@@ -133,7 +133,7 @@ export default function Reports() {
       if (json.download_url) window.open(json.download_url as string, '_blank');
       setSaftOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'SAF-T error');
+      setError(err instanceof Error ? err.message : t('common.saftError'));
     } finally {
       setSaftBusy(false);
     }

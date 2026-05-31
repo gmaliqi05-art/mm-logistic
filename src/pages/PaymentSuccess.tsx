@@ -65,7 +65,7 @@ export default function PaymentSuccess() {
           setTimeout(verifySession, 3000);
           return;
         }
-        setErrorMsg(err instanceof Error ? err.message : 'Unknown error');
+        setErrorMsg(err instanceof Error ? err.message : t('common.unknownError'));
         setStatus('error');
       }
     }

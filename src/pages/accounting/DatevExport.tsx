@@ -94,7 +94,7 @@ export default function DatevExport() {
       setResult({ download_url: json.download_url, files: json.files ?? [] });
     } catch (err) {
       logger.error('DATEV export failed', { error: err });
-      setError(err instanceof Error ? err.message : 'DATEV error');
+      setError(err instanceof Error ? err.message : t('common.datevError'));
     } finally {
       setBusy(false);
     }

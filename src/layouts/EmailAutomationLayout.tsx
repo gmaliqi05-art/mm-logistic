@@ -1,15 +1,16 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Mail, FileText, Palette, Settings2, Send, Clock } from 'lucide-react';
-
-const tabs = [
-  { to: '/company/email/templates', icon: FileText, label: 'Templates' },
-  { to: '/company/email/branding', icon: Palette, label: 'Branding' },
-  { to: '/company/email/automation', icon: Settings2, label: 'Automatizime' },
-  { to: '/company/email/send', icon: Send, label: 'Dergo Email' },
-  { to: '/company/email/log', icon: Clock, label: 'Historiku' },
-];
+import { useTranslation } from '../i18n';
 
 export default function EmailAutomationLayout() {
+  const { t } = useTranslation();
+  const tabs = [
+    { to: '/company/email/templates', icon: FileText, label: t('common.template') },
+    { to: '/company/email/branding', icon: Palette, label: t('common.brandingShort') },
+    { to: '/company/email/automation', icon: Settings2, label: t('common.automationRulesShort') },
+    { to: '/company/email/send', icon: Send, label: t('common.dergoEmail') },
+    { to: '/company/email/log', icon: Clock, label: t('common.history') },
+  ];
   return (
     <div className="space-y-6">
       <div>
