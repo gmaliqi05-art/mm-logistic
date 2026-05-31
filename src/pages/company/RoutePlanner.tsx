@@ -293,7 +293,7 @@ export default function CompanyRoutePlanner() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Route className="w-6 h-6 text-teal-600" /> Planifikim Rruge - 3 Alternativa
         </h1>
-        <p className="text-sm text-slate-600 mt-1">Zgjedh shoferin, vendos pikat ne harte dhe dergoji rrugen shoferit.</p>
+        <p className="text-sm text-slate-600 mt-1">{t('common.selectDriverPlacePointsOnMap')}</p>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">

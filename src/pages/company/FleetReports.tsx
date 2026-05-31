@@ -168,7 +168,7 @@ export default function CompanyFleetReports() {
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <BarChart3 className="w-6 h-6 text-teal-600" /> Raportet e Flotes
         </h1>
-        <p className="text-sm text-slate-600 mt-1">Analizo km, ore pune dhe kohe te pandryshueshme per shoferet.</p>
+        <p className="text-sm text-slate-600 mt-1">{t('common.analyzeKmHoursWorkAndImmutableTime')}</p>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">

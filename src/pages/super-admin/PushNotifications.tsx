@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { TableRowsSkeleton, CardListSkeleton } from '../../components/ui/Skeleton';
 
 type Tab = 'overview' | 'compose' | 'templates' | 'channels' | 'permissions' | 'logs' | 'platform' | 'devices';
@@ -140,6 +141,7 @@ export default function PushNotifications() {
 }
 
 function OverviewTab() {
+  const { t: tr } = useTranslation();
   const [stats, setStats] = useState({
     totalQueued: 0,
     sentToday: 0,
@@ -247,7 +249,7 @@ function OverviewTab() {
                 </tr>
               ))}
               {recent.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No notifications yet</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">{tr('common.noNotificationsYet')}</td></tr>
               )}
             </tbody>
           </table>
@@ -273,6 +275,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ComposeTab() {
+  const { t: tr } = useTranslation();
   const { profile } = useAuth();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [channelCode, setChannelCode] = useState('system.broadcast');
@@ -435,7 +438,7 @@ function ComposeTab() {
             <textarea
               value={userIdsInput}
               onChange={(e) => setUserIdsInput(e.target.value)}
-              placeholder="Comma or newline separated user UUIDs"
+              placeholder={tr('common.commaOrNewlineSeparatedUserUuids')}
               className="input-field min-h-[80px]"
             />
           )}
@@ -483,6 +486,7 @@ function ComposeTab() {
 }
 
 function ChannelsTab() {
+  const { t: tr } = useTranslation();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
@@ -549,7 +553,7 @@ function ChannelsTab() {
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
           {creating && (
             <input
-              placeholder="channel code (e.g. payment.success)"
+              placeholder={tr('common.channelCodeExamplePaymentSuccess')}
               value={form.code ?? ''}
               onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
               className="input-field"
@@ -610,6 +614,7 @@ function ChannelsTab() {
 }
 
 function TemplatesTab() {
+  const { t: tr } = useTranslation();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -655,7 +660,7 @@ function TemplatesTab() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Delete template?')) return;
+    if (!confirm(tr('common.deleteTemplateQ'))) return;
     await supabase.from('notification_templates').delete().eq('id', id);
     await load();
   }
@@ -683,7 +688,7 @@ function TemplatesTab() {
               className="input-field"
               disabled={!creating}
             >
-              <option value="">Select channel</option>
+              <option value="">{tr('common.selectChannel')}</option>
               {channels.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
             </select>
             <select
@@ -695,7 +700,7 @@ function TemplatesTab() {
               {['en', 'sq', 'de', 'fr'].map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
-          <input placeholder="Title template e.g. Invoice {{invoice_number}}" value={form.title_template ?? ''} onChange={(e) => setForm((f) => ({ ...f, title_template: e.target.value }))} className="input-field" />
+          <input placeholder={tr('common.titleTemplateExample')} value={form.title_template ?? ''} onChange={(e) => setForm((f) => ({ ...f, title_template: e.target.value }))} className="input-field" />
           <textarea placeholder="Body template" value={form.body_template ?? ''} onChange={(e) => setForm((f) => ({ ...f, body_template: e.target.value }))} className="input-field min-h-[80px]" />
           <p className="text-xs text-slate-500">Use {`{{variable_name}}`} for placeholders. Variables will be auto-extracted on save.</p>
           <div className="flex gap-2">
@@ -739,6 +744,7 @@ function TemplatesTab() {
 }
 
 function PermissionsTab() {
+  const { t: tr } = useTranslation();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [perms, setPerms] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -785,7 +791,7 @@ function PermissionsTab() {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-slate-600">Toggle send (S) / receive (R) per role per channel. Changes save automatically.</p>
+      <p className="text-sm text-slate-600">{tr('common.toggleSendReceivePerRoleHint')}</p>
       {saving && <p className="text-xs text-teal-600">Saving...</p>}
       <div className="overflow-x-auto bg-white border border-slate-200 rounded-lg">
         <table className="w-full text-xs">
@@ -830,6 +836,7 @@ function PermissionsTab() {
 }
 
 function LogsTab() {
+  const { t: tr } = useTranslation();
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<{ status: string; platform: string }>({ status: '', platform: '' });
@@ -850,11 +857,11 @@ function LogsTab() {
     <div className="space-y-3">
       <div className="flex gap-3 flex-wrap">
         <select value={filter.status} onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))} className="input-field max-w-[160px]">
-          <option value="">All statuses</option>
+          <option value="">{tr('common.allStatuses')}</option>
           {['sent', 'failed', 'pending', 'clicked', 'delivered'].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={filter.platform} onChange={(e) => setFilter((f) => ({ ...f, platform: e.target.value }))} className="input-field max-w-[160px]">
-          <option value="">All platforms</option>
+          <option value="">{tr('common.allPlatforms')}</option>
           {['web', 'android', 'ios', 'inapp'].map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
         <button onClick={load} className="btn-secondary">Refresh</button>
@@ -885,7 +892,7 @@ function LogsTab() {
                 </tr>
               ))}
               {deliveries.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No delivery logs</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">{tr('common.noDeliveryLogs')}</td></tr>
               )}
             </tbody>
           </table>
@@ -903,6 +910,7 @@ interface ConfigStatus {
 }
 
 function PlatformTab() {
+  const { t: tr } = useTranslation();
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [status, setStatus] = useState<ConfigStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -950,7 +958,7 @@ function PlatformTab() {
     <div className="space-y-6 max-w-2xl">
       {status && (
         <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-slate-900 mb-3">Live Secret Status</h3>
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">{tr('common.liveSecretStatus')}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <PlatformStatusCard
               label="Web Push"
@@ -1027,7 +1035,7 @@ function PlatformTab() {
             Enabled
           </label>
         </div>
-        <p className="text-xs text-slate-500">Upload Firebase service account JSON as secret <code className="px-1 bg-slate-100 rounded">FCM_SERVICE_ACCOUNT_JSON</code>.</p>
+        <p className="text-xs text-slate-500">{tr('common.uploadFirebaseServiceAccountJsonAsSecret')} <code className="px-1 bg-slate-100 rounded">FCM_SERVICE_ACCOUNT_JSON</code>.</p>
         <input
           placeholder="Firebase project ID"
           value={settings.fcm_project_id}
@@ -1064,6 +1072,7 @@ function PlatformTab() {
 }
 
 function DevicesTab() {
+  const { t: tr } = useTranslation();
   const [webSubs, setWebSubs] = useState<Array<{ id: string; user_id: string; device_name: string; user_agent: string; is_active: boolean; last_active_at: string }>>([]);
   const [deviceTokens, setDeviceTokens] = useState<Array<{ id: string; user_id: string; platform: string; device_model: string; app_version: string; is_active: boolean; last_active_at: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -1105,7 +1114,7 @@ function DevicesTab() {
               <tr>
                 <th className="text-left px-4 py-2 font-medium text-slate-600">User</th>
                 <th className="text-left px-4 py-2 font-medium text-slate-600">Device</th>
-                <th className="text-left px-4 py-2 font-medium text-slate-600">Last Active</th>
+                <th className="text-left px-4 py-2 font-medium text-slate-600">{tr('common.lastActive')}</th>
                 <th className="text-left px-4 py-2 font-medium text-slate-600">Status</th>
                 <th className="text-right px-4 py-2 font-medium text-slate-600">Actions</th>
               </tr>
@@ -1128,7 +1137,7 @@ function DevicesTab() {
                   </td>
                 </tr>
               ))}
-              {webSubs.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">No web subscriptions</td></tr>}
+              {webSubs.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">{tr('common.noWebSubscriptions')}</td></tr>}
             </tbody>
           </table>
         </div>
@@ -1169,7 +1178,7 @@ function DevicesTab() {
                   </td>
                 </tr>
               ))}
-              {deviceTokens.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">No native device tokens</td></tr>}
+              {deviceTokens.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">{tr('common.noNativeDeviceTokens')}</td></tr>}
             </tbody>
           </table>
         </div>

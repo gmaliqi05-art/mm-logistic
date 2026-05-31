@@ -91,7 +91,7 @@ export default function ReparatureDashboard() {
 
       <div className="bg-white rounded-xl border border-slate-200">
         <div className="px-5 py-3 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900">Puna e regjistruar (7 dite e fundit)</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{t('common.registeredWorkLast7Days')}</h2>
         </div>
         {loading ? (
           <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 text-slate-400 animate-spin" /></div>

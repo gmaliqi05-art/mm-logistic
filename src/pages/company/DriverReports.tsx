@@ -351,7 +351,7 @@ export default function DriverReports() {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-2">
           <Truck className="w-4 h-4 text-teal-600" />
-          <h2 className="text-sm font-semibold text-slate-900">Dergesat ne kete periudhe</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{t('common.deliveriesInThisPeriod')}</h2>
         </div>
         {deliveries.length === 0 ? (
           <div className="p-6 text-center text-sm text-slate-500">{t('common.noDeliveries')}</div>

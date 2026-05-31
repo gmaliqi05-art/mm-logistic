@@ -464,7 +464,7 @@ export default function DepotStock() {
         </div>
       </div>
 
-      <PalletScanner open={showScanner} onClose={() => setShowScanner(false)} onScan={handleScan} context="stock" title="Scan pallet for stocktake" />
+      <PalletScanner open={showScanner} onClose={() => setShowScanner(false)} onScan={handleScan} context="stock" title={t('common.scanPalletForStocktake')} />
 
       {error && (
         <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex items-center gap-3">
@@ -531,7 +531,7 @@ export default function DepotStock() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko produkt ose kategori"
+            placeholder={t('common.searchProductOrCategory')}
             className="w-full pl-8 pr-2 py-1.5 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>

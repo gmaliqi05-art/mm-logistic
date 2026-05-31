@@ -421,7 +421,7 @@ export default function ManualEmail() {
                 <iframe
                   srcDoc={previewHtml}
                   className="w-full h-full border-0"
-                  title="Email Preview"
+                  title={t('common.emailPreviewTitle')}
                   sandbox="allow-same-origin"
                 />
               ) : (

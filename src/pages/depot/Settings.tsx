@@ -39,7 +39,7 @@ export default function DepotSettings() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Cilesimet</h1>
-          <p className="text-sm text-gray-500">Profili dhe njoftimet</p>
+          <p className="text-sm text-gray-500">{t('common.profileAndNotifications')}</p>
         </div>
       </div>
 

@@ -122,7 +122,7 @@ export default function DriverRoutePlanner() {
 
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-center gap-2 text-sm text-teal-900">
         <Truck className="w-4 h-4" />
-        <span>Kalkulimi perdor vetem rruget e lejuara per kamiona (HGV).</span>
+        <span>{t('common.calculationUsesHgvOnlyRoutes')}</span>
       </div>
 
       {gpsError && (

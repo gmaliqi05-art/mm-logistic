@@ -707,7 +707,7 @@ export default function CompanyDepots() {
                       placeholder="p.sh. agimi"
                       className="input"
                     />
-                    <p className="text-[11px] text-slate-400 mt-1">3-32 karaktere · vetem shkronja, numra, . _ -</p>
+                    <p className="text-[11px] text-slate-400 mt-1">{t('common.usernameRule3to32Chars')}</p>
                   </Field>
                   <Field label={t('common.password')}>
                     <input

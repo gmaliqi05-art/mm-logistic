@@ -181,7 +181,7 @@ export default function MetadataSeo() {
                 <p className="text-xs text-gray-400 mt-1">{form.title.length}/60 {t('superAdmin.seo.charsRecommended')}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Meta Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.metaDescription')}</label>
                 <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={3} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm resize-none" />
                 <p className="text-xs text-gray-400 mt-1">{form.description.length}/160 {t('superAdmin.seo.charsRecommended')}</p>
               </div>
@@ -194,7 +194,7 @@ export default function MetadataSeo() {
                 <input type="text" value={form.og_image_url} onChange={(e) => setForm((p) => ({ ...p, og_image_url: e.target.value }))} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm" />
                 {form.og_image_url && (
                   <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 h-28">
-                    <img src={form.og_image_url} alt="OG Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <img src={form.og_image_url} alt={t('common.ogPreview')} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </div>
                 )}
               </div>

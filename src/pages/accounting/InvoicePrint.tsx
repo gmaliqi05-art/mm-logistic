@@ -7,11 +7,13 @@ import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import InvoiceTemplate, { type InvoicePreviewData } from '../../components/accounting/InvoiceTemplate';
 import { buildVatBreakdown } from '../../utils/euCompliance';
+import { useTranslation } from '../../i18n';
 
 export default function InvoicePrint() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { t } = useTranslation();
 
   const [previewData, setPreviewData] = useState<InvoicePreviewData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,7 +131,7 @@ export default function InvoicePrint() {
   if (!previewData) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4">
-        <p className="text-gray-500 text-lg">Fatura nuk u gjet</p>
+        <p className="text-gray-500 text-lg">{t('common.invoiceNotFound')}</p>
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"

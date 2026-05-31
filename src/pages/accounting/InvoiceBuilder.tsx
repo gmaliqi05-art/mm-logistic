@@ -1324,7 +1324,7 @@ export default function InvoiceBuilder() {
                       value={emailRecipient}
                       onChange={(e) => setEmailRecipient(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      placeholder="email@shembull.com"
+                      placeholder={t('common.emailExampleAlias')}
                     />
                   </div>
                   <div>
@@ -1335,7 +1335,7 @@ export default function InvoiceBuilder() {
                       value={emailCc}
                       onChange={(e) => setEmailCc(e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      placeholder="email1@x.com, email2@x.com"
+                      placeholder={t('common.emailListExample')}
                     />
                   </div>
                   <div>

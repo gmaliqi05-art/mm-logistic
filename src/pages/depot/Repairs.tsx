@@ -465,7 +465,7 @@ function ReportsTab({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko produkt..."
+            placeholder={t('common.searchProductEllipsis')}
             className="pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent w-48"
           />
         </div>

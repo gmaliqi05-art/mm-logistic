@@ -231,7 +231,7 @@ export default function ApiWebhooks() {
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.name')}</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Prefix</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Perdor fund.</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.useEnd')}</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">{t('common.status')}</th>
                     <th className="px-4 py-3"></th>
                   </tr>

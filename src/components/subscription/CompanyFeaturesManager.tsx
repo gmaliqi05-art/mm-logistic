@@ -277,7 +277,7 @@ export default function CompanyFeaturesManager({
                           onClick={() => handleRemoveFeature(existingFeature.id)}
                           disabled={saving}
                           className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Remove override (revert to plan-based access)"
+                          title={t('common.removeOverrideRevertToPlanBased')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

@@ -264,7 +264,7 @@ export default function EmailSettings() {
 
         <div className="lg:col-span-2">
           <div className="sticky top-20 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold text-slate-900">Preview i header-it</h2>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">{t('common.headerPreview')}</h2>
             <div className="overflow-hidden rounded-lg border border-slate-200">
               <div className="flex items-center gap-3 px-5 py-4" style={{ backgroundColor: primary }}>
                 {values.email_brand_logo_url ? (

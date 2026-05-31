@@ -474,7 +474,7 @@ export default function CompanyVehicles() {
                       <option value="3">3 - Lengje te ndezshme</option>
                       <option value="4.1">4.1 - Lendet e ngurta te ndezshme</option>
                       <option value="4.2">4.2 - Substancat vetdjegese</option>
-                      <option value="4.3">4.3 - Lendet qe leshojne gaz me uje</option>
+                      <option value="4.3">{t('common.adrClass43')}</option>
                       <option value="5.1">5.1 - Oksidues</option>
                       <option value="5.2">5.2 - Peroksidet organike</option>
                       <option value="6.1">6.1 - Toksike</option>

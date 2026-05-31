@@ -281,7 +281,7 @@ export default function DriverSettings() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold text-gray-900">{t("driver.settings.documentsTitle")}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Shiko patenten, Kod 95, G25, ADR — te ruajtura per ty</p>
+            <p className="text-xs text-gray-500 mt-0.5">{t('common.viewLicenseCode95G25Adr')}</p>
           </div>
           <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
         </div>

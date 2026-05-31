@@ -1027,7 +1027,7 @@ export default function Reports() {
           <Link
             to="/accounting/datev-export"
             className="inline-flex items-center gap-2 px-4 py-2.5 text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm"
-            title="Detailed DATEV export (EXTF v700)"
+            title={t('common.detailedDatevExportExtfV700')}
           >
             <FileCode2 className="w-4 h-4" />
             DATEV Detailed
@@ -1091,7 +1091,7 @@ export default function Reports() {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex flex-col sm:flex-row sm:items-end gap-3">
           <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Nga data</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.fromDate')}</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -1103,7 +1103,7 @@ export default function Reports() {
             </div>
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Deri ne date</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.toDate')}</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input

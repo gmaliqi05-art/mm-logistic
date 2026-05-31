@@ -295,7 +295,7 @@ export default function WorkerRepairEntry() {
         if (insErr) throw insErr;
         reportRow = data;
       }
-      if (!reportRow) throw new Error('Failed to save report');
+      if (!reportRow) throw new Error(t('common.failedToSaveReport'));
 
       const ids = entries.map((e) => e.id);
       const { error: upErr } = await supabase

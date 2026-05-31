@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FileCode2, FileText, Globe as Globe2, Loader2, CheckCircle2, AlertTriangle, Download } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
 
 interface InvoiceRow {
@@ -30,6 +31,7 @@ interface SaftResult {
 
 export default function TestExport() {
   const { profile } = useAuth();
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [companyCountry, setCompanyCountry] = useState<string | null>(null);
 
@@ -155,8 +157,8 @@ export default function TestExport() {
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Test Export Center</h1>
-        <p className="text-sm text-slate-600 mt-1">Trigger e-invoice, DATEV and SAF-T generation end-to-end.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t('common.testExportCenter')}</h1>
+        <p className="text-sm text-slate-600 mt-1">{t('common.triggerEinvoiceDatevSaft')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -211,7 +213,7 @@ export default function TestExport() {
                   {einvResult.pdf_url && (<a href={einvResult.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-slate-900 font-medium underline"><Download className="w-3 h-3" /> PDF</a>)}
                 </div>
                 <details className="mt-2">
-                  <summary className="text-xs text-slate-500 cursor-pointer">Preview XML</summary>
+                  <summary className="text-xs text-slate-500 cursor-pointer">{t('common.previewXml')}</summary>
                   <pre className="text-[10px] bg-slate-50 border border-slate-200 rounded p-2 mt-1 overflow-auto max-h-48">{einvResult.xml.slice(0, 500)}{einvResult.xml.length > 500 ? '\n...' : ''}</pre>
                 </details>
               </div>
@@ -227,7 +229,7 @@ export default function TestExport() {
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">DATEV EXTF v700</h2>
-              <p className="text-xs text-slate-500">Buchungsstapel + master data</p>
+              <p className="text-xs text-slate-500">{t('common.buchungsstapelMasterData')}</p>
             </div>
           </div>
           <div className="p-5 space-y-3">
@@ -261,7 +263,7 @@ export default function TestExport() {
                 <div className="font-semibold text-emerald-700">Ready ({datevResult.files.length} files)</div>
                 <div className="text-[11px] text-slate-500">{datevResult.files.join(', ')}</div>
                 {datevResult.download_url && (
-                  <a href={datevResult.download_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-900 font-medium underline"><Download className="w-3 h-3" /> Download ZIP</a>
+                  <a href={datevResult.download_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-900 font-medium underline"><Download className="w-3 h-3" /> {t('common.downloadZip')}</a>
                 )}
               </div>
             )}
@@ -276,7 +278,7 @@ export default function TestExport() {
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">SAF-T (RO / PL)</h2>
-              <p className="text-xs text-slate-500">Tax audit XML export</p>
+              <p className="text-xs text-slate-500">{t('common.taxAuditXmlExport')}</p>
             </div>
           </div>
           <div className="p-5 space-y-3">
@@ -319,7 +321,7 @@ export default function TestExport() {
                   </ul>
                 )}
                 {saftResult.download_url && (
-                  <a href={saftResult.download_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-emerald-800 font-medium underline"><Download className="w-3 h-3" /> Download XML</a>
+                  <a href={saftResult.download_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-emerald-800 font-medium underline"><Download className="w-3 h-3" /> {t('common.downloadXml')}</a>
                 )}
               </div>
             )}
