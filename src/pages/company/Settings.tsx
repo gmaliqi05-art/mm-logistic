@@ -371,7 +371,7 @@ export default function CompanySettings() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Afati i pageses (dite)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('common.paymentDeadlineDays')}</label>
                 <input
                   type="number"
                   min={0}
@@ -388,7 +388,7 @@ export default function CompanySettings() {
                   value={invoiceHeaderNote}
                   onChange={(e) => setInvoiceHeaderNote(e.target.value)}
                   rows={2}
-                  placeholder="Opsionale — shenim qe shfaqet nen te dhenat e kompanise."
+                  placeholder={t('common.optionalNoteShownUnderCompanyDetails')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
                 />
               </div>

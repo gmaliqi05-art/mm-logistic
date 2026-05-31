@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../i18n';
 
 type Tab = 'flow' | 'repair' | 'sorting' | 'damaged';
 
@@ -109,6 +110,7 @@ function downloadCsv(filename: string, content: string) {
 }
 
 export default function DepotReports() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [tab, setTab] = useState<Tab>('flow');
   const [days, setDays] = useState<number>(7);
@@ -283,8 +285,8 @@ export default function DepotReports() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-slate-900">Raporte Depo</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Hyrje / Dalje · Reparime · Sortime · Paleta te demtuara</p>
+          <h1 className="text-xl lg:text-2xl font-bold text-slate-900">{t('common.depotReports')}</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{t('common.incomingOutgoingRepairsSortingDamagedPallets')}</p>
         </div>
         <div className="flex items-center gap-2">
           <select
@@ -292,10 +294,10 @@ export default function DepotReports() {
             onChange={(e) => setDays(parseInt(e.target.value, 10))}
             className="px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
           >
-            <option value={7}>7 dite</option>
-            <option value={30}>30 dite</option>
-            <option value={90}>90 dite</option>
-            <option value={365}>1 vit</option>
+            <option value={7}>{t('common.sevenDays')}</option>
+            <option value={30}>{t('common.thirtyDays')}</option>
+            <option value={90}>{t('common.ninetyDays')}</option>
+            <option value={365}>{t('common.oneYear')}</option>
           </select>
         </div>
       </div>
@@ -442,7 +444,7 @@ export default function DepotReports() {
             <div className="space-y-4">
               <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-semibold text-slate-900 text-sm">Paleta te demtuara ne radhe</h2>
+                  <h2 className="font-semibold text-slate-900 text-sm">{t('common.damagedPalletsInQueue')}</h2>
                   <button
                     onClick={() => downloadCsv('depot-damaged.csv', toCsv(damaged as unknown as Record<string, unknown>[]))}
                     className="inline-flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-900"

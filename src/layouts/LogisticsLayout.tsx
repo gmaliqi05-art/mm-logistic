@@ -17,17 +17,16 @@ import { useCompanyBranding } from '../hooks/useCompanyBranding';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
-const navItems = [
-  { to: '/logistics', icon: LayoutDashboard, label: 'Ballina', end: true },
-  { to: '/logistics/dispatch', icon: ClipboardList, label: 'Dispeçeria', end: false },
-  { to: '/logistics/active', icon: Truck, label: 'Caktimet aktive', end: false },
-  { to: '/logistics/live-map', icon: Map, label: 'Harta live', end: false },
-  { to: '/logistics/drivers', icon: Users, label: 'Shoferët', end: false },
-];
-
 export default function LogisticsLayout() {
   const { profile, signOut } = useAuth();
   const { t } = useTranslation();
+  const navItems = [
+    { to: '/logistics', icon: LayoutDashboard, label: t('nav.dashboard'), end: true },
+    { to: '/logistics/dispatch', icon: ClipboardList, label: t('nav.dispatch'), end: false },
+    { to: '/logistics/active', icon: Truck, label: t('nav.activeAssignments'), end: false },
+    { to: '/logistics/live-map', icon: Map, label: t('nav.liveMap'), end: false },
+    { to: '/logistics/drivers', icon: Users, label: t('nav.drivers'), end: false },
+  ];
   const { name: brandName, logo: brandLogo } = useCompanyBranding();
   const location = useLocation();
   const navigate = useNavigate();
@@ -60,7 +59,7 @@ export default function LogisticsLayout() {
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg bg-teal-800/60 text-teal-50 hover:bg-teal-700 hover:text-white transition-colors font-medium"
             >
               <ArrowLeft className="w-5 h-5 flex-shrink-0" />
-              <span className="whitespace-nowrap text-sm">Admin Kompani</span>
+              <span className="whitespace-nowrap text-sm">{t('common.companyAdminLink')}</span>
             </button>
           </div>
         )}
@@ -114,18 +113,18 @@ export default function LogisticsLayout() {
               <button
                 onClick={() => navigate('/company')}
                 className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-teal-700 hover:bg-teal-50 transition-colors text-sm font-medium"
-                title="Kthehu ne Admin Kompani"
+                title={t('common.backToCompanyAdmin')}
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Admin Kompani</span>
+                <span>{t('common.companyAdminLink')}</span>
               </button>
             )}
             {isCompanyAdmin && (
               <button
                 onClick={() => navigate('/company')}
                 className="lg:hidden p-1.5 rounded-lg text-teal-700 hover:bg-teal-50 transition-colors"
-                aria-label="Admin Kompani"
-                title="Admin Kompani"
+                aria-label={t('common.companyAdminLink')}
+                title={t('common.companyAdminLink')}
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -198,7 +197,7 @@ export default function LogisticsLayout() {
                 className="flex items-center gap-3 w-full p-4 rounded-xl bg-teal-50 text-teal-700 font-medium"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span className="text-sm">Admin Kompani</span>
+                <span className="text-sm">{t('common.companyAdminLink')}</span>
               </button>
             )}
             {navItems.map((item) => (

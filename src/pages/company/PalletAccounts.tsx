@@ -83,7 +83,7 @@ export default function PalletAccounts() {
               <TrendingDown className="w-5 h-5 text-red-700" />
             </div>
             <div>
-              <div className="text-xs text-slate-500 uppercase tracking-wide">We owe partners</div>
+              <div className="text-xs text-slate-500 uppercase tracking-wide">{t('common.weOwePartners')}</div>
               <div className="text-2xl font-bold text-slate-900">{totalOwedByUs}</div>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function PalletAccounts() {
               <Package className="w-5 h-5 text-teal-700" />
             </div>
             <div>
-              <div className="text-xs text-slate-500 uppercase tracking-wide">Active accounts</div>
+              <div className="text-xs text-slate-500 uppercase tracking-wide">{t('common.activeAccounts')}</div>
               <div className="text-2xl font-bold text-slate-900">{rows.length}</div>
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function PalletAccounts() {
         {loading ? (
           <div className="p-8 text-center text-sm text-slate-500">Loading...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">No pallet accounts yet.</div>
+          <div className="p-8 text-center text-sm text-slate-500">{t('common.noPalletAccountsYet')}</div>
         ) : (
           <div className="divide-y divide-slate-100">
             {filtered.map((r) => (

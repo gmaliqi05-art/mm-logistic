@@ -239,7 +239,7 @@ export default function SupportFaqManager() {
                   type="text"
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  placeholder="p.sh. Llogaria, Kompania, Depo..."
+                  placeholder={t('common.egAccountCompanyDepot')}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   list="faq-categories"
                 />

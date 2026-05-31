@@ -14,7 +14,7 @@ interface Placement {
 }
 
 export default function LanguageSwitcher({ variant = 'default' }: { variant?: Variant }) {
-  const { language, setLanguage } = useTranslation();
+  const { language, setLanguage, t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<Placement>({ vertical: 'down', horizontal: 'right' });
   const ref = useRef<HTMLDivElement>(null);
@@ -62,7 +62,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
   const renderMenu = (itemClass: (active: boolean) => string, menuClass: string) => (
     <div
       role="menu"
-      aria-label="Select language"
+      aria-label={t('common.selectLanguage')}
       className={`absolute ${menuVerticalClass} ${menuHorizontalClass} w-[7.5rem] max-w-[calc(100vw-1rem)] rounded-lg shadow-xl py-0.5 z-[60] ${menuClass}`}
     >
       {languages.map((lang) => (
@@ -92,7 +92,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
           type="button"
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label="Change language"
+          aria-label={t('common.changeLanguage')}
           onClick={() => setOpen((v) => !v)}
           className={`${buttonBase} min-h-[40px] min-w-[40px] px-2.5 py-1.5 text-sm text-teal-200 hover:bg-teal-800 hover:text-white active:bg-teal-700`}
         >
@@ -119,7 +119,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
           type="button"
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label="Change language"
+          aria-label={t('common.changeLanguage')}
           onClick={() => setOpen((v) => !v)}
           className={`${buttonBase} min-h-[40px] min-w-[40px] px-2.5 py-2 text-gray-600 hover:bg-gray-100 active:bg-gray-200`}
         >
@@ -145,7 +145,7 @@ export default function LanguageSwitcher({ variant = 'default' }: { variant?: Va
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Change language"
+        aria-label={t('common.changeLanguage')}
         onClick={() => setOpen((v) => !v)}
         className={`${buttonBase} min-h-[40px] gap-2 px-3 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-sm text-gray-700`}
       >

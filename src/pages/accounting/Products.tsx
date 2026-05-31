@@ -659,8 +659,8 @@ export default function Products() {
                         <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
                           <Upload className="w-6 h-6 text-gray-400" />
                         </div>
-                        <p className="text-sm text-gray-600">Terhiq dhe lesho imazhin ketu</p>
-                        <p className="text-xs text-gray-400">ose kliko per te zgjedhur. Max 2MB (JPEG, PNG, WebP)</p>
+                        <p className="text-sm text-gray-600">{t('common.dragAndDropImageHere')}</p>
+                        <p className="text-xs text-gray-400">{t('common.orClickToSelectMax2MbJpegPngWebp')}</p>
                       </div>
                     )}
                     <input

@@ -107,8 +107,8 @@ export default function DatevExport() {
           <FileCode2 className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">DATEV Export</h1>
-          <p className="text-sm text-slate-600">EXTF v700 Buchungsstapel, Debitoren, Kreditoren and Sachkonten.</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t('common.datevExportTitle')}</h1>
+          <p className="text-sm text-slate-600">{t('common.extfV700Buchungsstapel')}</p>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ export default function DatevExport() {
         </div>
 
         <div className="pt-4 border-t border-slate-200">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Export types</div>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{t('common.exportTypes')}</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {(['buchungen', 'debitoren', 'kreditoren', 'sachkonten'] as ExportKind[]).map((k) => (
               <label key={k} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${selected[k] ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}>
@@ -177,7 +177,7 @@ export default function DatevExport() {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-900">
           <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
-            <div className="font-semibold">Export ready</div>
+            <div className="font-semibold">{t('common.exportReady')}</div>
             <div className="text-xs mt-1">Files: {result.files.join(', ')}</div>
             {result.download_url && (
               <a href={result.download_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-emerald-800 font-medium underline">

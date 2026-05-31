@@ -149,7 +149,7 @@ export default function RepairCompletionModal({ stockId, onClose, onApplied }: P
               <Wrench className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Raporto riparim</h2>
+              <h2 className="text-base font-bold text-slate-900">{t('common.reportRepair')}</h2>
               <p className="text-xs text-slate-500">
                 {detail?.category_name ?? '—'}
                 {detail?.depot_name ? ` · ${detail.depot_name}` : ''}
@@ -192,7 +192,7 @@ export default function RepairCompletionModal({ stockId, onClose, onApplied }: P
             </label>
 
             <label className="block">
-              <span className="text-[11px] uppercase tracking-wide text-slate-500">Reparatori qe e ka kryer punen</span>
+              <span className="text-[11px] uppercase tracking-wide text-slate-500">{t('common.repairWorkerWhoDidTheWork')}</span>
               <select
                 value={reparatorId}
                 onChange={(e) => setReparatorId(e.target.value)}

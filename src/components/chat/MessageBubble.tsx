@@ -59,7 +59,7 @@ export default function MessageBubble({ msg, isOwn, onDelete, formatTime }: Mess
             <div className="rounded-2xl px-4 py-2.5 bg-gray-100 border border-gray-200 border-dashed">
               <div className="flex items-center gap-1.5 text-gray-400">
                 <Ban className="w-3.5 h-3.5" />
-                <p className="text-sm italic">Ky mesazh u fshi</p>
+                <p className="text-sm italic">{t('common.messageDeleted')}</p>
               </div>
             </div>
             <p className={`text-xs mt-1 ${isOwn ? 'text-right' : 'text-left'} text-gray-400`}>

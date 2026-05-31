@@ -157,7 +157,7 @@ export default function SuperAdminReports() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Te Ardhurat</h1>
-        <p className="text-gray-500 mt-1">Raporte financiare dhe historiku i pagesave</p>
+        <p className="text-gray-500 mt-1">{t('common.financialReportsAndPaymentHistory')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -176,7 +176,7 @@ export default function SuperAdminReports() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Kete Muaj</p>
+              <p className="text-sm text-gray-500">{t('common.thisMonth')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{monthlyRevenue.toFixed(0)}{'\u20AC'}</p>
               <p className="text-xs text-gray-500 mt-1">Pagesa te perfunduara</p>
             </div>
@@ -190,7 +190,7 @@ export default function SuperAdminReports() {
             <div>
               <p className="text-sm text-gray-500">{t('common.totalRevenue')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{totalRevenue.toFixed(0)}{'\u20AC'}</p>
-              <p className="text-xs text-gray-500 mt-1">Qe nga fillimi</p>
+              <p className="text-xs text-gray-500 mt-1">{t('common.sinceTheBeginning')}</p>
             </div>
             <div className="bg-cyan-500 p-3 rounded-xl">
               <CreditCard className="w-6 h-6 text-white" />
@@ -239,7 +239,7 @@ export default function SuperAdminReports() {
                       <span className="text-sm font-bold text-gray-900">{plan.count}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500">Te ardhura/muaj</span>
+                      <span className="text-sm text-gray-500">{t('common.revenuePerMonth')}</span>
                       <span className="text-sm font-bold text-teal-600">{plan.revenue.toFixed(0)}{'\u20AC'}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">

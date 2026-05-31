@@ -214,13 +214,13 @@ export default function HRSettings() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <form onSubmit={addLeaveType} className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <h3 className="text-lg font-bold text-gray-900">{t('hr.settings.addLeaveType')}</h3>
-            <input type="text" placeholder="Code (e.g. education)" value={newType.code} onChange={(e) => setNewType(p => ({ ...p, code: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
-            <input type="text" placeholder="Name (Albanian)" value={newType.name_sq} onChange={(e) => setNewType(p => ({ ...p, name_sq: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
-            <input type="text" placeholder="Name (English)" value={newType.name_en} onChange={(e) => setNewType(p => ({ ...p, name_en: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
-            <input type="text" placeholder="Name (German)" value={newType.name_de} onChange={(e) => setNewType(p => ({ ...p, name_de: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
-            <input type="text" placeholder="Name (French)" value={newType.name_fr} onChange={(e) => setNewType(p => ({ ...p, name_fr: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+            <input type="text" placeholder={t('common.codeEgEducation')} value={newType.code} onChange={(e) => setNewType(p => ({ ...p, code: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+            <input type="text" placeholder={t('common.nameAlbanian')} value={newType.name_sq} onChange={(e) => setNewType(p => ({ ...p, name_sq: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+            <input type="text" placeholder={t('common.nameEnglish')} value={newType.name_en} onChange={(e) => setNewType(p => ({ ...p, name_en: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+            <input type="text" placeholder={t('common.nameGerman')} value={newType.name_de} onChange={(e) => setNewType(p => ({ ...p, name_de: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+            <input type="text" placeholder={t('common.nameFrench')} value={newType.name_fr} onChange={(e) => setNewType(p => ({ ...p, name_fr: e.target.value }))} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
             <div className="flex gap-4">
-              <input type="number" placeholder="Max days/year" value={newType.max_days_per_year} onChange={(e) => setNewType(p => ({ ...p, max_days_per_year: e.target.value }))} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+              <input type="number" placeholder={t('common.maxDaysPerYear')} value={newType.max_days_per_year} onChange={(e) => setNewType(p => ({ ...p, max_days_per_year: e.target.value }))} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
               <div className="flex items-center gap-2">
                 <Palette className="w-4 h-4 text-gray-400" />
                 <input type="color" value={newType.color} onChange={(e) => setNewType(p => ({ ...p, color: e.target.value }))} className="w-10 h-10 rounded border-0 cursor-pointer" />
@@ -242,7 +242,7 @@ export default function HRSettings() {
           <form onSubmit={addHoliday} className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
             <h3 className="text-lg font-bold text-gray-900">{t('hr.settings.addHoliday')}</h3>
             <input type="date" value={newHoliday.date} onChange={(e) => setNewHoliday(p => ({ ...p, date: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
-            <input type="text" placeholder="Holiday name" value={newHoliday.name} onChange={(e) => setNewHoliday(p => ({ ...p, name: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
+            <input type="text" placeholder={t('common.holidayName')} value={newHoliday.name} onChange={(e) => setNewHoliday(p => ({ ...p, name: e.target.value }))} required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={() => setShowAddHoliday(false)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-medium">{t('common.cancel')}</button>
               <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-xl font-medium disabled:opacity-50">

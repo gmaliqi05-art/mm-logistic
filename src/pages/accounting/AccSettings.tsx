@@ -313,7 +313,7 @@ export default function AccSettings() {
           </div>
           <div>
             <h2 className="text-base font-semibold text-gray-900">Njoftimet</h2>
-            <p className="text-xs text-gray-500">Aktivizo njoftimet push ne browser dhe PWA</p>
+            <p className="text-xs text-gray-500">{t('common.enablePushInBrowserAndPwa')}</p>
           </div>
         </div>
         <div className="p-6">
@@ -539,7 +539,7 @@ export default function AccSettings() {
               {ratesMessage && <p className="text-xs text-gray-500 mt-1">{ratesMessage}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Dite Pagese (parazgjedhur)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.paymentDaysDefault')}</label>
               <input
                 type="number"
                 value={defaultPaymentDays}

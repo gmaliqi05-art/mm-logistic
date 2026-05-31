@@ -59,7 +59,7 @@ export default function LegalPage({ documentKey }: LegalPageProps) {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-slate-800 mb-2">Dokumenti nuk u gjet</h1>
+          <h1 className="text-xl font-bold text-slate-800 mb-2">{t('common.documentNotFound')}</h1>
           <p className="text-slate-500 mb-6">{t('common.faqjaLigjoreEKerkuarNukEkziston')}</p>
           <Link to="/" className="text-teal-600 hover:text-teal-700 font-medium">{t('common.kthehuNeFaqenKryesore')}</Link>
         </div>

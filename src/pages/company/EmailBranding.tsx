@@ -161,7 +161,7 @@ export default function EmailBranding() {
 
             <div className="space-y-4 ml-14">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Emri i kompanise (ne email)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.companyNameInEmail')}</label>
                 <input
                   type="text"
                   value={settings.brand_name}
@@ -173,7 +173,7 @@ export default function EmailBranding() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">From Name (emri i derguesit)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.fromNameSender')}</label>
                 <input
                   type="text"
                   value={settings.from_name}
@@ -181,11 +181,11 @@ export default function EmailBranding() {
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   placeholder="p.sh. Faturimi - ABC Logistics"
                 />
-                <p className="text-[11px] text-gray-400 mt-1">Emri qe shfaqet ne inbox te marresit</p>
+                <p className="text-[11px] text-gray-400 mt-1">{t('common.nameShownInRecipientInbox')}</p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Reply-To Email</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.replyToEmail')}</label>
                 <input
                   type="email"
                   value={settings.reply_to_email}
@@ -249,7 +249,7 @@ export default function EmailBranding() {
             <h3 className="text-base font-semibold text-gray-900 ml-14">Ngjyrat</h3>
             <div className="ml-14 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Ngjyra primare (butona, header)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.primaryColorButtonsHeader')}</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -266,7 +266,7 @@ export default function EmailBranding() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Ngjyra sekondare (footer, tekst)</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.secondaryColorFooterText')}</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="color"
@@ -322,7 +322,7 @@ export default function EmailBranding() {
         {showPreview && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-4">
             <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-              <span className="text-xs font-semibold text-gray-600 uppercase">Preview i Email-it</span>
+              <span className="text-xs font-semibold text-gray-600 uppercase">{t('common.emailPreview')}</span>
             </div>
             <div className="p-4">
               <div
@@ -350,7 +350,7 @@ export default function EmailBranding() {
                     Ju dergojme faturen <strong>INV-2026-0042</strong> me total <strong>1.250,00 EUR</strong>.
                   </p>
                   <p className="text-sm text-gray-600 mb-6">
-                    <strong>Afati i pageses:</strong> 15.06.2026
+                    <strong>{t('common.paymentDeadlineColon')}</strong> 15.06.2026
                   </p>
                   <a
                     href="#"

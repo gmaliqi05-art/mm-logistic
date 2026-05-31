@@ -795,7 +795,7 @@ export default function SubscriptionPlans() {
                         type="button"
                         onClick={() => removeFeature(idx)}
                         className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0"
-                        title="Fshi vecorine"
+                        title={t('common.removeFeature')}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -814,7 +814,7 @@ export default function SubscriptionPlans() {
                         addFeature();
                       }
                     }}
-                    placeholder="Shto vecorite..."
+                    placeholder={t('common.addFeatures')}
                     className="flex-1 px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                   />
                   <button
