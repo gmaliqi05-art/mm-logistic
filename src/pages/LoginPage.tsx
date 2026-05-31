@@ -23,8 +23,8 @@ import { usePlatformSettings } from '../hooks/usePlatformSettings';
 
 const demoAccounts = [
   {
-    label: 'Company Admin',
-    description: 'Menaxho kompanine',
+    labelKey: 'common.companyAdminLink',
+    descriptionKey: 'common.manageCompany',
     email: 'demo-admin@demo.com',
     password: 'demo123456',
     icon: Building2,
@@ -32,8 +32,8 @@ const demoAccounts = [
     iconBg: 'bg-teal-100 text-teal-600',
   },
   {
-    label: 'Depot Worker',
-    description: 'Menaxho depon',
+    labelKey: 'common.depotWorker',
+    descriptionKey: 'common.manageDepot',
     email: 'demo-depot@demo.com',
     password: 'demo123456',
     icon: Warehouse,
@@ -41,8 +41,8 @@ const demoAccounts = [
     iconBg: 'bg-amber-100 text-amber-600',
   },
   {
-    label: 'Driver',
-    description: 'Shoferi i dergesave',
+    labelKey: 'common.shofer',
+    descriptionKey: 'common.deliveryDriver',
     email: 'demo-driver@demo.com',
     password: 'demo123456',
     icon: Truck,
@@ -50,8 +50,8 @@ const demoAccounts = [
     iconBg: 'bg-sky-100 text-sky-600',
   },
   {
-    label: 'Accountant',
-    description: 'Kontabilist',
+    labelKey: 'common.accountant',
+    descriptionKey: 'common.accountant',
     email: 'accountant@demo.com',
     password: 'demo123456',
     icon: Calculator,
@@ -387,8 +387,8 @@ export default function LoginPage() {
                     <account.icon className="w-4.5 h-4.5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold leading-tight truncate">{account.label}</div>
-                    <div className="text-[10px] opacity-70 leading-tight truncate mt-0.5">{account.description}</div>
+                    <div className="text-xs font-semibold leading-tight truncate">{t(account.labelKey)}</div>
+                    <div className="text-[10px] opacity-70 leading-tight truncate mt-0.5">{t(account.descriptionKey)}</div>
                   </div>
                 </button>
               ))}

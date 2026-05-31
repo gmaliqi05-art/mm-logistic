@@ -93,10 +93,10 @@ export default function BankAccounts() {
         }),
       });
       const json = await res.json();
-      if (!json.success) throw new Error(json.error || 'Import failed');
+      if (!json.success) throw new Error(json.error || t('common.importFailed'));
       setImportResult(`${json.line_count} rreshta te importuar, ${json.matches_suggested} sugjerime perputhjeje (${json.format}).`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed');
+      setError(err instanceof Error ? err.message : t('common.importFailed'));
     } finally {
       setImporting(false);
     }

@@ -119,7 +119,7 @@ export default function FinanceSnapshot({ companyId }: Props) {
   }> = [
     {
       key: 'out',
-      label: 'Fatura dalese (30d)',
+      label: t('common.outgoingInvoices30d'),
       value: fmt(data.outgoingInvoicesTotal),
       sub: data.outgoingInvoicesOverdue > 0 ? `${data.outgoingInvoicesOverdue} te vonuara` : 'Ne kohe',
       icon: FileText,
@@ -128,7 +128,7 @@ export default function FinanceSnapshot({ companyId }: Props) {
     },
     {
       key: 'in',
-      label: 'Fatura hyrese (30d)',
+      label: t('common.incomingInvoices30d'),
       value: fmt(data.incomingInvoicesTotal),
       sub: data.incomingInvoicesOverdue > 0 ? `${data.incomingInvoicesOverdue} te vonuara` : 'Ne kohe',
       icon: FileText,

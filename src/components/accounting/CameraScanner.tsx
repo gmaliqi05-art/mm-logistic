@@ -122,7 +122,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       searchStartRef.current = 0;
       setSearchTimedOut(false);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Nuk u qasa dot te kamera';
+      const msg = err instanceof Error ? err.message : t('common.couldNotAccessCamera');
       setError(`Gabim kamere: ${msg}. Sigurohu qe ke dhene leje per kameren.`);
     }
   }
@@ -766,7 +766,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
               onClick={toggleTorch}
               disabled={!torchSupported}
               className="p-3 bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white rounded-full transition-colors"
-              title={torchSupported ? 'Ndriçimi' : 'Nuk mbeshtetet'}
+              title={torchSupported ? t('common.torch') : t('common.notSupported')}
             >
               {torchOn ? <Zap className="w-5 h-5 text-amber-300" /> : <ZapOff className="w-5 h-5" />}
             </button>

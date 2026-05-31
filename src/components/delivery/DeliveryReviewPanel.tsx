@@ -1643,7 +1643,7 @@ function ReviewModal({
                 </>
               ) : (
                 <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center text-xs text-gray-400">
-                  {noScanFlag ? 'Shoferi e mbylli pa skanim - pritet ngarkimi nga kompania' : 'Nuk ka dokument te skanuar'}
+                  {noScanFlag ? 'Shoferi e mbylli pa skanim - pritet ngarkimi nga kompania' : t('common.noScannedDocument')}
                 </div>
               )}
             </div>
@@ -2178,24 +2178,24 @@ function groupRows(rows: RowState[]): Group[] {
   return order.map((k) => map.get(k)!);
 }
 
-const CONDITION_OPTIONS: { value: string; label: string; tone: string }[] = [
-  { value: 'good', label: 'I mire', tone: 'bg-emerald-600' },
-  { value: 'damaged', label: 'Me defekt', tone: 'bg-red-600' },
-  { value: 'sorting', label: 'Per sortim', tone: 'bg-teal-600' },
-  { value: 'ready_a', label: 'Klasse A', tone: 'bg-blue-600' },
-  { value: 'ready_b', label: 'Klasse B', tone: 'bg-sky-600' },
-  { value: 'ready_c', label: 'Klasse C', tone: 'bg-amber-600' },
+const CONDITION_OPTIONS: { value: string; labelKey: string; tone: string }[] = [
+  { value: 'good', labelKey: 'common.conditionGood', tone: 'bg-emerald-600' },
+  { value: 'damaged', labelKey: 'common.conditionDamaged', tone: 'bg-red-600' },
+  { value: 'sorting', labelKey: 'common.conditionForSorting', tone: 'bg-teal-600' },
+  { value: 'ready_a', labelKey: 'common.conditionClassA', tone: 'bg-blue-600' },
+  { value: 'ready_b', labelKey: 'common.conditionClassB', tone: 'bg-sky-600' },
+  { value: 'ready_c', labelKey: 'common.conditionClassC', tone: 'bg-amber-600' },
 ];
 
 const ACTION_OPTIONS: {
   value: 'stock' | 'sorting' | 'repair';
-  label: string;
+  labelKey: string;
   icon: typeof Package;
   tone: string;
 }[] = [
-  { value: 'stock', label: 'Stok', icon: Package, tone: 'bg-emerald-600' },
-  { value: 'sorting', label: 'Sortire', icon: Layers, tone: 'bg-teal-600' },
-  { value: 'repair', label: 'Defekt', icon: Wrench, tone: 'bg-red-600' },
+  { value: 'stock', labelKey: 'common.actionStock', icon: Package, tone: 'bg-emerald-600' },
+  { value: 'sorting', labelKey: 'common.actionSorting', icon: Layers, tone: 'bg-teal-600' },
+  { value: 'repair', labelKey: 'common.actionRepair', icon: Wrench, tone: 'bg-red-600' },
 ];
 
 function ItemGroupBlock({
@@ -2562,7 +2562,7 @@ function SplitRow({
                 }`}
               >
                 <Icon className="w-3 h-3" />
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             );
           })}
@@ -2609,7 +2609,7 @@ function SplitRow({
                 active ? `${opt.tone} text-white border-transparent` : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
               }`}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           );
         })}

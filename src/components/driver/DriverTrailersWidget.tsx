@@ -151,7 +151,7 @@ export default function DriverTrailersWidget() {
       }
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Nuk u mor dot kjo rimorkio');
+      setError(e instanceof Error ? e.message : t('common.couldNotGetTrailer'));
     } finally {
       setClaimingId(null);
     }

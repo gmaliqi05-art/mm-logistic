@@ -13,8 +13,8 @@ type Platform = 'ios' | 'android' | 'other';
 
 interface NavApp {
   name: string;
-  tag: string;
-  description: string;
+  tagKey: string;
+  descriptionKey: string;
   free: boolean;
   scheme: (lat: number, lng: number, label?: string) => string;
   androidStore: string;
@@ -24,8 +24,8 @@ interface NavApp {
 const APPS: NavApp[] = [
   {
     name: 'OsmAnd',
-    tag: 'Rekomandohet - falas',
-    description: 'Open-source me profil specifik per kamiona (HGV): peshe, lartesi, gjeresi dhe kufizime te rrugeve per LKW.',
+    tagKey: 'common.recommendedFree',
+    descriptionKey: 'common.osmTruckProfileDescription',
     free: true,
     scheme: (lat, lng) => `osmand.api://navigate?dest_lat=${lat}&dest_lon=${lng}&profile=truck&show_search_results=false`,
     androidStore: 'https://play.google.com/store/apps/details?id=net.osmand',
@@ -33,8 +33,8 @@ const APPS: NavApp[] = [
   },
   {
     name: 'Sygic Truck',
-    tag: 'Standardi i flotave',
-    description: 'Rruge te dedikuara per kamiona me rregulla EU (peshe, lartesi, gjeresi, ADR). Kerkon licence.',
+    tagKey: 'common.fleetStandard',
+    descriptionKey: 'common.tomtomTruckProfileDescription',
     free: false,
     scheme: (lat, lng) => `com.sygic.aura://coordinate|${lng}|${lat}|drive`,
     androidStore: 'https://play.google.com/store/apps/details?id=com.sygic.truck',
@@ -173,9 +173,9 @@ export default function TruckNavChooser({ destLat, destLng, label, onClose }: Pr
                     ) : (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded">Me pagese</span>
                     )}
-                    <span className="text-[10px] text-slate-500 italic">{app.tag}</span>
+                    <span className="text-[10px] text-slate-500 italic">{t(app.tagKey)}</span>
                   </div>
-                  <p className="text-xs text-slate-600 mt-1 leading-snug">{app.description}</p>
+                  <p className="text-xs text-slate-600 mt-1 leading-snug">{t(app.descriptionKey)}</p>
 
                   <button
                     onClick={() => launch(app)}

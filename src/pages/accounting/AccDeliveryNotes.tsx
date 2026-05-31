@@ -543,7 +543,7 @@ export default function AccDeliveryNotes() {
             { label: 'Klienti', value: (previewNote.contact as any)?.name },
             { label: 'Data', value: new Date(previewNote.note_date).toLocaleDateString('de-DE') },
             { label: 'Adresa e Dergimit', value: previewNote.shipping_address, highlight: true },
-            { label: 'Fatura e Lidhur', value: invoices.find((i) => i.id === previewNote.invoice_id)?.invoice_number },
+            { label: t('common.linkedInvoice'), value: invoices.find((i) => i.id === previewNote.invoice_id)?.invoice_number },
           ]}
           items={(previewNote.items || []).map((it: any) => ({
             description: it.description,

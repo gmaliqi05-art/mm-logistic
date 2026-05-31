@@ -28,11 +28,11 @@ interface IdentityDoc {
   notes: string;
 }
 
-const DOC_META: Record<DocumentType, { label: string; icon: typeof IdCard; allowSkipBack: boolean; hint: string }> = {
-  national_id: { label: 'Karta e Identitetit / ID', icon: IdCard, allowSkipBack: false, hint: 'Skano te dyja anet e kartes se identitetit.' },
-  passport: { label: 'Pasaporta', icon: BookUser, allowSkipBack: true, hint: 'Skano faqen me fotografine. Shtimi i faqeve me vize eshte opsional.' },
-  residence_permit: { label: 'Leja e Qendrimit', icon: Home, allowSkipBack: false, hint: 'Leja e qendrimit e perhershme ose afatgjate — te dyja anet.' },
-  work_visa: { label: 'Viza e Punes', icon: Stamp, allowSkipBack: true, hint: 'Viza e punes (Arbeitsvisum / Work Permit). Shtimi i anes se pasme eshte opsional.' },
+const DOC_META: Record<DocumentType, { labelKey: string; icon: typeof IdCard; allowSkipBack: boolean; hintKey: string }> = {
+  national_id: { labelKey: 'common.nationalIdLabel', icon: IdCard, allowSkipBack: false, hintKey: 'common.nationalIdHint' },
+  passport: { labelKey: 'common.passportLabel', icon: BookUser, allowSkipBack: true, hintKey: 'common.scanIdPageInstruction' },
+  residence_permit: { labelKey: 'common.residencePermitLabel', icon: Home, allowSkipBack: false, hintKey: 'common.residencePermitHint' },
+  work_visa: { labelKey: 'common.workVisaLabel', icon: Stamp, allowSkipBack: true, hintKey: 'common.workVisaScanInstruction' },
 };
 
 interface Props {
@@ -112,8 +112,8 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
         </div>
         {missingRequired.length > 0 && (
           <div className="mt-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">
-            Dokumente te kerkuara qe mungojne:{' '}
-            <span className="font-semibold">{missingRequired.map((t) => DOC_META[t].label).join(', ')}</span>
+            {t('common.requiredDocumentsMissing')}:{' '}
+            <span className="font-semibold">{missingRequired.map((dt) => t(DOC_META[dt].labelKey)).join(', ')}</span>
           </div>
         )}
       </div>
@@ -122,17 +122,17 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
         <p className="text-sm text-gray-600">{t('common.teGjithaDokumentetRuhenMeDy')}</p>
         {canEdit && (
           <div className="flex flex-wrap gap-1.5">
-            {(Object.keys(DOC_META) as DocumentType[]).map((t) => {
-              const Icon = DOC_META[t].icon;
+            {(Object.keys(DOC_META) as DocumentType[]).map((dt) => {
+              const Icon = DOC_META[dt].icon;
               return (
                 <button
-                  key={t}
-                  onClick={() => setAddOpen(t)}
+                  key={dt}
+                  onClick={() => setAddOpen(dt)}
                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-teal-600 text-teal-700 text-xs font-semibold hover:bg-teal-50"
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <Plus className="w-3 h-3" />
-                  {DOC_META[t].label}
+                  {t(DOC_META[dt].labelKey)}
                 </button>
               );
             })}
@@ -160,7 +160,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-900 text-sm">{meta.label}</span>
+                      <span className="font-semibold text-gray-900 text-sm">{t(meta.labelKey)}</span>
                       {d.document_number && (
                         <span className="text-xs font-mono text-gray-500">Nr. {d.document_number}</span>
                       )}
@@ -212,7 +212,7 @@ export default function DriverIdentityPanel({ driverId, companyId, canEdit, resi
       {capturing && (
         <TwoSidedPhotoCapture
           companyId={companyId}
-          label={DOC_META[capturing.doc].label}
+          label={t(DOC_META[capturing.doc].labelKey)}
           existingFront={capturing.front}
           existingBack={capturing.back}
           allowSkipBack={DOC_META[capturing.doc].allowSkipBack}
@@ -315,12 +315,12 @@ function IdentityDocForm({ docType, driverId, companyId, capturedFront, captured
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">{t('fleet.driverIdentity.addDocument')}</div>
-            <h3 className="font-bold text-gray-900">{meta.label}</h3>
+            <h3 className="font-bold text-gray-900">{t(meta.labelKey)}</h3>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 text-sm">{t('common.close')}</button>
         </div>
         <div className="p-5 space-y-3">
-          <p className="text-xs text-gray-500">{meta.hint}</p>
+          <p className="text-xs text-gray-500">{t(meta.hintKey)}</p>
 
           <button
             type="button"

@@ -28,15 +28,15 @@ interface CategoryProduct {
 }
 
 const CONDITION_OPTIONS = [
-  { value: '', label: '-- Auto --' },
-  { value: 'good', label: 'I mire' },
-  { value: 'damaged', label: 'Me defekt' },
-  { value: 'repaired', label: 'Riparuar' },
-  { value: 'sorting', label: 'Per sortim' },
-  { value: 'ready_a', label: 'Klasa A' },
-  { value: 'ready_b', label: 'Klasa B' },
-  { value: 'ready_c', label: 'Klasa C' },
-];
+  { value: '', labelKey: 'common.dashAutoDash' },
+  { value: 'good', labelKey: 'common.conditionGood' },
+  { value: 'damaged', labelKey: 'common.conditionDamaged' },
+  { value: 'repaired', labelKey: 'common.conditionRepaired' },
+  { value: 'sorting', labelKey: 'common.conditionForSorting' },
+  { value: 'ready_a', labelKey: 'common.conditionClassA' },
+  { value: 'ready_b', labelKey: 'common.conditionClassB' },
+  { value: 'ready_c', labelKey: 'common.conditionClassC' },
+] as const;
 
 const UNIT_OPTIONS = ['pcs', 'kg', 'liter', 'hour', 'meter', 'package', 'set'] as const;
 const VAT_OPTIONS = [0, 7, 19] as const;
@@ -591,7 +591,7 @@ function CategoriesContent() {
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button
                             onClick={() => handleToggleProductActive(prod)}
-                            title={inactive ? 'Aktivizo produktin' : 'Cakto si joaktiv'}
+                            title={inactive ? t('common.activateProduct') : t('common.setInactive')}
                             className={`p-1.5 rounded transition-colors ${
                               inactive
                                 ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-100'
@@ -699,7 +699,7 @@ function CategoriesContent() {
                   autoFocus
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
                   placeholder={
-                    addMode === 'category' ? 'Euro Palette, EPAL...' : 'A Kualitet, B Kualitet...'
+                    addMode === 'category' ? t('common.categoryPlaceholderExample') : t('common.productPlaceholderExample')
                   }
                 />
               </div>
@@ -831,20 +831,20 @@ function CategoriesContent() {
                       value={formProdAliases}
                       onChange={(e) => setFormProdAliases(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
-                      placeholder="Europalette B Qualität, EUR-Flachpalette gebraucht"
+                      placeholder={t('common.palletAliasExample')}
                     />
                     <p className="text-[11px] text-gray-500 mt-1">{t('common.ndajMePresjeNeseNdonjeNga')}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Fjale kyce (keywords)
+                      {t('common.keywords')}
                     </label>
                     <input
                       type="text"
                       value={formProdKeywords}
                       onChange={(e) => setFormProdKeywords(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
-                      placeholder="gebraucht, tauschfähig, Klasse B"
+                      placeholder={t('common.palletKeywordsExample')}
                     />
                     <p className="text-[11px] text-gray-500 mt-1">{t('common.ndajMePresjeCdoFjaleKyce')}</p>
                   </div>
@@ -870,7 +870,7 @@ function CategoriesContent() {
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm bg-white"
                       >
                         {CONDITION_OPTIONS.map((c) => (
-                          <option key={c.value} value={c.value}>{c.label}</option>
+                          <option key={c.value} value={c.value}>{t(c.labelKey)}</option>
                         ))}
                       </select>
                       <p className="text-[11px] text-gray-500 mt-1">{t('common.vendosetAutomatikishtKurZgjidhetProdukti')}</p>

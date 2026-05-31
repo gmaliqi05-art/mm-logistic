@@ -111,7 +111,7 @@ export default function AccountingUpgradeModal({ onClose, onActivated }: Props) 
           <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center mb-3">
             <Calculator className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-bold">Aktivizo Kontabilitetin</h2>
+          <h2 className="text-2xl font-bold">{t('common.activateAccounting')}</h2>
           <p className="text-teal-50/90 text-sm mt-1">
             Lidhja automatike mes kompanise suaj dhe kontabilitetit te integruar.
           </p>

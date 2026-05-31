@@ -227,7 +227,7 @@ export default function FixedAssets() {
           accentColor="blue"
           fields={[
             { label: 'Kategoria', value: CATEGORY_LABELS[previewAsset.category] || previewAsset.category },
-            { label: 'Data blerjes', value: previewAsset.acquisition_date },
+            { label: t('common.purchaseDate'), value: previewAsset.acquisition_date },
             { label: 'Kosto', value: formatCurrency(previewAsset.acquisition_cost) },
             { label: 'TVSH', value: formatCurrency(previewAsset.vat_amount) },
             { label: 'Jeta (vite)', value: previewAsset.useful_life_years },
