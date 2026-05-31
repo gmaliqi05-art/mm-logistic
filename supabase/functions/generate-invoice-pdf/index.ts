@@ -18,9 +18,64 @@ interface InvoiceItem {
   line_total: number;
 }
 
-function fmt(n: number, currency: string): string {
+type Lang = "sq" | "en" | "de" | "fr";
+
+const I18N: Record<Lang, Record<string, string>> = {
+  sq: {
+    invoice: "FATURE", credit_note: "NOTE KREDITIMI", proforma: "PROFORMA",
+    nr: "Nr", buyer: "Bleresi", invoiceDate: "Data e fatures",
+    dueDate: "Afati i pageses", deliveryDate: "Data e dorezimit",
+    desc: "Pershkrimi", qty: "Sasia", unit: "Njesia", price: "Cmimi",
+    vatPct: "TVSH%", total: "Totali", subtotal: "Nentotali",
+    discount: "Zbritja", vat: "TVSH", grandTotal: "TOTALI",
+    bankInfo: "Te dhenat bankare", bank: "Banka", reference: "Referenca",
+    notes: "Shenime", piece: "cope",
+  },
+  en: {
+    invoice: "INVOICE", credit_note: "CREDIT NOTE", proforma: "PRO FORMA",
+    nr: "No", buyer: "Bill to", invoiceDate: "Invoice date",
+    dueDate: "Due date", deliveryDate: "Delivery date",
+    desc: "Description", qty: "Qty", unit: "Unit", price: "Unit price",
+    vatPct: "VAT%", total: "Amount", subtotal: "Subtotal",
+    discount: "Discount", vat: "VAT", grandTotal: "TOTAL",
+    bankInfo: "Bank details", bank: "Bank", reference: "Reference",
+    notes: "Notes", piece: "pcs",
+  },
+  de: {
+    invoice: "RECHNUNG", credit_note: "GUTSCHRIFT", proforma: "PROFORMA",
+    nr: "Nr", buyer: "Rechnung an", invoiceDate: "Rechnungsdatum",
+    dueDate: "Faelligkeitsdatum", deliveryDate: "Lieferdatum",
+    desc: "Beschreibung", qty: "Menge", unit: "Einheit", price: "Einzelpreis",
+    vatPct: "MwSt%", total: "Gesamt", subtotal: "Nettobetrag",
+    discount: "Rabatt", vat: "MwSt", grandTotal: "GESAMT",
+    bankInfo: "Bankverbindung", bank: "Bank", reference: "Verwendungszweck",
+    notes: "Hinweise", piece: "Stk",
+  },
+  fr: {
+    invoice: "FACTURE", credit_note: "AVOIR", proforma: "PRO FORMA",
+    nr: "N°", buyer: "Facturer a", invoiceDate: "Date de facture",
+    dueDate: "Date d'echeance", deliveryDate: "Date de livraison",
+    desc: "Description", qty: "Qte", unit: "Unite", price: "Prix unitaire",
+    vatPct: "TVA%", total: "Total", subtotal: "Sous-total",
+    discount: "Remise", vat: "TVA", grandTotal: "TOTAL",
+    bankInfo: "Coordonnees bancaires", bank: "Banque", reference: "Reference",
+    notes: "Remarques", piece: "pcs",
+  },
+};
+
+function localeFor(lang: Lang): string {
+  switch (lang) {
+    case "sq": return "sq-AL";
+    case "en": return "en-GB";
+    case "fr": return "fr-FR";
+    case "de":
+    default:   return "de-DE";
+  }
+}
+
+function fmt(n: number, currency: string, lang: Lang = "de"): string {
   try {
-    return new Intl.NumberFormat("de-DE", {
+    return new Intl.NumberFormat(localeFor(lang), {
       style: "currency",
       currency,
     }).format(n);
@@ -29,10 +84,10 @@ function fmt(n: number, currency: string): string {
   }
 }
 
-function fmtDate(d: string | null): string {
+function fmtDate(d: string | null, lang: Lang = "de"): string {
   if (!d) return "-";
   try {
-    return new Date(d).toLocaleDateString("de-DE", {
+    return new Date(d).toLocaleDateString(localeFor(lang), {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -54,7 +109,8 @@ Deno.serve(async (req: Request) => {
     });
     if (!caller.ok) return caller.response;
 
-    const { invoice_id } = await req.json();
+    const body = await req.json();
+    const invoice_id = body.invoice_id;
     if (!invoice_id) {
       return new Response(
         JSON.stringify({ error: "invoice_id is required" }),
@@ -161,18 +217,23 @@ Deno.serve(async (req: Request) => {
 
     y -= 10;
 
+    // Resolve language: explicit request -> invoice language_code -> SQ default
+    const explicitLang = (["sq", "en", "de", "fr"] as Lang[]).includes(body.language as Lang)
+      ? (body.language as Lang)
+      : null;
+    const lang: Lang = explicitLang
+      ?? ((["sq", "en", "de", "fr"] as Lang[]).includes(invoice.language_code as Lang)
+        ? (invoice.language_code as Lang)
+        : "sq");
+    const L = I18N[lang];
+
     // --- Invoice title ---
-    const typeLabels: Record<string, string> = {
-      invoice: "RECHNUNG / FATURE",
-      credit_note: "GUTSCHRIFT / NOTE KREDITIMI",
-      proforma: "PROFORMA",
-    };
-    const titleText = typeLabels[invoice.invoice_type] || "RECHNUNG / FATURE";
+    const titleText = L[invoice.invoice_type] ?? L.invoice;
     drawText(titleText, margin, y, { size: 14, font: fontBold });
 
     // Invoice number on the right
     drawText(
-      `Nr: ${invoice.invoice_number || "-"}`,
+      `${L.nr}: ${invoice.invoice_number || "-"}`,
       pageWidth - margin - 150,
       y,
       { size: 11, font: fontBold }
@@ -182,7 +243,7 @@ Deno.serve(async (req: Request) => {
     // --- Buyer info ---
     const contact = invoice.contact;
     if (contact) {
-      drawText("Bleresi / Kunde:", margin, y, { size: 8, color: grayColor });
+      drawText(`${L.buyer}:`, margin, y, { size: 8, color: grayColor });
       y -= 13;
       drawText(contact.name || "", margin, y, { size: 10, font: fontBold });
       y -= 13;
@@ -203,9 +264,9 @@ Deno.serve(async (req: Request) => {
 
     // --- Dates row ---
     const dates = [
-      { label: "Data fatures", value: fmtDate(invoice.invoice_date) },
-      { label: "Afati pageses", value: fmtDate(invoice.due_date) },
-      { label: "Data dorezimit", value: fmtDate(invoice.delivery_date) },
+      { label: L.invoiceDate, value: fmtDate(invoice.invoice_date, lang) },
+      { label: L.dueDate, value: fmtDate(invoice.due_date, lang) },
+      { label: L.deliveryDate, value: fmtDate(invoice.delivery_date, lang) },
     ].filter((d) => d.value !== "-");
 
     const dateColWidth = contentWidth / dates.length;
@@ -230,13 +291,13 @@ Deno.serve(async (req: Request) => {
       total: margin + 450,
     };
 
-    drawText("Nr", colX.nr, y, { size: 7, font: fontBold, color: grayColor });
-    drawText("Pershkrimi", colX.desc, y, { size: 7, font: fontBold, color: grayColor });
-    drawText("Sasia", colX.qty, y, { size: 7, font: fontBold, color: grayColor });
-    drawText("Njesia", colX.unit, y, { size: 7, font: fontBold, color: grayColor });
-    drawText("Cmimi", colX.price, y, { size: 7, font: fontBold, color: grayColor });
-    drawText("TVSH%", colX.vat, y, { size: 7, font: fontBold, color: grayColor });
-    drawText("Totali", colX.total, y, { size: 7, font: fontBold, color: grayColor });
+    drawText(L.nr, colX.nr, y, { size: 7, font: fontBold, color: grayColor });
+    drawText(L.desc, colX.desc, y, { size: 7, font: fontBold, color: grayColor });
+    drawText(L.qty, colX.qty, y, { size: 7, font: fontBold, color: grayColor });
+    drawText(L.unit, colX.unit, y, { size: 7, font: fontBold, color: grayColor });
+    drawText(L.price, colX.price, y, { size: 7, font: fontBold, color: grayColor });
+    drawText(L.vatPct, colX.vat, y, { size: 7, font: fontBold, color: grayColor });
+    drawText(L.total, colX.total, y, { size: 7, font: fontBold, color: grayColor });
     y -= 12;
     drawLine(margin, y, pageWidth - margin);
     y -= 10;
@@ -268,7 +329,7 @@ Deno.serve(async (req: Request) => {
       drawText(String(i + 1), colX.nr, y, { size: 8 });
       drawText(item.description || "", colX.desc, y, { size: 8, maxWidth: 250 });
       drawText(String(Number(item.quantity ?? 0)), colX.qty, y, { size: 8 });
-      drawText(item.unit || "cope", colX.unit, y, { size: 8 });
+      drawText(item.unit || L.piece, colX.unit, y, { size: 8 });
       drawText(Number(item.unit_price ?? 0).toFixed(2), colX.price, y, { size: 8 });
       drawText(`${Number(item.vat_rate ?? 0)}%`, colX.vat, y, { size: 8 });
       drawText(lineTotal.toFixed(2), colX.total, y, { size: 8, font: fontBold });
@@ -288,25 +349,25 @@ Deno.serve(async (req: Request) => {
 
     const totalsX = pageWidth - margin - 180;
 
-    drawText("Nentotali:", totalsX, y, { size: 9, color: grayColor });
-    drawText(fmt(subtotal, currency), totalsX + 100, y, { size: 9 });
+    drawText(`${L.subtotal}:`, totalsX, y, { size: 9, color: grayColor });
+    drawText(fmt(subtotal, currency, lang), totalsX + 100, y, { size: 9 });
     y -= 14;
 
     if (discount > 0) {
-      drawText("Zbritja:", totalsX, y, { size: 9, color: grayColor });
-      drawText(`-${fmt(discount, currency)}`, totalsX + 100, y, { size: 9 });
+      drawText(`${L.discount}:`, totalsX, y, { size: 9, color: grayColor });
+      drawText(`-${fmt(discount, currency, lang)}`, totalsX + 100, y, { size: 9 });
       y -= 14;
     }
 
-    drawText("TVSH:", totalsX, y, { size: 9, color: grayColor });
-    drawText(fmt(vatAmount, currency), totalsX + 100, y, { size: 9 });
+    drawText(`${L.vat}:`, totalsX, y, { size: 9, color: grayColor });
+    drawText(fmt(vatAmount, currency, lang), totalsX + 100, y, { size: 9 });
     y -= 16;
 
     drawLine(totalsX, y, pageWidth - margin);
     y -= 14;
 
-    drawText("TOTALI:", totalsX, y, { size: 11, font: fontBold, color: tealColor });
-    drawText(fmt(total, currency), totalsX + 100, y, { size: 11, font: fontBold, color: tealColor });
+    drawText(`${L.grandTotal}:`, totalsX, y, { size: 11, font: fontBold, color: tealColor });
+    drawText(fmt(total, currency, lang), totalsX + 100, y, { size: 11, font: fontBold, color: tealColor });
     y -= 24;
 
     // --- Bank details ---
@@ -314,7 +375,7 @@ Deno.serve(async (req: Request) => {
     if (bank) {
       drawLine(margin, y, pageWidth - margin);
       y -= 16;
-      drawText("Te dhenat bankare / Bankverbindung:", margin, y, {
+      drawText(`${L.bankInfo}:`, margin, y, {
         size: 8,
         font: fontBold,
         color: grayColor,
@@ -325,16 +386,16 @@ Deno.serve(async (req: Request) => {
       drawText(`BIC: ${bank.bic || "-"}`, margin, y, { size: 9 });
       y -= 12;
       if (bank.bank_name) {
-        drawText(`Banka: ${bank.bank_name}`, margin, y, { size: 9 });
+        drawText(`${L.bank}: ${bank.bank_name}`, margin, y, { size: 9 });
         y -= 12;
       }
-      drawText(`Referenca: ${invoice.invoice_number || "-"}`, margin, y, { size: 9 });
+      drawText(`${L.reference}: ${invoice.invoice_number || "-"}`, margin, y, { size: 9 });
       y -= 16;
     }
 
     // --- Notes ---
     if (invoice.notes) {
-      drawText("Shenime:", margin, y, { size: 8, font: fontBold, color: grayColor });
+      drawText(`${L.notes}:`, margin, y, { size: 8, font: fontBold, color: grayColor });
       y -= 12;
       drawText(invoice.notes.substring(0, 200), margin, y, { size: 8, color: grayColor });
       y -= 14;

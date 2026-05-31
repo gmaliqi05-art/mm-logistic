@@ -28,7 +28,7 @@ interface Transaction {
 }
 
 export default function PalletAccountDetail() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { profile } = useAuth();
   const [header, setHeader] = useState<AccountHeader | null>(null);
@@ -116,7 +116,7 @@ export default function PalletAccountDetail() {
           'Content-Type': 'application/json',
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify({ pallet_account_id: id }),
+        body: JSON.stringify({ pallet_account_id: id, language }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? 'PDF generation failed');
