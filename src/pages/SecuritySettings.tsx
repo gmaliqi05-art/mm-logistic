@@ -182,12 +182,12 @@ export default function SecuritySettings() {
                 <div className="space-y-4 p-5 rounded-xl border border-slate-200 bg-slate-50">
                   <p className="text-sm text-slate-700">{t('common.scanQrAndEnterCode')}</p>
                   <div className="flex flex-col sm:flex-row gap-5 items-start">
-                    <img src={enrollment.qr} alt="TOTP QR code" className="w-48 h-48 rounded-lg bg-white p-2 border border-slate-200" />
+                    <img src={enrollment.qr} alt={t('common.totpQrCode')} className="w-48 h-48 rounded-lg bg-white p-2 border border-slate-200" />
                     <div className="flex-1">
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Secret (manual entry)</label>
                       <code className="block mt-1 text-xs font-mono bg-white border border-slate-200 rounded-md px-3 py-2 break-all">{enrollment.secret}</code>
 
-                      <label className="block mt-4 text-sm font-medium text-slate-700">Verification code</label>
+                      <label className="block mt-4 text-sm font-medium text-slate-700">{t('common.verificationCode')}</label>
                       <input
                         value={verifyCode}
                         onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}

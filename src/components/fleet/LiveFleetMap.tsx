@@ -721,7 +721,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
-      if (!uid) throw new Error('No user');
+      if (!uid) throw new Error(t('common.noUser'));
       await supabase.from('route_extension_requests').insert({
         company_id: companyId,
         driver_id: driver.driver_id,
@@ -850,7 +850,7 @@ export default function LiveFleetMap({ companyId, height = '520px', compact = fa
         </div>
       )}
       {loading && list.length === 0 ? (
-        <div className="h-full flex items-center justify-center text-sm text-slate-500">Loading map...</div>
+        <div className="h-full flex items-center justify-center text-sm text-slate-500">{t('common.loadingMap')}</div>
       ) : (
         <>
           <MapContainer center={center} zoom={6} style={{ height: '100%', width: '100%' }} scrollWheelZoom>

@@ -92,7 +92,7 @@ export default function EmailTemplates() {
         <div className="min-w-0">
           <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900 sm:text-2xl">
             <Mail className="h-6 w-6 text-teal-600" />{tr('common.templateTEEmailit')}</h1>
-          <p className="mt-1 text-sm text-slate-500">Editoni permbajtjen, gjuhet dhe dergimin e emaileve.</p>
+          <p className="mt-1 text-sm text-slate-500">{tr('common.editContentLanguagesAndEmailSending')}</p>
         </div>
         <Link
           to="/super-admin/email/templates/new"

@@ -2462,7 +2462,7 @@ function SplitRow({
           {productsForCategory.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
-          {row.category_id && <option value="__create__">+ Krijo produkt te ri</option>}
+          {row.category_id && <option value="__create__">{t('common.createNewProductPlus')}</option>}
         </select>
         <input
           type="number"

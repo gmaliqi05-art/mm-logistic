@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "../../../i18n";
 
 interface Props {
   templateCode: string;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function EmailPreviewPane({ templateCode, locale, sampleData, debounceMs = 500 }: Props) {
+  const { t } = useTranslation();
   const [html, setHtml] = useState<string>("");
   const [subject, setSubject] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -76,7 +78,7 @@ export default function EmailPreviewPane({ templateCode, locale, sampleData, deb
       ) : (
         <iframe
           ref={iframeRef}
-          title="Email preview"
+          title={t('common.emailPreviewAlt')}
           className="h-full w-full flex-1 border-0 bg-white"
           sandbox="allow-same-origin"
         />

@@ -350,7 +350,7 @@ export default function DepotReceiving() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pranim</h1>
-          <p className="text-gray-500 mt-1">Regjistro pranime ne depo</p>
+          <p className="text-gray-500 mt-1">{t('common.registerReceivingsInDepot')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -552,7 +552,7 @@ export default function DepotReceiving() {
 
               <ContactAutocomplete
                 label="Nga kush? (Kompania/Personi)"
-                placeholder="Emri i kompanise ose personit qe ka sjelle paletat..."
+                placeholder={t('common.companyOrPersonNameThatBrought')}
                 contactId={sourceContactId}
                 partnerText={sourcePartner}
                 onChange={({ contactId, partnerText }) => {

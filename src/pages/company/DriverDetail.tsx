@@ -191,7 +191,7 @@ export default function DriverDetail() {
           {tab === 'qualifications' && (
             <>
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-600">Kod 95 (BKrFQG): 35 ore trajnim cdo 5 vjet. ADR per mallra te rrezikshme.</p>
+                <p className="text-sm text-gray-600">{t('common.code95Bkrfqg35hRetraining')}</p>
                 <div className="flex gap-2">
                   <button onClick={() => setScannerCat('kod95')} className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-teal-600 text-teal-700 text-xs rounded-lg hover:bg-teal-50">
                     <ScanLine className="w-3.5 h-3.5" />{t('common.skano')}</button>

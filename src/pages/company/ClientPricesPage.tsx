@@ -235,7 +235,7 @@ export default function ClientPricesPage() {
       {/* Add form */}
       {addMode && (
         <div className="bg-teal-50 border border-teal-200 rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-teal-800">Shto cmim te personalizuar</h3>
+          <h3 className="text-sm font-semibold text-teal-800">{t('common.addCustomPrice')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{t('common.customer')}</label>

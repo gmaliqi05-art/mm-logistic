@@ -411,7 +411,7 @@ export default function EmailCampaignNew() {
                   type="email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  placeholder="email@example.com"
+                  placeholder={t('common.emailExampleAlias')}
                   className="flex-1 min-w-[220px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
                 />
                 <button

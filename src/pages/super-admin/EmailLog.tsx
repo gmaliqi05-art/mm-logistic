@@ -98,7 +98,7 @@ export default function EmailLog() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Kerko email ose subject..."
+            placeholder={t('common.searchEmailOrSubject')}
             className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
           />
         </div>

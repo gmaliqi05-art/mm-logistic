@@ -503,7 +503,7 @@ export default function SuperAdminUsers() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.email')}</label>
                     <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm" placeholder="email@shembull.com" />
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm" placeholder={t('common.emailExampleAlias')} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('common.password')}</label>

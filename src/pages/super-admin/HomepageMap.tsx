@@ -172,7 +172,7 @@ export default function HomepageMap() {
           <div className="p-6">
             <div className="rounded-xl overflow-hidden border border-gray-200 h-80">
               <iframe
-                title="Map Preview"
+                title={t('common.mapPreview')}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}

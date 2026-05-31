@@ -441,7 +441,7 @@ export default function Imports() {
               <div className="border rounded-lg overflow-hidden">
                 <div className="bg-gray-50 px-3 py-2 flex items-center justify-between">
                   <h3 className="font-semibold text-sm flex items-center gap-2"><Package className="w-4 h-4" /> Artikujt e importit</h3>
-                  <button onClick={() => setItems(l => [...l, emptyItem()])} className="text-xs px-2 py-1 bg-emerald-600 text-white rounded">+ Shto artikull</button>
+                  <button onClick={() => setItems(l => [...l, emptyItem()])} className="text-xs px-2 py-1 bg-emerald-600 text-white rounded">{t('common.addItem')}</button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
@@ -466,7 +466,7 @@ export default function Imports() {
                           <td className="px-2 py-1">
                             <select value={it.product_id ?? ''} onChange={e => updateItem(idx, { product_id: e.target.value || null, description: products.find(p => p.id === e.target.value)?.name || it.description })}
                               className="w-full px-1 py-1 border border-gray-200 rounded text-xs">
-                              <option value="">— pa produkt —</option>
+                              <option value="">{t('common.noProductDash')}</option>
                               {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
                             <input type="text" placeholder={t('common.pershkrim')} value={it.description}

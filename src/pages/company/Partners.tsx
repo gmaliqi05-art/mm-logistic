@@ -494,7 +494,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="input"
-                placeholder="email@domen.com"
+                placeholder={t('common.emailExampleAlias')}
               />
             </Field>
             <Field label="Telefon">

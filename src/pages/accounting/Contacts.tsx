@@ -554,7 +554,7 @@ export default function Contacts() {
                       value={form.email}
                       onChange={(e) => updateForm('email', e.target.value)}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
-                      placeholder="email@shembull.com"
+                      placeholder={t('common.emailExampleAlias')}
                     />
                   </div>
                   <div>

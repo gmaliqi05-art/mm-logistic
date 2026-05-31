@@ -271,7 +271,7 @@ export default function HRWorkHours() {
                 required
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm"
               >
-                <option value="">-- Select --</option>
+                <option value="">{t('common.selectDashDash')}</option>
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>{emp.full_name}</option>
                 ))}
