@@ -1039,50 +1039,43 @@ export default function CompanyDashboard() {
               <Calculator className="w-4 h-4" />
               {t('company.dashboard.accountingSummaryTitle')}
             </h2>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={toggleFinancials}
-                aria-label={hideFinancials ? t('common.showAmounts') : t('common.hideAmounts')}
-                title={hideFinancials ? t('common.showAmounts') : t('common.hideAmounts')}
-                className="inline-flex items-center justify-center p-1 rounded text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 transition-colors"
-              >
-                {hideFinancials ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-              <Link to="/accounting" className="text-xs text-emerald-700 hover:text-emerald-900 font-medium">
-                {t('company.dashboard.openAccounting')} →
-              </Link>
-            </div>
+            <Link to="/accounting" className="text-xs text-emerald-700 hover:text-emerald-900 font-medium">
+              {t('company.dashboard.openAccounting')} →
+            </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-            <Link
-              to="/accounting/invoices"
-              className="rounded-lg p-3 bg-white border border-slate-200 hover:border-emerald-300 transition-colors block"
-            >
+            <div className="rounded-lg p-3 bg-white border border-slate-200">
               <p className="text-[11px] text-slate-500 uppercase tracking-wide font-semibold">{t('company.dashboard.openInvoices')}</p>
-              <p className="text-lg font-bold text-slate-900 mt-1 font-mono tabular-nums">
+              <p
+                onClick={toggleFinancials}
+                title={hideFinancials ? t('common.showAmounts') : t('common.hideAmounts')}
+                className="text-lg font-bold text-slate-900 mt-1 font-mono tabular-nums cursor-pointer select-none inline-flex items-center gap-2 hover:text-emerald-700 transition-colors"
+              >
                 {hideFinancials
                   ? `${MASKED} ${stats.accountingSummary.currency}`
                   : `${stats.accountingSummary.openInvoiceTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.accountingSummary.currency}`}
+                {hideFinancials ? <EyeOff className="w-3.5 h-3.5 opacity-60" /> : <Eye className="w-3.5 h-3.5 opacity-60" />}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">{stats.accountingSummary.openInvoiceCount} {t('company.dashboard.invoicesUnit')}</p>
-            </Link>
-            <Link
-              to="/accounting/invoices"
-              className={`rounded-lg p-3 border block transition-colors ${
-                stats.accountingSummary.overdueCount > 0
-                  ? 'bg-red-50 border-red-200 hover:border-red-300'
-                  : 'bg-white border-slate-200 hover:border-slate-300'
-              }`}
-            >
+            </div>
+            <div className={`rounded-lg p-3 border ${
+              stats.accountingSummary.overdueCount > 0
+                ? 'bg-red-50 border-red-200'
+                : 'bg-white border-slate-200'
+            }`}>
               <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{t('company.dashboard.overdueInvoices')}</p>
-              <p className={`text-lg font-bold mt-1 font-mono tabular-nums ${stats.accountingSummary.overdueCount > 0 ? 'text-red-900' : 'text-slate-900'}`}>
+              <p
+                onClick={toggleFinancials}
+                title={hideFinancials ? t('common.showAmounts') : t('common.hideAmounts')}
+                className={`text-lg font-bold mt-1 font-mono tabular-nums cursor-pointer select-none inline-flex items-center gap-2 transition-colors ${stats.accountingSummary.overdueCount > 0 ? 'text-red-900 hover:text-red-700' : 'text-slate-900 hover:text-emerald-700'}`}
+              >
                 {hideFinancials
                   ? `${MASKED} ${stats.accountingSummary.currency}`
                   : `${stats.accountingSummary.overdueTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.accountingSummary.currency}`}
+                {hideFinancials ? <EyeOff className="w-3.5 h-3.5 opacity-60" /> : <Eye className="w-3.5 h-3.5 opacity-60" />}
               </p>
               <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{stats.accountingSummary.overdueCount} {t('company.dashboard.invoicesUnit')}</p>
-            </Link>
+            </div>
             <Link
               to="/company/delivery-notes?scope=uninvoiced"
               className={`rounded-lg p-3 border block transition-colors ${
