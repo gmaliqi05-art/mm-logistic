@@ -316,7 +316,7 @@ export default function HomeWebView({ onSecretClick }: Props) {
             <div className="relative">
               <img
                 src="/homepage/dashboard-mockup.webp"
-                alt="MM Logistic Dashboard"
+                alt={t('common.appBrandDashboard')}
                 className="w-full rounded-xl shadow-2xl"
                 loading="lazy"
               />
@@ -407,7 +407,7 @@ export default function HomeWebView({ onSecretClick }: Props) {
                 )}
                 <div>
                   <span className="font-bold text-white text-sm">MM LOGISTIC</span>
-                  <p className="text-[9px] tracking-wider text-slate-500 uppercase">We care. We deliver</p>
+                  <p className="text-[9px] tracking-wider text-slate-500 uppercase">{t('common.appSlogan')}</p>
                 </div>
               </div>
               <p className="mt-3 text-xs text-slate-500 leading-relaxed">
