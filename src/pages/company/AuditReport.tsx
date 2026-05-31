@@ -22,18 +22,19 @@ type Domain = 'company' | 'driver' | 'depot';
 interface Finding {
   id: string;
   domain: Domain;
-  title: string;
+  titleKey: string;
   detail: string;
   severity: Severity;
   count: number;
-  recommendation: string;
-  timeline: '0-30 days' | '30-90 days' | '90-180 days';
+  recommendationKey: string;
+  timelineKey: string;
 }
 
 interface KPI {
-  label: string;
-  value: string;
+  labelKey: string;
+  hintKey?: string;
   hint?: string;
+  value: string;
   trend?: 'up' | 'down' | 'flat';
 }
 
@@ -45,10 +46,10 @@ const severityMeta: Record<Severity, { label: string; dot: string; chip: string;
   info: { label: 'Info', dot: 'bg-gray-400', chip: 'bg-gray-50 text-gray-700 border-gray-200', ring: 'ring-gray-200' },
 };
 
-const domainMeta: Record<Domain, { label: string; icon: typeof Building2; color: string }> = {
-  company: { label: 'Company Operations', icon: Building2, color: 'text-teal-700' },
-  driver: { label: 'Driver Management', icon: Truck, color: 'text-emerald-700' },
-  depot: { label: 'Warehouse & Depot', icon: Warehouse, color: 'text-amber-700' },
+const domainMeta: Record<Domain, { labelKey: string; icon: typeof Building2; color: string }> = {
+  company: { labelKey: 'common.auditDomainCompany', icon: Building2, color: 'text-teal-700' },
+  driver: { labelKey: 'common.auditDomainDriver', icon: Truck, color: 'text-emerald-700' },
+  depot: { labelKey: 'common.auditDomainDepot', icon: Warehouse, color: 'text-amber-700' },
 };
 
 function daysFromNow(date: string | null | undefined): number | null {
@@ -180,10 +181,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'critical',
           count: expiredLicenses,
-          title: 'Drivers with expired driving licenses',
+          titleKey: 'common.auditDrvLicenseExpiredTitle',
           detail: `${expiredLicenses} active driver(s) have a license past its expiry date. Operating a vehicle with an invalid license is a statutory violation.`,
-          recommendation: 'Suspend dispatch for affected drivers until renewal is recorded. Enforce a blocking rule at route assignment.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvLicenseExpiredRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (missingLicense > 0) {
@@ -192,10 +193,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'high',
           count: missingLicense,
-          title: 'Active drivers without a recorded license',
+          titleKey: 'common.auditDrvLicenseMissingTitle',
           detail: `${missingLicense} active driver profile(s) have no license on file. Unable to verify road legality.`,
-          recommendation: 'Collect license scans within 14 days and upload via the compliance module.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvLicenseMissingRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (soonExpiringLicenses > 0) {
@@ -204,10 +205,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'medium',
           count: soonExpiringLicenses,
-          title: 'Licenses expiring within 30 days',
+          titleKey: 'common.auditDrvLicenseSoonTitle',
           detail: `${soonExpiringLicenses} license(s) are due to expire within 30 days.`,
-          recommendation: 'Schedule renewals and notify drivers through the notification center.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvLicenseSoonRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (expiredMedical > 0 || missingMedical > 0) {
@@ -216,10 +217,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: expiredMedical > 0 ? 'high' : 'medium',
           count: expiredMedical + missingMedical,
-          title: 'Missing or expired driver medical exams',
+          titleKey: 'common.auditDrvMedicalTitle',
           detail: `${expiredMedical} expired and ${missingMedical} missing medical certificates across active drivers.`,
-          recommendation: 'Book medical exams and block drivers without valid medicals from long-haul routes.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvMedicalRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (expiredQuals > 0) {
@@ -228,10 +229,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'high',
           count: expiredQuals,
-          title: 'Expired professional qualifications (CPC / ADR)',
+          titleKey: 'common.auditDrvQualTitle',
           detail: `${expiredQuals} professional qualification(s) have lapsed. EU Directive 2003/59/EC requires valid CPC for professional driving.`,
-          recommendation: 'Enroll drivers in refresher training modules (35 hours CPC).',
-          timeline: '30-90 days',
+          recommendationKey: 'common.auditDrvQualRec',
+          timelineKey: 'common.auditTimeline30to90',
         });
       }
       const expiredVisa = identity.filter((i) => i.document_type === 'work_visa' && (() => { const d = daysFromNow(i.expiry_date); return d !== null && d < 0; })() && driverIds.has(i.driver_id)).length;
@@ -246,10 +247,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'critical',
           count: expiredVisa,
-          title: 'Driver work visas expired',
+          titleKey: 'common.auditDrvVisaExpiredTitle',
           detail: `${expiredVisa} work visa(s) have expired. Without a valid visa, drivers cannot legally work.`,
-          recommendation: 'Suspend affected drivers from dispatch; initiate visa renewal with immigration authority.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvVisaExpiredRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (soonVisa > 0) {
@@ -258,10 +259,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'high',
           count: soonVisa,
-          title: 'Work visas expiring within 90 days',
+          titleKey: 'common.auditDrvVisaSoonTitle',
           detail: `${soonVisa} work visa(s) are due to expire within 90 days.`,
-          recommendation: 'Begin renewal paperwork immediately; processing times can exceed 60 days.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvVisaSoonRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (expiredIdDocs > 0) {
@@ -270,10 +271,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'high',
           count: expiredIdDocs,
-          title: 'Expired identity documents (ID / passport / residence permit)',
+          titleKey: 'common.auditDrvIdExpiredTitle',
           detail: `${expiredIdDocs} identity document(s) past expiry across active drivers.`,
-          recommendation: 'Require renewal; cannot verify identity for cross-border operations.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvIdExpiredRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (missingIdDocs > 0) {
@@ -282,10 +283,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'medium',
           count: missingIdDocs,
-          title: 'Drivers with no identity document scanned',
+          titleKey: 'common.auditDrvIdMissingTitle',
           detail: `${missingIdDocs} active driver(s) have no ID card, passport, residence permit or work visa on file.`,
-          recommendation: 'Collect two-sided scans (front/back) via the driver detail screen.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvIdMissingRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
 
@@ -295,10 +296,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'medium',
           count: trackingOff,
-          title: 'Drivers with GPS auto-tracking disabled',
+          titleKey: 'common.auditDrvGpsTitle',
           detail: `${trackingOff} active driver(s) have disabled automatic location tracking during shifts.`,
-          recommendation: 'Enforce tracking policy at shift start; require justification for manual pauses.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDrvGpsRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
 
@@ -310,10 +311,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'high',
           count: overlongShifts,
-          title: 'Shifts exceeding 9h driving window',
+          titleKey: 'common.auditDrvShiftLongTitle',
           detail: `${overlongShifts} shift session(s) ran longer than 9 hours. EU 561/2006 caps daily driving at 9h (10h twice per week).`,
-          recommendation: 'Review tachograph records, add breaks, and raise alerts when daily driving approaches the legal limit.',
-          timeline: '30-90 days',
+          recommendationKey: 'common.auditDrvShiftLongRec',
+          timelineKey: 'common.auditTimeline30to90',
         });
       }
       if (shortShifts > 0) {
@@ -322,10 +323,10 @@ export default function CompanyAuditReport() {
           domain: 'driver',
           severity: 'low',
           count: shortShifts,
-          title: 'Unusually short shift sessions',
+          titleKey: 'common.auditDrvShiftShortTitle',
           detail: `${shortShifts} session(s) under 30 minutes — possibly incomplete tracking.`,
-          recommendation: 'Review data quality and educate drivers on shift start/end procedures.',
-          timeline: '90-180 days',
+          recommendationKey: 'common.auditDrvShiftShortRec',
+          timelineKey: 'common.auditTimeline90to180',
         });
       }
 
@@ -348,10 +349,10 @@ export default function CompanyAuditReport() {
           domain: 'company',
           severity: 'critical',
           count: expiredInspections,
-          title: 'Vehicles with expired technical inspection',
+          titleKey: 'common.auditVehInspectionTitle',
           detail: `${expiredInspections} vehicle(s) past technical inspection (TUV/ITP) expiry.`,
-          recommendation: 'Park affected vehicles; schedule inspections before next dispatch.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditVehInspectionRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (expiredInsurance > 0) {
@@ -360,10 +361,10 @@ export default function CompanyAuditReport() {
           domain: 'company',
           severity: 'critical',
           count: expiredInsurance,
-          title: 'Vehicles with expired insurance',
+          titleKey: 'common.auditVehInsuranceTitle',
           detail: `${expiredInsurance} vehicle(s) have lapsed insurance coverage.`,
-          recommendation: 'Renew policies immediately; suspend operation of uninsured vehicles.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditVehInsuranceRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (unpaidTaxes > 0) {
@@ -372,10 +373,10 @@ export default function CompanyAuditReport() {
           domain: 'company',
           severity: 'medium',
           count: unpaidTaxes,
-          title: 'Overdue vehicle taxes',
+          titleKey: 'common.auditVehTaxTitle',
           detail: `${unpaidTaxes} vehicle tax record(s) are past due and unpaid.`,
-          recommendation: 'Clear outstanding balances and set automated reminders.',
-          timeline: '30-90 days',
+          recommendationKey: 'common.auditVehTaxRec',
+          timelineKey: 'common.auditTimeline30to90',
         });
       }
 
@@ -391,10 +392,10 @@ export default function CompanyAuditReport() {
           domain: 'company',
           severity: overdueAmount > 10000 ? 'high' : 'medium',
           count: overdueInvoices.length,
-          title: 'Overdue receivables',
+          titleKey: 'common.auditCompanyReceivablesTitle',
           detail: `${overdueInvoices.length} unpaid invoice(s) past due (total ${overdueAmount.toFixed(2)}).`,
-          recommendation: 'Trigger dunning workflow; apply late-payment fees per contract.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditCompanyReceivablesRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
 
@@ -408,10 +409,10 @@ export default function CompanyAuditReport() {
           domain: 'company',
           severity: 'low',
           count: upcomingCompliance,
-          title: 'Upcoming compliance deadlines (30 days)',
+          titleKey: 'common.auditCompanyComplianceTitle',
           detail: `${upcomingCompliance} compliance item(s) are due within 30 days across fleet and drivers.`,
-          recommendation: 'Pre-schedule renewal tasks and assign responsible owners.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditCompanyComplianceRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
 
@@ -434,10 +435,10 @@ export default function CompanyAuditReport() {
           domain: 'depot',
           severity: 'high',
           count: unscannedDeliveries,
-          title: 'Delivered notes without attached scan/proof',
+          titleKey: 'common.auditDepotNoScanTitle',
           detail: `${unscannedDeliveries} closed delivery note(s) are missing a scanned document or proof image.`,
-          recommendation: 'Enforce mandatory scan attachment before closing delivery notes.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDepotNoScanRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (unpostedStock > 0) {
@@ -446,10 +447,10 @@ export default function CompanyAuditReport() {
           domain: 'depot',
           severity: 'high',
           count: unpostedStock,
-          title: 'Delivered notes not posted to stock',
+          titleKey: 'common.auditDepotNoPostTitle',
           detail: `${unpostedStock} delivery note(s) marked as delivered but not reconciled against stock movements.`,
-          recommendation: 'Run stock reconciliation and resolve posting errors in the queue.',
-          timeline: '0-30 days',
+          recommendationKey: 'common.auditDepotNoPostRec',
+          timelineKey: 'common.auditTimeline0to30',
         });
       }
       if (otpPct !== null && otpPct < 90) {
@@ -458,10 +459,10 @@ export default function CompanyAuditReport() {
           domain: 'depot',
           severity: otpPct < 75 ? 'high' : 'medium',
           count: lateDeliveries,
-          title: 'On-time delivery rate below target',
+          titleKey: 'common.auditDepotOtpTitle',
           detail: `Current on-time rate is ${otpPct.toFixed(1)}% over the last 90 days. ${lateDeliveries} deliveries missed the 1-hour window.`,
-          recommendation: 'Review dispatch planning, buffer times and chronic late routes.',
-          timeline: '30-90 days',
+          recommendationKey: 'common.auditDepotOtpRec',
+          timelineKey: 'common.auditTimeline30to90',
         });
       }
 
@@ -472,10 +473,10 @@ export default function CompanyAuditReport() {
           domain: 'depot',
           severity: 'low',
           count: zeroStock,
-          title: 'SKUs at zero or negative stock',
+          titleKey: 'common.auditDepotStockZeroTitle',
           detail: `${zeroStock} stock line(s) at 0 or below. Potential stock-outs or posting anomalies.`,
-          recommendation: 'Investigate negatives, recount and run cycle-count for affected locations.',
-          timeline: '30-90 days',
+          recommendationKey: 'common.auditDepotStockZeroRec',
+          timelineKey: 'common.auditTimeline30to90',
         });
       }
       if (alerts.length > 0) {
@@ -484,34 +485,34 @@ export default function CompanyAuditReport() {
           domain: 'depot',
           severity: 'medium',
           count: alerts.length,
-          title: 'Active stock alerts triggered',
+          titleKey: 'common.auditDepotAlertsTitle',
           detail: `${alerts.length} stock alert rule(s) currently active.`,
-          recommendation: 'Review alert rules; replenish low-stock SKUs.',
-          timeline: '30-90 days',
+          recommendationKey: 'common.auditDepotAlertsRec',
+          timelineKey: 'common.auditTimeline30to90',
         });
       }
 
       setFindings(findings);
       setKpis({
         company: [
-          { label: 'Active vehicles', value: String(vehicles.length), hint: 'Fleet size' },
-          { label: 'Overdue receivables', value: overdueInvoices.length.toString(), hint: `${overdueAmount.toFixed(0)} open` },
-          { label: 'Compliance items ≤ 30d', value: String(upcomingCompliance), hint: 'Due soon' },
+          { labelKey: 'common.kpiActiveVehicles', value: String(vehicles.length), hintKey: 'common.kpiFleetSize' },
+          { labelKey: 'common.kpiOverdueReceivables', value: overdueInvoices.length.toString(), hint: `${overdueAmount.toFixed(0)} ${t('common.kpiOpenAmount')}` },
+          { labelKey: 'common.kpiComplianceItems30d', value: String(upcomingCompliance), hintKey: 'common.kpiDueSoon' },
         ],
         driver: [
-          { label: 'Active drivers', value: String(driverIds.size) },
-          { label: 'Expired licenses', value: String(expiredLicenses), trend: expiredLicenses > 0 ? 'down' : 'flat' },
-          { label: 'Shifts over 9h', value: String(overlongShifts), hint: 'last 90 days' },
+          { labelKey: 'common.kpiActiveDrivers', value: String(driverIds.size) },
+          { labelKey: 'common.kpiExpiredLicenses', value: String(expiredLicenses), trend: expiredLicenses > 0 ? 'down' : 'flat' },
+          { labelKey: 'common.kpiShiftsOver9h', value: String(overlongShifts), hintKey: 'common.kpiLast90Days' },
         ],
         depot: [
-          { label: 'On-time delivery', value: otpPct === null ? '—' : `${otpPct.toFixed(0)}%`, trend: otpPct !== null && otpPct >= 90 ? 'up' : 'down' },
-          { label: 'Scan-missing notes', value: String(unscannedDeliveries) },
-          { label: 'Stock lines', value: String(stock.length) },
+          { labelKey: 'common.kpiOnTimeDelivery', value: otpPct === null ? '—' : `${otpPct.toFixed(0)}%`, trend: otpPct !== null && otpPct >= 90 ? 'up' : 'down' },
+          { labelKey: 'common.kpiScanMissingNotes', value: String(unscannedDeliveries) },
+          { labelKey: 'common.kpiStockLines', value: String(stock.length) },
         ],
       });
       setGeneratedAt(new Date());
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to run audit';
+      const msg = e instanceof Error ? e.message : t('common.auditFailedToRun');
       setError(msg);
     } finally {
       setLoading(false);
@@ -645,12 +646,12 @@ export default function CompanyAuditReport() {
             <div key={d} className="bg-white rounded-2xl border border-gray-200 p-5">
               <div className="flex items-center gap-2">
                 <Icon className={`w-5 h-5 ${meta.color}`} />
-                <h3 className="font-semibold text-gray-900">{meta.label}</h3>
+                <h3 className="font-semibold text-gray-900">{t(meta.labelKey)}</h3>
               </div>
               <dl className="mt-4 space-y-2.5">
                 {kpis[d].map((k) => (
-                  <div key={k.label} className="flex items-center justify-between gap-3">
-                    <dt className="text-sm text-gray-600">{k.label}</dt>
+                  <div key={k.labelKey} className="flex items-center justify-between gap-3">
+                    <dt className="text-sm text-gray-600">{t(k.labelKey)}</dt>
                     <dd className="text-sm font-semibold text-gray-900 flex items-center gap-1">
                       {k.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />}
                       {k.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 text-red-500" />}
@@ -721,19 +722,19 @@ export default function CompanyAuditReport() {
                   </div>
                   <div className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-600">
                     <DIcon className="w-3.5 h-3.5" />
-                    {dMeta.label}
+                    {t(dMeta.labelKey)}
                   </div>
                   <div className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-600">
                     <Clock className="w-3.5 h-3.5" />
-                    {f.timeline}
+                    {t(f.timelineKey)}
                   </div>
                   <div className="ml-auto text-xs text-gray-500">#{f.count}</div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mt-2">{f.title}</h3>
+                <h3 className="font-semibold text-gray-900 mt-2">{t(f.titleKey)}</h3>
                 <p className="text-sm text-gray-600 mt-1">{f.detail}</p>
                 <div className="mt-3 rounded-lg bg-gray-50 border border-gray-100 p-3 text-sm">
-                  <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Recommendation</div>
-                  <p className="text-gray-700">{f.recommendation}</p>
+                  <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-1">{t('common.recommendationLabel')}</div>
+                  <p className="text-gray-700">{t(f.recommendationKey)}</p>
                 </div>
               </article>
             );
@@ -745,12 +746,12 @@ export default function CompanyAuditReport() {
         <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Implementation roadmap</div>
         <h2 className="text-lg font-bold text-gray-900 mt-1">Prioritized action plan</h2>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {(['0-30 days', '30-90 days', '90-180 days'] as const).map((window) => {
-            const items = findings.filter((f) => f.timeline === window);
+          {(['common.auditTimeline0to30', 'common.auditTimeline30to90', 'common.auditTimeline90to180'] as const).map((windowKey) => {
+            const items = findings.filter((f) => f.timelineKey === windowKey);
             return (
-              <div key={window} className="rounded-xl border border-gray-200 p-4">
+              <div key={windowKey} className="rounded-xl border border-gray-200 p-4">
                 <div className="flex items-center justify-between">
-                  <div className="font-semibold text-gray-900 text-sm">{window}</div>
+                  <div className="font-semibold text-gray-900 text-sm">{t(windowKey)}</div>
                   <span className="text-xs text-gray-500">{items.length}</span>
                 </div>
                 <ul className="mt-2 space-y-2">
@@ -762,7 +763,7 @@ export default function CompanyAuditReport() {
                     return (
                       <li key={f.id} className="text-sm text-gray-700 flex items-start gap-2">
                         <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${meta.dot}`} />
-                        <span>{f.title}</span>
+                        <span>{t(f.titleKey)}</span>
                       </li>
                     );
                   })}

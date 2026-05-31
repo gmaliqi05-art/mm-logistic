@@ -620,7 +620,7 @@ function BusinessTypeSelector({ businessType, onChange }: { businessType: Busine
     {
       type: 'accounting',
       icon: Calculator,
-      title: 'Vetem Kontabilitet',
+      title: t('common.accountingOnly'),
       desc: 'Fatura, DATEV, XRechnung/ZUGFeRD, raporte TVSH.',
     },
     {

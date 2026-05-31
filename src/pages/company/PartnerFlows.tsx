@@ -25,13 +25,13 @@ interface FlowRow {
   delivery_note?: { note_number: string } | null;
 }
 
-const DIRECTION_META: Record<FlowRow['direction'], { label: string; tone: string; icon: typeof ArrowDownLeft }> = {
-  in: { label: 'Hyrje ne stok', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: ArrowDownLeft },
-  out: { label: 'Dalje nga stoku', tone: 'bg-rose-50 text-rose-700 border-rose-200', icon: ArrowUpRight },
-  carrier_in: { label: 'Transport (marr)', tone: 'bg-slate-50 text-slate-700 border-slate-200', icon: Handshake },
-  carrier_out: { label: 'Transport (derguar)', tone: 'bg-slate-50 text-slate-700 border-slate-200', icon: Handshake },
-  custody_in: { label: 'Ruajtje hyrese', tone: 'bg-amber-50 text-amber-700 border-amber-200', icon: Warehouse },
-  custody_out: { label: 'Ruajtje dalese', tone: 'bg-sky-50 text-sky-700 border-sky-200', icon: Warehouse },
+const DIRECTION_META: Record<FlowRow['direction'], { labelKey: string; tone: string; icon: typeof ArrowDownLeft }> = {
+  in: { labelKey: 'common.flowInStock', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: ArrowDownLeft },
+  out: { labelKey: 'common.flowOutStock', tone: 'bg-rose-50 text-rose-700 border-rose-200', icon: ArrowUpRight },
+  carrier_in: { labelKey: 'common.flowCarrierIn', tone: 'bg-slate-50 text-slate-700 border-slate-200', icon: Handshake },
+  carrier_out: { labelKey: 'common.flowCarrierOut', tone: 'bg-slate-50 text-slate-700 border-slate-200', icon: Handshake },
+  custody_in: { labelKey: 'common.flowCustodyIn', tone: 'bg-amber-50 text-amber-700 border-amber-200', icon: Warehouse },
+  custody_out: { labelKey: 'common.flowCustodyOut', tone: 'bg-sky-50 text-sky-700 border-sky-200', icon: Warehouse },
 };
 
 export default function PartnerFlows() {
@@ -126,10 +126,10 @@ export default function PartnerFlows() {
   }, [filtered]);
 
   const TABS: Array<{ id: typeof filter; label: string }> = [
-    { id: 'all', label: 'Te gjitha' },
-    { id: 'stock', label: 'Hyrje / Dalje stoku' },
-    { id: 'carrier', label: 'Vetem transport' },
-    { id: 'custody', label: 'Ruajtje per partner' },
+    { id: 'all', label: t('common.allF') },
+    { id: 'stock', label: t('common.flowStockTab') },
+    { id: 'carrier', label: t('common.flowCarrierOnly') },
+    { id: 'custody', label: t('common.flowCustodyTab') },
   ];
 
   return (
@@ -272,7 +272,7 @@ export default function PartnerFlows() {
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border ${meta.tone}`}
                         >
                           <Icon className="w-3 h-3" />
-                          {meta.label}
+                          {t(meta.labelKey)}
                         </span>
                       </td>
                       <td className="px-4 py-2 text-slate-700 whitespace-nowrap">{r.category?.name ?? '—'}</td>

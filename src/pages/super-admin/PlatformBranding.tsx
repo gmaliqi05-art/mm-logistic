@@ -236,7 +236,7 @@ export default function PlatformBranding() {
           className="inline-flex items-center gap-2 px-6 py-2.5 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 disabled:opacity-50 transition-colors"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {saving ? 'Duke ruajtur...' : 'Ruaj Ndryshimet'}
+          {saving ? t('common.saving') : t('common.saveChanges')}
         </button>
       </div>
 

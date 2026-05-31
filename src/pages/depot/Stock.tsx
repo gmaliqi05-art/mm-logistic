@@ -790,8 +790,8 @@ export default function DepotStock() {
 
               {(formType === 'entry' || formType === 'exit') && (
                 <ContactAutocomplete
-                  label={formType === 'entry' ? 'Nga kush?' : 'Per kend?'}
-                  placeholder={formType === 'entry' ? 'Kompania/Personi qe ka sjelle...' : 'Kompania/Personi qe i merr...'}
+                  label={formType === 'entry' ? t('common.fromWhom') : t('common.forWhom')}
+                  placeholder={formType === 'entry' ? t('common.companyPersonBringing') : t('common.companyPersonReceiving')}
                   contactId={formSourceContactId}
                   partnerText={formSourcePartner}
                   onChange={({ contactId, partnerText }) => {
