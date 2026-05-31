@@ -564,7 +564,7 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:opacity-60"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing ? 'Ruaj Ndryshimet' : 'Regjistro'}
+            {editing ? t('common.saveChanges') : t('common.register')}
           </button>
         </div>
       </div>

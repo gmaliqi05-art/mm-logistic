@@ -13,56 +13,56 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { Feature, CompanyFeature } from '../../types';
 
-const ALL_FEATURES: Array<{ key: Feature; label: string; description: string }> = [
+const ALL_FEATURES: Array<{ key: Feature; labelKey: string; descriptionKey: string }> = [
   {
     key: 'documents_signing',
-    label: 'Document Signing',
-    description: 'Ability to sign and manage documents digitally',
+    labelKey: 'common.featureDocSigning',
+    descriptionKey: 'common.featureDocSigningDesc',
   },
   {
     key: 'basic_reports',
-    label: 'Basic Reports',
-    description: 'Access to basic reporting and analytics',
+    labelKey: 'common.featureBasicReports',
+    descriptionKey: 'common.featureBasicReportsDesc',
   },
   {
     key: 'categories',
-    label: 'Categories',
-    description: 'Manage product categories',
+    labelKey: 'common.featureCategories',
+    descriptionKey: 'common.featureCategoriesDesc',
   },
   {
     key: 'advanced_reports',
-    label: 'Advanced Reports',
-    description: 'Detailed analytics and custom reports',
+    labelKey: 'common.featureAdvReports',
+    descriptionKey: 'common.featureAdvReportsDesc',
   },
   {
     key: 'export_pdf',
-    label: 'PDF Export',
-    description: 'Export data and reports as PDF',
+    labelKey: 'common.featurePdfExport',
+    descriptionKey: 'common.featurePdfExportDesc',
   },
   {
     key: 'export_excel',
-    label: 'Excel Export',
-    description: 'Export data to Excel spreadsheets',
+    labelKey: 'common.featureExcelExport',
+    descriptionKey: 'common.featureExcelExportDesc',
   },
   {
     key: 'audit_log',
-    label: 'Audit Log',
-    description: 'Track all changes and user actions',
+    labelKey: 'common.featureAuditLog',
+    descriptionKey: 'common.featureAuditLogDesc',
   },
   {
     key: 'bulk_operations',
-    label: 'Bulk Operations',
-    description: 'Perform bulk actions on multiple items',
+    labelKey: 'common.featureBulkOps',
+    descriptionKey: 'common.featureBulkOpsDesc',
   },
   {
     key: 'stock_alerts',
-    label: 'Stock Alerts',
-    description: 'Receive alerts for low stock levels',
+    labelKey: 'common.featureStockAlerts',
+    descriptionKey: 'common.featureStockAlertsDesc',
   },
   {
     key: 'data_export',
-    label: 'Data Export',
-    description: 'Export all company data',
+    labelKey: 'common.featureDataExport',
+    descriptionKey: 'common.featureDataExportDesc',
   },
 ];
 
@@ -250,8 +250,8 @@ export default function CompanyFeaturesManager({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900">{feature.label}</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">{feature.description}</p>
+                      <h4 className="text-sm font-medium text-gray-900">{t(feature.labelKey)}</h4>
+                      <p className="text-xs text-gray-500 mt-0.5">{t(feature.descriptionKey)}</p>
                       {existingFeature && (
                         <p className="text-xs text-gray-400 mt-1">
                           {existingFeature.notes || 'No notes'}
