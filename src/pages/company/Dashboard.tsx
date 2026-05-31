@@ -17,6 +17,8 @@ import {
   MessageCircle,
   Layers,
   Calculator,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -114,6 +116,22 @@ export default function CompanyDashboard() {
   const [scanKind, setScanKind] = useState<ScanDocKind | null>(null);
   const [range, setRange] = useState<RangeKey>('7d');
   const [quickNoteId, setQuickNoteId] = useState<string | null>(null);
+  // Privacy toggle for financial amounts in the accounting summary card.
+  // Default: hidden — operators often have the dashboard on a shared
+  // screen and don't want revenue visible by default. Choice persists
+  // per browser via localStorage.
+  const [hideFinancials, setHideFinancials] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('mm-dashboard-hide-financials') !== 'false';
+  });
+  const toggleFinancials = () => {
+    setHideFinancials((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('mm-dashboard-hide-financials', String(next)); } catch { /* quota / private mode */ }
+      return next;
+    });
+  };
+  const MASKED = '••••••';
 
   const grouped = useMemo(() => {
     const todayStart = new Date();
@@ -1021,9 +1039,20 @@ export default function CompanyDashboard() {
               <Calculator className="w-4 h-4" />
               {t('company.dashboard.accountingSummaryTitle')}
             </h2>
-            <Link to="/accounting" className="text-xs text-emerald-700 hover:text-emerald-900 font-medium">
-              {t('company.dashboard.openAccounting')} →
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleFinancials}
+                aria-label={hideFinancials ? t('common.showAmounts') : t('common.hideAmounts')}
+                title={hideFinancials ? t('common.showAmounts') : t('common.hideAmounts')}
+                className="inline-flex items-center justify-center p-1 rounded text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 transition-colors"
+              >
+                {hideFinancials ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+              <Link to="/accounting" className="text-xs text-emerald-700 hover:text-emerald-900 font-medium">
+                {t('company.dashboard.openAccounting')} →
+              </Link>
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
             <Link
@@ -1031,8 +1060,10 @@ export default function CompanyDashboard() {
               className="rounded-lg p-3 bg-white border border-slate-200 hover:border-emerald-300 transition-colors block"
             >
               <p className="text-[11px] text-slate-500 uppercase tracking-wide font-semibold">{t('company.dashboard.openInvoices')}</p>
-              <p className="text-lg font-bold text-slate-900 mt-1">
-                {stats.accountingSummary.openInvoiceTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {stats.accountingSummary.currency}
+              <p className="text-lg font-bold text-slate-900 mt-1 font-mono tabular-nums">
+                {hideFinancials
+                  ? `${MASKED} ${stats.accountingSummary.currency}`
+                  : `${stats.accountingSummary.openInvoiceTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.accountingSummary.currency}`}
               </p>
               <p className="text-[11px] text-slate-500 mt-0.5">{stats.accountingSummary.openInvoiceCount} {t('company.dashboard.invoicesUnit')}</p>
             </Link>
@@ -1045,8 +1076,10 @@ export default function CompanyDashboard() {
               }`}
             >
               <p className={`text-[11px] uppercase tracking-wide font-semibold ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{t('company.dashboard.overdueInvoices')}</p>
-              <p className={`text-lg font-bold mt-1 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-900' : 'text-slate-900'}`}>
-                {stats.accountingSummary.overdueTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {stats.accountingSummary.currency}
+              <p className={`text-lg font-bold mt-1 font-mono tabular-nums ${stats.accountingSummary.overdueCount > 0 ? 'text-red-900' : 'text-slate-900'}`}>
+                {hideFinancials
+                  ? `${MASKED} ${stats.accountingSummary.currency}`
+                  : `${stats.accountingSummary.overdueTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.accountingSummary.currency}`}
               </p>
               <p className={`text-[11px] mt-0.5 ${stats.accountingSummary.overdueCount > 0 ? 'text-red-700' : 'text-slate-500'}`}>{stats.accountingSummary.overdueCount} {t('company.dashboard.invoicesUnit')}</p>
             </Link>

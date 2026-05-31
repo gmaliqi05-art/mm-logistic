@@ -1332,6 +1332,8 @@ export const en: typeof sq = {
     contactLabel: 'Contact',
     amountLabel: 'Amount',
     referenceLabel: 'Reference',
+    showAmounts: 'Show amounts',
+    hideAmounts: 'Hide amounts',
 },
   roles: {
     super_admin: 'Super Admin',
