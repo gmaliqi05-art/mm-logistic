@@ -1330,6 +1330,8 @@ export const sq = {
     contactLabel: 'Kontakti',
     amountLabel: 'Shuma',
     referenceLabel: 'Referenca',
+    showAmounts: 'Shfaq shumat',
+    hideAmounts: 'Fshih shumat',
 },
   roles: {
     super_admin: 'Super Admin',
