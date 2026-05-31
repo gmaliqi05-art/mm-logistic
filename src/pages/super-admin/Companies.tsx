@@ -154,7 +154,7 @@ export default function SuperAdminCompanies() {
 
       setEditingCompany({ ...editingCompany, logo_url: urlData.publicUrl });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Dështoi ngarkimi i logos');
+      setError(err instanceof Error ? err.message : t('common.logoUploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -439,7 +439,7 @@ export default function SuperAdminCompanies() {
                       ) : (
                         <Upload className="w-4 h-4" />
                       )}
-                      {uploading ? 'Duke ngarkuar...' : 'Ngarko Logo'}
+                      {uploading ? 'Duke ngarkuar...' : t('common.uploadLogo')}
                     </button>
                     <p className="text-xs text-gray-500 mt-2">{t('common.pngJpgGifDeriNeMb')}</p>
                   </div>

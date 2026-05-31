@@ -36,12 +36,12 @@ function statusOf(expiry: string | null): { status: ExpiryStatus; days: number |
   return { status: 'valid', days: d };
 }
 
-const STATUS_CHIP: Record<ExpiryStatus, { label: string; cls: string; Icon: typeof CheckCircle2 }> = {
-  valid: { label: 'Ne rregull', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', Icon: CheckCircle2 },
-  warn: { label: 'Skadon se shpejti', cls: 'bg-amber-50 text-amber-800 border-amber-200', Icon: Clock },
-  critical: { label: 'Urgjent', cls: 'bg-orange-50 text-orange-800 border-orange-200', Icon: AlertTriangle },
-  expired: { label: 'Skaduar', cls: 'bg-red-50 text-red-700 border-red-200', Icon: AlertTriangle },
-  unknown: { label: 'Pa afat', cls: 'bg-gray-50 text-gray-600 border-gray-200', Icon: Clock },
+const STATUS_CHIP: Record<ExpiryStatus, { labelKey: string; cls: string; Icon: typeof CheckCircle2 }> = {
+  valid: { labelKey: 'common.statusValid', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', Icon: CheckCircle2 },
+  warn: { labelKey: 'common.statusExpiringSoon', cls: 'bg-amber-50 text-amber-800 border-amber-200', Icon: Clock },
+  critical: { labelKey: 'common.statusUrgent', cls: 'bg-orange-50 text-orange-800 border-orange-200', Icon: AlertTriangle },
+  expired: { labelKey: 'common.statusExpired', cls: 'bg-red-50 text-red-700 border-red-200', Icon: AlertTriangle },
+  unknown: { labelKey: 'common.noExpiry', cls: 'bg-gray-50 text-gray-600 border-gray-200', Icon: Clock },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -280,7 +280,7 @@ export default function DriverMyDocuments() {
                     <div className="mt-1 flex items-center gap-2 flex-wrap">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${chip.cls}`}>
                         <Chip className="w-3 h-3" />
-                        {chip.label}
+                        {t(chip.labelKey)}
                       </span>
                       {r.expiry && (
                         <span className="text-xs text-gray-500">
@@ -414,16 +414,19 @@ function StatCard({ label, value, cls }: { label: string; value: number; cls: st
 }
 
 function ScanStatusPill({ status }: { status: string }) {
-  const map: Record<string, { cls: string; label: string }> = {
-    pending_review: { cls: 'bg-amber-100 text-amber-700', label: 'Per shqyrtim' },
-    saved: { cls: 'bg-emerald-100 text-emerald-700', label: 'Ruajtur' },
-    approved: { cls: 'bg-emerald-100 text-emerald-700', label: 'Aprovuar' },
-    rejected: { cls: 'bg-red-100 text-red-700', label: 'Refuzuar' },
+  const { t } = useTranslation();
+  const map: Record<string, { cls: string; labelKey: string }> = {
+    pending_review: { cls: 'bg-amber-100 text-amber-700', labelKey: 'common.forReview' },
+    saved: { cls: 'bg-emerald-100 text-emerald-700', labelKey: 'common.saved' },
+    approved: { cls: 'bg-emerald-100 text-emerald-700', labelKey: 'common.approvedLabel' },
+    rejected: { cls: 'bg-red-100 text-red-700', labelKey: 'common.rejectedLabel' },
   };
-  const meta = map[status] ?? { cls: 'bg-gray-100 text-gray-700', label: status };
+  const meta = map[status];
+  const label = meta ? t(meta.labelKey) : status;
+  const cls = meta ? meta.cls : 'bg-gray-100 text-gray-700';
   return (
-    <span className={`px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${meta.cls}`}>
-      {meta.label}
+    <span className={`px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${cls}`}>
+      {label}
     </span>
   );
 }

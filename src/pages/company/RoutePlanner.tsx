@@ -269,7 +269,7 @@ export default function CompanyRoutePlanner() {
           user_id: targetDriver,
           type: 'route_assigned',
           title: 'Rruge e re e caktuar',
-          message: 'Kompania te ka caktuar nje rruge te re. Hap Navigimin per detajet.',
+          message: t('common.companyAssignedNewRoute'),
           data: { kind: 'route_assigned', delivery_note_id: deliveryId || null },
         });
       }
@@ -531,7 +531,7 @@ export default function CompanyRoutePlanner() {
               disabled={assigning || assigned}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white disabled:opacity-70 ${assigned ? 'bg-emerald-600' : 'bg-slate-900 hover:bg-slate-800'}`}
             >
-              {assigned ? <><Check className="w-4 h-4" />{t('common.rrugaUDerguaTeShoferi')}</> : <><Send className="w-4 h-4" /> {assigning ? 'Duke dërguar...' : 'Cakto kete rruge per shoferin'}</>}
+              {assigned ? <><Check className="w-4 h-4" />{t('common.rrugaUDerguaTeShoferi')}</> : <><Send className="w-4 h-4" /> {assigning ? t('common.sending') : t('common.assignRouteToDriver')}</>}
             </button>
           )}
         </div>

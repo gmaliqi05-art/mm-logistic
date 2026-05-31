@@ -461,7 +461,7 @@ export default function FleetDocScanner({ mode, defaultCategory, presetTargetId,
                     )}
                     {fields.map((f) => (
                       <div key={f.key}>
-                        <label className="text-xs text-slate-500 mb-1 block">{f.label}</label>
+                        <label className="text-xs text-slate-500 mb-1 block">{t(f.labelKey)}</label>
                         <input
                           type={f.type || 'text'}
                           value={String(editMap[f.key] ?? '')}
@@ -594,73 +594,73 @@ function buildEditMap(ex: Extracted, cat: string, mode: FleetMode): Record<strin
   return m;
 }
 
-function getDisplayFields(cat: string, mode: FleetMode, _m: Record<string, string | number | string[]>): Array<{ key: string; label: string; type?: string }> {
+function getDisplayFields(cat: string, mode: FleetMode, _m: Record<string, string | number | string[]>): Array<{ key: string; labelKey: string; type?: string }> {
   if (mode === 'vehicle') {
     if (cat === 'zulassung') {
       return [
-        { key: 'license_plate', label: 'Targa (Kennzeichen)' },
-        { key: 'vin', label: 'VIN' },
-        { key: 'brand', label: 'Marka' },
-        { key: 'model', label: 'Modeli' },
-        { key: 'first_registration', label: 'Data e pare e regjistrimit', type: 'date' },
-        { key: 'max_weight_kg', label: 'Pesha maks. (kg)', type: 'number' },
-        { key: 'axles', label: 'Aksjet', type: 'number' },
-        { key: 'euro_emission', label: 'Klasa Euro' },
-        { key: 'fuel_type', label: 'Karburanti' },
-        { key: 'engine_power_kw', label: 'Fuqia (kW)', type: 'number' },
-        { key: 'zb1_number', label: 'ZB I Nr.' },
-        { key: 'zb2_number', label: 'ZB II Nr.' },
+        { key: 'license_plate', labelKey: 'common.licensePlateKennzeichen' },
+        { key: 'vin', labelKey: 'common.vin' },
+        { key: 'brand', labelKey: 'common.brand' },
+        { key: 'model', labelKey: 'common.model' },
+        { key: 'first_registration', labelKey: 'common.firstRegistrationDate', type: 'date' },
+        { key: 'max_weight_kg', labelKey: 'common.maxWeightKg', type: 'number' },
+        { key: 'axles', labelKey: 'common.axles', type: 'number' },
+        { key: 'euro_emission', labelKey: 'common.euroClass' },
+        { key: 'fuel_type', labelKey: 'common.fuelType' },
+        { key: 'engine_power_kw', labelKey: 'common.enginePowerKw', type: 'number' },
+        { key: 'zb1_number', labelKey: 'common.zb1Number' },
+        { key: 'zb2_number', labelKey: 'common.zb2Number' },
       ];
     }
     if (['hu_tuv', 'au', 'sp', 'uvv', 'tacho'].includes(cat)) {
       return [
-        { key: 'issued_date', label: 'Data e leshimit', type: 'date' },
-        { key: 'expiry_date', label: 'Data e skadimit', type: 'date' },
-        { key: 'provider', label: 'Ofruesi (TUV/DEKRA/...)' },
-        { key: 'certificate_number', label: 'Nr. i certifikates' },
+        { key: 'issued_date', labelKey: 'common.issueDate', type: 'date' },
+        { key: 'expiry_date', labelKey: 'common.expiryDate', type: 'date' },
+        { key: 'provider', labelKey: 'common.providerTuvDekra' },
+        { key: 'certificate_number', labelKey: 'common.certificateNumber' },
       ];
     }
     if (['haftpflicht', 'vollkasko', 'teilkasko', 'ladung'].includes(cat)) {
       return [
-        { key: 'provider', label: 'Kompania e sigurimit' },
-        { key: 'policy_number', label: 'Nr. i polices' },
-        { key: 'start_date', label: 'Fillon me', type: 'date' },
-        { key: 'end_date', label: 'Skadon me', type: 'date' },
-        { key: 'premium_amount', label: 'Primi vjetor', type: 'number' },
+        { key: 'provider', labelKey: 'common.insuranceCompany' },
+        { key: 'policy_number', labelKey: 'common.policyNumber' },
+        { key: 'start_date', labelKey: 'common.startsOn', type: 'date' },
+        { key: 'end_date', labelKey: 'common.endsOn', type: 'date' },
+        { key: 'premium_amount', labelKey: 'common.annualPremium', type: 'number' },
       ];
     }
     if (cat === 'kfz_steuer') {
       return [
-        { key: 'tax_year', label: 'Viti', type: 'number' },
-        { key: 'amount', label: 'Shuma', type: 'number' },
-        { key: 'due_date', label: 'Data e skadimit', type: 'date' },
-        { key: 'paid_at', label: 'Data e pageses', type: 'date' },
+        { key: 'tax_year', labelKey: 'common.year', type: 'number' },
+        { key: 'amount', labelKey: 'common.amount', type: 'number' },
+        { key: 'due_date', labelKey: 'common.expiryDate', type: 'date' },
+        { key: 'paid_at', labelKey: 'common.paymentDate', type: 'date' },
       ];
     }
   } else {
     if (cat === 'fuehrerschein') {
       return [
-        { key: 'license_number', label: 'Nr. i patentes' },
-        { key: 'license_categories', label: 'Kategorite (B, BE, C, CE, ...)' },
-        { key: 'issued_date', label: 'Data e leshimit', type: 'date' },
-        { key: 'issued_country', label: 'Shteti' },
-        { key: 'issuing_authority', label: 'Organi leshues' },
-        { key: 'expiry_date', label: 'Data e skadimit', type: 'date' },
+        { key: 'license_number', labelKey: 'common.licenseNumber' },
+        { key: 'license_categories', labelKey: 'common.licenseCategories' },
+        { key: 'issued_date', labelKey: 'common.issueDate', type: 'date' },
+        { key: 'issued_country', labelKey: 'common.country' },
+        { key: 'issuing_authority', labelKey: 'common.issuingAuthority' },
+        { key: 'expiry_date', labelKey: 'common.expiryDate', type: 'date' },
       ];
     }
     if (cat === 'g25_medical') {
       return [
-        { key: 'exam_date', label: 'Data e ekzaminimit', type: 'date' },
-        { key: 'expiry_date', label: 'Skadon me', type: 'date' },
-        { key: 'doctor', label: 'Mjeku' },
+        { key: 'exam_date', labelKey: 'common.examDate', type: 'date' },
+        { key: 'expiry_date', labelKey: 'common.endsOn', type: 'date' },
+        { key: 'doctor', labelKey: 'common.doctor' },
       ];
     }
     return [
-      { key: 'number', label: 'Nr. i dokumentit' },
-      { key: 'issued_date', label: 'Data e leshimit', type: 'date' },
-      { key: 'expiry_date', label: 'Data e skadimit', type: 'date' },
-      { key: 'module_hours', label: 'Ore moduli', type: 'number' },
-      { key: 'issuing_authority', label: 'Organi leshues' },
+      { key: 'number', labelKey: 'common.documentNumber' },
+      { key: 'issued_date', labelKey: 'common.issueDate', type: 'date' },
+      { key: 'expiry_date', labelKey: 'common.expiryDate', type: 'date' },
+      { key: 'module_hours', labelKey: 'common.moduleHours', type: 'number' },
+      { key: 'issuing_authority', labelKey: 'common.issuingAuthority' },
     ];
   }
   return [];

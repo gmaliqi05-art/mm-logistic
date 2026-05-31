@@ -1623,7 +1623,7 @@ export default function CompanyDeliveryNotes() {
                     }`}
                   >
                     <FileText className="w-4 h-4" />
-                    {(selectedNote as any).acc_invoice_id ? 'Shiko faturen' : 'Krijo fature'}
+                    {(selectedNote as any).acc_invoice_id ? 'Shiko faturen' : t('common.createInvoice')}
                   </button>
                 </div>
               )}

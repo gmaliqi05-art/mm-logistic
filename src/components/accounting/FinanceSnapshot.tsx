@@ -178,7 +178,7 @@ export default function FinanceSnapshot({ companyId }: Props) {
         <button
           type="button"
           onClick={toggleAll}
-          title={allRevealed ? 'Fshih te gjitha' : 'Shfaq te gjitha'}
+          title={allRevealed ? 'Fshih te gjitha' : t('common.showAll')}
           className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 hover:text-teal-700 bg-slate-100 hover:bg-teal-50 rounded-full px-2 py-1 transition-colors"
         >
           {allRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
@@ -201,7 +201,7 @@ export default function FinanceSnapshot({ companyId }: Props) {
                     <Icon className="w-4 h-4" />
                   </div>
                   <span
-                    title={isRevealed ? 'Fshih' : 'Shfaq per arsye sigurie'}
+                    title={isRevealed ? 'Fshih' : t('common.showForSecurity')}
                     className="p-1 rounded-full text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors"
                   >
                     {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}

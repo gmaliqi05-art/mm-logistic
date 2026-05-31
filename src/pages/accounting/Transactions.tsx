@@ -521,7 +521,7 @@ export default function Transactions() {
               <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl z-10">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-900">
-                    {editingId ? 'Ndrysho Transaksionin' : 'Shto Transaksion te Ri'}
+                    {editingId ? 'Ndrysho Transaksionin' : t('common.addNewTransaction')}
                   </h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -676,7 +676,7 @@ export default function Transactions() {
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingId ? 'Ruaj Ndryshimet' : 'Shto Transaksionin'}
+                  {editingId ? 'Ruaj Ndryshimet' : t('common.addTransaction')}
                 </button>
               </div>
             </div>

@@ -1226,7 +1226,7 @@ export default function Invoices() {
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-gray-100">
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {editingId ? 'Ndrysho Faturen' : 'Krijo Fature te Re'}
+                  {editingId ? 'Ndrysho Faturen' : t('common.addNewInvoice')}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -1527,7 +1527,7 @@ export default function Invoices() {
                   className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingId ? 'Ruaj Ndryshimet' : 'Krijo Faturen'}
+                  {editingId ? 'Ruaj Ndryshimet' : t('common.createInvoiceCapital')}
                 </button>
               </div>
             </div>

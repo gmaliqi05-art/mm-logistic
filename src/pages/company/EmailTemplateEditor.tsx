@@ -468,7 +468,7 @@ export default function EmailTemplateEditor() {
                     onChange={(e) => setData((d) => ({ ...d, cta_url: e.target.value }))}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-50"
-                    placeholder="{{app_base_url}}/invoices/{{invoice_number}}"
+                    placeholder={t('common.invoiceUrlExample')}
                   />
                 </div>
               </div>

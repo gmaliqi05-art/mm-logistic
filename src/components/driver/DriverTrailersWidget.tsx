@@ -231,7 +231,7 @@ export default function DriverTrailersWidget() {
             )}
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            {open ? 'Kliko per te mbyllur' : 'Kliko per te pare detajet'}
+            {open ? t('common.clickToClose') : t('common.clickToSeeDetails')}
           </p>
         </div>
         <ChevronDown

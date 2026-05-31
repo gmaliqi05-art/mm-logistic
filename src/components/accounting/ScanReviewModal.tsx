@@ -339,7 +339,7 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-4 h-4 text-teal-600" />
                 <p className="font-semibold text-slate-800 text-sm">
-                  {needsNewCompany ? 'Kompani e re' : 'Krijo kompani te re nga ky dokument'}
+                  {needsNewCompany ? 'Kompani e re' : t('common.createNewCompanyFromDocument')}
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -381,7 +381,7 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-teal-600 text-white font-semibold hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {selectedContactId ? 'Ruaj dokumentin' : 'Ruaj kompanine dhe dokumentin'}
+            {selectedContactId ? 'Ruaj dokumentin' : t('common.saveCompanyAndDocument')}
           </button>
         </div>
       </div>

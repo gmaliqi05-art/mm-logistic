@@ -43,13 +43,13 @@ const OVERDUE_STATUSES = [
   'delivered',
 ];
 
-const statusBadge: Record<string, { cls: string; label: string }> = {
-  sent: { cls: 'bg-blue-100 text-blue-700', label: 'Ne Pritje' },
-  in_transit: { cls: 'bg-amber-100 text-amber-700', label: 'E Nisur' },
-  pending_company_review: { cls: 'bg-sky-100 text-sky-700', label: 'Ne Shqyrtim' },
-  pending_stock_confirmation: { cls: 'bg-orange-100 text-orange-700', label: 'Per Stok' },
-  delivered: { cls: 'bg-emerald-100 text-emerald-700', label: 'E Dorezuar' },
-  cancelled: { cls: 'bg-red-100 text-red-700', label: 'Anuluar nga Admini' },
+const statusBadge: Record<string, { cls: string; labelKey: string }> = {
+  sent: { cls: 'bg-blue-100 text-blue-700', labelKey: 'common.pendingLabel' },
+  in_transit: { cls: 'bg-amber-100 text-amber-700', labelKey: 'common.startedLabel' },
+  pending_company_review: { cls: 'bg-sky-100 text-sky-700', labelKey: 'common.underReview' },
+  pending_stock_confirmation: { cls: 'bg-orange-100 text-orange-700', labelKey: 'common.forStock' },
+  delivered: { cls: 'bg-emerald-100 text-emerald-700', labelKey: 'common.deliveredF' },
+  cancelled: { cls: 'bg-red-100 text-red-700', labelKey: 'common.cancelledByAdmin' },
 };
 
 function scheduledOf(n: OverdueRow): Date | null {
@@ -267,7 +267,7 @@ export default function DriverOverdue() {
                         </span>
                         {sb && (
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${sb.cls}`}>
-                            {sb.label}
+                            {t(sb.labelKey)}
                           </span>
                         )}
                       </div>

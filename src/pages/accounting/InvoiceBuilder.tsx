@@ -1534,6 +1534,7 @@ function ProductAutocomplete({ value, onChange, onSelect, catalog, inputCls }: {
   catalog: CatalogItem[];
   inputCls: string;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -1581,7 +1582,7 @@ function ProductAutocomplete({ value, onChange, onSelect, catalog, inputCls }: {
         onChange={(e) => { onChange(e.target.value); setOpen(true); setActiveIdx(0); }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder={catalog.length ? 'Pershkrimi — shkruaj per te kerkuar nga katalogu' : 'Pershkrimi'}
+        placeholder={catalog.length ? t('common.descriptionSearchCatalog') : t('common.description')}
         autoComplete="off"
         role="combobox"
         aria-expanded={showDropdown}

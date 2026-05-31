@@ -252,7 +252,7 @@ export default function EmailSettings() {
                     value={newServiceKey}
                     onChange={(e) => setNewServiceKey(e.target.value)}
                     autoComplete="new-password"
-                    placeholder={cron.keyConfigured ? '••• shkruaje vlere te re per ta nderruar •••' : 'eyJ...'}
+                    placeholder={cron.keyConfigured ? t('common.writeNewValueToChange') : 'eyJ...'}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
                   />
                   <p className="mt-1 text-xs text-slate-500">{t('common.nevojitetPerThirrjetEBrendshmeHttp')}</p>

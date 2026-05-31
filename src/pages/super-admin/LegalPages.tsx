@@ -73,7 +73,7 @@ export default function LegalPages() {
       if (err) throw err;
       setDocuments(data ?? []);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error loading documents');
+      setError(err instanceof Error ? err.message : t('common.errorLoadingDocuments'));
     } finally {
       setLoading(false);
     }
@@ -150,7 +150,7 @@ export default function LegalPages() {
       setTimeout(() => setSuccess(null), 3000);
       await fetchDocuments();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error saving');
+      setError(err instanceof Error ? err.message : t('common.errorSaving'));
     } finally {
       setSaving(false);
     }
