@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { requireEnv } from "../_shared/env.ts";
+import { parseJson, z } from "../_shared/schemas.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,13 +9,29 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface RegisterInput {
-  platform: "ios" | "android";
-  token: string;
-  app_version?: string;
-  device_model?: string;
-  locale?: string;
-}
+// Per-platform token shape: iOS APNs tokens are 32-200 hex chars; FCM
+// Android tokens are base64url-ish. Validating up-front blocks
+// log-injection and clearly-malformed strings from being persisted.
+const RegisterBody = z.discriminatedUnion("platform", [
+  z.object({
+    platform: z.literal("ios"),
+    token: z.string().regex(/^[A-Fa-f0-9]{32,200}$/, "Invalid APNs token format"),
+    app_version: z.string().max(64).optional(),
+    device_model: z.string().max(128).optional(),
+    locale: z.string().max(8).optional(),
+  }),
+  z.object({
+    platform: z.literal("android"),
+    token: z.string().regex(/^[A-Za-z0-9_\-:.]{20,500}$/, "Invalid FCM token format"),
+    app_version: z.string().max(64).optional(),
+    device_model: z.string().max(128).optional(),
+    locale: z.string().max(8).optional(),
+  }),
+]);
+
+const DeleteBody = z.object({
+  token: z.string().min(1, "Token required").max(500),
+});
 
 Deno.serve(async (req: Request) => {
   const jsonRes = (p: unknown, status = 200) =>
@@ -43,34 +60,19 @@ Deno.serve(async (req: Request) => {
     );
 
     if (req.method === "DELETE") {
-      const { token } = (await req.json()) as { token?: string };
-      if (!token) return jsonRes({ error: "Token required" }, 400);
+      const parsed = await parseJson(req, DeleteBody, corsHeaders);
+      if (!parsed.ok) return parsed.response;
       await serviceClient
         .from("device_tokens")
         .update({ is_active: false })
         .eq("user_id", userId)
-        .eq("token", token);
+        .eq("token", parsed.data.token);
       return jsonRes({ success: true });
     }
 
-    const input = (await req.json()) as Partial<RegisterInput>;
-    if (!input.platform || !["ios", "android"].includes(input.platform)) {
-      return jsonRes({ error: "Invalid platform" }, 400);
-    }
-    if (!input.token || typeof input.token !== "string" || input.token.length > 500) {
-      return jsonRes({ error: "Invalid token" }, 400);
-    }
-    // Per-platform shape check. iOS APNs tokens are 64-hex chars
-    // (legacy) or up to 200 hex chars (modern); FCM Android tokens
-    // are base64url-ish (letters, digits, _-:.). This blocks
-    // log-injection and clearly-malformed strings from being
-    // persisted and later replayed to APNs/FCM.
-    if (input.platform === "ios" && !/^[A-Fa-f0-9]{32,200}$/.test(input.token)) {
-      return jsonRes({ error: "Invalid APNs token format" }, 400);
-    }
-    if (input.platform === "android" && !/^[A-Za-z0-9_\-:.]{20,500}$/.test(input.token)) {
-      return jsonRes({ error: "Invalid FCM token format" }, 400);
-    }
+    const parsed = await parseJson(req, RegisterBody, corsHeaders);
+    if (!parsed.ok) return parsed.response;
+    const input = parsed.data;
 
     // Token-takeover guard: device_tokens has UNIQUE(token), so an upsert
     // with onConflict: "token" would silently rewrite an existing row's
