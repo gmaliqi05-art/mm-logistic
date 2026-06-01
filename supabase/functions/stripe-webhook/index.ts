@@ -19,22 +19,28 @@ function getEnv() {
 async function getStripeSecrets(
   supabase: ReturnType<typeof createClient>,
 ): Promise<{ stripeKey: string; webhookSecret: string } | null> {
-  let stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
-  let webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
+  // Read from platform_settings FIRST — this is the source of truth managed
+  // by super-admin via PaymentSettings.tsx. Env vars are a fallback only,
+  // intentionally lower priority so a stale env var can't override a freshly
+  // rotated secret in the UI.
+  let stripeKey = "";
+  let webhookSecret = "";
 
-  if (!stripeKey || !webhookSecret) {
-    const { data } = await supabase
-      .from("platform_settings")
-      .select("key, value")
-      .in("key", ["stripe_secret_key", "stripe_webhook_secret"]);
+  const { data } = await supabase
+    .from("platform_settings")
+    .select("key, value")
+    .in("key", ["stripe_secret_key", "stripe_webhook_secret"]);
 
-    if (data) {
-      for (const row of data) {
-        if (row.key === "stripe_secret_key" && row.value) stripeKey = row.value;
-        if (row.key === "stripe_webhook_secret" && row.value) webhookSecret = row.value;
-      }
+  if (data) {
+    for (const row of data) {
+      if (row.key === "stripe_secret_key" && row.value) stripeKey = row.value;
+      if (row.key === "stripe_webhook_secret" && row.value) webhookSecret = row.value;
     }
   }
+
+  // Fallback to env vars only if super-admin hasn't set the values
+  if (!stripeKey) stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+  if (!webhookSecret) webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
 
   if (!stripeKey || !webhookSecret) return null;
   return { stripeKey, webhookSecret };
