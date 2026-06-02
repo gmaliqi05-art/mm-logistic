@@ -1,7 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14.25.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
-import { requireEnv } from "../_shared/env.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+function requireEnv(name: string): string {
+  const value = Deno.env.get(name);
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
+  return value;
+}
 
 let _url: string, _key: string;
 function getEnv() {
@@ -19,10 +24,9 @@ function getEnv() {
 async function getStripeSecrets(
   supabase: ReturnType<typeof createClient>,
 ): Promise<{ stripeKey: string; webhookSecret: string } | null> {
-  // Read from platform_settings FIRST — this is the source of truth managed
-  // by super-admin via PaymentSettings.tsx. Env vars are a fallback only,
-  // intentionally lower priority so a stale env var can't override a freshly
-  // rotated secret in the UI.
+  // platform_settings is the source of truth managed by super-admin via
+  // PaymentSettings.tsx. Env vars are a fallback only — intentionally lower
+  // priority so a stale env var can't override a freshly rotated secret.
   let stripeKey = "";
   let webhookSecret = "";
 
@@ -38,7 +42,6 @@ async function getStripeSecrets(
     }
   }
 
-  // Fallback to env vars only if super-admin hasn't set the values
   if (!stripeKey) stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
   if (!webhookSecret) webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
 
@@ -62,7 +65,7 @@ async function notifySuperAdmins(
       body: JSON.stringify({
         channelCode: "system.broadcast",
         title: `Pagese e re: ${companyName}`,
-        body: `Kompania "${companyName}" ka perfunduar pagesen per planin ${planName} (${amountEur.toFixed(2)}\u20AC). Llogaria eshte aktivizuar automatikisht.`,
+        body: `Kompania "${companyName}" ka perfunduar pagesen per planin ${planName} (${amountEur.toFixed(2)}€). Llogaria eshte aktivizuar automatikisht.`,
         recipientRoles: ["super_admin"],
         targetPlatforms: ["web", "android", "ios"],
         data: { type: "payment_completed", company_name: companyName, plan_name: planName },
@@ -134,7 +137,9 @@ Deno.serve(async (req: Request) => {
 
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, sig, secrets.webhookSecret);
+      // constructEventAsync is required in Deno — SubtleCrypto is async-only
+      // so the sync constructEvent throws SubtleCryptoProvider errors here.
+      event = await stripe.webhooks.constructEventAsync(body, sig, secrets.webhookSecret);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid signature";
       return new Response(
@@ -285,7 +290,6 @@ async function handleCheckoutCompleted(
   const periodStart = new Date(stripeSubscription.current_period_start * 1000).toISOString();
   const periodEnd = new Date(stripeSubscription.current_period_end * 1000).toISOString();
 
-  // Check if there's an existing pending_payment subscription to activate
   const { data: pendingSub } = await supabase
     .from("company_subscriptions")
     .select("id")
@@ -296,7 +300,6 @@ async function handleCheckoutCompleted(
     .maybeSingle();
 
   if (pendingSub) {
-    // Activate the pending subscription (new registration flow)
     await supabase
       .from("company_subscriptions")
       .update({
@@ -310,7 +313,6 @@ async function handleCheckoutCompleted(
       })
       .eq("id", pendingSub.id);
   } else {
-    // Upgrade flow: cancel old active subscription and create new one
     if (isUpgrade) {
       await supabase
         .from("company_subscriptions")
@@ -331,7 +333,6 @@ async function handleCheckoutCompleted(
     });
   }
 
-  // Always activate the company when payment succeeds
   await supabase
     .from("companies")
     .update({ is_active: true })
@@ -355,7 +356,6 @@ async function handleCheckoutCompleted(
     description: `Subscription: ${isUpgrade ? "Upgrade" : "New"} plan`,
   });
 
-  // Send welcome email + notify super admins
   const { data: company } = await supabase
     .from("companies")
     .select("id, name, created_by")
