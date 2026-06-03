@@ -28,7 +28,6 @@ interface RegisterPayload {
   planId?: string;
   planName?: string;
   businessType?: "logistics" | "accounting";
-  accountingEnabled?: boolean;
 }
 
 Deno.serve(async (req: Request) => {
@@ -63,7 +62,6 @@ Deno.serve(async (req: Request) => {
       planName,
     } = payload;
     const businessType = payload.businessType === "accounting" ? "accounting" : "logistics";
-    const accountingEnabled = payload.accountingEnabled === true;
     const primaryRole = businessType === "accounting" ? "accountant" : "company_admin";
 
     if (!companyName || !adminEmail || !adminPassword || (!planId && !planName)) {
@@ -195,8 +193,12 @@ Deno.serve(async (req: Request) => {
         commercial_register: commercialRegister || null,
         legal_form: legalForm || null,
         registration_court: registrationCourt || null,
-        business_type: accountingEnabled ? "both" : businessType,
-        accounting_enabled: accountingEnabled || businessType === "accounting",
+        business_type: businessType,
+        // accounting_enabled defaults to false. It is set to true only after a
+        // successful Stripe payment (stripe-webhook handleCheckoutCompleted)
+        // for paid plans, or below for free/trial accounting plans where no
+        // payment is required.
+        accounting_enabled: false,
         created_by: userId,
       })
       .select("id")
@@ -245,6 +247,15 @@ Deno.serve(async (req: Request) => {
     );
 
     const isPaidPlan = !isTrial;
+
+    // Enable accounting access immediately ONLY for trial/free accounting plans.
+    // For paid plans, accounting_enabled stays false until stripe-webhook fires.
+    if (isTrial && businessType === "accounting") {
+      await supabaseAdmin
+        .from("companies")
+        .update({ accounting_enabled: true })
+        .eq("id", companyData.id);
+    }
 
     const { error: subError } = await supabaseAdmin
       .from("company_subscriptions")

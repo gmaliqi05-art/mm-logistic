@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { X, Calculator, Check, Sparkles, Loader2, CreditCard } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 
 interface Props {
@@ -19,10 +18,9 @@ const FEATURES = [
   'Menagjim i aseteve fikse dhe amortizimit',
 ];
 
-export default function AccountingUpgradeModal({ onClose, onActivated }: Props) {
+export default function AccountingUpgradeModal({ onClose, onActivated: _onActivated }: Props) {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const { refreshSubscription } = useSubscription();
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +32,6 @@ export default function AccountingUpgradeModal({ onClose, onActivated }: Props) 
     setActivating(true);
     setError(null);
     try {
-      // Look for an accounting plan with stripe_price_id
       const { data: accPlan } = await supabase
         .from('subscription_plans')
         .select('id, stripe_price_id')
@@ -45,51 +42,41 @@ export default function AccountingUpgradeModal({ onClose, onActivated }: Props) 
         .limit(1)
         .maybeSingle();
 
-      if (accPlan?.stripe_price_id) {
-        // Use Stripe checkout for paid accounting addon
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          window.location.href = '/login';
-          return;
-        }
-
-        const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            },
-            body: JSON.stringify({
-              planId: accPlan.id,
-              successUrl: `${window.location.origin}/payment-success`,
-              cancelUrl: window.location.href,
-              isAddon: true,
-            }),
-          }
+      if (!accPlan?.stripe_price_id) {
+        throw new Error(
+          'Plani i kontabilitetit nuk eshte konfiguruar per pagese. Kontaktoni administratorin.',
         );
-
-        const data = await res.json();
-        if (data.url) {
-          window.location.href = data.url;
-          return;
-        }
       }
 
-      // Fallback: if no Stripe price configured, activate directly (free trial / manual)
-      const { error: upErr } = await supabase
-        .from('companies')
-        .update({
-          accounting_enabled: true,
-          accounting_enabled_at: new Date().toISOString(),
-        })
-        .eq('id', profile.company_id);
-      if (upErr) throw upErr;
-      await refreshSubscription();
-      onActivated?.();
-      onClose();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            planId: accPlan.id,
+            successUrl: `${window.location.origin}/payment-success`,
+            cancelUrl: window.location.href,
+            isAddon: true,
+          }),
+        },
+      );
+
+      const data = await res.json();
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || 'Nuk u arrit te nisej checkout-i i Stripe.');
+      }
+      window.location.href = data.url;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ndodhi nje gabim');
     } finally {

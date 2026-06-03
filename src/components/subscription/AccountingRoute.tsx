@@ -20,10 +20,16 @@ export default function AccountingRoute({ children }: { children: ReactNode }) {
   const allowedRoles = ['accountant', 'company_admin', 'super_admin'];
   if (!allowedRoles.includes(profile.role)) return <Navigate to="/login" replace />;
 
-  if (profile.role === 'accountant' || profile.role === 'super_admin') {
+  if (profile.role === 'super_admin') {
     return <>{children}</>;
   }
 
+  // accountant and company_admin both require: accounting_enabled is true on
+  // the company (set only after Stripe payment confirmation by stripe-webhook,
+  // or for trial/free plans by register-company), AND the subscription is not
+  // expired/pending payment. Without this gate, a company_admin could call
+  // PostgREST directly to flip the bit, or an accountant of a paid-but-unpaid
+  // company could access accounting before the webhook fires.
   if (!accountingEnabled || isExpired) {
     return <Navigate to="/company/accounting-upgrade" replace />;
   }
