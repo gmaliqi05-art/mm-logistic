@@ -66,6 +66,7 @@ Deno.serve(async (req: Request) => {
 
     const companyId = session.metadata?.company_id;
     const planId = session.metadata?.plan_id;
+    const isAddon = session.metadata?.is_addon === "true";
 
     if (!companyId || !planId) {
       return jsonRes({ error: "Missing metadata in session" }, 400);
@@ -152,10 +153,17 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Activate the company
+    // Activate the company. Mirror the webhook (stripe-webhook handleCheckoutCompleted):
+    // for an accounting addon purchase we also flip accounting_enabled = true here,
+    // otherwise a user returning to the success URL before the webhook fires would
+    // remain locked out of /accounting/* despite a successful payment.
+    const companyUpdate: { is_active: boolean; accounting_enabled?: boolean } = { is_active: true };
+    if (isAddon) {
+      companyUpdate.accounting_enabled = true;
+    }
     await supabase
       .from("companies")
-      .update({ is_active: true })
+      .update(companyUpdate)
       .eq("id", companyId);
 
     // Mark checkout session as completed

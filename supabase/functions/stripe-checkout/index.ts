@@ -17,6 +17,31 @@ const jsonRes = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+// Restrict success/cancel URLs to the request's own origin, plus an optional
+// allowlist via APP_ALLOWED_ORIGINS (comma-separated). Without this guard,
+// a tenant could ship Stripe a phishing URL that the post-payment redirect
+// would land on (CVSS 6.1 open-redirect).
+function isAllowedRedirect(url: string, req: Request): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+
+  const reqOrigin = req.headers.get("Origin") || req.headers.get("Referer");
+  const allowed = new Set<string>();
+  if (reqOrigin) {
+    try { allowed.add(new URL(reqOrigin).origin); } catch { /* ignore */ }
+  }
+  const extra = Deno.env.get("APP_ALLOWED_ORIGINS") ?? "";
+  for (const o of extra.split(",").map((s) => s.trim()).filter(Boolean)) {
+    try { allowed.add(new URL(o).origin); } catch { /* ignore */ }
+  }
+  return allowed.has(parsed.origin);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -48,7 +73,6 @@ Deno.serve(async (req: Request) => {
       successUrl,
       cancelUrl,
       isUpgrade,
-      isAddon,
       billingInterval,
       companyId: bodyCompanyId,
     } = body as {
@@ -56,13 +80,20 @@ Deno.serve(async (req: Request) => {
       successUrl: string;
       cancelUrl: string;
       isUpgrade?: boolean;
-      isAddon?: boolean;
+      // isAddon is intentionally NOT read from the request body — it is derived
+      // server-side from the plan's product_type to prevent a tenant from
+      // unlocking the accounting feature by paying for a cheap logistics plan
+      // with `isAddon: true`. See PR #148 for related bypass history.
       billingInterval?: "monthly" | "yearly";
       companyId?: string;
     };
 
     if (!planId || !successUrl || !cancelUrl) {
       return jsonRes({ error: "Missing required fields: planId, successUrl, cancelUrl" }, 400);
+    }
+
+    if (!isAllowedRedirect(successUrl, req) || !isAllowedRedirect(cancelUrl, req)) {
+      return jsonRes({ error: "successUrl/cancelUrl must match the request origin" }, 400);
     }
 
     const authHeader = req.headers.get("Authorization");
@@ -162,6 +193,27 @@ Deno.serve(async (req: Request) => {
 
     if (!plan) {
       return jsonRes({ error: "Plan not found or inactive" }, 404);
+    }
+
+    // Derive isAddon from the plan itself, not from the client payload.
+    // An accounting plan is treated as an addon when the tenant already has
+    // a non-accounting (logistics) subscription; otherwise it becomes the
+    // primary subscription. The webhook then flips accounting_enabled based
+    // on this metadata, so it MUST originate from the plan row.
+    const planIsAccounting = plan.product_type === "accounting";
+    let isAddon = false;
+    if (planIsAccounting) {
+      const { data: primarySub } = await supabase
+        .from("company_subscriptions")
+        .select("id, status, plan:subscription_plans(product_type)")
+        .eq("company_id", companyId)
+        .in("status", ["active", "trial"])
+        .order("created_at", { ascending: false });
+      isAddon = Boolean(
+        primarySub?.some((s: { plan: { product_type?: string } | null }) =>
+          s.plan?.product_type === "logistics",
+        ),
+      );
     }
 
     const useYearly = billingInterval === "yearly" && plan.price_yearly != null && Number(plan.price_yearly) > 0;
