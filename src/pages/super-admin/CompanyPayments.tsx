@@ -171,65 +171,34 @@ export default function CompanyPayments() {
       setSaving(true);
       setError(null);
 
-      const oldStatus = sub.status;
-      let newStatus = oldStatus;
-      const metadata: Record<string, unknown> = {};
-
+      // Every state change goes through a SECURITY DEFINER RPC that runs the
+      // subscription update, companies update, audit row, and (for activate)
+      // manual payment_transactions insert in a single transaction. Before
+      // this, three separate PostgREST calls left the system half-updated if
+      // the browser tab closed mid-sequence and produced no audit trail.
+      let rpcError: { message: string } | null = null;
       if (action === 'activate') {
-        newStatus = 'active';
-        const periodEnd = new Date();
-        periodEnd.setDate(periodEnd.getDate() + 30);
-
-        await supabase
-          .from('company_subscriptions')
-          .update({
-            status: 'active',
-            current_period_start: new Date().toISOString(),
-            current_period_end: periodEnd.toISOString(),
-            payment_method: sub.payment_method === 'free' ? 'manual' : sub.payment_method,
-          })
-          .eq('id', sub.id);
-
-        await supabase
-          .from('companies')
-          .update({ is_active: true })
-          .eq('id', company.id);
-
-        metadata.period_end = periodEnd.toISOString();
+        const { error } = await supabase.rpc('admin_activate_subscription', {
+          p_subscription_id: sub.id,
+          p_reason: actionReason,
+        });
+        rpcError = error;
       } else if (action === 'cancel') {
-        newStatus = 'cancelled';
-        await supabase
-          .from('company_subscriptions')
-          .update({ status: 'cancelled' })
-          .eq('id', sub.id);
+        const { error } = await supabase.rpc('admin_cancel_subscription', {
+          p_subscription_id: sub.id,
+          p_reason: actionReason,
+        });
+        rpcError = error;
       } else if (action === 'extend') {
-        newStatus = sub.status === 'expired' ? 'active' : sub.status;
-        const baseDate = sub.current_period_end ? new Date(sub.current_period_end) : new Date();
-        if (baseDate < new Date()) baseDate.setTime(Date.now());
-        baseDate.setDate(baseDate.getDate() + extendDays);
-
-        await supabase
-          .from('company_subscriptions')
-          .update({
-            status: newStatus,
-            current_period_end: baseDate.toISOString(),
-          })
-          .eq('id', sub.id);
-
-        metadata.extended_days = extendDays;
-        metadata.new_period_end = baseDate.toISOString();
+        const { error } = await supabase.rpc('admin_extend_subscription', {
+          p_subscription_id: sub.id,
+          p_days: extendDays,
+          p_reason: actionReason,
+        });
+        rpcError = error;
       }
 
-      await supabase.from('admin_subscription_actions').insert({
-        admin_id: profile.id,
-        company_id: company.id,
-        subscription_id: sub.id,
-        action,
-        old_status: oldStatus,
-        new_status: newStatus,
-        reason: actionReason,
-        metadata,
-      });
+      if (rpcError) throw new Error(rpcError.message);
 
       setActionModal(null);
       setActionReason('');
