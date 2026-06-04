@@ -149,6 +149,64 @@ Deno.serve(async (req: Request) => {
       throw new Error("Ky email eshte i regjistruar tashme");
     }
 
+    // Look up the plan early so we can enforce the trial-abuse guard before
+    // creating the auth user. For trial / free plans, we check the
+    // prior_trials tombstone — a single human can otherwise register
+    // unlimited trials by email aliasing, dot variations, or by deleting
+    // their account and re-registering.
+    let planQuery = supabaseAdmin
+      .from("subscription_plans")
+      .select("id, name, trial_days, price_monthly");
+    if (planId) {
+      planQuery = planQuery.eq("id", planId);
+    } else {
+      planQuery = planQuery.eq("name", planName!);
+    }
+    const { data: planData, error: planError } = await planQuery.maybeSingle();
+
+    if (planError || !planData) {
+      throw new Error("Plani i zgjedhur nuk u gjet");
+    }
+
+    const planIsTrial = planData.trial_days > 0 || Number(planData.price_monthly) === 0;
+
+    if (planIsTrial) {
+      // Normalize the email through the same SQL function the tombstone is
+      // keyed on, so Gmail dot variations and +alias suffixes collapse to a
+      // single fingerprint.
+      const { data: normalizedRow } = await supabaseAdmin
+        .rpc("normalize_trial_email", { p_email: normalizedEmail });
+      const fingerprint = (normalizedRow as string | null) ?? normalizedEmail;
+
+      const twelveMonthsAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: emailMatch } = await supabaseAdmin
+        .from("prior_trials")
+        .select("id")
+        .eq("email_normalized", fingerprint)
+        .gte("redeemed_at", twelveMonthsAgo)
+        .limit(1)
+        .maybeSingle();
+
+      if (emailMatch) {
+        throw new Error("Kjo adrese email ka perdorur tashme nje prove falas. Ju lutem zgjidhni nje plan me pagese.");
+      }
+
+      const vatTrim = (vatNumber || "").trim();
+      if (vatTrim) {
+        const { data: vatMatch } = await supabaseAdmin
+          .from("prior_trials")
+          .select("id")
+          .eq("vat_number", vatTrim)
+          .gte("redeemed_at", twelveMonthsAgo)
+          .limit(1)
+          .maybeSingle();
+
+        if (vatMatch) {
+          throw new Error("Kjo kompani (VAT) ka perdorur tashme nje prove falas. Ju lutem zgjidhni nje plan me pagese.");
+        }
+      }
+    }
+
     const { data: authData, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
         email: adminEmail,
@@ -222,25 +280,9 @@ Deno.serve(async (req: Request) => {
       throw new Error(updateProfileError.message);
     }
 
-    let planQuery = supabaseAdmin
-      .from("subscription_plans")
-      .select("id, name, trial_days, price_monthly");
-    if (planId) {
-      planQuery = planQuery.eq("id", planId);
-    } else {
-      planQuery = planQuery.eq("name", planName!);
-    }
-    const { data: planData, error: planError } = await planQuery.maybeSingle();
-
-    if (planError || !planData) {
-      await supabaseAdmin.from("profiles").delete().eq("id", userId);
-      await supabaseAdmin.from("companies").delete().eq("id", companyData.id);
-      await supabaseAdmin.auth.admin.deleteUser(userId);
-      throw new Error("Plani i zgjedhur nuk u gjet");
-    }
-
+    // Plan was already loaded above for the trial-abuse guard; reuse it.
     const now = new Date();
-    const isTrial = planData.trial_days > 0 || Number(planData.price_monthly) === 0;
+    const isTrial = planIsTrial;
     const periodEnd = new Date(
       now.getTime() +
         (isTrial ? (planData.trial_days || 30) : 30) * 24 * 60 * 60 * 1000
@@ -275,6 +317,28 @@ Deno.serve(async (req: Request) => {
       await supabaseAdmin.from("companies").delete().eq("id", companyData.id);
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error(subError.message);
+    }
+
+    // Record the trial fingerprint after the subscription is in place so a
+    // partial failure earlier doesn't burn the user's email/VAT for a year.
+    // Done as a fire-and-forget insert — if it fails, the registration
+    // already succeeded; we accept the (low-impact) risk over rolling back.
+    if (isTrial) {
+      const { data: normalizedRow } = await supabaseAdmin
+        .rpc("normalize_trial_email", { p_email: normalizedEmail });
+      const fingerprint = (normalizedRow as string | null) ?? normalizedEmail;
+      const vatTrim = (vatNumber || "").trim() || null;
+      const taxTrim = (taxNumber || "").trim() || null;
+      const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+        ?? req.headers.get("cf-connecting-ip")
+        ?? null;
+      await supabaseAdmin.from("prior_trials").insert({
+        email_normalized: fingerprint,
+        vat_number: vatTrim,
+        tax_number: taxTrim,
+        registered_ip: clientIp,
+        source: "register-company",
+      });
     }
 
     try {
