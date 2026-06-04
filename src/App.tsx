@@ -346,10 +346,10 @@ function AppRoutes() {
           <Route path="hr/settings" element={<HRSettings />} />
           <Route path="hr/leave" element={<HRMyLeave />} />
           <Route path="accounting-upgrade" element={<CompanyAccountingUpgrade />} />
-          <Route path="invoices" element={<Suspense fallback={<LoadingScreen />}><AccInvoices /></Suspense>} />
-          <Route path="invoices/new" element={<Suspense fallback={<LoadingScreen />}><AccInvoiceBuilder /></Suspense>} />
-          <Route path="invoices/:id/edit" element={<Suspense fallback={<LoadingScreen />}><AccInvoiceBuilder /></Suspense>} />
-          <Route path="invoices/:id/print" element={<Suspense fallback={<LoadingScreen />}><AccInvoicePrint /></Suspense>} />
+          <Route path="invoices" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoices /></AccountingRoute></Suspense>} />
+          <Route path="invoices/new" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoiceBuilder /></AccountingRoute></Suspense>} />
+          <Route path="invoices/:id/edit" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoiceBuilder /></AccountingRoute></Suspense>} />
+          <Route path="invoices/:id/print" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoicePrint /></AccountingRoute></Suspense>}/>
           <Route path="email" element={<EmailAutomationLayout />}>
             <Route index element={<CompanyEmailTemplatesList />} />
             <Route path="templates" element={<CompanyEmailTemplatesList />} />
