@@ -174,7 +174,11 @@ Deno.serve(async (req: Request) => {
 
     // Record the payment transaction
     const amountTotal = session.amount_total ?? 0;
-    await supabase.from("payment_transactions").insert({
+    // Upsert on stripe_payment_id so the inverse race (webhook beats us)
+    // doesn't 23505. The UNIQUE index added in 20260604100011 makes this
+    // path the dedupe boundary for both verify-checkout-session and the
+    // stripe-webhook handlers.
+    await supabase.from("payment_transactions").upsert({
       company_id: companyId,
       amount: amountTotal / 100,
       currency: session.currency || "eur",
@@ -182,8 +186,8 @@ Deno.serve(async (req: Request) => {
       payment_method: "stripe",
       stripe_payment_id: (session.payment_intent as string) || session.id,
       description: "Subscription payment (verified via checkout session)",
-    }).then(({ error }) => {
-      if (error) console.error("payment_transactions insert error:", error);
+    }, { onConflict: "stripe_payment_id", ignoreDuplicates: true }).then(({ error }) => {
+      if (error) console.error("payment_transactions upsert error:", error);
     });
 
     // Log a webhook-equivalent event for auditing

@@ -346,7 +346,9 @@ async function handleCheckoutCompleted(
   }
 
   const amountTotal = session.amount_total ?? 0;
-  await supabase.from("payment_transactions").insert({
+  // Use upsert so a race with verify-checkout-session (which records the same
+  // payment when the user returns before the webhook fires) doesn't 23505.
+  await supabase.from("payment_transactions").upsert({
     company_id: companyId,
     amount: amountTotal / 100,
     currency: session.currency || "eur",
@@ -354,7 +356,7 @@ async function handleCheckoutCompleted(
     payment_method: "stripe",
     stripe_payment_id: session.payment_intent as string || session.id,
     description: `Subscription: ${isUpgrade ? "Upgrade" : "New"} plan`,
-  });
+  }, { onConflict: "stripe_payment_id", ignoreDuplicates: true });
 
   const { data: company } = await supabase
     .from("companies")
@@ -417,7 +419,7 @@ async function handleInvoicePaid(
       .eq("id", sub.id);
   }
 
-  await supabase.from("payment_transactions").insert({
+  await supabase.from("payment_transactions").upsert({
     company_id: sub.company_id,
     amount: (invoice.amount_paid ?? 0) / 100,
     currency: invoice.currency || "eur",
@@ -425,7 +427,7 @@ async function handleInvoicePaid(
     payment_method: "stripe",
     stripe_payment_id: invoice.payment_intent as string || invoice.id,
     description: `Invoice payment: ${invoice.number || invoice.id}`,
-  });
+  }, { onConflict: "stripe_payment_id", ignoreDuplicates: true });
 }
 
 async function handlePaymentFailed(
@@ -448,7 +450,7 @@ async function handlePaymentFailed(
     .update({ status: "past_due" })
     .eq("id", sub.id);
 
-  await supabase.from("payment_transactions").insert({
+  await supabase.from("payment_transactions").upsert({
     company_id: sub.company_id,
     amount: (invoice.amount_due ?? 0) / 100,
     currency: invoice.currency || "eur",
@@ -456,7 +458,7 @@ async function handlePaymentFailed(
     payment_method: "stripe",
     stripe_payment_id: invoice.payment_intent as string || invoice.id,
     description: `Failed payment: ${invoice.number || invoice.id}`,
-  });
+  }, { onConflict: "stripe_payment_id", ignoreDuplicates: true });
 }
 
 async function handleSubscriptionUpdated(
@@ -468,10 +470,11 @@ async function handleSubscriptionUpdated(
 
   const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
   let status = "active";
+  let revokeAccess = false;
 
   if (subscription.status === "past_due") status = "past_due";
-  else if (subscription.status === "canceled") status = "cancelled";
-  else if (subscription.status === "unpaid") status = "expired";
+  else if (subscription.status === "canceled") { status = "cancelled"; revokeAccess = true; }
+  else if (subscription.status === "unpaid") { status = "expired"; revokeAccess = true; }
 
   await supabase
     .from("company_subscriptions")
@@ -480,14 +483,58 @@ async function handleSubscriptionUpdated(
       current_period_end: periodEnd,
     })
     .eq("stripe_subscription_id", subscription.id);
+
+  // When Stripe marks the subscription as terminally lost, revoke feature
+  // flags on the company so a tenant cannot keep reading/writing acc_*
+  // tables (gated by has_active_accounting) or get the active UI banner.
+  if (revokeAccess) {
+    await revokeCompanyAccessIfNoActiveSubscription(supabase, companyId);
+  }
 }
 
 async function handleSubscriptionDeleted(
   supabase: ReturnType<typeof createClient>,
   subscription: Stripe.Subscription
 ) {
+  const companyId = subscription.metadata?.company_id;
   await supabase
     .from("company_subscriptions")
     .update({ status: "cancelled" })
     .eq("stripe_subscription_id", subscription.id);
+
+  if (companyId) {
+    await revokeCompanyAccessIfNoActiveSubscription(supabase, companyId);
+  }
+}
+
+// Revoke companies.is_active and companies.accounting_enabled when the
+// company no longer has ANY active/trial subscription. We re-check rather
+// than blindly disabling because a tenant may have multiple subscriptions
+// (e.g. logistics primary + accounting addon); cancelling one shouldn't kill
+// access granted by the other.
+async function revokeCompanyAccessIfNoActiveSubscription(
+  supabase: ReturnType<typeof createClient>,
+  companyId: string,
+) {
+  const { data: surviving } = await supabase
+    .from("company_subscriptions")
+    .select("id, plan:subscription_plans(product_type)")
+    .eq("company_id", companyId)
+    .in("status", ["active", "trial"]);
+
+  const subs = (surviving ?? []) as Array<{ plan: { product_type?: string } | null }>;
+  const hasAny = subs.length > 0;
+  const hasAccounting = subs.some((s) => s.plan?.product_type === "accounting");
+
+  const update: { is_active?: boolean; accounting_enabled?: boolean } = {};
+  if (!hasAny) update.is_active = false;
+  // accounting_enabled should track *either* an accounting plan OR (for the
+  // addon flow) any active subscription combined with the original purchase.
+  // Conservative rule: only keep accounting_enabled when there is still an
+  // accounting-typed subscription. Pure addon purchasers will lose it when
+  // their addon is cancelled, which matches Stripe's source-of-truth.
+  if (!hasAccounting) update.accounting_enabled = false;
+
+  if (Object.keys(update).length === 0) return;
+  await supabase.from("companies").update(update).eq("id", companyId);
 }
