@@ -147,7 +147,12 @@ export async function requireCaller(
     return { ok: false, response: unauthorized(corsHeaders, "Profile not found") };
   }
 
-  if (!opts.allowInactive && profile.is_active === false) {
+  // Treat anything other than an explicit `true` as disabled. Previous code
+  // checked `is_active === false`, which let through profiles where the
+  // column was NULL (e.g. brief windows during migrations). The DB default
+  // is true, but defence-in-depth here matters because this guard fronts
+  // every privileged endpoint.
+  if (!opts.allowInactive && profile.is_active !== true) {
     return { ok: false, response: forbidden(corsHeaders, "Account disabled") };
   }
 
