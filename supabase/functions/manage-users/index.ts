@@ -67,7 +67,10 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Profili nuk u gjet" }, 403);
     }
 
-    if (callerProfile.is_active === false) {
+    // Anything other than an explicit `true` is treated as disabled. The
+    // previous strict `=== false` check let through profiles where the
+    // column was null (e.g. during a migration window).
+    if (callerProfile.is_active !== true) {
       return jsonResponse({ error: "Llogaria juaj eshte c'aktivizuar" }, 403);
     }
 

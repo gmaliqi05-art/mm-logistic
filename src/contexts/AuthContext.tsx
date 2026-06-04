@@ -124,6 +124,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // Tear down the push subscription BEFORE clearing auth — once the JWT is
+    // gone we can no longer reach the DB to delete the push_subscriptions
+    // row, and the browser PushManager would keep delivering pushes to the
+    // device under the previous user's identity. Best-effort: failures here
+    // shouldn't block logout.
+    const userIdAtSignOut = session?.user?.id ?? null;
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        const sub = await registration?.pushManager.getSubscription();
+        if (sub) {
+          const endpoint = sub.endpoint;
+          await sub.unsubscribe();
+          if (userIdAtSignOut) {
+            await supabase
+              .from('push_subscriptions')
+              .delete()
+              .eq('user_id', userIdAtSignOut)
+              .eq('endpoint', endpoint);
+          }
+        }
+      } catch (err) {
+        logger.warn('push unsubscribe on signOut failed', { error: err });
+      }
+    }
+
     await supabase.auth.signOut();
     setProfile(null);
     setSession(null);
