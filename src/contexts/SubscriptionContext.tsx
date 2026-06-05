@@ -44,13 +44,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const fetchSubscription = async (companyId: string) => {
     try {
+      // Fetch ALL active/trial subscriptions for the company, not just the
+      // newest one. A tenant who buys the accounting addon ends up with two
+      // rows (primary logistics + addon accounting); the addon is newer, so
+      // the previous `.limit(1).order(created_at desc)` made `plan` point at
+      // the addon and effectively downgraded the user's feature set in the
+      // UI (max_drivers, max_depots, feature_keys all wrong). Picking the
+      // non-addon plan keeps the primary plan as the source of truth for
+      // limits + features; accounting access stays gated separately via
+      // companies.accounting_enabled.
       const { data, error } = await supabase
         .from('company_subscriptions')
         .select('*, plan:subscription_plans(*)')
         .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
       if (error) {
         logger.error('Failed to fetch subscription', { error });
@@ -59,9 +66,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (data) {
-        setSubscription(data);
-        setPlan((data.plan ?? null) as PlanRow | null);
+      const rows = (data ?? []) as Array<CompanySubscription & { plan: (PlanRow & { is_addon?: boolean; product_type?: string }) | null }>;
+      // Prefer an active/trial row whose plan is the primary (not an addon
+      // and not the accounting product), falling back to any active/trial,
+      // then to the newest row regardless of status (so we still surface
+      // expired/cancelled state to the gating UI).
+      const isPrimaryPlan = (p: (PlanRow & { is_addon?: boolean; product_type?: string }) | null) =>
+        !!p && !p.is_addon && p.product_type !== 'accounting';
+      const liveStatuses = new Set(['active', 'trial', 'past_due', 'pending_payment']);
+      const primary = rows.find((r) => liveStatuses.has(r.status) && isPrimaryPlan(r.plan));
+      const anyLive = primary ?? rows.find((r) => liveStatuses.has(r.status));
+      const chosen = anyLive ?? rows[0] ?? null;
+
+      if (chosen) {
+        setSubscription(chosen);
+        setPlan((chosen.plan ?? null) as PlanRow | null);
       } else {
         setSubscription(null);
         setPlan(null);
@@ -127,6 +146,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'company_features', filter: `company_id=eq.${companyId}` },
+        debouncedRefresh,
+      )
+      // Also watch the companies row itself — stripe-webhook flips
+      // accounting_enabled there directly (PR #149), and without this
+      // listener the UI stayed stale until the next mount or login. See
+      // audit finding 1.4.
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${companyId}` },
         debouncedRefresh,
       )
       .subscribe();
