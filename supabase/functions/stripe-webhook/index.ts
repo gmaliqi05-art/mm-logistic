@@ -310,6 +310,9 @@ async function handleCheckoutCompleted(
         current_period_start: periodStart,
         current_period_end: periodEnd,
         payment_method: "stripe",
+        // Burn the single-use unauth checkout token so a leaked value cannot
+        // be replayed to mint a second checkout in this tenant's name.
+        pending_payment_token: null,
       })
       .eq("id", pendingSub.id);
   } else {
