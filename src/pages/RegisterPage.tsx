@@ -396,6 +396,11 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           companyId: data.companyId,
+          // Single-use token minted by register-company. Without it the
+          // unauthenticated checkout path now rejects (401), which prevents
+          // a third party who learned the companyId from starting a paid
+          // checkout in this tenant's name.
+          pendingPaymentToken: data.pendingPaymentToken,
           planId: selectedPlan.id,
           billingInterval,
           successUrl: `${window.location.origin}/payment-success`,

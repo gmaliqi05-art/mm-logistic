@@ -299,6 +299,16 @@ Deno.serve(async (req: Request) => {
         .eq("id", companyData.id);
     }
 
+    // For paid plans, mint a single-use random token. The unauthenticated
+    // stripe-checkout path requires it, preventing a third party who knows
+    // only the companyId from initiating a checkout in this tenant's name.
+    let pendingPaymentToken: string | null = null;
+    if (isPaidPlan) {
+      const buf = new Uint8Array(32);
+      crypto.getRandomValues(buf);
+      pendingPaymentToken = Array.from(buf).map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
     const { error: subError } = await supabaseAdmin
       .from("company_subscriptions")
       .insert({
@@ -310,6 +320,7 @@ Deno.serve(async (req: Request) => {
         current_period_start: now.toISOString(),
         current_period_end: isPaidPlan ? null : periodEnd.toISOString(),
         payment_method: isPaidPlan ? "stripe" : "free",
+        pending_payment_token: pendingPaymentToken,
       });
 
     if (subError) {
@@ -401,6 +412,7 @@ Deno.serve(async (req: Request) => {
         userId,
         companyId: companyData.id,
         businessType,
+        pendingPaymentToken,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -21,6 +21,13 @@ const jsonRes = (body: unknown, status = 200) =>
 // allowlist via APP_ALLOWED_ORIGINS (comma-separated). Without this guard,
 // a tenant could ship Stripe a phishing URL that the post-payment redirect
 // would land on (CVSS 6.1 open-redirect).
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 function isAllowedRedirect(url: string, req: Request): boolean {
   let parsed: URL;
   try {
@@ -75,6 +82,7 @@ Deno.serve(async (req: Request) => {
       isUpgrade,
       billingInterval,
       companyId: bodyCompanyId,
+      pendingPaymentToken: bodyPendingToken,
     } = body as {
       planId: string;
       successUrl: string;
@@ -86,6 +94,7 @@ Deno.serve(async (req: Request) => {
       // with `isAddon: true`. See PR #148 for related bypass history.
       billingInterval?: "monthly" | "yearly";
       companyId?: string;
+      pendingPaymentToken?: string;
     };
 
     if (!planId || !successUrl || !cancelUrl) {
@@ -140,8 +149,16 @@ Deno.serve(async (req: Request) => {
       companyName = company.name;
     } else {
       // --- Unauthenticated path (new registration with pending_payment) ---
+      // Requires a single-use token minted by register-company. Without it,
+      // anyone who learned a tenant's UUID could initiate a checkout in
+      // that tenant's name with a stolen card and have the chargeback land
+      // on the victim (and on the platform Stripe account). See H1-sec in
+      // the deep audit.
       if (!bodyCompanyId) {
         return jsonRes({ error: "Missing companyId for unauthenticated checkout" }, 400);
+      }
+      if (typeof bodyPendingToken !== "string" || bodyPendingToken.length !== 64) {
+        return jsonRes({ error: "Missing or malformed pendingPaymentToken" }, 401);
       }
 
       const ip = getClientIp(req);
@@ -154,9 +171,10 @@ Deno.serve(async (req: Request) => {
       }
 
       // Verify the company exists and has a pending_payment subscription
+      // with a matching token. Constant-time compare to avoid timing leaks.
       const { data: pendingSub } = await supabase
         .from("company_subscriptions")
-        .select("id, company_id, plan_id")
+        .select("id, company_id, plan_id, pending_payment_token")
         .eq("company_id", bodyCompanyId)
         .eq("status", "pending_payment")
         .order("created_at", { ascending: false })
@@ -165,6 +183,11 @@ Deno.serve(async (req: Request) => {
 
       if (!pendingSub) {
         return jsonRes({ error: "No pending payment subscription found for this company" }, 404);
+      }
+
+      const stored = (pendingSub.pending_payment_token as string | null) ?? "";
+      if (stored.length !== bodyPendingToken.length || !constantTimeEqual(stored, bodyPendingToken)) {
+        return jsonRes({ error: "Invalid pendingPaymentToken" }, 401);
       }
 
       const { data: company } = await supabase

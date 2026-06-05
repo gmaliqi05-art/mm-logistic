@@ -137,6 +137,8 @@ Deno.serve(async (req: Request) => {
           stripe_customer_id: customerId,
           current_period_start: periodStart,
           current_period_end: periodEnd,
+          // Burn the single-use unauth checkout token after activation.
+          pending_payment_token: null,
           payment_method: "stripe",
         })
         .eq("id", pendingSub.id);
