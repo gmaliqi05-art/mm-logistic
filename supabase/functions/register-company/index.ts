@@ -113,11 +113,15 @@ Deno.serve(async (req: Request) => {
 
     // Check if email was verified via the verification code flow
     const normalizedEmail = adminEmail.trim().toLowerCase();
+    // Require a verified-but-not-yet-consumed code. consumed_at gets stamped
+    // after the registration commits below, so a code is good for exactly
+    // one registration even within the 30-minute grace.
     const { data: verifiedCode } = await supabaseAdmin
       .from("email_verification_codes")
       .select("id")
       .eq("email", normalizedEmail)
       .not("verified_at", "is", null)
+      .is("consumed_at", null)
       .gte("expires_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
       .order("verified_at", { ascending: false })
       .limit(1)
@@ -351,6 +355,13 @@ Deno.serve(async (req: Request) => {
         source: "register-company",
       });
     }
+
+    // Burn the verification code so it cannot drive a second registration
+    // even within the 30-minute grace window.
+    await supabaseAdmin
+      .from("email_verification_codes")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", verifiedCode.id);
 
     try {
       await supabaseAdmin.rpc("seed_company_coa", {

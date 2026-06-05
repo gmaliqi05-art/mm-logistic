@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14.25.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { requireEnv } from "../_shared/env.ts";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,14 +25,19 @@ Deno.serve(async (req: Request) => {
   try {
     // Allow unauthenticated calls: users returning from Stripe redirect
     // may not have an active session. The Stripe session_id itself is the
-    // proof of payment — we verify it against Stripe's API below.
+    // proof of payment — we verify it against Stripe's API below. Rate
+    // limit defends against an attacker probing the activation path with
+    // guessed session ids (M2-sec).
+    const ip = getClientIp(req);
+    const rl = await checkRateLimit(`verify-checkout-session:ip=${ip}`, 20, 60_000);
+    if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
 
     const supabaseUrl = requireEnv("SUPABASE_URL");
     const serviceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const { sessionId } = (await req.json()) as { sessionId: string };
-    if (!sessionId) {
+    if (!sessionId || typeof sessionId !== "string" || sessionId.length > 200) {
       return jsonRes({ error: "sessionId required" }, 400);
     }
 
