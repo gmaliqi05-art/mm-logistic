@@ -9,11 +9,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+const isCapacitor = 'Capacitor' in window;
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: !isCapacitor,
     storage: window.localStorage,
     storageKey: 'mm-logistic-auth',
   },

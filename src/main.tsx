@@ -4,7 +4,10 @@ import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
-if ('serviceWorker' in navigator) {
+const isCapacitor = window.location.protocol === 'capacitor:' ||
+  window.location.hostname === 'localhost' && 'Capacitor' in window;
+
+if ('serviceWorker' in navigator && !isCapacitor) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
