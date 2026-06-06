@@ -1,13 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Capacitor } from '@capacitor/core';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
-const isCapacitor = window.location.protocol === 'capacitor:' ||
-  window.location.hostname === 'localhost' && 'Capacitor' in window;
-
-if ('serviceWorker' in navigator && !isCapacitor) {
+if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')

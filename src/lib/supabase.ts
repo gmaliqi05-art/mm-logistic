@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -9,13 +10,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-const isCapacitor = 'Capacitor' in window;
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: !isCapacitor,
+    detectSessionInUrl: !Capacitor.isNativePlatform(),
     storage: window.localStorage,
     storageKey: 'mm-logistic-auth',
   },

@@ -1,0 +1,47 @@
+{
+  "name": "MM Logistic - Smart Logistics. Clear Numbers.",
+  "short_name": "MM Logistic",
+  "description": "Platforma profesionale per menaxhimin e logjistikes dhe kontabilitetit.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d9488",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png?v=4",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512.png?v=4",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-192-maskable.png?v=4",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwa-icon-512-maskable.png?v=4",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/mm-logistic-social.png?v=4",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
