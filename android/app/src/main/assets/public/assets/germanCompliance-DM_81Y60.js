@@ -71,6 +71,3 @@ function o(c){return c?String(c).replace(/&/g,"&amp;").replace(/</g,"&lt;").repl
 `),i=`"EXTF";700;21;"Buchungsstapel";7;;;;"${n.replace(/-/g,"")}";"${u.replace(/-/g,"")}";"";;;;"EUR";;;;;;;;;;;;;;;\r
 `+l;x(i,`DATEV_Export_${n}_${u}.csv`,"text/csv")}function D(c,n){const u=[`Umsatzsteuer-Voranmeldung - ${n}`,`Zeitraum: ${c.period.from} bis ${c.period.to}`,"","Kennzahl;Bezeichnung;Betrag EUR",`81;Umsatze zu 19 % (steuerpflichtig);${a(c.revenue19)}`,`86;Umsatze zu 7 % (steuerpflichtig);${a(c.revenue7)}`,`35;Steuerfreie Umsatze;${a(c.revenue0)}`,`181;Umsatzsteuer 19 %;${a(c.vatCollected19)}`,`186;Umsatzsteuer 7 %;${a(c.vatCollected7)}`,`66;Vorsteuer;${a(c.vatPaid)}`,`83;Verbleibende Umsatzsteuer-Vorauszahlung;${a(c.vatDue)}`].join(`\r
 `);x(u,`UStVA_${c.period.from}_${c.period.to}.csv`,"text/csv")}export{D as a,p as b,I as e};
-
-
-export { a }

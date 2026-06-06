@@ -1,4 +1,1 @@
 import{j as r}from"./react-vendor-Dwlk7q_1.js";import{T as o}from"./TrailersManager-B88xN3wa.js";import"./tiptap-BB__UdYR.js";import"./index-BAmvzASx.js";import"./supabase-DjSvOoQS.js";import"./i18n-CBHlLJkF.js";import"./i18n-sq-Dyc8pABW.js";import"./i18n-legal-BZr4Isxp.js";import"./icons-BWdnOekj.js";import"./notifications-BH65SwbV.js";function x(){return r.jsx(o,{})}export{x as default};
-
-
-export default x

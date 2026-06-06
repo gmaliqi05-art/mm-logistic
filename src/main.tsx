@@ -1,11 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
+import { supabaseMisconfigured } from './lib/supabase';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
-if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
+if (supabaseMisconfigured) {
+  // supabase.ts already rendered a visible error into #root; stop here.
+} else if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
@@ -32,10 +35,12 @@ if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   });
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </StrictMode>
-);
+if (!supabaseMisconfigured) {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </StrictMode>
+  );
+}
