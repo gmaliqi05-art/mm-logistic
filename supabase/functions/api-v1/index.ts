@@ -65,6 +65,42 @@ Deno.serve(async (req: Request) => {
     // Reject outright.
     if (!apiKey.company_id) return json({ error: "Invalid API key" }, 401);
 
+    // Enforce scopes (M3-sec). Today all routes are read-only GETs, so we
+    // require the "read" scope on every authenticated route. A key with
+    // an empty scopes array is treated as having no permissions — the
+    // create-api-key flow already mints keys with ["read"] by default.
+    const scopes = Array.isArray(apiKey.scopes) ? (apiKey.scopes as string[]) : [];
+    if (!scopes.includes("read")) {
+      return json({ error: "API key is missing the 'read' scope" }, 403);
+    }
+
+    // Gate on the company being active AND having a current paid/trial
+    // subscription (M4-sec). A lapsed tenant whose UI is correctly
+    // blocked could otherwise keep pulling data via a long-lived API key.
+    const { data: company } = await admin
+      .from("companies")
+      .select("is_active")
+      .eq("id", apiKey.company_id)
+      .maybeSingle();
+    if (!company || company.is_active !== true) {
+      return json({ error: "Company is not active" }, 403);
+    }
+    const { data: liveSubs } = await admin
+      .from("company_subscriptions")
+      .select("id, status, current_period_end, trial_end")
+      .eq("company_id", apiKey.company_id)
+      .in("status", ["active", "trial"]);
+    const nowMs = Date.now();
+    const hasLiveSub = (liveSubs ?? []).some((s) => {
+      if (s.status === "active") {
+        return !s.current_period_end || new Date(s.current_period_end as string).getTime() > nowMs;
+      }
+      return !s.trial_end || new Date(s.trial_end as string).getTime() > nowMs;
+    });
+    if (!hasLiveSub) {
+      return json({ error: "Subscription is not active" }, 403);
+    }
+
     const rl = await checkRateLimit(`api-v1:${apiKey.id}`, 60, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
 
