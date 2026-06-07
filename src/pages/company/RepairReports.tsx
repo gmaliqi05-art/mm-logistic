@@ -77,7 +77,7 @@ function startOf(range: DateRange): string | null {
   return null;
 }
 
-export default function CompanyRepairReports() {
+export default function CompanyRepairReports({ embedded = false }: { embedded?: boolean } = {}) {
   const { profile } = useAuth();
   const { t } = useTranslation();
 
@@ -242,22 +242,27 @@ export default function CompanyRepairReports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Wrench className="w-6 h-6 text-teal-600" />
-            {t('company.repairReports.title')}
-          </h1>
-          <p className="text-gray-500 mt-1">{t('company.repairReports.subtitle')}</p>
+      {/* When embedded inside the Repair hub the tab bar already shows the
+          title and the sibling tab, so the page header + cross-link are
+          suppressed to avoid a duplicate heading. */}
+      {!embedded && (
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Wrench className="w-6 h-6 text-teal-600" />
+              {t('company.repairReports.title')}
+            </h1>
+            <p className="text-gray-500 mt-1">{t('company.repairReports.subtitle')}</p>
+          </div>
+          <Link
+            to="/company/worker-repair-stats"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {t('company.workerRepairStats.title')}
+          </Link>
         </div>
-        <Link
-          to="/company/worker-repair-stats"
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
-        >
-          <BarChart3 className="w-4 h-4" />
-          {t('company.workerRepairStats.title')}
-        </Link>
-      </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">

@@ -107,7 +107,6 @@ const navEntries: NavEntry[] = [
       { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports' },
       { to: '/company/sorting-reports', icon: Layers, labelKey: 'nav.sortingReports' },
       { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports' },
-      { to: '/company/worker-repair-stats', icon: BarChart3, labelKey: 'nav.workerRepairStats' },
       { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary' },
       { to: '/company/audit-report', icon: FileCheck2, labelKey: 'nav.auditReport' },
       { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', premium: true },

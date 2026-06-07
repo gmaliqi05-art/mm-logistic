@@ -85,8 +85,7 @@ const CompanyStock = lazy(() => import('./pages/company/Stock'));
 const CompanyCategories = lazy(() => import('./pages/company/Categories'));
 const CompanyDeliveryNotes = lazy(() => import('./pages/company/DeliveryNotes'));
 const CompanyReports = lazy(() => import('./pages/company/Reports'));
-const CompanyRepairReports = lazy(() => import('./pages/company/RepairReports'));
-const CompanyWorkerRepairStats = lazy(() => import('./pages/company/WorkerRepairStats'));
+const CompanyRepairHub = lazy(() => import('./pages/company/RepairHub'));
 const CompanyChat = lazy(() => import('./pages/company/Chat'));
 const CompanyDocuments = lazy(() => import('./pages/company/Documents'));
 const CompanyAuditLog = lazy(() => import('./pages/company/AuditLog'));
@@ -328,8 +327,8 @@ function AppRoutes() {
           <Route path="reports" element={<CompanyReports />} />
           <Route path="sorting" element={<DepotSorting />} />
           <Route path="sorting-reports" element={<CompanySortingReports />} />
-          <Route path="repair-reports" element={<CompanyRepairReports />} />
-          <Route path="worker-repair-stats" element={<CompanyWorkerRepairStats />} />
+          <Route path="repair-reports" element={<CompanyRepairHub />} />
+          <Route path="worker-repair-stats" element={<Navigate to="/company/repair-reports?tab=workers" replace />} />
           <Route path="chat" element={<CompanyChat />} />
           <Route path="audit-log" element={<CompanyAuditLog />} />
           <Route path="audit-report" element={<CompanyAuditReport />} />
