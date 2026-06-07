@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Building2,
@@ -13,6 +13,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Star,
   CreditCard,
   Globe,
@@ -100,8 +101,26 @@ export default function SuperAdminLayout() {
   const { t } = useTranslation();
   const { unreadCount: notificationCount } = useNotifications();
   const { settings: platformSettings } = usePlatformSettings();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Titled sections (Homepage CMS, App tools, Email) collapse by default so
+  // the 29-item sidebar isn't fully expanded at once. A section auto-opens
+  // when the current route lives inside it, and the user can toggle any
+  // section open/closed.
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    for (const section of navSections) {
+      if (!section.titleKey) continue;
+      init[section.titleKey] = section.items.some((i) =>
+        i.end ? location.pathname === i.to : location.pathname.startsWith(i.to),
+      );
+    }
+    return init;
+  });
+  const toggleSection = (key: string) =>
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const roleLabel = t(`roles.${profile?.role ?? ''}`);
 
@@ -166,36 +185,52 @@ export default function SuperAdminLayout() {
         </div>
 
         <nav className="flex-1 py-4 px-2 overflow-y-auto">
-          {navSections.map((section, sIdx) => (
-            <div key={sIdx} className={sIdx > 0 ? 'mt-4 pt-4 border-t border-teal-800' : ''}>
-              {section.titleKey && sidebarOpen && (
-                <p className="px-3 mb-2 text-[10px] font-bold text-teal-400 uppercase tracking-widest">{t(section.titleKey)}</p>
-              )}
-              <div className="space-y-0.5">
-                {section.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    onClick={() => setMobileOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group
-                      ${isActive ? 'bg-teal-700 text-white font-medium' : 'text-teal-200 hover:bg-teal-800 hover:text-white'}
-                      ${!sidebarOpen ? 'justify-center' : ''}`
-                    }
+          {navSections.map((section, sIdx) => {
+            // A titled section is collapsible. When the sidebar is collapsed
+            // to icons (!sidebarOpen) we always show items, since there's no
+            // header to toggle. Untitled sections are always shown.
+            const collapsible = Boolean(section.titleKey) && sidebarOpen;
+            const isOpen = !collapsible || openSections[section.titleKey!];
+            return (
+              <div key={sIdx} className={sIdx > 0 ? 'mt-4 pt-4 border-t border-teal-800' : ''}>
+                {section.titleKey && sidebarOpen && (
+                  <button
+                    onClick={() => toggleSection(section.titleKey!)}
+                    className="w-full flex items-center justify-between px-3 mb-2 text-[10px] font-bold text-teal-400 uppercase tracking-widest hover:text-teal-200 transition-colors"
+                    aria-expanded={isOpen}
                   >
-                    <item.icon className="w-4.5 h-4.5 flex-shrink-0" style={{ width: '18px', height: '18px' }} />
-                    <span className={`transition-all duration-300 whitespace-nowrap text-sm ${sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}`}>
-                      {t(item.labelKey)}
-                    </span>
-                    {item.badgeKey && sidebarOpen && (
-                      <span className="ml-auto px-1.5 py-0.5 rounded text-[9px] font-bold bg-teal-500/30 text-teal-300">{t(item.badgeKey)}</span>
-                    )}
-                  </NavLink>
-                ))}
+                    <span>{t(section.titleKey)}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+                  </button>
+                )}
+                {isOpen && (
+                  <div className="space-y-0.5">
+                    {section.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        onClick={() => setMobileOpen(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group
+                          ${isActive ? 'bg-teal-700 text-white font-medium' : 'text-teal-200 hover:bg-teal-800 hover:text-white'}
+                          ${!sidebarOpen ? 'justify-center' : ''}`
+                        }
+                      >
+                        <item.icon className="w-4.5 h-4.5 flex-shrink-0" style={{ width: '18px', height: '18px' }} />
+                        <span className={`transition-all duration-300 whitespace-nowrap text-sm ${sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}`}>
+                          {t(item.labelKey)}
+                        </span>
+                        {item.badgeKey && sidebarOpen && (
+                          <span className="ml-auto px-1.5 py-0.5 rounded text-[9px] font-bold bg-teal-500/30 text-teal-300">{t(item.badgeKey)}</span>
+                        )}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="px-2 pb-2">
