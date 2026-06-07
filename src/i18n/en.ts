@@ -2555,6 +2555,7 @@ export const en: typeof sq = {
       tabDelivery: 'Delivery',
       tabPickup: 'Pickup',
       directionLabel: 'Order type',
+      openDocument: 'Document / Print',
       productLabel: 'Product',
       productPlaceholder: 'Select product (optional)',
       categorySearchPlaceholder: 'Search category...',

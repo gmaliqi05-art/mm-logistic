@@ -2552,6 +2552,7 @@ export const de: typeof sq = {
       tabDelivery: 'Lieferung',
       tabPickup: 'Abholung',
       directionLabel: 'Auftragsart',
+      openDocument: 'Dokument / Druck',
       productLabel: 'Produkt',
       productPlaceholder: 'Produkt w\u00e4hlen (optional)',
       categorySearchPlaceholder: 'Kategorie suchen...',

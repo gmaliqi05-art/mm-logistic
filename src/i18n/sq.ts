@@ -2550,6 +2550,7 @@ export const sq = {
       tabDelivery: 'Fletedergese (dalje)',
       tabPickup: 'Fletemarrje (hyrje)',
       directionLabel: 'Lloji i porosise',
+      openDocument: 'Dokument / Print',
       productLabel: 'Produkti',
       productPlaceholder: 'Zgjedh produktin (opsional)',
       categorySearchPlaceholder: 'Kerko kategorine...',
