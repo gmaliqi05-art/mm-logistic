@@ -91,7 +91,7 @@ function rangeToIso(r: RangePreset, customFrom: string, customTo: string): { fro
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
-export default function WorkerRepairStats() {
+export default function WorkerRepairStats({ embedded = false }: { embedded?: boolean } = {}) {
   const { profile } = useAuth();
   const { t } = useTranslation();
 
@@ -313,14 +313,18 @@ export default function WorkerRepairStats() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-teal-600" />
-            {t('company.workerRepairStats.title')}
-          </h1>
-          <p className="text-gray-500 mt-1">{t('company.workerRepairStats.subtitle')}</p>
-        </div>
+      {/* In the Repair hub the tab bar shows the title; keep the export
+          action but drop the duplicate heading when embedded. */}
+      <div className={`flex flex-col sm:flex-row sm:items-start gap-3 ${embedded ? 'sm:justify-end' : 'sm:justify-between'}`}>
+        {!embedded && (
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <BarChart3 className="w-6 h-6 text-teal-600" />
+              {t('company.workerRepairStats.title')}
+            </h1>
+            <p className="text-gray-500 mt-1">{t('company.workerRepairStats.subtitle')}</p>
+          </div>
+        )}
         <button
           onClick={exportCsv}
           disabled={workerAggs.length === 0}
