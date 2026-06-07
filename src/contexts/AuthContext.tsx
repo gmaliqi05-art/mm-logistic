@@ -150,6 +150,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Native shell: deactivate the FCM/APNs device tokens for this user
+    // so the next user on the same device doesn't inherit their pushes.
+    // Mirrors the web flow above; runs only inside Capacitor.
+    if (userIdAtSignOut) {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          await supabase
+            .from('device_tokens')
+            .update({ is_active: false })
+            .eq('user_id', userIdAtSignOut);
+        }
+      } catch (err) {
+        logger.warn('device_tokens deactivate on signOut failed', { error: err });
+      }
+    }
+
     await supabase.auth.signOut();
     setProfile(null);
     setSession(null);

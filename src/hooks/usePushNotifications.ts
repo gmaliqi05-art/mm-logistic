@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
+import { useNativePush } from './useNativePush';
 
 async function fetchVapidPublicKey(): Promise<string | null> {
   const { data, error } = await supabase
@@ -30,14 +32,24 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 export function usePushNotifications() {
   const { profile } = useAuth();
+  const native = useNativePush();
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [permission, setPermission] = useState<NotificationPermission>('default');
 
+  // Inside the Capacitor shell, delegate everything to the native FCM/APNs
+  // path. Web Push doesn't even work there (no PushManager). This keeps
+  // the existing consumers (PushAutoSubscribe, PushEnableBanner,
+  // DriverPermissionsGate, PushNotificationSettings) unchanged: they call
+  // the same hook and get the same surface.
+  const onNative = Capacitor.isNativePlatform();
+
   useEffect(() => {
+    if (onNative) return;
     checkSupport();
     checkSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
   async function checkSupport() {
@@ -166,6 +178,23 @@ export function usePushNotifications() {
     if (/Mac/.test(ua)) return 'Mac';
     if (/Linux/.test(ua)) return 'Linux';
     return 'Unknown';
+  }
+
+  if (onNative) {
+    // Translate Capacitor's permission string into the Web Notification API
+    // shape that existing UI ('granted' | 'denied' | 'default') expects.
+    const webPermission: NotificationPermission =
+      native.permission === 'granted' ? 'granted'
+        : native.permission === 'denied' ? 'denied'
+          : 'default';
+    return {
+      isSupported: native.isSupported,
+      isSubscribed: native.isSubscribed,
+      loading: native.loading,
+      permission: webPermission,
+      subscribe: native.subscribe,
+      unsubscribe: native.unsubscribe,
+    };
   }
 
   return {
