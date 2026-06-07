@@ -171,34 +171,37 @@ export default function CompanyPayments() {
       setSaving(true);
       setError(null);
 
-      // Every state change goes through a SECURITY DEFINER RPC that runs the
-      // subscription update, companies update, audit row, and (for activate)
-      // manual payment_transactions insert in a single transaction. Before
-      // this, three separate PostgREST calls left the system half-updated if
-      // the browser tab closed mid-sequence and produced no audit trail.
-      let rpcError: { message: string } | null = null;
-      if (action === 'activate') {
-        const { error } = await supabase.rpc('admin_activate_subscription', {
-          p_subscription_id: sub.id,
-          p_reason: actionReason,
-        });
-        rpcError = error;
-      } else if (action === 'cancel') {
-        const { error } = await supabase.rpc('admin_cancel_subscription', {
-          p_subscription_id: sub.id,
-          p_reason: actionReason,
-        });
-        rpcError = error;
-      } else if (action === 'extend') {
-        const { error } = await supabase.rpc('admin_extend_subscription', {
-          p_subscription_id: sub.id,
-          p_days: extendDays,
-          p_reason: actionReason,
-        });
-        rpcError = error;
-      }
+      // The three admin subscription actions used to call SECURITY DEFINER
+      // RPCs directly (admin_activate / cancel / extend _subscription).
+      // The RPCs are still in place — they handle the multi-step
+      // transaction — but PostgREST EXECUTE was revoked from
+      // `authenticated` to remove the public surface flagged by Supabase
+      // advisor 0029. The admin-subscription-action edge function is the
+      // only path that can reach them: it verifies the JWT belongs to a
+      // super_admin via requireCaller, then invokes the RPC with service
+      // role (which bypasses the EXECUTE grant).
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Session expired');
 
-      if (rpcError) throw new Error(rpcError.message);
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-subscription-action`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            action,
+            subscription_id: sub.id,
+            reason: actionReason,
+            days: action === 'extend' ? extendDays : undefined,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
 
       setActionModal(null);
       setActionReason('');
