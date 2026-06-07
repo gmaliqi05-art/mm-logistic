@@ -217,7 +217,7 @@ function OverviewTab() {
 
       <div>
         <h3 className="text-sm font-semibold text-slate-900 mb-3">Recent Queue Activity</h3>
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -576,7 +576,7 @@ function ChannelsTab() {
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -710,7 +710,7 @@ function TemplatesTab() {
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -868,7 +868,7 @@ function LogsTab() {
       </div>
 
       {loading ? <Loader2 className="w-6 h-6 animate-spin text-teal-600" /> : (
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -1108,7 +1108,7 @@ function DevicesTab() {
         <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
           <Globe className="w-4 h-4 text-teal-600" /> Web Push Subscriptions ({webSubs.length})
         </h3>
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -1147,7 +1147,7 @@ function DevicesTab() {
         <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
           <Smartphone className="w-4 h-4 text-green-600" /> Native Device Tokens ({deviceTokens.length})
         </h3>
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-slate-200 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
