@@ -2845,6 +2845,8 @@ export const de: typeof sq = {
       damagedAtCategoryLevel: '— defekt auf Kategorie-Ebene —',
       noProductsForCategory: '— keine Produkte —',
       pickCategoryFirst: '— Kategorie waehlen —',
+      classifiedInSorting: '(wird in der Sortierung zugeordnet)',
+      pendingSorting: '— unsortiert (Sortierung) —',
       title: 'Empfang / Versand',
       subtitle: 'Empfänge und Versendungen registrieren',
       tabReceiving: 'Empfang',
