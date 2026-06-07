@@ -242,6 +242,11 @@ export default function DepotReceiving() {
     return products.some((p) => p.category_id === categoryId);
   }
 
+  function categoryRequiresSorting(categoryId: string): boolean {
+    const c = categories.find((x) => x.id === categoryId);
+    return !!(c && c.sorting_mode && c.sorting_mode !== 'none');
+  }
+
   async function handleReceiving(e: React.FormEvent) {
     e.preventDefault();
     const validRows = receivingRows.filter((r) => r.category_id && r.quantity && parseInt(r.quantity, 10) > 0);
@@ -251,10 +256,11 @@ export default function DepotReceiving() {
     }
     // Damaged intake skips the product picker — defective pallets are
     // booked at category level regardless of which specific product
-    // they would have been. Only ask for a product when the row is
-    // marked as good.
+    // they would have been. The same applies to categories that need
+    // sorting: the worker books the bulk at category level and the
+    // sorter assigns each pallet to a specific product later.
     const missingProduct = validRows.find(
-      (r) => r.condition !== 'damaged' && categoryHasProducts(r.category_id) && !r.category_product_id,
+      (r) => r.condition !== 'damaged' && !categoryRequiresSorting(r.category_id) && categoryHasProducts(r.category_id) && !r.category_product_id,
     );
     if (missingProduct) {
       const cat = categories.find((c) => c.id === missingProduct.category_id);
@@ -274,11 +280,19 @@ export default function DepotReceiving() {
       // form has one lingering in state. Damaged stock is a single bucket
       // per (depot, category) so workers reparature can later credit
       // their repairs against it.
+      // Treat sortable-category good intake the same way as damaged intake:
+      // store at category level only. The product is set later by the sorter
+      // when the batch is committed.
+      const productIdFor = (r: ItemRow) =>
+        r.condition === 'damaged' || categoryRequiresSorting(r.category_id)
+          ? null
+          : (r.category_product_id || null);
+
       const movements = validRows.map((r) => ({
         company_id: companyId,
         depot_id: depotId,
         category_id: r.category_id,
-        category_product_id: r.condition === 'damaged' ? null : (r.category_product_id || null),
+        category_product_id: productIdFor(r),
         movement_type: 'entry' as const,
         quantity: parseInt(r.quantity, 10),
         condition_before: r.condition,
@@ -294,8 +308,7 @@ export default function DepotReceiving() {
 
       for (const row of validRows) {
         const qty = parseInt(row.quantity, 10);
-        // Mirror the movement insert above — damaged intake is category-only.
-        const productId = row.condition === 'damaged' ? null : (row.category_product_id || null);
+        const productId = productIdFor(row);
         let lookup = supabase
           .from('stock')
           .select('id, quantity')
@@ -470,18 +483,23 @@ export default function DepotReceiving() {
                           {row.condition === 'damaged' && (
                             <span className="ml-2 text-amber-700 font-normal text-[10px]">{t('depot.receiving.notRequiredForDamaged') || '(pa nevoje per defekt)'}</span>
                           )}
+                          {categoryRequiresSorting(row.category_id) && row.condition !== 'damaged' && (
+                            <span className="ml-2 text-amber-700 font-normal text-[10px]">{t('depot.receiving.classifiedInSorting') || '(klasifikohet ne sortire)'}</span>
+                          )}
                         </label>
                         <select
-                          value={row.category_product_id}
+                          value={categoryRequiresSorting(row.category_id) && row.condition !== 'damaged' ? '' : row.category_product_id}
                           onChange={(e) => updateReceivingRow(row.id, 'category_product_id', e.target.value)}
-                          disabled={!row.category_id || !hasProducts || row.condition === 'damaged'}
-                          required={hasProducts && row.condition !== 'damaged'}
+                          disabled={!row.category_id || !hasProducts || row.condition === 'damaged' || categoryRequiresSorting(row.category_id)}
+                          required={hasProducts && row.condition !== 'damaged' && !categoryRequiresSorting(row.category_id)}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-400"
                         >
                           <option value="">
                             {row.condition === 'damaged'
                               ? (t('depot.receiving.damagedAtCategoryLevel') || '— defekt te kategoria —')
-                              : (hasProducts ? (t('depot.stock.selectProduct') || 'Zgjedh produktin') : (row.category_id ? (t('depot.receiving.noProductsForCategory') || '— pa produkte —') : (t('depot.receiving.pickCategoryFirst') || '— zgjedh kategorin —')))}
+                              : categoryRequiresSorting(row.category_id)
+                                ? (t('depot.receiving.pendingSorting') || '— pa klasifikuar (sortire) —')
+                                : (hasProducts ? (t('depot.stock.selectProduct') || 'Zgjedh produktin') : (row.category_id ? (t('depot.receiving.noProductsForCategory') || '— pa produkte —') : (t('depot.receiving.pickCategoryFirst') || '— zgjedh kategorin —')))}
                           </option>
                           {rowProducts.map((p) => (
                             <option key={p.id} value={p.id}>{p.name}</option>

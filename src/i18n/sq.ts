@@ -2845,6 +2845,8 @@ export const sq = {
       damagedAtCategoryLevel: '— defekt te kategoria —',
       noProductsForCategory: '— pa produkte —',
       pickCategoryFirst: '— zgjedh kategorin —',
+      classifiedInSorting: '(klasifikohet ne sortire)',
+      pendingSorting: '— pa klasifikuar (sortire) —',
       tabReceiving: 'Pranim',
       tabShipping: 'Dergese',
       addItem: 'Shto artikull',

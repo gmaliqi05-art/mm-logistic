@@ -2848,6 +2848,8 @@ export const en: typeof sq = {
       damagedAtCategoryLevel: '— damaged at category level —',
       noProductsForCategory: '— no products —',
       pickCategoryFirst: '— pick a category —',
+      classifiedInSorting: '(classified in sorting)',
+      pendingSorting: '— unsorted (sorting) —',
       title: 'Receiving / Shipping',
       subtitle: 'Register receivings and shipments',
       tabReceiving: 'Receiving',
