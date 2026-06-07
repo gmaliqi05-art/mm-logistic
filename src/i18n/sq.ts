@@ -2549,6 +2549,7 @@ export const sq = {
       createNote: 'Krijo Porosi',
       tabDelivery: 'Fletedergese (dalje)',
       tabPickup: 'Fletemarrje (hyrje)',
+      directionLabel: 'Lloji i porosise',
       productLabel: 'Produkti',
       productPlaceholder: 'Zgjedh produktin (opsional)',
       categorySearchPlaceholder: 'Kerko kategorine...',

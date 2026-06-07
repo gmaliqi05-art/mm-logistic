@@ -2551,6 +2551,7 @@ export const de: typeof sq = {
       createNote: 'Auftrag erstellen',
       tabDelivery: 'Lieferung',
       tabPickup: 'Abholung',
+      directionLabel: 'Auftragsart',
       productLabel: 'Produkt',
       productPlaceholder: 'Produkt w\u00e4hlen (optional)',
       categorySearchPlaceholder: 'Kategorie suchen...',
