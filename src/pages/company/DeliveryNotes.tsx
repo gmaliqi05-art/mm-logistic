@@ -21,7 +21,6 @@ import {
   ChevronDown,
   Building2,
   Layers,
-  Truck,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -175,7 +174,10 @@ export default function CompanyDeliveryNotes() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState<NoteForm>({ ...emptyForm });
   const [ourRole, setOurRole] = useState<OurRole>('consignor');
-  const [threePartyData, setThreePartyData] = useState<ThreePartyData>(emptyThreeParty());
+  // threePartyData stays at its empty default now that the carrier UI is
+  // gone; the consignor/carrier/consignee columns are still written (as
+  // nulls) from it on create, so the shape is kept but no setter is needed.
+  const [threePartyData] = useState<ThreePartyData>(emptyThreeParty());
   const [saving, setSaving] = useState(false);
   const [selectedNote, setSelectedNote] = useState<DeliveryNote | null>(null);
   const [noteItems, setNoteItems] = useState<DeliveryNoteItem[]>([]);
@@ -1106,38 +1108,6 @@ export default function CompanyDeliveryNotes() {
 
               {/* --- COLLAPSIBLE SECTIONS --- */}
 
-              {/* Spedicioni (Carrier) */}
-              <CollapsibleHeader
-                label="Spedicioni (Carrier)"
-                icon={<Truck className="w-4 h-4" />}
-                isOpen={!!openSections.carrier}
-                onToggle={() => setOpenSections((s) => ({ ...s, carrier: !s.carrier }))}
-              />
-              {openSections.carrier && (
-                <div className="pl-2 border-l-2 border-slate-200 space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('threeParty.carrier.name')}</label>
-                    <input
-                      type="text"
-                      value={threePartyData.carrier.name}
-                      onChange={(e) => setThreePartyData({ ...threePartyData, carrier: { ...threePartyData.carrier, name: e.target.value } })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                      placeholder={t('threeParty.carrier.name')}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('threeParty.vehiclePlate')}</label>
-                    <input
-                      type="text"
-                      value={threePartyData.carrier_vehicle_plate}
-                      onChange={(e) => setThreePartyData({ ...threePartyData, carrier_vehicle_plate: e.target.value })}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                      placeholder={t('threeParty.vehiclePlate')}
-                    />
-                  </div>
-                </div>
-              )}
-
               {/* Marresi (Consignee) */}
               <CollapsibleHeader
                 label="Marresi (Consignee)"
@@ -1407,6 +1377,17 @@ export default function CompanyDeliveryNotes() {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Optional printable document (Fletedergese / Fletemarrje). */}
+              <a
+                href={`/company/delivery-notes/${selectedNote.id}/print`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                {t('company.deliveryNotes.openDocument')}
+              </a>
+
               <div>
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">{t('company.deliveryNotes.changeStatus')}</label>
                 <select
