@@ -652,7 +652,8 @@ export default function GermanFinancials() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3 text-base border-b-2 border-emerald-600 pb-2">{labels.assetsHeading}</h3>
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto -mx-2 px-2">
+                  <table className="w-full text-sm min-w-[420px]">
                     <tbody>
                       {assetRows.filter(r => !liabilityRows.includes(r) && Math.abs(r.balance) > 0.01).map(r => (
                         <tr key={r.code} className="border-b border-gray-100">
@@ -663,6 +664,7 @@ export default function GermanFinancials() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                   <div className="flex justify-between pt-3 border-t-2 border-gray-900 font-bold mt-3">
                     <span>{labels.totalAssets}</span>
                     <span>{formatMoney(totalAssets)}</span>
@@ -670,7 +672,8 @@ export default function GermanFinancials() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3 text-base border-b-2 border-emerald-600 pb-2">{labels.liabilitiesHeading}</h3>
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto -mx-2 px-2">
+                  <table className="w-full text-sm min-w-[420px]">
                     <tbody>
                       {[...equityRows, ...liabilityRows].filter(r => Math.abs(r.balance) > 0.01).map(r => (
                         <tr key={r.code} className="border-b border-gray-100">
@@ -681,6 +684,7 @@ export default function GermanFinancials() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                   <div className="flex justify-between pt-3 border-t-2 border-gray-900 font-bold mt-3">
                     <span>{labels.totalLiabilities}</span>
                     <span>{formatMoney(totalLiab + totalEquity)}</span>
@@ -692,7 +696,8 @@ export default function GermanFinancials() {
             {activeTab === 'guv' && (
               <div>
                 <h3 className="font-semibold mb-3 border-b-2 border-emerald-600 pb-2">{labels.income}</h3>
-                <table className="w-full text-sm mb-6">
+                <div className="overflow-x-auto -mx-2 px-2">
+                <table className="w-full text-sm mb-6 min-w-[480px]">
                   <tbody>
                     {revenueRows.filter(r => Math.abs(r.balance) > 0.01).map(r => (
                       <tr key={r.code} className="border-b border-gray-100">
@@ -707,8 +712,10 @@ export default function GermanFinancials() {
                     </tr>
                   </tbody>
                 </table>
+                </div>
                 <h3 className="font-semibold mb-3 border-b-2 border-red-600 pb-2">{labels.expenses}</h3>
-                <table className="w-full text-sm mb-6">
+                <div className="overflow-x-auto -mx-2 px-2">
+                <table className="w-full text-sm mb-6 min-w-[480px]">
                   <tbody>
                     {expenseRows.filter(r => Math.abs(r.balance) > 0.01).map(r => (
                       <tr key={r.code} className="border-b border-gray-100">
@@ -723,6 +730,7 @@ export default function GermanFinancials() {
                     </tr>
                   </tbody>
                 </table>
+                </div>
                 <div className={`flex justify-between items-center p-4 rounded-lg ${totalRevenue - totalExpense >= 0 ? 'bg-emerald-50 text-emerald-900' : 'bg-red-50 text-red-900'}`}>
                   <span className="font-semibold text-lg">{labels.result}</span>
                   <span className="font-bold text-xl">{formatMoney(totalRevenue - totalExpense)}</span>
