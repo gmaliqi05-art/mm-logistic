@@ -1021,7 +1021,7 @@ function ReviewModal({
 
   async function handleCreateInvoice() {
     if (note.acc_invoice_id) {
-      navigate(`/company/invoices/${note.acc_invoice_id}/print`);
+      navigate(`/company/invoices?highlight=${note.acc_invoice_id}`);
       return;
     }
     setError(null);

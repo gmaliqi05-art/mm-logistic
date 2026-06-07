@@ -27,6 +27,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import DocumentScanner from '../../components/scanner/DocumentScanner';
+import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
+import { formatCurrency, type AccCurrency } from '../../types/accounting';
 import type { DeliveryNote, DeliveryNoteItem, Profile, Depot, ProductCategory } from '../../types';
 import { createNotificationAndPush } from '../../utils/pushNotifications';
 import PartnerQuickRegister from './PartnerQuickRegister';
@@ -182,6 +184,12 @@ export default function CompanyDeliveryNotes() {
   const [selectedNote, setSelectedNote] = useState<DeliveryNote | null>(null);
   const [noteItems, setNoteItems] = useState<DeliveryNoteItem[]>([]);
   const [showDetail, setShowDetail] = useState(false);
+  const [invoicePreview, setInvoicePreview] = useState<{
+    invoice: Record<string, unknown>;
+    items: Record<string, unknown>[];
+    contact: Record<string, unknown> | null;
+  } | null>(null);
+  const [loadingInvoicePreview, setLoadingInvoicePreview] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [reassigning, setReassigning] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -464,6 +472,31 @@ export default function CompanyDeliveryNotes() {
       .select('*, category:product_categories(name), product:category_products(name)')
       .eq('delivery_note_id', note.id);
     setNoteItems(data ?? []);
+  }
+
+  async function openInvoicePreview(invoiceId: string) {
+    try {
+      setLoadingInvoicePreview(true);
+      const { data: invoice, error: invErr } = await supabase
+        .from('acc_invoices')
+        .select('*, contact:acc_contacts(*)')
+        .eq('id', invoiceId)
+        .maybeSingle();
+      if (invErr) throw invErr;
+      if (!invoice) return;
+      const { data: items } = await supabase
+        .from('acc_invoice_items')
+        .select('*, product:acc_products(name, image_url, sku)')
+        .eq('invoice_id', invoiceId)
+        .order('created_at');
+      setInvoicePreview({
+        invoice: invoice as unknown as Record<string, unknown>,
+        items: (items ?? []) as unknown as Record<string, unknown>[],
+        contact: (invoice as { contact?: Record<string, unknown> }).contact ?? null,
+      });
+    } finally {
+      setLoadingInvoicePreview(false);
+    }
   }
 
   async function updateStatus(noteId: string, newStatus: string) {
@@ -1630,20 +1663,22 @@ export default function CompanyDeliveryNotes() {
               {selectedNote.type === 'delivery' && ['confirmed', 'completed'].includes(selectedNote.status) && (
                 <div className="mt-4">
                   <button
+                    disabled={loadingInvoicePreview}
                     onClick={() => {
-                      if ((selectedNote as any).acc_invoice_id) {
-                        window.location.href = `/company/invoices/${(selectedNote as any).acc_invoice_id}/print`;
+                      const invId = (selectedNote as any).acc_invoice_id;
+                      if (invId) {
+                        void openInvoicePreview(invId);
                       } else {
                         window.location.href = `/company/invoices/new?delivery_note_id=${selectedNote.id}`;
                       }
                     }}
-                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
                       (selectedNote as any).acc_invoice_id
                         ? 'text-teal-800 bg-teal-50 border border-teal-200 hover:bg-teal-100'
                         : 'text-white bg-sky-600 hover:bg-sky-700'
                     }`}
                   >
-                    <FileText className="w-4 h-4" />
+                    {loadingInvoicePreview ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                     {(selectedNote as any).acc_invoice_id ? 'Shiko faturen' : t('common.createInvoice')}
                   </button>
                 </div>
@@ -1730,6 +1765,45 @@ export default function CompanyDeliveryNotes() {
           onScanComplete={handleScanComplete}
         />
       )}
+
+      {invoicePreview && (() => {
+        const inv = invoicePreview.invoice as Record<string, any>;
+        const contact = invoicePreview.contact as Record<string, any> | null;
+        const items = invoicePreview.items as Record<string, any>[];
+        const currency = ((inv.currency as string) || 'EUR') as AccCurrency;
+        const typeShort = inv.invoice_type === 'credit_note' ? 'Nota kreditit' : inv.invoice_type === 'proforma' ? 'Proformë' : 'Faturë shitje';
+        return (
+          <DocumentPreviewModal
+            title={`Faturë ${inv.invoice_number ?? ''}`}
+            subtitle={typeShort}
+            statusLabel={inv.status as string}
+            statusClass="bg-emerald-50 text-emerald-700"
+            accentColor="teal"
+            fields={[
+              { label: 'Klienti', value: contact?.name ?? '-' },
+              { label: 'Data', value: inv.invoice_date as string },
+              { label: 'Afati', value: (inv.due_date as string) ?? '-' },
+              { label: 'Monedha', value: currency },
+            ]}
+            items={items.map((it) => ({
+              description: (it.description as string) || (it.product as { name?: string } | null)?.name || '',
+              quantity: Number(it.quantity ?? 0),
+              unit: (it.unit as string) || 'cope',
+              unit_price: Number(it.unit_price ?? 0),
+              vat_rate: Number(it.vat_rate ?? 0),
+              line_total: Number(it.line_total ?? 0),
+              image_url: (it.product as { image_url?: string } | null)?.image_url,
+            }))}
+            totals={[
+              { label: 'Nentotali', value: formatCurrency(Number(inv.subtotal ?? 0), currency) },
+              { label: 'TVSH', value: formatCurrency(Number(inv.vat_amount ?? 0), currency) },
+              { label: 'Totali', value: formatCurrency(Number(inv.total ?? 0), currency), strong: true },
+            ]}
+            notes={(inv.notes as string) || undefined}
+            onClose={() => setInvoicePreview(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
