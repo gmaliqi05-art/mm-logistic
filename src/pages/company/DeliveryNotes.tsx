@@ -941,6 +941,46 @@ export default function CompanyDeliveryNotes() {
             </div>
 
             <div className="p-6 space-y-4">
+              {/* Direction toggle — mirrors the list tabs so the user can see
+                  and change whether this order is an outgoing delivery note
+                  (Fletedergese / dalje) or an incoming goods receipt
+                  (Fletemarrje / hyrje) without closing the modal. Changing it
+                  also realigns the default scheduled date to the matching
+                  field, same as the "Create" button does on open. */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.directionLabel')}</label>
+                <div className="inline-flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({
+                      ...f,
+                      type: 'delivery',
+                      scheduled_delivery_date: f.scheduled_delivery_date || todayLocalDate(),
+                    }))}
+                    className={`flex-1 sm:flex-none px-5 py-2 rounded-md text-sm font-medium transition-colors inline-flex items-center justify-center gap-2 ${
+                      form.type === 'delivery' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <ArrowUpRight className="w-4 h-4" />
+                    {t('company.deliveryNotes.tabDelivery')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({
+                      ...f,
+                      type: 'pickup',
+                      scheduled_pickup_date: f.scheduled_pickup_date || todayLocalDate(),
+                    }))}
+                    className={`flex-1 sm:flex-none px-5 py-2 rounded-md text-sm font-medium transition-colors inline-flex items-center justify-center gap-2 ${
+                      form.type === 'pickup' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <ArrowDownLeft className="w-4 h-4" />
+                    {t('company.deliveryNotes.tabPickup')}
+                  </button>
+                </div>
+              </div>
+
               {/* Derguesi - always visible, auto-filled with our company */}
               <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg">
                 <Building2 className="w-4 h-4 text-slate-500 flex-shrink-0" />

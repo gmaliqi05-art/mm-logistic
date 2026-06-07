@@ -2551,6 +2551,7 @@ export const fr: typeof sq = {
       createNote: 'Cr\u00e9er une commande',
       tabDelivery: 'Livraison',
       tabPickup: 'Ramassage',
+      directionLabel: 'Type de commande',
       productLabel: 'Produit',
       productPlaceholder: 'S\u00e9lectionner un produit (optionnel)',
       categorySearchPlaceholder: 'Rechercher une cat\u00e9gorie...',

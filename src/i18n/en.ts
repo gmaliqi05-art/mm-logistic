@@ -2554,6 +2554,7 @@ export const en: typeof sq = {
       createNote: 'Create Order',
       tabDelivery: 'Delivery',
       tabPickup: 'Pickup',
+      directionLabel: 'Order type',
       productLabel: 'Product',
       productPlaceholder: 'Select product (optional)',
       categorySearchPlaceholder: 'Search category...',
