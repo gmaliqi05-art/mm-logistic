@@ -31,8 +31,12 @@ function esc(v: unknown): string {
     .replace(/"/g, "&quot;");
 }
 
+function round2(n: number): number {
+  return Math.round(Number(n) * 100) / 100;
+}
+
 function money(n: number): string {
-  return (Math.round(Number(n) * 100) / 100).toFixed(2);
+  return round2(n).toFixed(2);
 }
 
 function vatCategoryFromInvoice(inv: Record<string, unknown>, rate: number): string {
@@ -96,7 +100,11 @@ function buildXRechnung(
   for (const it of items) {
     const rate = Number(it.vat_rate ?? 0);
     const base = Number(it.line_total ?? 0);
-    const vat = base * (rate / 100);
+    // Round each line's VAT to 2 decimals BEFORE summing, so the breakdown
+    // total equals the sum of the per-line VAT values the UI shows. Summing
+    // unrounded then rounding once could differ by a cent on multi-line
+    // invoices and trips strict XRechnung validators. (Audit 6.3)
+    const vat = round2(base * (rate / 100));
     const category = (it.vat_category as string) || vatCategoryFromInvoice(invoice, rate);
     const cur = vatBreakdown.get(rate) || { taxable: 0, vat: 0, category };
     cur.taxable += base;

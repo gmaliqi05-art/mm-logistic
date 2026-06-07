@@ -33,14 +33,21 @@ export async function matchCounterparty(
   const { name, vat, email, phone } = snapshot;
   const normPhone = normalizePhone(phone);
 
+  // Note: these use .limit(1) + data[0] rather than .maybeSingle(). An
+  // ilike match can legitimately return more than one row (two contacts
+  // sharing a VAT or a near-identical name); .maybeSingle() turns that into
+  // a PGRST116 error + null data, which the old code silently treated as
+  // "no match" and could then create a duplicate contact. Taking the first
+  // row keeps the match working. (Audit 3.1)
   if (vat && vat.trim().length > 3) {
     const { data } = await supabase
       .from('companies')
       .select('id, name')
       .ilike('vat_number', vat.trim())
       .neq('id', ownCompanyId)
-      .maybeSingle();
-    if (data) return { companyId: data.id, contactId: null, matchedField: 'vat', display: data.name };
+      .limit(1);
+    const hit = data?.[0];
+    if (hit) return { companyId: hit.id, contactId: null, matchedField: 'vat', display: hit.name };
   }
   if (email && email.includes('@')) {
     const { data } = await supabase
@@ -48,8 +55,9 @@ export async function matchCounterparty(
       .select('id, name')
       .ilike('email', email.trim())
       .neq('id', ownCompanyId)
-      .maybeSingle();
-    if (data) return { companyId: data.id, contactId: null, matchedField: 'email', display: data.name };
+      .limit(1);
+    const hit = data?.[0];
+    if (hit) return { companyId: hit.id, contactId: null, matchedField: 'email', display: hit.name };
   }
   if (normPhone.length >= 6) {
     const { data } = await supabase
@@ -66,8 +74,9 @@ export async function matchCounterparty(
       .select('id, name')
       .ilike('name', name.trim())
       .neq('id', ownCompanyId)
-      .maybeSingle();
-    if (data) return { companyId: data.id, contactId: null, matchedField: 'name', display: data.name };
+      .limit(1);
+    const hit = data?.[0];
+    if (hit) return { companyId: hit.id, contactId: null, matchedField: 'name', display: hit.name };
   }
 
   if (vat && vat.trim().length > 3) {
@@ -76,8 +85,9 @@ export async function matchCounterparty(
       .select('id, name')
       .eq('company_id', ownCompanyId)
       .ilike('vat_number', vat.trim())
-      .maybeSingle();
-    if (data) return { companyId: null, contactId: data.id, matchedField: 'vat', display: data.name };
+      .limit(1);
+    const hit = data?.[0];
+    if (hit) return { companyId: null, contactId: hit.id, matchedField: 'vat', display: hit.name };
   }
   if (name && name.trim().length > 2) {
     const { data } = await supabase
@@ -85,8 +95,9 @@ export async function matchCounterparty(
       .select('id, name')
       .eq('company_id', ownCompanyId)
       .ilike('name', name.trim())
-      .maybeSingle();
-    if (data) return { companyId: null, contactId: data.id, matchedField: 'name', display: data.name };
+      .limit(1);
+    const hit = data?.[0];
+    if (hit) return { companyId: null, contactId: hit.id, matchedField: 'name', display: hit.name };
   }
 
   return { companyId: null, contactId: null, matchedField: null, display: name ?? '' };
