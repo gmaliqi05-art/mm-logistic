@@ -32,35 +32,56 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 // Country-gated export modules. Empty `countries` means "show everywhere".
-const allNavItems: Array<{
+// `group` buckets items into labelled sidebar sections (the flat 19-item list
+// was hard to scan); empty group = always at the top (Dashboard).
+type NavItem = {
   to: string;
   icon: typeof LayoutDashboard;
   label: string;
   labelKey: string;
   end: boolean;
   bottomNav: boolean;
+  group: string;
   countries?: string[];
-}> = [
-  { to: '/accounting', icon: LayoutDashboard, label: 'Dashboard', labelKey: 'nav.dashboard', end: true, bottomNav: true },
-  { to: '/accounting/contacts', icon: Users, label: 'Kontaktet', labelKey: 'nav.contacts', end: false, bottomNav: true },
-  { to: '/accounting/clients', icon: Building2, label: 'Kompanite / Faturat', labelKey: 'nav.clientInvoices', end: false, bottomNav: false },
-  { to: '/accounting/products', icon: Package, label: 'Produktet', labelKey: 'nav.products', end: false, bottomNav: true },
-  { to: '/accounting/invoices', icon: FileText, label: 'Faturat', labelKey: 'nav.invoices', end: false, bottomNav: true },
-  { to: '/accounting/purchases', icon: ShoppingCart, label: 'Blerjet', labelKey: 'nav.purchases', end: false, bottomNav: false },
-  { to: '/accounting/stock', icon: Warehouse, label: 'Stoku', labelKey: 'nav.stock', end: false, bottomNav: false },
-  { to: '/accounting/deliveries', icon: Truck, label: 'Fletedergesat', labelKey: 'nav.deliveries', end: false, bottomNav: false },
-  { to: '/accounting/transactions', icon: ArrowLeftRight, label: 'Shpenzime & Te ardhura', labelKey: 'nav.transactions', end: false, bottomNav: false },
-  { to: '/accounting/expenses', icon: Receipt, label: 'Kategorite e Shpenzimeve', labelKey: 'nav.expenses', end: false, bottomNav: false },
-  { to: '/accounting/bank-accounts', icon: Building2, label: 'Llogarite Bankare', labelKey: 'nav.bankAccounts', end: false, bottomNav: false },
-  { to: '/accounting/assets', icon: Briefcase, label: 'Asetet Fikse', labelKey: 'nav.fixedAssets', end: false, bottomNav: false },
-  { to: '/accounting/imports', icon: Ship, label: 'Importet', labelKey: 'nav.imports', end: false, bottomNav: false },
-  { to: '/accounting/coa', icon: BookOpen, label: 'Plani i Llogarive', labelKey: 'nav.coa', end: false, bottomNav: false },
-  { to: '/accounting/scans', icon: ScanLine, label: 'Skanimet', labelKey: 'nav.scans', end: false, bottomNav: false },
-  { to: '/accounting/reports', icon: BarChart3, label: 'Raportet', labelKey: 'nav.reports', end: false, bottomNav: false },
-  { to: '/accounting/financials', icon: Scale, label: 'Raportet Financiare', labelKey: 'nav.financials', end: false, bottomNav: false },
+};
+
+const allNavItems: NavItem[] = [
+  { to: '/accounting', icon: LayoutDashboard, label: 'Dashboard', labelKey: 'nav.dashboard', end: true, bottomNav: true, group: '' },
+  // Sales
+  { to: '/accounting/contacts', icon: Users, label: 'Kontaktet', labelKey: 'nav.contacts', end: false, bottomNav: true, group: 'sales' },
+  { to: '/accounting/clients', icon: Building2, label: 'Kompanite / Faturat', labelKey: 'nav.clientInvoices', end: false, bottomNav: false, group: 'sales' },
+  { to: '/accounting/products', icon: Package, label: 'Produktet', labelKey: 'nav.products', end: false, bottomNav: true, group: 'sales' },
+  { to: '/accounting/invoices', icon: FileText, label: 'Faturat', labelKey: 'nav.invoices', end: false, bottomNav: true, group: 'sales' },
+  { to: '/accounting/deliveries', icon: Truck, label: 'Fletedergesat', labelKey: 'nav.deliveries', end: false, bottomNav: false, group: 'sales' },
+  // Purchases
+  { to: '/accounting/purchases', icon: ShoppingCart, label: 'Blerjet', labelKey: 'nav.purchases', end: false, bottomNav: false, group: 'purchases' },
+  { to: '/accounting/expenses', icon: Receipt, label: 'Kategorite e Shpenzimeve', labelKey: 'nav.expenses', end: false, bottomNav: false, group: 'purchases' },
+  { to: '/accounting/scans', icon: ScanLine, label: 'Skanimet', labelKey: 'nav.scans', end: false, bottomNav: false, group: 'purchases' },
+  { to: '/accounting/imports', icon: Ship, label: 'Importet', labelKey: 'nav.imports', end: false, bottomNav: false, group: 'purchases' },
+  // Inventory
+  { to: '/accounting/stock', icon: Warehouse, label: 'Stoku', labelKey: 'nav.stock', end: false, bottomNav: false, group: 'inventory' },
+  { to: '/accounting/assets', icon: Briefcase, label: 'Asetet Fikse', labelKey: 'nav.fixedAssets', end: false, bottomNav: false, group: 'inventory' },
+  // Bank
+  { to: '/accounting/bank-accounts', icon: Building2, label: 'Llogarite Bankare', labelKey: 'nav.bankAccounts', end: false, bottomNav: false, group: 'bank' },
+  { to: '/accounting/transactions', icon: ArrowLeftRight, label: 'Shpenzime & Te ardhura', labelKey: 'nav.transactions', end: false, bottomNav: false, group: 'bank' },
+  // Reports
+  { to: '/accounting/reports', icon: BarChart3, label: 'Raportet', labelKey: 'nav.reports', end: false, bottomNav: false, group: 'reports' },
+  { to: '/accounting/financials', icon: Scale, label: 'Raportet Financiare', labelKey: 'nav.financials', end: false, bottomNav: false, group: 'reports' },
+  { to: '/accounting/coa', icon: BookOpen, label: 'Plani i Llogarive', labelKey: 'nav.coa', end: false, bottomNav: false, group: 'reports' },
   // DATEV is German tax-authority specific. Hide for other countries.
-  { to: '/accounting/datev-export', icon: BookOpen, label: 'DATEV Export', labelKey: 'nav.datevExport', end: false, bottomNav: false, countries: ['DE'] },
-  { to: '/accounting/settings', icon: Settings, label: 'Cilesimet', labelKey: 'nav.settings', end: false, bottomNav: false },
+  { to: '/accounting/datev-export', icon: BookOpen, label: 'DATEV Export', labelKey: 'nav.datevExport', end: false, bottomNav: false, group: 'reports', countries: ['DE'] },
+  // Settings
+  { to: '/accounting/settings', icon: Settings, label: 'Cilesimet', labelKey: 'nav.settings', end: false, bottomNav: false, group: 'settings' },
+];
+
+// Display order + i18n key for each sidebar section header.
+const GROUP_ORDER: { key: string; labelKey: string }[] = [
+  { key: 'sales', labelKey: 'nav.groupSales' },
+  { key: 'purchases', labelKey: 'nav.groupPurchases' },
+  { key: 'inventory', labelKey: 'nav.groupInventory' },
+  { key: 'bank', labelKey: 'nav.groupBank' },
+  { key: 'reports', labelKey: 'nav.groupReports' },
+  { key: 'settings', labelKey: 'nav.groupSettings' },
 ];
 
 const bottomNavItems = allNavItems.filter(i => i.bottomNav);
@@ -147,7 +168,8 @@ export default function AccountingLayout() {
         )}
 
         <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
-          {navItems.map((item) => (
+          {/* Ungrouped items (Dashboard) render first, flush to the top. */}
+          {navItems.filter((i) => !i.group).map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -164,6 +186,36 @@ export default function AccountingLayout() {
               <span className="flex-1 whitespace-nowrap">{getLabel(item)}</span>
             </NavLink>
           ))}
+
+          {/* Grouped sections with a small uppercase header each. */}
+          {GROUP_ORDER.map((group) => {
+            const groupItems = navItems.filter((i) => i.group === group.key);
+            if (groupItems.length === 0) return null;
+            return (
+              <div key={group.key} className="pt-3">
+                <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/80">
+                  {t(group.labelKey)}
+                </p>
+                {groupItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+                      ${isActive
+                        ? 'bg-emerald-700 text-white font-medium'
+                        : 'text-emerald-200 hover:bg-emerald-800 hover:text-white'
+                      }`
+                    }
+                  >
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="flex-1 whitespace-nowrap">{getLabel(item)}</span>
+                  </NavLink>
+                ))}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="px-2 pb-2">
@@ -292,8 +344,10 @@ export default function AccountingLayout() {
                 {t('nav.backToCompany') || 'Kthehu te Paneli'}
               </button>
             )}
-            <div className="grid grid-cols-3 gap-2">
-              {navItems.map((item) => {
+            {/* Ungrouped (Dashboard) then labelled sections, mirroring the
+                desktop sidebar so the mobile menu is just as scannable. */}
+            {(() => {
+              const renderTile = (item: NavItem) => {
                 const isActive = item.end
                   ? location.pathname === item.to
                   : location.pathname.startsWith(item.to);
@@ -313,8 +367,29 @@ export default function AccountingLayout() {
                     <span className="text-xs font-medium text-center leading-tight">{getLabel(item)}</span>
                   </NavLink>
                 );
-              })}
-            </div>
+              };
+              return (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    {navItems.filter((i) => !i.group).map(renderTile)}
+                  </div>
+                  {GROUP_ORDER.map((group) => {
+                    const groupItems = navItems.filter((i) => i.group === group.key);
+                    if (groupItems.length === 0) return null;
+                    return (
+                      <div key={group.key} className="mt-4">
+                        <p className="px-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                          {t(group.labelKey)}
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {groupItems.map(renderTile)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              );
+            })()}
           </div>
 
           <div className="p-4 border-t border-gray-100">
