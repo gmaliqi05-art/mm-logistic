@@ -83,6 +83,8 @@ export default function DriverDashboard() {
   const [selected, setSelected] = useState<NoteRow | null>(null);
   const [search, setSearch] = useState('');
   const [range, setRange] = useState<'default' | 'today' | '7d' | '30d' | 'all'>('default');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'delivery' | 'pickup'>('all');
+  const [partnerFilter, setPartnerFilter] = useState<string>('all');
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmErrors, setConfirmErrors] = useState<Record<string, string>>({});
   const [assignedTrailers, setAssignedTrailers] = useState<Array<{ id: string; plate_number: string; title: string | null }>>([]);
@@ -216,8 +218,20 @@ export default function DriverDashboard() {
     };
   }, [notes]);
 
+  const partnerOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const n of notes) {
+      const raw = ((n as any).partner_name ?? '').trim();
+      const clean = stripOwnFromPartnerName(raw, (profile as any)?.company_name, (profile as any)?.company_vat).trim();
+      const label = clean || raw;
+      if (label) set.add(label);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [notes, profile]);
+
   const filteredResults = useMemo(() => {
-    if (range === 'default' && !search.trim()) return [] as NoteRow[];
+    const anyFilter = range !== 'default' || !!search.trim() || typeFilter !== 'all' || partnerFilter !== 'all';
+    if (!anyFilter) return [] as NoteRow[];
     const now = new Date();
     const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
     let after: Date | null = null;
@@ -228,6 +242,13 @@ export default function DriverDashboard() {
 
     return notes.filter((n) => {
       if (n.status === 'draft') return false;
+      if (typeFilter !== 'all' && n.type !== typeFilter) return false;
+      if (partnerFilter !== 'all') {
+        const raw = ((n as any).partner_name ?? '').trim();
+        const clean = stripOwnFromPartnerName(raw, (profile as any)?.company_name, (profile as any)?.company_vat).trim();
+        const label = clean || raw;
+        if (label !== partnerFilter) return false;
+      }
       if (after) {
         const d = getNoteDate(n);
         if (d < after) return false;
@@ -242,9 +263,9 @@ export default function DriverDashboard() {
       ].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [notes, search, range]);
+  }, [notes, search, range, typeFilter, partnerFilter, profile]);
 
-  const showResults = range !== 'default' || !!search.trim();
+  const showResults = range !== 'default' || !!search.trim() || typeFilter !== 'all' || partnerFilter !== 'all';
 
   const totalToday = todayDeliveries.length + todayPickups.length;
   const totalTomorrow = tomorrowDeliveries.length + tomorrowPickups.length;
@@ -370,6 +391,43 @@ export default function DriverDashboard() {
             </button>
           ))}
         </div>
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+          {([
+            { k: 'all', label: t('driver.home.filterTypeAll'), icon: Repeat },
+            { k: 'delivery', label: t('driver.home.filterTypeDelivery'), icon: ArrowUpRight },
+            { k: 'pickup', label: t('driver.home.filterTypePickup'), icon: ArrowDownLeft },
+          ] as const).map((opt) => (
+            <button
+              key={opt.k}
+              type="button"
+              onClick={() => setTypeFilter(opt.k)}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                typeFilter === opt.k
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <opt.icon className="w-3 h-3" />
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {partnerOptions.length > 0 && (
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <select
+              value={partnerFilter}
+              onChange={(e) => setPartnerFilter(e.target.value)}
+              className="w-full pl-9 pr-9 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white appearance-none"
+            >
+              <option value="all">{t('driver.home.filterPartnerAll')}</option>
+              {partnerOptions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <ChevronRight className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 rotate-90 pointer-events-none" />
+          </div>
+        )}
       </div>
 
       {showResults ? (
@@ -383,7 +441,7 @@ export default function DriverDashboard() {
             </div>
             <button
               type="button"
-              onClick={() => { setSearch(''); setRange('default'); }}
+              onClick={() => { setSearch(''); setRange('default'); setTypeFilter('all'); setPartnerFilter('all'); }}
               className="text-xs font-semibold text-teal-700 hover:underline"
             >
               {t('driver.home.clearFilters')}
