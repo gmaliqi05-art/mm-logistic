@@ -126,6 +126,7 @@ export default function CompanyStock() {
           .from('stock')
           .select('*, category:product_categories(id, name), depot:depots(id, name), product:category_products(id, name)')
           .eq('company_id', companyId)
+          .gt('quantity', 0)
           .order('updated_at', { ascending: false }),
         supabase
           .from('stock_movements')

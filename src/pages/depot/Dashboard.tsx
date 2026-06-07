@@ -97,7 +97,8 @@ function DepoistDashboard() {
           .from('v_depot_stock_value')
           .select('category_id, category_name, category_product_id, product_name, condition, quantity')
           .eq('depot_id', depotId)
-          .eq('company_id', companyId),
+          .eq('company_id', companyId)
+          .gt('quantity', 0),
         supabase
           .from('v_depot_daily_flow')
           .select('flow_date, movement_type, quantity')

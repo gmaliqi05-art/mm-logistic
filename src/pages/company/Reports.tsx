@@ -154,7 +154,8 @@ export default function CompanyReports() {
         supabase
           .from('v_company_stock_breakdown')
           .select('*')
-          .eq('company_id', companyId),
+          .eq('company_id', companyId)
+          .gt('quantity', 0),
         supabase
           .from('v_company_movements')
           .select('*')
