@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Search, X, AlertTriangle, Loader2, CreditCard as Edit2, Printer, ChevronDown, Trash2, FileText, FileCode2, Eye, Truck, PackageCheck, PackageOpen, PackageX, Mail, Send, Bell } from 'lucide-react';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
 import { supabase } from '../../lib/supabase';
@@ -124,6 +124,9 @@ export default function Invoices() {
   const { profile, session } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  const highlightRef = useRef<HTMLElement | null>(null);
   const { rates: vatRates, standardRate: defaultVat } = useCountryVatRates();
   const { ctx: complianceCtx } = useCompliance();
   const complianceAuthority = taxAuthority(complianceCtx);
@@ -177,6 +180,19 @@ export default function Invoices() {
       fetchInvoices();
     }
   }, [profile?.company_id]);
+
+  useEffect(() => {
+    if (!highlightId || loading) return;
+    const el = highlightRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const timer = setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      next.delete('highlight');
+      setSearchParams(next, { replace: true });
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [highlightId, loading, invoices.length]);
 
 
   async function fetchInvoices() {
@@ -877,7 +893,13 @@ export default function Invoices() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredInvoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={invoice.id}
+                      ref={highlightId === invoice.id ? (highlightRef as React.RefObject<HTMLTableRowElement>) : undefined}
+                      className={`hover:bg-gray-50 transition-colors ${
+                        highlightId === invoice.id ? 'bg-amber-50 ring-2 ring-inset ring-amber-300' : ''
+                      }`}
+                    >
                       <td className="px-6 py-4">
                         <span className="text-sm font-bold text-gray-900">{invoice.invoice_number}</span>
                       </td>
@@ -1045,7 +1067,13 @@ export default function Invoices() {
 
           <div className="lg:hidden space-y-3">
             {filteredInvoices.map((invoice) => (
-              <div key={invoice.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <div
+                key={invoice.id}
+                ref={highlightId === invoice.id ? (highlightRef as React.RefObject<HTMLDivElement>) : undefined}
+                className={`bg-white rounded-xl shadow-sm border p-4 ${
+                  highlightId === invoice.id ? 'border-amber-300 ring-2 ring-amber-200' : 'border-gray-100'
+                }`}
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="text-sm font-bold text-gray-900">{invoice.invoice_number}</p>

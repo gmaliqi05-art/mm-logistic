@@ -1632,7 +1632,7 @@ export default function CompanyDeliveryNotes() {
                   <button
                     onClick={() => {
                       if ((selectedNote as any).acc_invoice_id) {
-                        window.location.href = `/company/invoices/${(selectedNote as any).acc_invoice_id}/print`;
+                        window.location.href = `/company/invoices?highlight=${(selectedNote as any).acc_invoice_id}`;
                       } else {
                         window.location.href = `/company/invoices/new?delivery_note_id=${selectedNote.id}`;
                       }
