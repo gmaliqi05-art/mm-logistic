@@ -1730,6 +1730,27 @@ function DeliveryProofModal({ note, t, onClose, onSaved }: {
         .from('delivery_notes')
         .update({ status: 'delivered', delivered_at: new Date().toISOString() })
         .eq('id', note.id);
+
+      // Notify company admins that the driver has confirmed delivery so they
+      // can review proof, post stock and issue an invoice without polling.
+      const { data: admins } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('company_id', note.company_id)
+        .eq('role', 'company_admin')
+        .eq('is_active', true);
+      if (admins && admins.length > 0) {
+        await notifyUsers({
+          userIds: admins.map((a) => a.id),
+          type: 'delivery',
+          titleKey: 'notifications.templates.deliveryConfirmedByDriver.title',
+          messageKey: 'notifications.templates.deliveryConfirmedByDriver.body',
+          params: { number: note.note_number },
+          referenceId: note.id,
+          fallbackTitle: 'Dergesa u konfirmua nga shoferi',
+          fallbackMessage: `${note.note_number} u dorezua dhe konfirmua nga shoferi.`,
+        });
+      }
       await onSaved();
     } catch (e) {
       setErr(e instanceof Error ? e.message : t('driver.taskDetail.errorGeneric'));

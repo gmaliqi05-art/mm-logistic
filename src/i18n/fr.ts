@@ -3669,6 +3669,10 @@ export const fr: typeof sq = {
         title: 'Livraison sans document',
         body: '{number} a \u00e9t\u00e9 cl\u00f4tur\u00e9e par le chauffeur sans scan - document attendu par e-mail.',
       },
+      deliveryConfirmedByDriver: {
+        title: 'Livraison confirm\u00e9e par le chauffeur',
+        body: '{number} a \u00e9t\u00e9 livr\u00e9e et confirm\u00e9e par le chauffeur.',
+      },
       deliveryScannedPendingReview: {
         title: 'Livraison scann\u00e9e en attente de v\u00e9rification',
         body: '{number} a \u00e9t\u00e9 scann\u00e9e/t\u00e9l\u00e9vers\u00e9e par le chauffeur et attend approbation.',

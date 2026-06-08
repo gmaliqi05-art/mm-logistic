@@ -3672,6 +3672,10 @@ export const en: typeof sq = {
         title: 'Delivery without document',
         body: '{number} was closed by the driver without scan - document expected by email.',
       },
+      deliveryConfirmedByDriver: {
+        title: 'Delivery confirmed by driver',
+        body: '{number} was delivered and confirmed by the driver.',
+      },
       deliveryScannedPendingReview: {
         title: 'Delivery scanned for review',
         body: '{number} was scanned/uploaded by the driver and awaits approval.',
