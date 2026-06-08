@@ -3667,6 +3667,10 @@ export const sq = {
         title: 'Dergese pa dokument',
         body: '{number} u mbyll nga shoferi pa skanim - dokumenti pritet me email.',
       },
+      deliveryConfirmedByDriver: {
+        title: 'Dergesa u konfirmua nga shoferi',
+        body: '{number} u dorezua dhe konfirmua nga shoferi.',
+      },
       deliveryScannedPendingReview: {
         title: 'Dergese e skanuar per shqyrtim',
         body: '{number} u skanua/ngarkua nga shoferi dhe pret miratim.',

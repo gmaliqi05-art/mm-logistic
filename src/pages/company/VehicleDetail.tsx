@@ -105,6 +105,16 @@ export default function VehicleDetail() {
   }
   async function addAssignment(driverId: string) {
     if (!driverId) return;
+    // Defence in depth: only assign drivers that actually belong to this
+    // company. The dropdown already filters by company, but a malicious
+    // caller could submit any UUID directly.
+    const { data: driver, error: driverErr } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', driverId)
+      .maybeSingle();
+    if (driverErr) return;
+    if (!driver || driver.company_id !== profile!.company_id) return;
     const isPrimary = assignments.length === 0;
     await supabase.from('vehicle_assignments').insert({
       vehicle_id: id, company_id: profile!.company_id, driver_id: driverId, is_primary: isPrimary,
