@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -84,6 +85,7 @@ const navEntries: NavEntry[] = [
   },
 
   { to: '/depot/settings', icon: Settings, labelKey: 'nav.settings', end: false, bottomNav: false },
+  { to: '/depot/manual', icon: BookOpen, labelKey: 'nav.manual', end: false, bottomNav: false },
 ];
 
 function leafVisible(item: NavLeaf, cat: WorkerCategory | null | undefined): boolean {

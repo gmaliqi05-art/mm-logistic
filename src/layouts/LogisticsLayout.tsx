@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   ArrowLeft,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../i18n';
@@ -26,6 +27,7 @@ export default function LogisticsLayout() {
     { to: '/logistics/active', icon: Truck, label: t('nav.activeAssignments'), end: false },
     { to: '/logistics/live-map', icon: Map, label: t('nav.liveMap'), end: false },
     { to: '/logistics/drivers', icon: Users, label: t('nav.drivers'), end: false },
+    { to: '/logistics/manual', icon: BookOpen, label: t('nav.manual'), end: false },
   ];
   const { name: brandName, logo: brandLogo } = useCompanyBranding();
   const location = useLocation();

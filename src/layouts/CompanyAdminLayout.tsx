@@ -32,6 +32,7 @@ import {
   Mail,
   ChevronDown,
   ChevronRight,
+  BookOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -126,6 +127,7 @@ const navEntries: NavEntry[] = [
       { to: '/company/data-export', icon: Download, labelKey: 'nav.dataExport', premium: true },
       { to: '/company/settings/api-webhooks', icon: Key, labelKey: 'nav.apiWebhooks', premium: true },
       { to: '/company/settings', icon: Settings, labelKey: 'nav.settings' },
+      { to: '/company/manual', icon: BookOpen, labelKey: 'nav.manual' },
     ],
   },
 ];
