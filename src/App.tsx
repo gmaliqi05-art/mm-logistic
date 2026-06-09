@@ -192,6 +192,8 @@ const LogisticsDashboard = lazy(() => import('./pages/logistics/Dashboard'));
 const LogisticsDispatch = lazy(() => import('./pages/logistics/Dispatch'));
 const LogisticsActive = lazy(() => import('./pages/logistics/Active'));
 const LogisticsDrivers = lazy(() => import('./pages/logistics/Drivers'));
+const Manual = lazy(() => import('./pages/Manual'));
+const DepotManual = lazy(() => import('./pages/Manual').then((m) => ({ default: m.DepotManual })));
 
 function LoadingScreen() {
   return (
@@ -362,6 +364,7 @@ function AppRoutes() {
             <Route path="log" element={<CompanyEmailLog />} />
           </Route>
           <Route path="client-prices" element={<CompanyClientPricesPage />} />
+          <Route path="manual" element={<Manual scope="company" />} />
         </Route>
 
         <Route path="/depot" element={
@@ -387,6 +390,7 @@ function AppRoutes() {
           <Route path="work-hours" element={<HRMyWorkHours />} />
           <Route path="chat" element={<DepotChat />} />
           <Route path="settings" element={<DepotSettings />} />
+          <Route path="manual" element={<DepotManual />} />
         </Route>
 
         <Route path="/driver" element={
@@ -407,6 +411,7 @@ function AppRoutes() {
           <Route path="attendance" element={<HRMyAttendance />} />
           <Route path="work-hours" element={<HRMyWorkHours />} />
           <Route path="settings" element={<DriverSettings />} />
+          <Route path="manual" element={<Manual scope="driver" />} />
         </Route>
 
         <Route path="/accounting" element={
@@ -439,6 +444,7 @@ function AppRoutes() {
           <Route path="settings" element={<AccSettings />} />
           <Route path="datev-export" element={<AccDatevExport />} />
           <Route path="test-export" element={<AccTestExport />} />
+          <Route path="manual" element={<Manual scope="accounting" />} />
         </Route>
 
         <Route path="/logistics" element={
@@ -451,6 +457,7 @@ function AppRoutes() {
           <Route path="active" element={<LogisticsActive />} />
           <Route path="live-map" element={<LogisticsLiveMap />} />
           <Route path="drivers" element={<LogisticsDrivers />} />
+          <Route path="manual" element={<Manual scope="logistics" />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

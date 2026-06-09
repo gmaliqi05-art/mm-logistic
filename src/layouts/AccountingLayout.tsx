@@ -72,6 +72,7 @@ const allNavItems: NavItem[] = [
   { to: '/accounting/datev-export', icon: BookOpen, label: 'DATEV Export', labelKey: 'nav.datevExport', end: false, bottomNav: false, group: 'reports', countries: ['DE'] },
   // Settings
   { to: '/accounting/settings', icon: Settings, label: 'Cilesimet', labelKey: 'nav.settings', end: false, bottomNav: false, group: 'settings' },
+  { to: '/accounting/manual', icon: BookOpen, label: 'Manual', labelKey: 'nav.manual', end: false, bottomNav: false, group: 'settings' },
 ];
 
 // Display order + i18n key for each sidebar section header.

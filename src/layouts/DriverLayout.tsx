@@ -16,6 +16,7 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
+  BookOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,6 +67,7 @@ const navEntries: NavEntry[] = [
   },
 
   { to: '/driver/settings', icon: SettingsIcon, labelKey: 'nav.settings', end: false, bottomNav: true },
+  { to: '/driver/manual', icon: BookOpen, labelKey: 'nav.manual', end: false, bottomNav: false },
 ];
 
 const navItems: NavLeaf[] = navEntries.flatMap((e) => (e.kind === 'group' ? e.items : [e]));

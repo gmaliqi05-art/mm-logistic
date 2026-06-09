@@ -1380,6 +1380,7 @@ export const sq = {
     automjetet: 'Automjetet',
     emailAutomation: 'Email & Automatizime',
     settings: 'Cilesimet',
+    manual: 'Manuali i perdorimit',
     hr: 'Burimet Njerezore',
     hrLeave: 'Pushimet e Mia',
     hrAttendance: 'Vijueshmeria',

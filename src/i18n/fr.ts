@@ -1382,6 +1382,7 @@ export const fr: typeof sq = {
     automjetet: 'Véhicules',
     emailAutomation: 'Email & Automatisation',
     settings: 'Paramètres',
+    manual: 'Manuel d\'utilisation',
     hr: 'Ressources Humaines',
     hrLeave: 'Mes Congés',
     hrAttendance: 'Présence',
