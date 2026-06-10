@@ -359,7 +359,14 @@ export type Feature =
   | 'audit_log'
   | 'bulk_operations'
   | 'stock_alerts'
-  | 'data_export';
+  | 'data_export'
+  | 'fleet_reports'
+  | 'hr'
+  | 'email_automation'
+  | 'api_webhooks'
+  | 'sorting'
+  | 'repairs'
+  | 'driver_tracking';
 
 export interface AuditLog {
   id: string;

@@ -117,6 +117,7 @@ const CompanyManualEmail = lazy(() => import('./pages/company/ManualEmail'));
 const CompanyClientPricesPage = lazy(() => import('./pages/company/ClientPricesPage'));
 const CompanyAutomationRules = lazy(() => import('./pages/company/AutomationRules'));
 const AccountingRoute = lazy(() => import('./components/subscription/AccountingRoute'));
+const FeatureGate = lazy(() => import('./components/subscription/FeatureGate'));
 
 const DepotDashboard = lazy(() => import('./pages/depot/Dashboard'));
 const DepotStock = lazy(() => import('./pages/depot/Stock'));
@@ -324,14 +325,14 @@ function AppRoutes() {
           <Route path="partner-flows" element={<CompanyPartnerFlows />} />
           <Route path="pallet-accounts" element={<CompanyPalletAccounts />} />
           <Route path="pallet-accounts/:id" element={<CompanyPalletAccountDetail />} />
-          <Route path="live-map" element={<CompanyLiveMapWithPlanner />} />
+          <Route path="live-map" element={<FeatureGate feature="driver_tracking"><CompanyLiveMapWithPlanner /></FeatureGate>} />
           <Route path="route-planner" element={<CompanyRoutePlanner />} />
           <Route path="automjetet" element={<CompanyAutomjetet />} />
-          <Route path="fleet-reports" element={<CompanyFleetReports />} />
+          <Route path="fleet-reports" element={<FeatureGate feature="fleet_reports"><CompanyFleetReports /></FeatureGate>} />
           <Route path="reports" element={<CompanyReports />} />
-          <Route path="sorting" element={<DepotSorting />} />
-          <Route path="sorting-reports" element={<CompanySortingReports />} />
-          <Route path="repair-reports" element={<CompanyRepairHub />} />
+          <Route path="sorting" element={<FeatureGate feature="sorting"><DepotSorting /></FeatureGate>} />
+          <Route path="sorting-reports" element={<FeatureGate feature="sorting"><CompanySortingReports /></FeatureGate>} />
+          <Route path="repair-reports" element={<FeatureGate feature="repairs"><CompanyRepairHub /></FeatureGate>} />
           <Route path="worker-repair-stats" element={<Navigate to="/company/repair-reports?tab=workers" replace />} />
           <Route path="chat" element={<CompanyChat />} />
           <Route path="audit-log" element={<CompanyAuditLog />} />
@@ -339,21 +340,21 @@ function AppRoutes() {
           <Route path="stock-alerts" element={<CompanyStockAlerts />} />
           <Route path="data-export" element={<CompanyDataExport />} />
           <Route path="settings" element={<CompanySettings />} />
-          <Route path="settings/api-webhooks" element={<CompanyApiWebhooks />} />
+          <Route path="settings/api-webhooks" element={<FeatureGate feature="api_webhooks"><CompanyApiWebhooks /></FeatureGate>} />
           <Route path="financial-summary" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><CompanyFinancialSummary /></AccountingRoute></Suspense>} />
-          <Route path="hr" element={<HRDashboard />} />
-          <Route path="hr/requests" element={<HRLeaveRequests />} />
-          <Route path="hr/attendance" element={<HRAttendance />} />
-          <Route path="hr/work-hours" element={<HRWorkHours />} />
-          <Route path="hr/reports" element={<HRReports />} />
-          <Route path="hr/settings" element={<HRSettings />} />
-          <Route path="hr/leave" element={<HRMyLeave />} />
+          <Route path="hr" element={<FeatureGate feature="hr"><HRDashboard /></FeatureGate>} />
+          <Route path="hr/requests" element={<FeatureGate feature="hr"><HRLeaveRequests /></FeatureGate>} />
+          <Route path="hr/attendance" element={<FeatureGate feature="hr"><HRAttendance /></FeatureGate>} />
+          <Route path="hr/work-hours" element={<FeatureGate feature="hr"><HRWorkHours /></FeatureGate>} />
+          <Route path="hr/reports" element={<FeatureGate feature="hr"><HRReports /></FeatureGate>} />
+          <Route path="hr/settings" element={<FeatureGate feature="hr"><HRSettings /></FeatureGate>} />
+          <Route path="hr/leave" element={<FeatureGate feature="hr"><HRMyLeave /></FeatureGate>} />
           <Route path="accounting-upgrade" element={<CompanyAccountingUpgrade />} />
           <Route path="invoices" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoices /></AccountingRoute></Suspense>} />
           <Route path="invoices/new" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoiceBuilder /></AccountingRoute></Suspense>} />
           <Route path="invoices/:id/edit" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoiceBuilder /></AccountingRoute></Suspense>} />
           <Route path="invoices/:id/print" element={<Suspense fallback={<LoadingScreen />}><AccountingRoute><AccInvoicePrint /></AccountingRoute></Suspense>}/>
-          <Route path="email" element={<EmailAutomationLayout />}>
+          <Route path="email" element={<FeatureGate feature="email_automation"><EmailAutomationLayout /></FeatureGate>}>
             <Route index element={<CompanyEmailTemplatesList />} />
             <Route path="templates" element={<CompanyEmailTemplatesList />} />
             <Route path="templates/new" element={<CompanyEmailTemplateEditor />} />
@@ -376,18 +377,18 @@ function AppRoutes() {
           <Route path="stock" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotStock /></ProtectedRoute>} />
           <Route path="receiving" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotReceiving /></ProtectedRoute>} />
           <Route path="outgoing" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotOutgoing /></ProtectedRoute>} />
-          <Route path="sorting" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotSorting /></ProtectedRoute>} />
+          <Route path="sorting" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><FeatureGate feature="sorting"><DepotSorting /></FeatureGate></ProtectedRoute>} />
           <Route path="delivery-notes" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotDeliveryNotes /></ProtectedRoute>} />
           <Route path="trailers" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotTrailers /></ProtectedRoute>} />
-          <Route path="repairs" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotRepairs /></ProtectedRoute>} />
-          <Route path="repair-workers" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotRepairWorkers /></ProtectedRoute>} />
-          <Route path="repair-workers/:workerId" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><WorkerRepairEntry /></ProtectedRoute>} />
-          <Route path="damage" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotDamage /></ProtectedRoute>} />
+          <Route path="repairs" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><FeatureGate feature="repairs"><DepotRepairs /></FeatureGate></ProtectedRoute>} />
+          <Route path="repair-workers" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><FeatureGate feature="repairs"><DepotRepairWorkers /></FeatureGate></ProtectedRoute>} />
+          <Route path="repair-workers/:workerId" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><FeatureGate feature="repairs"><WorkerRepairEntry /></FeatureGate></ProtectedRoute>} />
+          <Route path="damage" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><FeatureGate feature="repairs"><DepotDamage /></FeatureGate></ProtectedRoute>} />
           <Route path="documents" element={<DepotDocuments />} />
           <Route path="reports" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotReports /></ProtectedRoute>} />
-          <Route path="leave" element={<HRMyLeave />} />
-          <Route path="attendance" element={<HRMyAttendance />} />
-          <Route path="work-hours" element={<HRMyWorkHours />} />
+          <Route path="leave" element={<FeatureGate feature="hr"><HRMyLeave /></FeatureGate>} />
+          <Route path="attendance" element={<FeatureGate feature="hr"><HRMyAttendance /></FeatureGate>} />
+          <Route path="work-hours" element={<FeatureGate feature="hr"><HRMyWorkHours /></FeatureGate>} />
           <Route path="chat" element={<DepotChat />} />
           <Route path="settings" element={<DepotSettings />} />
           <Route path="manual" element={<DepotManual />} />
@@ -399,7 +400,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }>
           <Route index element={<DriverDashboard />} />
-          <Route path="tracking" element={<DriverTracking />} />
+          <Route path="tracking" element={<FeatureGate feature="driver_tracking"><DriverTracking /></FeatureGate>} />
           <Route path="trailers" element={<DriverTrailers />} />
           <Route path="route-planner" element={<DriverRoutePlanner />} />
           <Route path="navigation" element={<DriverNavigation />} />
@@ -407,9 +408,9 @@ function AppRoutes() {
           <Route path="documents" element={<DriverDocuments />} />
           <Route path="my-documents" element={<DriverMyDocuments />} />
           <Route path="chat" element={<DriverChat />} />
-          <Route path="leave" element={<HRMyLeave />} />
-          <Route path="attendance" element={<HRMyAttendance />} />
-          <Route path="work-hours" element={<HRMyWorkHours />} />
+          <Route path="leave" element={<FeatureGate feature="hr"><HRMyLeave /></FeatureGate>} />
+          <Route path="attendance" element={<FeatureGate feature="hr"><HRMyAttendance /></FeatureGate>} />
+          <Route path="work-hours" element={<FeatureGate feature="hr"><HRMyWorkHours /></FeatureGate>} />
           <Route path="settings" element={<DriverSettings />} />
           <Route path="manual" element={<Manual scope="driver" />} />
         </Route>

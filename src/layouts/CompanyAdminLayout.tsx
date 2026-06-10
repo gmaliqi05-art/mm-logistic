@@ -81,7 +81,7 @@ const navEntries: NavEntry[] = [
   { to: '/company/review', icon: ClipboardList, labelKey: 'nav.review', badgeKey: 'review' },
   { to: '/company/overdue', icon: AlertCircle, labelKey: 'nav.overdue' },
   { to: '/company/chat', icon: MessageSquare, labelKey: 'nav.chat', bottomNav: true },
-  { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap' },
+  { to: '/company/live-map', icon: MapPin, labelKey: 'nav.liveMap', premium: true },
 
   {
     kind: 'group', groupKey: 'partners', icon: Building2, labelKey: 'nav.groupPartners',
@@ -106,8 +106,8 @@ const navEntries: NavEntry[] = [
     kind: 'group', groupKey: 'reports', icon: BarChart3, labelKey: 'nav.groupReports',
     items: [
       { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports' },
-      { to: '/company/sorting-reports', icon: Layers, labelKey: 'nav.sortingReports' },
-      { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports' },
+      { to: '/company/sorting-reports', icon: Layers, labelKey: 'nav.sortingReports', premium: true },
+      { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports', premium: true },
       { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary' },
       { to: '/company/audit-report', icon: FileCheck2, labelKey: 'nav.auditReport' },
       { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', premium: true },
