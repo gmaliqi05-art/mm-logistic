@@ -13,6 +13,36 @@ export type AccTransactionType = 'income' | 'expense' | 'transfer';
 export type AccDeliveryNoteStatus = 'draft' | 'sent' | 'in_transit' | 'delivered' | 'confirmed';
 export type AccDeliveryNoteKind = 'sale' | 'purchase_receipt' | 'transfer' | 'return_in' | 'return_out';
 
+// Pallet clearing model per partner. 'deposit' = pallets billed with
+// VAT (Pfand/rental). 'exchange' = open EPAL pool swap booked as
+// Sachdarlehen §607 BGB — pallets themselves carry no VAT, only
+// handling fees do. Mirrors acc_contacts.clearing_model added in
+// migration 20260613180000.
+export type ClearingModel = 'deposit' | 'exchange';
+
+// Per-line VAT rule for acc_invoice_items. 'standard' uses vat_rate
+// as-is. The other treatments force the effective rate to 0 with a
+// legal annotation on the printed invoice. Mirrors
+// acc_invoice_items.vat_treatment added in migration 20260613180000.
+export type VatTreatment =
+  | 'standard'
+  | 'reverse_charge'
+  | 'exempt'
+  | 'sachdarlehen'
+  | 'schadenersatz';
+
+// Optional categorisation for downstream DATEV/SAF-T export and journal
+// posting. Nullable on the DB; consumers should treat null as 'goods'
+// for backward compatibility with existing line items.
+export type LineType =
+  | 'goods'
+  | 'transport'
+  | 'handling'
+  | 'pallet_deposit'
+  | 'pallet_exchange'
+  | 'repair'
+  | 'other';
+
 export interface AccContact {
   id: string;
   company_id: string;
@@ -33,6 +63,7 @@ export interface AccContact {
   payment_days: number;
   notes: string;
   is_active: boolean;
+  clearing_model: ClearingModel;
   created_at: string;
   updated_at: string;
 }
@@ -122,6 +153,8 @@ export interface AccInvoiceItem {
   vat_rate: number;
   line_discount: number;
   line_total: number;
+  vat_treatment: VatTreatment;
+  line_type: LineType | null;
   created_at: string;
   product?: AccProduct;
 }
