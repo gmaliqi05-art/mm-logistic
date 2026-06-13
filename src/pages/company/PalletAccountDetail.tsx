@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Plus, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Plus, TrendingUp, TrendingDown, Loader2, CheckCircle2, FileSignature } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../utils/logger';
 import { useTranslation } from '../../i18n';
+import LimitationBadge from '../../components/accounting/LimitationBadge';
+import { formatReconciliationPeriod } from '../../utils/palletReconciliation';
+import type { PalletReconciliation, PalletReconciliationStatus } from '../../types';
 
 interface AccountHeader {
   id: string;
@@ -27,6 +30,14 @@ interface Transaction {
   created_at: string;
 }
 
+const RECON_STATUS_STYLE: Record<PalletReconciliationStatus, string> = {
+  draft: 'bg-slate-100 text-slate-700',
+  sent: 'bg-blue-100 text-blue-800',
+  signed: 'bg-emerald-100 text-emerald-800',
+  disputed: 'bg-red-100 text-red-800',
+  cancelled: 'bg-slate-100 text-slate-500 line-through',
+};
+
 export default function PalletAccountDetail() {
   const { t, language } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -39,6 +50,18 @@ export default function PalletAccountDetail() {
   const [adjReason, setAdjReason] = useState('');
   const [adjBusy, setAdjBusy] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [reconciliations, setReconciliations] = useState<PalletReconciliation[]>([]);
+  const [oldestOpenAgeDays, setOldestOpenAgeDays] = useState<number | null>(null);
+  const [showReconForm, setShowReconForm] = useState(false);
+  const [reconBusy, setReconBusy] = useState(false);
+  const todayIso = () => new Date().toISOString().slice(0, 10);
+  const [reconForm, setReconForm] = useState({
+    period_start: todayIso(),
+    period_end: todayIso(),
+    confirmed_balance: '',
+    signed_by_name: '',
+    notes: '',
+  });
 
   const load = async () => {
     if (!id) return;
@@ -61,13 +84,27 @@ export default function PalletAccountDetail() {
         partner_name: ((acc.acc_contacts as { name?: string } | null)?.name) ?? '—',
       });
 
-      const { data: ts } = await supabase
-        .from('pallet_account_transactions')
-        .select('id, transaction_date, direction, quantity, reference, notes, delivery_note_id, created_at')
-        .eq('pallet_account_id', id)
-        .order('transaction_date', { ascending: false })
-        .order('created_at', { ascending: false });
-      setTxns((ts ?? []) as Transaction[]);
+      const [txnsRes, reconsRes, agingRes] = await Promise.all([
+        supabase
+          .from('pallet_account_transactions')
+          .select('id, transaction_date, direction, quantity, reference, notes, delivery_note_id, created_at')
+          .eq('pallet_account_id', id)
+          .order('transaction_date', { ascending: false })
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('pallet_reconciliations')
+          .select('*')
+          .eq('pallet_account_id', id)
+          .order('period_end', { ascending: false }),
+        supabase
+          .from('v_pallet_account_aging')
+          .select('oldest_open_txn_age_days')
+          .eq('pallet_account_id', id)
+          .maybeSingle(),
+      ]);
+      setTxns((txnsRes.data ?? []) as Transaction[]);
+      setReconciliations((reconsRes.data ?? []) as PalletReconciliation[]);
+      setOldestOpenAgeDays((agingRes.data?.oldest_open_txn_age_days ?? null) as number | null);
     } catch (err) {
       logger.error('PalletAccountDetail load failed', { error: err });
     } finally {
@@ -102,6 +139,59 @@ export default function PalletAccountDetail() {
       logger.error('adjustment failed', { error: err });
     } finally {
       setAdjBusy(false);
+    }
+  };
+
+  const submitReconciliation = async () => {
+    if (!id || !profile?.company_id) return;
+    const balance = parseInt(reconForm.confirmed_balance, 10);
+    if (!Number.isFinite(balance)) return;
+    if (!reconForm.period_start || !reconForm.period_end) return;
+    setReconBusy(true);
+    try {
+      const { error } = await supabase.from('pallet_reconciliations').insert({
+        company_id: profile.company_id,
+        pallet_account_id: id,
+        period_start: reconForm.period_start,
+        period_end: reconForm.period_end,
+        confirmed_balance: balance,
+        status: 'draft',
+        signed_by_name: reconForm.signed_by_name,
+        notes: reconForm.notes,
+        created_by: profile.id,
+      });
+      if (error) throw error;
+      setShowReconForm(false);
+      setReconForm({
+        period_start: todayIso(),
+        period_end: todayIso(),
+        confirmed_balance: '',
+        signed_by_name: '',
+        notes: '',
+      });
+      await load();
+    } catch (err) {
+      logger.error('reconciliation insert failed', { error: err });
+    } finally {
+      setReconBusy(false);
+    }
+  };
+
+  const markReconciliationSigned = async (reconId: string, signedByName: string) => {
+    try {
+      const { error } = await supabase
+        .from('pallet_reconciliations')
+        .update({
+          status: 'signed',
+          signed_at: new Date().toISOString(),
+          signed_by_name: signedByName,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', reconId);
+      if (error) throw error;
+      await load();
+    } catch (err) {
+      logger.error('mark signed failed', { error: err });
     }
   };
 
@@ -163,6 +253,10 @@ export default function PalletAccountDetail() {
         </div>
       </div>
 
+      <div className="flex justify-end">
+        <LimitationBadge ageDays={oldestOpenAgeDays} />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="text-xs text-slate-500 uppercase tracking-wide">Current balance</div>
@@ -221,6 +315,107 @@ export default function PalletAccountDetail() {
           </table>
         )}
       </div>
+
+      {/* Saldenbestätigung / Reconciliation history */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+              <FileSignature className="w-4 h-4 text-slate-500" />
+              {t('common.palletReconciliation.title')}
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">{t('common.palletReconciliation.legalNote')}</p>
+          </div>
+          <button
+            onClick={() => setShowReconForm(true)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 text-sm hover:bg-slate-50"
+          >
+            <Plus className="w-4 h-4" /> {t('common.palletReconciliation.newReconciliation')}
+          </button>
+        </div>
+        {reconciliations.length === 0 ? (
+          <div className="p-8 text-center text-sm text-slate-500">{t('common.palletReconciliation.noneYet')}</div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-slate-50 text-xs text-slate-600 uppercase tracking-wide">
+              <tr>
+                <th className="text-left px-4 py-2">{t('common.palletReconciliation.periodLabel')}</th>
+                <th className="text-right px-4 py-2">{t('common.palletReconciliation.confirmedBalance')}</th>
+                <th className="text-left px-4 py-2">Status</th>
+                <th className="text-left px-4 py-2">{t('common.palletReconciliation.signedByName')}</th>
+                <th className="text-right px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {reconciliations.map((r) => (
+                <tr key={r.id}>
+                  <td className="px-4 py-2 text-slate-700">{formatReconciliationPeriod(r.period_start, r.period_end)}</td>
+                  <td className="px-4 py-2 text-right font-mono font-semibold text-slate-900">{r.confirmed_balance > 0 ? '+' : ''}{r.confirmed_balance}</td>
+                  <td className="px-4 py-2">
+                    <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${RECON_STATUS_STYLE[r.status]}`}>
+                      {t(`common.palletReconciliation.status${r.status.charAt(0).toUpperCase()}${r.status.slice(1)}`)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-slate-600">
+                    {r.signed_by_name || '—'}
+                    {r.signed_at && <span className="block text-xs text-slate-400">{new Date(r.signed_at).toLocaleDateString()}</span>}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    {(r.status === 'draft' || r.status === 'sent') && (
+                      <button
+                        onClick={() => {
+                          const name = prompt(t('common.palletReconciliation.signedByName'), r.signed_by_name || '');
+                          if (name !== null) void markReconciliationSigned(r.id, name);
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        {t('common.palletReconciliation.markAsSigned')}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showReconForm && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-5 space-y-3">
+            <h3 className="font-semibold text-slate-900">{t('common.palletReconciliation.newReconciliation')}</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase">From</label>
+                <input type="date" value={reconForm.period_start} onChange={(e) => setReconForm((p) => ({ ...p, period_start: e.target.value }))} className="w-full px-3 py-2 border border-slate-300 rounded-lg mt-1" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase">To</label>
+                <input type="date" value={reconForm.period_end} onChange={(e) => setReconForm((p) => ({ ...p, period_end: e.target.value }))} className="w-full px-3 py-2 border border-slate-300 rounded-lg mt-1" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase">{t('common.palletReconciliation.confirmedBalance')}</label>
+              <input type="number" value={reconForm.confirmed_balance} onChange={(e) => setReconForm((p) => ({ ...p, confirmed_balance: e.target.value }))} className="w-full px-3 py-2 border border-slate-300 rounded-lg mt-1" placeholder={String(header.current_balance)} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase">{t('common.palletReconciliation.signedByName')}</label>
+              <input type="text" value={reconForm.signed_by_name} onChange={(e) => setReconForm((p) => ({ ...p, signed_by_name: e.target.value }))} className="w-full px-3 py-2 border border-slate-300 rounded-lg mt-1" placeholder="—" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase">Notes</label>
+              <textarea value={reconForm.notes} onChange={(e) => setReconForm((p) => ({ ...p, notes: e.target.value }))} className="w-full px-3 py-2 border border-slate-300 rounded-lg mt-1" rows={2} />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowReconForm(false)} className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm">{t('common.palletReconciliation.cancel')}</button>
+              <button onClick={submitReconciliation} disabled={reconBusy || !reconForm.confirmed_balance} className="flex-1 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold disabled:opacity-50">
+                {reconBusy ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t('common.palletReconciliation.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAdj && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
