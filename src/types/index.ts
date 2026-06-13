@@ -404,3 +404,55 @@ export interface CompanyFeature {
   updated_at: string;
   enabler?: Profile;
 }
+
+// Pallet reconciliation (Saldenbestätigung) — a signed balance
+// confirmation between operator and partner. Lifecycle:
+//   draft → sent → signed (or → disputed / → cancelled).
+// Once signed, restarts the §439 HGB 1-year limitation clock on every
+// transaction dated within or before period_end (per §212 BGB).
+// Mirrors public.pallet_reconciliations from migration 20260613190000.
+export type PalletReconciliationStatus =
+  | 'draft'
+  | 'sent'
+  | 'signed'
+  | 'disputed'
+  | 'cancelled';
+
+export interface PalletReconciliation {
+  id: string;
+  company_id: string;
+  pallet_account_id: string;
+  period_start: string;
+  period_end: string;
+  confirmed_balance: number;
+  status: PalletReconciliationStatus;
+  sent_at: string | null;
+  signed_at: string | null;
+  signed_by_name: string;
+  document_url: string | null;
+  notes: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Status buckets for the §439 HGB 1-year limitation alarm. The UI maps
+// these to coloured badges; the threshold logic lives in
+// src/utils/palletReconciliation.ts so it stays in one place.
+export type PalletAccountAgingStatus = 'ok' | 'warning' | 'critical' | 'expired';
+
+// Row shape returned by the v_pallet_account_aging view added in
+// migration 20260613190000. Read-only, server-derived.
+export interface PalletAccountAging {
+  pallet_account_id: string;
+  company_id: string;
+  partner_contact_id: string;
+  pallet_type: string;
+  current_balance: number;
+  last_movement_at: string | null;
+  last_reconciled_at: string | null;
+  last_reconciled_balance: number | null;
+  last_reconciled_period_end: string | null;
+  oldest_open_txn_date: string | null;
+  oldest_open_txn_age_days: number | null;
+}
