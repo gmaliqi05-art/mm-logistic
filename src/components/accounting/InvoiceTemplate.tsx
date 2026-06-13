@@ -1,4 +1,6 @@
 import type { VatBreakdownRow } from '../../utils/euCompliance';
+import type { VatTreatment, LineType } from '../../types/accounting';
+import { vatTreatmentNoteKey } from '../../utils/vatTreatment';
 
 export interface InvoicePreviewData {
   language: 'en' | 'de' | 'fr' | 'sq';
@@ -49,6 +51,8 @@ export interface InvoicePreviewData {
     vat_rate: number;
     discount_amount: number;
     line_total: number;
+    vat_treatment?: VatTreatment | null;
+    line_type?: LineType | null;
   }>;
 
   totals: {
@@ -100,6 +104,40 @@ const I18N: Record<string, Record<string, string>> = {
     subtotal: 'Nëntotali', discount: 'Zbritje', vatAmount: 'TVSH', grandTotal: 'Totali për pagesë',
     bankInfo: 'Të dhënat bankare', ref: 'Referenca', iban: 'IBAN', bic: 'BIC', bank: 'Banka',
     notes: 'Shënime', thanks: 'Ju falënderojmë për besimin tuaj.',
+  },
+};
+
+// Legal annotations for non-standard VAT treatments, printed beneath the
+// line item. Required by BMF v. 05.11.2013 for Sachdarlehen and by Art.
+// 226 Pt 11 Directive 2006/112/EC for reverse-charge / exempt supplies.
+const TREATMENT_NOTES: Record<string, Record<VatTreatment, string>> = {
+  en: {
+    standard: '',
+    reverse_charge: 'Reverse charge — recipient liable for VAT (Art. 196 Directive 2006/112/EC)',
+    exempt: 'VAT-exempt supply',
+    sachdarlehen: 'Sachdarlehen §607 BGB — pallet exchange, not subject to VAT (BMF v. 05.11.2013)',
+    schadenersatz: 'Schadenersatz — non-VAT compensation for non-returned pallets',
+  },
+  de: {
+    standard: '',
+    reverse_charge: 'Steuerschuldnerschaft des Leistungsempfängers (Art. 196 MwStSystRL)',
+    exempt: 'Steuerfreie Lieferung',
+    sachdarlehen: 'Sachdarlehen §607 BGB — Palettentausch, nicht steuerbar (BMF v. 05.11.2013)',
+    schadenersatz: 'Schadenersatz — nicht steuerbarer Ausgleich für nicht zurückgegebene Paletten',
+  },
+  fr: {
+    standard: '',
+    reverse_charge: 'Autoliquidation — TVA due par le preneur (art. 196 Directive 2006/112/CE)',
+    exempt: 'Livraison exonérée de TVA',
+    sachdarlehen: 'Sachdarlehen §607 BGB — échange de palettes, non soumis à la TVA (BMF v. 05.11.2013)',
+    schadenersatz: 'Schadenersatz — compensation non soumise à la TVA pour palettes non restituées',
+  },
+  sq: {
+    standard: '',
+    reverse_charge: 'Reverse charge — blerësi paguan TVSH-në (Neni 196 Direktiva 2006/112/EC)',
+    exempt: 'Shitje e përjashtuar nga TVSH-ja',
+    sachdarlehen: 'Sachdarlehen §607 BGB — këmbim palete, pa TVSH (BMF v. 05.11.2013)',
+    schadenersatz: 'Schadenersatz — kompensim pa TVSH për paleta të pakthyera',
   },
 };
 
@@ -222,20 +260,31 @@ export default function InvoiceTemplate({ data }: { data: InvoicePreviewData }) 
           </tr>
         </thead>
         <tbody>
-          {data.items.map((it, i) => (
+          {data.items.map((it, i) => {
+            // For non-standard VAT treatments, render the legal annotation
+            // beneath the description and show 0% in the VAT column so the
+            // printed invoice matches what the customer actually owes.
+            const treatment: VatTreatment = (it.vat_treatment ?? 'standard') as VatTreatment;
+            const annotation = vatTreatmentNoteKey(treatment)
+              ? TREATMENT_NOTES[data.language][treatment]
+              : '';
+            const displayedRate = treatment === 'standard' ? `${it.vat_rate}%` : '0%';
+            return (
             <tr key={i} className="border-b border-gray-200">
               <td className="py-2 pr-2 text-gray-500 align-top">{i + 1}</td>
               <td className="py-2 pr-2 align-top">
                 <span className="font-medium">{it.description || '—'}</span>
                 {it.product_code && <span className="block text-[8.5px] text-gray-400">{it.product_code}</span>}
+                {annotation && <span className="block text-[8.5px] text-gray-500 italic mt-0.5">{annotation}</span>}
               </td>
               <td className="py-2 pr-2 text-right tabular-nums align-top">{formatQty(it.quantity, data.language)}</td>
               <td className="py-2 pr-2 text-gray-600 align-top">{it.unit_code}</td>
               <td className="py-2 pr-2 text-right tabular-nums align-top">{formatMoney(it.unit_price, data.invoice.currency, data.language)}</td>
-              <td className="py-2 pr-2 text-right tabular-nums align-top">{it.vat_rate}%</td>
+              <td className="py-2 pr-2 text-right tabular-nums align-top">{displayedRate}</td>
               <td className="py-2 text-right tabular-nums font-medium align-top">{formatMoney(it.line_total, data.invoice.currency, data.language)}</td>
             </tr>
-          ))}
+            );
+          })}
           {data.items.length === 0 && (
             <tr><td colSpan={7} className="text-center text-gray-400 py-6">—</td></tr>
           )}

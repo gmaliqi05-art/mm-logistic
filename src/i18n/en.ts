@@ -3816,6 +3816,37 @@ export const en: typeof sq = {
       empty: 'No imports registered.',
       saveImport: 'Save import',
     },
+    vatTreatment: {
+      label: 'VAT treatment',
+      notes: {
+        reverse_charge: 'Reverse charge — the recipient is liable for VAT under Art. 196 of Directive 2006/112/EC',
+        exempt: 'VAT-exempt supply',
+        sachdarlehen: 'Sachdarlehen §607 BGB — pallet exchange not subject to VAT (BMF v. 05.11.2013)',
+        schadenersatz: 'Schadenersatz (compensation for non-returned pallets) — not subject to VAT',
+      },
+      labels: {
+        standard: 'Standard (use VAT rate)',
+        reverse_charge: 'Reverse Charge (0%)',
+        exempt: 'Exempt (0%)',
+        sachdarlehen: 'Sachdarlehen §607 (0%)',
+        schadenersatz: 'Schadenersatz (0%)',
+      },
+    },
+    clearing: {
+      label: 'Pallet clearing model',
+      deposit: 'Deposit / Pfand (standard VAT)',
+      exchange: 'Open exchange / Tausch (Sachdarlehen, no VAT)',
+    },
+    lineType: {
+      label: 'Line type',
+      goods: 'Goods',
+      transport: 'Transport',
+      handling: 'Handling',
+      pallet_deposit: 'Pallet deposit',
+      pallet_exchange: 'Pallet exchange',
+      repair: 'Repair',
+      other: 'Other',
+    },
     dashboard: {
       title: 'Accounting',
       subtitle: 'Financial summary',

@@ -14,7 +14,8 @@ import {
   UN_ECE_UNITS, VAT_CATEGORIES, validateVatFormat,
   type EuCountry, type EuVatRate,
 } from '../../utils/euCompliance';
-import { formatCurrency, type AccCurrency } from '../../types/accounting';
+import { formatCurrency, type AccCurrency, type VatTreatment, type LineType, type ClearingModel } from '../../types/accounting';
+import { defaultVatTreatmentFor, vatTreatmentNoteKey } from '../../utils/vatTreatment';
 
 type Lang = 'en' | 'de' | 'fr' | 'sq';
 
@@ -37,6 +38,8 @@ interface Item {
   vat_rate: number;
   vat_category: string;
   discount_amount: number;
+  vat_treatment: VatTreatment;
+  line_type: LineType | null;
 }
 
 interface Company {
@@ -75,6 +78,7 @@ interface Contact {
   bank_name?: string | null;
   payment_days?: number | null;
   contact_type?: string | null;
+  clearing_model?: ClearingModel | null;
 }
 
 interface BankAccount {
@@ -131,6 +135,8 @@ function newItem(): Item {
     vat_rate: 19,
     vat_category: 'S',
     discount_amount: 0,
+    vat_treatment: 'standard',
+    line_type: null,
   };
 }
 
@@ -227,7 +233,7 @@ export default function InvoiceBuilder() {
     setLoading(true);
     const [{ data: co }, { data: cs }, { data: bs }, { data: countryRows }, { data: rates }, { data: accProds }, { data: catProds }, { data: emailSettings }] = await Promise.all([
       supabase.from('companies').select('*').eq('id', profile.company_id).maybeSingle(),
-      supabase.from('acc_contacts').select('id, name, address, postal_code, city, country, vat_number, tax_number, email, phone, iban, bic, bank_name, payment_days, contact_type')
+      supabase.from('acc_contacts').select('id, name, address, postal_code, city, country, vat_number, tax_number, email, phone, iban, bic, bank_name, payment_days, contact_type, clearing_model')
         .eq('company_id', profile.company_id).eq('is_active', true).order('name'),
       supabase.from('acc_bank_accounts').select('id, name, iban, bic, bank_name, is_default')
         .eq('company_id', profile.company_id).eq('is_active', true),
@@ -313,17 +319,30 @@ export default function InvoiceBuilder() {
       .select('quantity, notes, category:product_categories(name), category_product:category_products(name, sku, price_net, vat_rate, unit)')
       .eq('delivery_note_id', dnId);
     if (dnItems && dnItems.length) {
-      const rows: Item[] = (dnItems as any[]).map((r) => ({
-        id: crypto.randomUUID(),
-        description: (r.category_product?.name || r.category?.name || r.notes || 'Artikull').trim(),
-        product_code: r.category_product?.sku || '',
-        quantity: Number(r.quantity ?? 1),
-        unit_code: mapUnitToUnece(r.category_product?.unit || 'cope'),
-        unit_price: Number(r.category_product?.price_net ?? 0),
-        vat_rate: Number(r.category_product?.vat_rate ?? 19),
-        vat_category: 'S',
-        discount_amount: 0,
-      }));
+      // If the contact has clearing_model='exchange', pallet lines auto-default
+      // to vat_treatment='sachdarlehen' so the operator does not have to
+      // remember the legal carve-out (BMF v. 05.11.2013). Operator can
+      // override per line.
+      const contact = contacts.find((c) => c.id === contactId);
+      const clearing: ClearingModel = contact?.clearing_model ?? 'deposit';
+      const isPalletDescription = (s: string) => /palet|pallet/i.test(s);
+      const rows: Item[] = (dnItems as any[]).map((r) => {
+        const description = (r.category_product?.name || r.category?.name || r.notes || 'Artikull').trim();
+        const lineType: LineType | null = isPalletDescription(description) ? 'pallet_exchange' : null;
+        return {
+          id: crypto.randomUUID(),
+          description,
+          product_code: r.category_product?.sku || '',
+          quantity: Number(r.quantity ?? 1),
+          unit_code: mapUnitToUnece(r.category_product?.unit || 'cope'),
+          unit_price: Number(r.category_product?.price_net ?? 0),
+          vat_rate: Number(r.category_product?.vat_rate ?? 19),
+          vat_category: 'S',
+          discount_amount: 0,
+          vat_treatment: defaultVatTreatmentFor(clearing, lineType),
+          line_type: lineType,
+        };
+      });
       setItems(rows);
     }
     setNotes((prev) => prev || `Sipas fletedergeses Nr. ${resolvedDocNumber}`);
@@ -415,6 +434,10 @@ export default function InvoiceBuilder() {
         vat_rate: 19,
         vat_category: 'S',
         discount_amount: 0,
+        // BMF v. 05.11.2013: handling and transport fees stay taxable
+        // even when the pallet swap itself is Sachdarlehen.
+        vat_treatment: 'standard',
+        line_type: 'transport',
       },
     ]);
   }
@@ -460,7 +483,8 @@ export default function InvoiceBuilder() {
     }
     if (its && its.length) {
       type It = { id: string; description: string; product_code: string; quantity: number;
-        unit_code: string; unit_price: number; vat_rate: number; vat_category: string; discount_amount: number; };
+        unit_code: string; unit_price: number; vat_rate: number; vat_category: string; discount_amount: number;
+        vat_treatment?: VatTreatment | null; line_type?: LineType | null; };
       setItems((its as unknown as It[]).map((r) => ({
         id: r.id,
         description: r.description ?? '',
@@ -471,6 +495,8 @@ export default function InvoiceBuilder() {
         vat_rate: Number(r.vat_rate ?? 0),
         vat_category: r.vat_category ?? 'S',
         discount_amount: Number(r.discount_amount ?? 0),
+        vat_treatment: (r.vat_treatment ?? 'standard') as VatTreatment,
+        line_type: (r.line_type ?? null) as LineType | null,
       })));
     }
   }
@@ -540,7 +566,7 @@ export default function InvoiceBuilder() {
       // When the operator forces "exempt", zero out the VAT rate for
       // every line so the breakdown is consistent with the regime.
       const rate = vatOverride === 'exempt' ? 0 : it.vat_rate;
-      return { net, vat_rate: rate, vat_category: it.vat_category };
+      return { net, vat_rate: rate, vat_category: it.vat_category, vat_treatment: it.vat_treatment };
     });
     const subtotal = processed.reduce((s, it) => s + it.net, 0);
     const discount = items.reduce((s, it) => s + (it.discount_amount || 0), 0);
@@ -719,6 +745,8 @@ export default function InvoiceBuilder() {
             line_discount: 0,
             discount_amount: it.discount_amount,
             line_total: Math.max(0, it.quantity * it.unit_price - it.discount_amount),
+            vat_treatment: it.vat_treatment,
+            line_type: it.line_type,
           }));
           const { error: iie } = await supabase.from('acc_invoice_items').insert(rows);
           if (iie) throw iie;
@@ -1251,6 +1279,39 @@ export default function InvoiceBuilder() {
                         </div>
                       </div>
                     </div>
+                    {/* Tausch/Pfand: per-line VAT treatment + line type. Hidden behind
+                        a thin row so it does not clutter the daily flow but is always
+                        accessible for German operators who need Sachdarlehen. */}
+                    <div className="grid grid-cols-12 gap-2 pt-1">
+                      <div className="col-span-6">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.vatTreatment.label')}</span>
+                        <select value={it.vat_treatment} onChange={(e) => updateItem(it.id, { vat_treatment: e.target.value as VatTreatment })} className={selectCls}>
+                          <option value="standard">{t('accounting.vatTreatment.labels.standard')}</option>
+                          <option value="reverse_charge">{t('accounting.vatTreatment.labels.reverse_charge')}</option>
+                          <option value="exempt">{t('accounting.vatTreatment.labels.exempt')}</option>
+                          <option value="sachdarlehen">{t('accounting.vatTreatment.labels.sachdarlehen')}</option>
+                          <option value="schadenersatz">{t('accounting.vatTreatment.labels.schadenersatz')}</option>
+                        </select>
+                      </div>
+                      <div className="col-span-6">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-0.5">{t('accounting.lineType.label')}</span>
+                        <select value={it.line_type ?? ''} onChange={(e) => updateItem(it.id, { line_type: (e.target.value || null) as LineType | null })} className={selectCls}>
+                          <option value="">—</option>
+                          <option value="goods">{t('accounting.lineType.goods')}</option>
+                          <option value="transport">{t('accounting.lineType.transport')}</option>
+                          <option value="handling">{t('accounting.lineType.handling')}</option>
+                          <option value="pallet_deposit">{t('accounting.lineType.pallet_deposit')}</option>
+                          <option value="pallet_exchange">{t('accounting.lineType.pallet_exchange')}</option>
+                          <option value="repair">{t('accounting.lineType.repair')}</option>
+                          <option value="other">{t('accounting.lineType.other')}</option>
+                        </select>
+                      </div>
+                    </div>
+                    {it.vat_treatment !== 'standard' && vatTreatmentNoteKey(it.vat_treatment) && (
+                      <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-1">
+                        {t(vatTreatmentNoteKey(it.vat_treatment) as string)}
+                      </div>
+                    )}
                   </div>
                 );
               })}

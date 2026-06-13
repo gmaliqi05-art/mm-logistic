@@ -3813,6 +3813,37 @@ export const fr: typeof sq = {
       empty: 'Aucun import enregistré.',
       saveImport: 'Enregistrer l\'import',
     },
+    vatTreatment: {
+      label: 'Traitement de la TVA',
+      notes: {
+        reverse_charge: 'Autoliquidation — le preneur est redevable de la TVA selon l\'article 196 de la Directive 2006/112/CE',
+        exempt: 'Livraison exonérée de TVA',
+        sachdarlehen: 'Sachdarlehen §607 BGB — échange de palettes non soumis à la TVA (BMF v. 05.11.2013)',
+        schadenersatz: 'Schadenersatz (compensation pour palettes non restituées) — non soumis à la TVA',
+      },
+      labels: {
+        standard: 'Standard (utiliser le taux de TVA)',
+        reverse_charge: 'Autoliquidation (0%)',
+        exempt: 'Exonéré (0%)',
+        sachdarlehen: 'Sachdarlehen §607 (0%)',
+        schadenersatz: 'Schadenersatz (0%)',
+      },
+    },
+    clearing: {
+      label: 'Modèle de compensation palettes',
+      deposit: 'Consigne / Pfand (TVA standard)',
+      exchange: 'Échange ouvert / Tausch (Sachdarlehen, sans TVA)',
+    },
+    lineType: {
+      label: 'Type de ligne',
+      goods: 'Marchandises',
+      transport: 'Transport',
+      handling: 'Manutention',
+      pallet_deposit: 'Consigne palette',
+      pallet_exchange: 'Échange palette',
+      repair: 'Réparation',
+      other: 'Autre',
+    },
     dashboard: {
       title: 'Tableau de bord',
       subtitle: 'Apercu financier',
