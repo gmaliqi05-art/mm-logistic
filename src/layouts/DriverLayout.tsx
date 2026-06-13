@@ -28,6 +28,8 @@ import DriverTrackingIndicator from '../components/DriverTrackingBanner';
 import DriverShiftEndModal from '../components/DriverShiftEndModal';
 import { DriverTrackingProvider } from '../contexts/DriverTrackingContext';
 import DeletionBanner from '../components/DeletionBanner';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import type { Feature } from '../types';
 
 type NavLeaf = {
   kind?: 'leaf';
@@ -36,6 +38,7 @@ type NavLeaf = {
   labelKey: string;
   end: boolean;
   bottomNav: boolean;
+  feature?: Feature;
 };
 
 type NavGroup = {
@@ -43,6 +46,7 @@ type NavGroup = {
   groupKey: string;
   labelKey: string;
   icon: LucideIcon;
+  feature?: Feature;
   items: NavLeaf[];
 };
 
@@ -50,7 +54,7 @@ type NavEntry = NavLeaf | NavGroup;
 
 const navEntries: NavEntry[] = [
   { to: '/driver', icon: LayoutDashboard, labelKey: 'nav.dashboard', end: true, bottomNav: true },
-  { to: '/driver/tracking', icon: MapPin, labelKey: 'nav.tracking', end: false, bottomNav: true },
+  { to: '/driver/tracking', icon: MapPin, labelKey: 'nav.tracking', end: false, bottomNav: true, feature: 'driver_tracking' },
   { to: '/driver/trailers', icon: Truck, labelKey: 'nav.trailers', end: false, bottomNav: true },
   { to: '/driver/navigation', icon: Navigation, labelKey: 'nav.navigation', end: false, bottomNav: false },
   { to: '/driver/overdue', icon: AlertCircle, labelKey: 'nav.overdue', end: false, bottomNav: false },
@@ -58,11 +62,11 @@ const navEntries: NavEntry[] = [
   { to: '/driver/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
 
   {
-    kind: 'group', groupKey: 'hr', icon: Calendar, labelKey: 'nav.groupHr',
+    kind: 'group', groupKey: 'hr', icon: Calendar, labelKey: 'nav.groupHr', feature: 'hr',
     items: [
-      { to: '/driver/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
-      { to: '/driver/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
-      { to: '/driver/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
+      { to: '/driver/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false, feature: 'hr' },
+      { to: '/driver/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false, feature: 'hr' },
+      { to: '/driver/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false, feature: 'hr' },
     ],
   },
 
@@ -70,8 +74,17 @@ const navEntries: NavEntry[] = [
   { to: '/driver/manual', icon: BookOpen, labelKey: 'nav.manual', end: false, bottomNav: false },
 ];
 
-const navItems: NavLeaf[] = navEntries.flatMap((e) => (e.kind === 'group' ? e.items : [e]));
-const bottomNavItems = navItems.filter((i) => i.bottomNav);
+function leafVisible(item: NavLeaf, hasFeature: (f: Feature) => boolean): boolean {
+  return !item.feature || hasFeature(item.feature);
+}
+
+function entryVisible(entry: NavEntry, hasFeature: (f: Feature) => boolean): boolean {
+  if (entry.kind === 'group') {
+    if (entry.feature && !hasFeature(entry.feature)) return false;
+    return entry.items.some((it) => leafVisible(it, hasFeature));
+  }
+  return leafVisible(entry, hasFeature);
+}
 
 function isGroupActive(group: NavGroup, pathname: string): boolean {
   return group.items.some((it) =>
@@ -82,6 +95,7 @@ function isGroupActive(group: NavGroup, pathname: string): boolean {
 export default function DriverLayout() {
   const { profile, signOut } = useAuth();
   const { t } = useTranslation();
+  const { canAccess } = useSubscription();
   const { name: brandName, logo: brandLogo } = useCompanyBranding();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -91,6 +105,11 @@ export default function DriverLayout() {
   }, [location.pathname]);
 
   const roleLabel = t(`roles.${profile?.role ?? ''}`);
+  const visibleEntries = navEntries.filter((e) => entryVisible(e, canAccess));
+  const navItems = visibleEntries.flatMap((e) =>
+    e.kind === 'group' ? e.items.filter((it) => leafVisible(it, canAccess)) : [e]
+  );
+  const bottomNavItems = navItems.filter((i) => i.bottomNav);
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     let stored: Record<string, boolean> = {};

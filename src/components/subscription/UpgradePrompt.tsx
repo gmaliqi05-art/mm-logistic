@@ -68,6 +68,41 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
       description: t('subscription.features.data_export_desc'),
       requiredPlan: t('subscription.premiumPlan'),
     },
+    fleet_reports: {
+      title: t('subscription.features.fleet_reports'),
+      description: t('subscription.features.fleet_reports_desc'),
+      requiredPlan: t('subscription.premiumPlan'),
+    },
+    hr: {
+      title: t('subscription.features.hr'),
+      description: t('subscription.features.hr_desc'),
+      requiredPlan: t('subscription.premiumPlan'),
+    },
+    email_automation: {
+      title: t('subscription.features.email_automation'),
+      description: t('subscription.features.email_automation_desc'),
+      requiredPlan: t('subscription.premiumPlan'),
+    },
+    api_webhooks: {
+      title: t('subscription.features.api_webhooks'),
+      description: t('subscription.features.api_webhooks_desc'),
+      requiredPlan: t('subscription.premiumPlan'),
+    },
+    sorting: {
+      title: t('subscription.features.sorting'),
+      description: t('subscription.features.sorting_desc'),
+      requiredPlan: t('subscription.premiumPlan'),
+    },
+    repairs: {
+      title: t('subscription.features.repairs'),
+      description: t('subscription.features.repairs_desc'),
+      requiredPlan: t('subscription.premiumPlan'),
+    },
+    driver_tracking: {
+      title: t('subscription.features.driver_tracking'),
+      description: t('subscription.features.driver_tracking_desc'),
+      requiredPlan: t('subscription.premiumPlan'),
+    },
   };
 
   const info = featureLabels[feature];

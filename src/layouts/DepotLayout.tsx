@@ -30,6 +30,9 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import DeletionBanner from '../components/DeletionBanner';
 
+import type { Feature } from '../types';
+import { useSubscription } from '../contexts/SubscriptionContext';
+
 type WorkerCategory = 'depoist' | 'reparature';
 
 type NavLeaf = {
@@ -40,6 +43,7 @@ type NavLeaf = {
   end: boolean;
   bottomNav: boolean;
   categories?: WorkerCategory[];
+  feature?: Feature;
 };
 
 type NavGroup = {
@@ -48,6 +52,7 @@ type NavGroup = {
   labelKey: string;
   icon: typeof LayoutDashboard;
   categories?: WorkerCategory[];
+  feature?: Feature;
   items: NavLeaf[];
 };
 
@@ -59,15 +64,15 @@ const navEntries: NavEntry[] = [
   { to: '/depot/trailers', icon: Truck, labelKey: 'nav.trailers', end: false, bottomNav: true, categories: ['depoist'] },
   { to: '/depot/receiving', icon: ArrowLeftRight, labelKey: 'nav.receiving', end: false, bottomNav: true, categories: ['depoist'] },
   { to: '/depot/outgoing', icon: ArrowDownCircle, labelKey: 'nav.outgoing', end: false, bottomNav: true, categories: ['depoist'] },
-  { to: '/depot/sorting', icon: Layers, labelKey: 'nav.sorting', end: false, bottomNav: false, categories: ['depoist'] },
+  { to: '/depot/sorting', icon: Layers, labelKey: 'nav.sorting', end: false, bottomNav: false, categories: ['depoist'], feature: 'sorting' },
   { to: '/depot/delivery-notes', icon: FileText, labelKey: 'nav.deliveryNotes', end: false, bottomNav: false, categories: ['depoist'] },
 
   {
-    kind: 'group', groupKey: 'repairs', icon: Wrench, labelKey: 'nav.groupRepairs', categories: ['depoist'],
+    kind: 'group', groupKey: 'repairs', icon: Wrench, labelKey: 'nav.groupRepairs', categories: ['depoist'], feature: 'repairs',
     items: [
-      { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false, categories: ['depoist'] },
-      { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false, categories: ['depoist'] },
-      { to: '/depot/damage', icon: AlertTriangle, labelKey: 'nav.damage', end: false, bottomNav: false, categories: ['depoist'] },
+      { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false, categories: ['depoist'], feature: 'repairs' },
+      { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false, categories: ['depoist'], feature: 'repairs' },
+      { to: '/depot/damage', icon: AlertTriangle, labelKey: 'nav.damage', end: false, bottomNav: false, categories: ['depoist'], feature: 'repairs' },
     ],
   },
 
@@ -76,11 +81,11 @@ const navEntries: NavEntry[] = [
   { to: '/depot/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
 
   {
-    kind: 'group', groupKey: 'hr', icon: Calendar, labelKey: 'nav.groupHr',
+    kind: 'group', groupKey: 'hr', icon: Calendar, labelKey: 'nav.groupHr', feature: 'hr',
     items: [
-      { to: '/depot/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false },
-      { to: '/depot/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false },
-      { to: '/depot/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false },
+      { to: '/depot/leave', icon: Calendar, labelKey: 'nav.hrLeave', end: false, bottomNav: false, feature: 'hr' },
+      { to: '/depot/attendance', icon: Clock, labelKey: 'nav.hrAttendance', end: false, bottomNav: false, feature: 'hr' },
+      { to: '/depot/work-hours', icon: Clock, labelKey: 'nav.workHours', end: false, bottomNav: false, feature: 'hr' },
     ],
   },
 
@@ -88,18 +93,28 @@ const navEntries: NavEntry[] = [
   { to: '/depot/manual', icon: BookOpen, labelKey: 'nav.manual', end: false, bottomNav: false },
 ];
 
-function leafVisible(item: NavLeaf, cat: WorkerCategory | null | undefined): boolean {
+function leafVisible(
+  item: NavLeaf,
+  cat: WorkerCategory | null | undefined,
+  hasFeature: (f: Feature) => boolean,
+): boolean {
+  if (item.feature && !hasFeature(item.feature)) return false;
   if (!item.categories) return true;
   if (!cat) return true;
   return item.categories.includes(cat);
 }
 
-function entryVisible(entry: NavEntry, cat: WorkerCategory | null | undefined): boolean {
+function entryVisible(
+  entry: NavEntry,
+  cat: WorkerCategory | null | undefined,
+  hasFeature: (f: Feature) => boolean,
+): boolean {
   if (entry.kind === 'group') {
+    if (entry.feature && !hasFeature(entry.feature)) return false;
     if (entry.categories && cat && !entry.categories.includes(cat)) return false;
-    return entry.items.some((it) => leafVisible(it, cat));
+    return entry.items.some((it) => leafVisible(it, cat, hasFeature));
   }
-  return leafVisible(entry, cat);
+  return leafVisible(entry, cat, hasFeature);
 }
 
 function isGroupActive(group: NavGroup, pathname: string): boolean {
@@ -111,6 +126,7 @@ function isGroupActive(group: NavGroup, pathname: string): boolean {
 export default function DepotLayout() {
   const { profile, signOut } = useAuth();
   const { t } = useTranslation();
+  const { canAccess } = useSubscription();
   const { name: brandName, logo: brandLogo } = useCompanyBranding();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -121,9 +137,9 @@ export default function DepotLayout() {
 
   const roleLabel = t(`roles.${profile?.role ?? ''}`);
   const workerCategory = profile?.worker_category as WorkerCategory | null | undefined;
-  const visibleEntries = navEntries.filter((e) => entryVisible(e, workerCategory));
+  const visibleEntries = navEntries.filter((e) => entryVisible(e, workerCategory, canAccess));
   const navItems = visibleEntries.flatMap((e) =>
-    e.kind === 'group' ? e.items.filter((it) => leafVisible(it, workerCategory)) : [e]
+    e.kind === 'group' ? e.items.filter((it) => leafVisible(it, workerCategory, canAccess)) : [e]
   );
   const bottomNavItems = navItems.filter((i) => i.bottomNav);
 
@@ -200,7 +216,7 @@ export default function DepotLayout() {
             if (entry.kind === 'group') {
               const isOpen = !!openGroups[entry.groupKey];
               const containsActive = isGroupActive(entry, location.pathname);
-              const childLeaves = entry.items.filter((it) => leafVisible(it, workerCategory));
+              const childLeaves = entry.items.filter((it) => leafVisible(it, workerCategory, canAccess));
               return (
                 <div key={entry.groupKey} className="pt-1">
                   <button
