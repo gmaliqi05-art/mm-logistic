@@ -1,5 +1,6 @@
 import { matchProduct, type ProductLike, type CategoryLike, type MatchResult } from './productMatcher';
 import type { StockCondition } from '../types';
+import type { QualityClass } from './epalClassification';
 
 export type IntendedAction = 'stock' | 'sorting' | 'repair';
 // Re-export so callers that already imported StockCondition from this module
@@ -18,29 +19,39 @@ export interface InferredRow {
   unit: string | null;
   condition: StockCondition;
   intended_action: IntendedAction;
+  quality_class?: QualityClass;
   match: MatchResult;
 }
 
+/**
+ * Derives the operational condition and intended action from scanned
+ * text. EPAL grade markers ("Klasse A/B/C") set `quality_class` so the
+ * grade is preserved for the pallet account ledger, while `condition`
+ * stays within the operational vocabulary the DB constraint accepts
+ * (good/damaged/repaired/sorting/sorting_pending). Migration
+ * 20260527122741 merged ready_a/b/c into 'good'; any future code that
+ * needs the EPAL class should read `quality_class`, not `condition`.
+ */
 export function deriveConditionAction(
   desc: string,
   productName?: string | null,
-): { condition: StockCondition; intended_action: IntendedAction } {
+): { condition: StockCondition; intended_action: IntendedAction; quality_class?: QualityClass } {
   const d = `${desc || ''} ${productName || ''}`.toLowerCase();
 
   if (/\b(defekt|defect|damage|damaged|kaputt|broken|repair|riparim)\b/i.test(d)) {
-    return { condition: 'damaged', intended_action: 'repair' };
+    return { condition: 'damaged', intended_action: 'repair', quality_class: 'REPAIR_NEEDED' };
   }
   if (/\b(klasse\s*a|\bkl\.?\s*a\b|class\s*a|a[- ]?qualit(a|ä)t|qualit(a|ä)t\s*a)\b/i.test(d)) {
-    return { condition: 'ready_a', intended_action: 'sorting' };
+    return { condition: 'good', intended_action: 'sorting', quality_class: 'A' };
   }
   if (/\b(klasse\s*b|\bkl\.?\s*b\b|class\s*b|b[- ]?qualit(a|ä)t|qualit(a|ä)t\s*b)\b/i.test(d)) {
-    return { condition: 'ready_b', intended_action: 'sorting' };
+    return { condition: 'good', intended_action: 'sorting', quality_class: 'B' };
   }
   if (/\b(klasse\s*c|\bkl\.?\s*c\b|class\s*c|c[- ]?qualit(a|ä)t|qualit(a|ä)t\s*c)\b/i.test(d)) {
-    return { condition: 'ready_c', intended_action: 'sorting' };
+    return { condition: 'good', intended_action: 'sorting', quality_class: 'C' };
   }
   if (/\b(sortier|sortir|sorting|mix|mischpalette|misch)\b/i.test(d)) {
-    return { condition: 'sorting', intended_action: 'sorting' };
+    return { condition: 'sorting', intended_action: 'sorting', quality_class: 'UNSORTED' };
   }
   return { condition: 'good', intended_action: 'stock' };
 }

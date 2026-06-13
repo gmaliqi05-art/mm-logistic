@@ -68,18 +68,15 @@ export interface ProductCategory {
 export type SortingBatchStatus = 'in_progress' | 'completed' | 'cancelled';
 
 // Canonical pallet condition vocabulary. Mirrors the
-// stock_condition_check / stock_movements_movement_type_check constraints
-// applied by migration 20260520120100_add_stock_hierarchy_repair_completion.sql.
-// Keep these strings in sync with the DB CHECK constraints.
+// stock_condition_check constraint as last set by migration
+// 20260527122741_merge_ready_conditions_into_good_stock.sql.
+// Keep these strings in sync with the DB CHECK constraint.
 export type StockCondition =
   | 'good'
   | 'damaged'
   | 'repaired'
   | 'sorting'
-  | 'sorting_pending'
-  | 'ready_a'
-  | 'ready_b'
-  | 'ready_c';
+  | 'sorting_pending';
 
 export interface PalletSortingBatch {
   id: string;

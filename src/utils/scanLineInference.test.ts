@@ -6,58 +6,69 @@ describe('deriveConditionAction', () => {
     expect(deriveConditionAction('Defekt palette')).toEqual({
       condition: 'damaged',
       intended_action: 'repair',
+      quality_class: 'REPAIR_NEEDED',
     });
     expect(deriveConditionAction('Broken pallet')).toEqual({
       condition: 'damaged',
       intended_action: 'repair',
+      quality_class: 'REPAIR_NEEDED',
     });
     expect(deriveConditionAction('riparim te nevojshem')).toEqual({
       condition: 'damaged',
       intended_action: 'repair',
+      quality_class: 'REPAIR_NEEDED',
     });
   });
 
-  it('routes Klasse A keywords to ready_a / sorting', () => {
+  it('routes Klasse A keywords to good / sorting with quality_class=A', () => {
     expect(deriveConditionAction('EPAL Klasse A')).toEqual({
-      condition: 'ready_a',
+      condition: 'good',
       intended_action: 'sorting',
+      quality_class: 'A',
     });
     expect(deriveConditionAction('A-Qualität')).toEqual({
-      condition: 'ready_a',
+      condition: 'good',
       intended_action: 'sorting',
+      quality_class: 'A',
     });
     expect(deriveConditionAction('Kl. A')).toEqual({
-      condition: 'ready_a',
+      condition: 'good',
       intended_action: 'sorting',
+      quality_class: 'A',
     });
   });
 
-  it('routes Klasse B keywords to ready_b / sorting', () => {
+  it('routes Klasse B keywords to good / sorting with quality_class=B', () => {
     expect(deriveConditionAction('Klasse B')).toEqual({
-      condition: 'ready_b',
+      condition: 'good',
       intended_action: 'sorting',
+      quality_class: 'B',
     });
     expect(deriveConditionAction('Class B pallet')).toEqual({
-      condition: 'ready_b',
+      condition: 'good',
       intended_action: 'sorting',
+      quality_class: 'B',
     });
   });
 
-  it('routes Klasse C keywords to ready_c / sorting', () => {
+  it('routes Klasse C keywords to good / sorting with quality_class=C', () => {
     expect(deriveConditionAction('Klasse C')).toEqual({
-      condition: 'ready_c',
+      condition: 'good',
       intended_action: 'sorting',
+      quality_class: 'C',
     });
   });
 
-  it('routes sorting / mix to sorting condition', () => {
+  it('routes sorting / mix to sorting condition with quality_class=UNSORTED', () => {
     expect(deriveConditionAction('Mischpalette')).toEqual({
       condition: 'sorting',
       intended_action: 'sorting',
+      quality_class: 'UNSORTED',
     });
     expect(deriveConditionAction('Sortier palette')).toEqual({
       condition: 'sorting',
       intended_action: 'sorting',
+      quality_class: 'UNSORTED',
     });
   });
 
@@ -72,6 +83,7 @@ describe('deriveConditionAction', () => {
     expect(deriveConditionAction('Item 1', 'Defekt Palette')).toEqual({
       condition: 'damaged',
       intended_action: 'repair',
+      quality_class: 'REPAIR_NEEDED',
     });
   });
 
@@ -80,6 +92,7 @@ describe('deriveConditionAction', () => {
     expect(deriveConditionAction('Defekt Klasse A')).toEqual({
       condition: 'damaged',
       intended_action: 'repair',
+      quality_class: 'REPAIR_NEEDED',
     });
   });
 });
