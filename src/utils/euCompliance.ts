@@ -1,3 +1,6 @@
+import { effectiveVatRate } from './vatTreatment';
+import type { VatTreatment } from '../types/accounting';
+
 export interface EuCountry {
   code: string;
   name: string;
@@ -126,19 +129,34 @@ export interface VatBreakdownRow {
   gross: number;
 }
 
-export function buildVatBreakdown(items: Array<{ net: number; vat_rate: number; vat_category?: string }>): VatBreakdownRow[] {
+/**
+ * Aggregates invoice items into per-(rate, category) VAT rows.
+ *
+ * If an item passes a `vat_treatment` (added in PR after migration
+ * 20260613180000), the effective rate honours it: exempt treatments
+ * (reverse_charge / exempt / sachdarlehen / schadenersatz) contribute
+ * zero VAT, even when the stored `vat_rate` is 19.
+ *
+ * Existing callers that do NOT pass vat_treatment keep historic
+ * behaviour because `effectiveVatRate` falls back to the raw rate when
+ * the treatment is missing.
+ */
+export function buildVatBreakdown(
+  items: Array<{ net: number; vat_rate: number; vat_category?: string; vat_treatment?: VatTreatment | null }>,
+): VatBreakdownRow[] {
   const map = new Map<string, VatBreakdownRow>();
   for (const it of items) {
-    const key = `${it.vat_rate}-${it.vat_category ?? 'S'}`;
+    const rate = effectiveVatRate({ vat_rate: it.vat_rate, vat_treatment: it.vat_treatment });
+    const key = `${rate}-${it.vat_category ?? 'S'}`;
     const row = map.get(key) ?? {
-      rate: it.vat_rate,
+      rate,
       category: it.vat_category ?? 'S',
       net: 0,
       vat: 0,
       gross: 0,
     };
     row.net += it.net;
-    row.vat += (it.net * it.vat_rate) / 100;
+    row.vat += (it.net * rate) / 100;
     row.gross = row.net + row.vat;
     map.set(key, row);
   }

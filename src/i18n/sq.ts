@@ -3811,6 +3811,37 @@ export const sq = {
       empty: 'Nuk ka importe te regjistruara.',
       saveImport: 'Ruaj importin',
     },
+    vatTreatment: {
+      label: 'Trajtimi i TVSH-se',
+      notes: {
+        reverse_charge: 'Reverse charge — bleresi paguan TVSH-ne sipas Nenit 196 te Direktives 2006/112/EC',
+        exempt: 'Shitje e perjashtuar nga TVSH-ja',
+        sachdarlehen: 'Sachdarlehen §607 BGB — kembim i paletave pa TVSH (BMF v. 05.11.2013)',
+        schadenersatz: 'Schadenersatz (kompensim per paleta te pakthyera) — pa TVSH',
+      },
+      labels: {
+        standard: 'Standarde (perdor normen e TVSH-se)',
+        reverse_charge: 'Reverse Charge (0%)',
+        exempt: 'E perjashtuar (0%)',
+        sachdarlehen: 'Sachdarlehen §607 (0%)',
+        schadenersatz: 'Schadenersatz (0%)',
+      },
+    },
+    clearing: {
+      label: 'Modeli i kembimit te paletave',
+      deposit: 'Depozite / Pfand (TVSH standarde)',
+      exchange: 'Kembim i hapur / Tausch (Sachdarlehen, pa TVSH)',
+    },
+    lineType: {
+      label: 'Lloji i rreshtit',
+      goods: 'Mallrat',
+      transport: 'Transporti',
+      handling: 'Manipulimi',
+      pallet_deposit: 'Depozite palete',
+      pallet_exchange: 'Kembim palete',
+      repair: 'Riparimi',
+      other: 'Tjeter',
+    },
     dashboard: {
       title: 'Kontabiliteti',
       subtitle: 'Permbledhje financiare',

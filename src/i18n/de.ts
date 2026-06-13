@@ -3813,6 +3813,37 @@ export const de: typeof sq = {
       empty: 'Keine Importe erfasst.',
       saveImport: 'Import speichern',
     },
+    vatTreatment: {
+      label: 'USt-Behandlung',
+      notes: {
+        reverse_charge: 'Umkehrung der Steuerschuldnerschaft — Empfänger schuldet die USt nach Art. 196 MwStSystRL',
+        exempt: 'Steuerfreie Lieferung',
+        sachdarlehen: 'Sachdarlehen §607 BGB — Palettentausch ohne USt (BMF v. 05.11.2013)',
+        schadenersatz: 'Schadenersatz (Ausgleich für nicht zurückgegebene Paletten) — nicht steuerbar',
+      },
+      labels: {
+        standard: 'Standard (USt-Satz anwenden)',
+        reverse_charge: 'Reverse Charge (0%)',
+        exempt: 'Steuerbefreit (0%)',
+        sachdarlehen: 'Sachdarlehen §607 (0%)',
+        schadenersatz: 'Schadenersatz (0%)',
+      },
+    },
+    clearing: {
+      label: 'Paletten-Abrechnungsmodell',
+      deposit: 'Pfand (Standard-USt)',
+      exchange: 'Offener Tausch (Sachdarlehen, ohne USt)',
+    },
+    lineType: {
+      label: 'Positionstyp',
+      goods: 'Waren',
+      transport: 'Transport',
+      handling: 'Handling',
+      pallet_deposit: 'Palettenpfand',
+      pallet_exchange: 'Palettentausch',
+      repair: 'Reparatur',
+      other: 'Sonstiges',
+    },
     dashboard: {
       title: 'Dashboard',
       subtitle: 'Finanzuebersicht',
