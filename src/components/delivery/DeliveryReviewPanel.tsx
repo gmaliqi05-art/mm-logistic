@@ -102,29 +102,34 @@ type RowState = {
   match_confidence?: 'high' | 'medium' | 'low' | 'none';
 };
 
+// EPAL class markers in scanned text are mapped to operational
+// `condition='good'` (DB constraint accepts only good/damaged/repaired/
+// sorting/sorting_pending since migration 20260527122741) while the
+// detected grade is preserved in `quality_class` for the pallet account
+// ledger. Routing to the sorting line is preserved via intended_action.
 function deriveConditionAction(
   desc: string,
   productName?: string | null,
   categoryName?: string | null,
   isOutgoing: boolean = false,
-): { condition: string; intended_action: 'stock' | 'sorting' | 'repair' } {
+): { condition: string; intended_action: 'stock' | 'sorting' | 'repair'; quality_class?: 'A' | 'B' | 'C' | 'REPAIR_NEEDED' | 'UNSORTED' } {
   const d = `${desc || ''} ${productName || ''}`.toLowerCase();
   const outgoingAction = (fallback: 'stock' | 'sorting' | 'repair'): 'stock' | 'sorting' | 'repair' =>
     isOutgoing ? 'stock' : fallback;
   if (/\b(defekt|defect|damage|damaged|kaputt|broken|repair|riparim)\b/i.test(d)) {
-    return { condition: 'damaged', intended_action: outgoingAction('repair') };
+    return { condition: 'damaged', intended_action: outgoingAction('repair'), quality_class: 'REPAIR_NEEDED' };
   }
   if (/(klasse\s*a|\bkl\.?\s*a\b|\bclass\s*a\b|\ba[\s-]?klasse\b|a[- ]?qualit(a|ä)t|qualit(a|ä)t\s*a)/i.test(d)) {
-    return { condition: 'ready_a', intended_action: outgoingAction('sorting') };
+    return { condition: 'good', intended_action: outgoingAction('sorting'), quality_class: 'A' };
   }
   if (/(klasse\s*b|\bkl\.?\s*b\b|\bclass\s*b\b|\bb[\s-]?klasse\b|b[- ]?qualit(a|ä)t|qualit(a|ä)t\s*b)/i.test(d)) {
-    return { condition: 'ready_b', intended_action: outgoingAction('sorting') };
+    return { condition: 'good', intended_action: outgoingAction('sorting'), quality_class: 'B' };
   }
   if (/(klasse\s*c|\bkl\.?\s*c\b|\bclass\s*c\b|\bc[\s-]?klasse\b|c[- ]?qualit(a|ä)t|qualit(a|ä)t\s*c)/i.test(d)) {
-    return { condition: 'ready_c', intended_action: outgoingAction('sorting') };
+    return { condition: 'good', intended_action: outgoingAction('sorting'), quality_class: 'C' };
   }
   if (/\b(sortier|sortir|sorting|mix|mischt|gemischt|mischpalette)\b/i.test(d)) {
-    return { condition: isOutgoing ? 'good' : 'sorting', intended_action: outgoingAction('sorting') };
+    return { condition: isOutgoing ? 'good' : 'sorting', intended_action: outgoingAction('sorting'), quality_class: 'UNSORTED' };
   }
   if (isEuroPaletteName(d) || isEuroPaletteName(categoryName)) {
     return { condition: 'good', intended_action: 'stock' };

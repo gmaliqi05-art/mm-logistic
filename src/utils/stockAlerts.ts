@@ -1,4 +1,5 @@
 import type { StockAlert, Stock as StockType } from '../types';
+import { isDamageLike } from './epalClassification';
 
 /**
  * Returns the subset of stock alerts that are currently breached for the
@@ -6,9 +7,13 @@ import type { StockAlert, Stock as StockType } from '../types';
  *   - it is_active = true, AND
  *   - out_of_stock: total qty in (depot, category) is 0
  *   - low_stock: total qty in (depot, category) is between 1 and the threshold (inclusive)
- *   - damaged_threshold: damaged qty in (depot, category) >= threshold
+ *   - damaged_threshold: damage-like qty in (depot, category) >= threshold
  *
  * Stock rows are aggregated across product variants within (depot_id, category_id).
+ *
+ * Damage-like detection routes through `isDamageLike()` so that future
+ * additions to the condition vocabulary cannot silently bypass damage
+ * alerts — a previously latent bug.
  */
 export function getTriggeredStockAlerts(
   alerts: StockAlert[],
@@ -33,7 +38,7 @@ export function getTriggeredStockAlerts(
 
     if (alert.alert_type === 'damaged_threshold') {
       const damaged = rowsForKey
-        .filter((s) => s.condition === 'damaged')
+        .filter((s) => isDamageLike(s.condition))
         .reduce((sum, s) => sum + (s.quantity ?? 0), 0);
       return damaged >= alert.threshold;
     }
