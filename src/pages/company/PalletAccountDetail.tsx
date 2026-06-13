@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, Plus, TrendingUp, TrendingDown, Loader2, CheckCircle2, FileSignature } from 'lucide-react';
+import { ArrowLeft, Download, Plus, TrendingUp, TrendingDown, Loader2, CheckCircle2, FileSignature, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../utils/logger';
@@ -54,6 +54,7 @@ export default function PalletAccountDetail() {
   const [oldestOpenAgeDays, setOldestOpenAgeDays] = useState<number | null>(null);
   const [showReconForm, setShowReconForm] = useState(false);
   const [reconBusy, setReconBusy] = useState(false);
+  const [pdfBusyReconId, setPdfBusyReconId] = useState<string | null>(null);
   const todayIso = () => new Date().toISOString().slice(0, 10);
   const [reconForm, setReconForm] = useState({
     period_start: todayIso(),
@@ -192,6 +193,30 @@ export default function PalletAccountDetail() {
       await load();
     } catch (err) {
       logger.error('mark signed failed', { error: err });
+    }
+  };
+
+  const generateSaldoPdf = async (reconId: string) => {
+    setPdfBusyReconId(reconId);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-saldenbestaetigung`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ reconciliation_id: reconId, language }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json?.error ?? 'PDF generation failed');
+      if (json.download_url) window.open(json.download_url, '_blank');
+      await load();
+    } catch (err) {
+      logger.error('Saldenbestätigung PDF generation failed', { error: err });
+      alert(err instanceof Error ? err.message : 'PDF failed');
+    } finally {
+      setPdfBusyReconId(null);
     }
   };
 
@@ -361,18 +386,29 @@ export default function PalletAccountDetail() {
                     {r.signed_at && <span className="block text-xs text-slate-400">{new Date(r.signed_at).toLocaleDateString()}</span>}
                   </td>
                   <td className="px-4 py-2 text-right">
-                    {(r.status === 'draft' || r.status === 'sent') && (
+                    <div className="flex items-center justify-end gap-1.5">
                       <button
-                        onClick={() => {
-                          const name = prompt(t('common.palletReconciliation.signedByName'), r.signed_by_name || '');
-                          if (name !== null) void markReconciliationSigned(r.id, name);
-                        }}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => void generateSaldoPdf(r.id)}
+                        disabled={pdfBusyReconId === r.id}
+                        title="PDF"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                       >
-                        <CheckCircle2 className="w-3 h-3" />
-                        {t('common.palletReconciliation.markAsSigned')}
+                        {pdfBusyReconId === r.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3" />}
+                        PDF
                       </button>
-                    )}
+                      {(r.status === 'draft' || r.status === 'sent') && (
+                        <button
+                          onClick={() => {
+                            const name = prompt(t('common.palletReconciliation.signedByName'), r.signed_by_name || '');
+                            if (name !== null) void markReconciliationSigned(r.id, name);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          {t('common.palletReconciliation.markAsSigned')}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
