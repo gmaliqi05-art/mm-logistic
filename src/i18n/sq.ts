@@ -3912,6 +3912,12 @@ export const sq = {
       deposit: 'Depozite / Pfand (TVSH standarde)',
       exchange: 'Kembim i hapur / Tausch (Sachdarlehen, pa TVSH)',
     },
+    exchangeProtocol: {
+      label: 'Protokolli i kembimit (Kölner / Bonner)',
+      none: 'Pa marreveshje formale',
+      koelner: 'Kölner — transportuesi sjell paleta boshe per kembim direkt',
+      bonner: 'Bonner — marresi ka detyrim kthimi brenda afatit',
+    },
     lineType: {
       label: 'Lloji i rreshtit',
       goods: 'Mallrat',

@@ -3917,6 +3917,12 @@ export const en: typeof sq = {
       deposit: 'Deposit / Pfand (standard VAT)',
       exchange: 'Open exchange / Tausch (Sachdarlehen, no VAT)',
     },
+    exchangeProtocol: {
+      label: 'Exchange protocol (Kölner / Bonner)',
+      none: 'No formal agreement',
+      koelner: 'Kölner — carrier brings empties for direct swap (Doppeltausch)',
+      bonner: 'Bonner — receiver has return obligation within the agreed window',
+    },
     lineType: {
       label: 'Line type',
       goods: 'Goods',

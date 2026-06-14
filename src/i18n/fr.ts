@@ -3914,6 +3914,12 @@ export const fr: typeof sq = {
       deposit: 'Consigne / Pfand (TVA standard)',
       exchange: 'Échange ouvert / Tausch (Sachdarlehen, sans TVA)',
     },
+    exchangeProtocol: {
+      label: 'Protocole d\'échange (Kölner / Bonner)',
+      none: 'Aucun accord formel',
+      koelner: 'Kölner — le transporteur apporte des palettes vides pour échange direct',
+      bonner: 'Bonner — le destinataire a obligation de retour dans le délai convenu',
+    },
     lineType: {
       label: 'Type de ligne',
       goods: 'Marchandises',

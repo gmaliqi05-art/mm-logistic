@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import { useTranslation } from '../../i18n';
-import type { AccContact, AccContactType, ClearingModel } from '../../types/accounting';
+import type { AccContact, AccContactType, ClearingModel, ExchangeProtocol } from '../../types/accounting';
 import ClientPricesModal from '../../components/accounting/ClientPricesModal';
 
 interface ContactForm {
@@ -26,6 +26,7 @@ interface ContactForm {
   payment_days: number;
   notes: string;
   clearing_model: ClearingModel;
+  exchange_protocol: ExchangeProtocol | '';
 }
 
 const emptyForm: ContactForm = {
@@ -46,6 +47,7 @@ const emptyForm: ContactForm = {
   payment_days: 30,
   notes: '',
   clearing_model: 'deposit',
+  exchange_protocol: '',
 };
 
 type FilterType = 'all' | AccContactType;
@@ -144,6 +146,7 @@ export default function Contacts() {
             payment_days: form.payment_days,
             notes: form.notes,
             clearing_model: form.clearing_model,
+            exchange_protocol: form.exchange_protocol || null,
           })
           .eq('id', editingId);
         if (err) throw err;
@@ -167,6 +170,7 @@ export default function Contacts() {
           payment_days: form.payment_days,
           notes: form.notes,
           clearing_model: form.clearing_model,
+          exchange_protocol: form.exchange_protocol || null,
         });
         if (err) throw err;
       }
@@ -216,6 +220,7 @@ export default function Contacts() {
       payment_days: contact.payment_days,
       notes: contact.notes,
       clearing_model: contact.clearing_model ?? 'deposit',
+      exchange_protocol: (contact.exchange_protocol ?? '') as ExchangeProtocol | '',
     });
     setShowModal(true);
   }
@@ -509,6 +514,19 @@ export default function Contacts() {
                   >
                     <option value="deposit">{t('accounting.clearing.deposit')}</option>
                     <option value="exchange">{t('accounting.clearing.exchange')}</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('accounting.exchangeProtocol.label')}</label>
+                  <select
+                    value={form.exchange_protocol}
+                    onChange={(e) => updateForm('exchange_protocol', e.target.value as ExchangeProtocol | '')}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-white"
+                  >
+                    <option value="">{t('accounting.exchangeProtocol.none')}</option>
+                    <option value="koelner">{t('accounting.exchangeProtocol.koelner')}</option>
+                    <option value="bonner">{t('accounting.exchangeProtocol.bonner')}</option>
                   </select>
                 </div>
               </div>
