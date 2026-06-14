@@ -2896,6 +2896,9 @@ export const en: typeof sq = {
       codeNotFound: 'Code "{code}" was not found',
       atLeastOne: 'Add at least one valid item',
       pickProductForCategory: 'Pick the specific product for category "{category}".',
+      pendingIntakeTitle: '{count} delivery notes awaiting intake at this depot',
+      pendingIntakeDesc: 'Before adding stock manually here, open the delivered notes — the system posts them to stock automatically and there\'s no need to re-enter them in this form.',
+      pendingIntakeCta: 'Open delivery notes',
     },
     outgoing: {
       title: 'Outgoing Goods',

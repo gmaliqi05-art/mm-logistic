@@ -10,7 +10,9 @@ import {
   Clock,
   Package,
   Sparkles,
+  Inbox,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -19,6 +21,7 @@ import PalletScanner from '../../components/scanner/PalletScanner';
 import ContactAutocomplete from '../../components/depot/ContactAutocomplete';
 import type { StockMovement, ProductCategory } from '../../types';
 import { epalClassRank } from '../../utils/productSort';
+import { PENDING_INTAKE_STATUSES } from '../../utils/pendingDepotIntake';
 
 interface CategoryProductLite {
   id: string;
@@ -56,6 +59,7 @@ export default function DepotReceiving() {
 
   const [showScanner, setShowScanner] = useState(false);
   const [showPalletScanner, setShowPalletScanner] = useState(false);
+  const [pendingIntakeCount, setPendingIntakeCount] = useState(0);
 
   function normalizeForMatch(s: string) {
     return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -179,7 +183,7 @@ export default function DepotReceiving() {
       const depotId = profile!.depot_id!;
       const companyId = profile!.company_id!;
 
-      const [catRes, prodRes, histRes] = await Promise.all([
+      const [catRes, prodRes, histRes, pendingRes] = await Promise.all([
         supabase
           .from('product_categories')
           .select('*')
@@ -197,15 +201,24 @@ export default function DepotReceiving() {
           .in('movement_type', ['entry', 'exit'])
           .order('created_at', { ascending: false })
           .limit(30),
+        supabase
+          .from('delivery_notes')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', companyId)
+          .eq('assigned_depot_id', depotId)
+          .neq('stock_posted', true)
+          .in('status', PENDING_INTAKE_STATUSES as unknown as string[]),
       ]);
 
       if (catRes.error) throw catRes.error;
       if (prodRes.error) throw prodRes.error;
       if (histRes.error) throw histRes.error;
+      if (pendingRes.error) throw pendingRes.error;
 
       setCategories(catRes.data ?? []);
       setProducts(prodRes.data ?? []);
       setHistory(histRes.data ?? []);
+      setPendingIntakeCount(pendingRes.count ?? 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -389,6 +402,26 @@ export default function DepotReceiving() {
         continuous
         title={t('common.skanoPaletatPerPranim')}
       />
+
+      {pendingIntakeCount > 0 && (
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-300">
+          <Inbox className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              {t('depot.receiving.pendingIntakeTitle').replace('{count}', String(pendingIntakeCount))}
+            </p>
+            <p className="text-xs text-amber-800 mt-0.5">
+              {t('depot.receiving.pendingIntakeDesc')}
+            </p>
+          </div>
+          <Link
+            to="/depot/delivery-notes"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-amber-900 bg-white border border-amber-400 rounded-lg hover:bg-amber-100 transition-colors"
+          >
+            {t('depot.receiving.pendingIntakeCta')}
+          </Link>
+        </div>
+      )}
 
       {aiNotice && (
         <div className="flex items-start gap-2 p-3 rounded-lg bg-teal-50 border border-teal-200">

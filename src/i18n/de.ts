@@ -2893,6 +2893,9 @@ export const de: typeof sq = {
       codeNotFound: 'Code "{code}" wurde nicht gefunden',
       atLeastOne: 'Fügen Sie mindestens einen gültigen Artikel hinzu',
       pickProductForCategory: 'Wählen Sie das spezifische Produkt für die Kategorie "{category}".',
+      pendingIntakeTitle: '{count} Lieferscheine warten in diesem Depot auf Annahme',
+      pendingIntakeDesc: 'Bevor Sie hier manuell Bestand erfassen, öffnen Sie die zugestellten Lieferscheine — das System bucht sie automatisch in den Bestand; ein erneutes Erfassen in diesem Formular ist nicht nötig.',
+      pendingIntakeCta: 'Lieferscheine öffnen',
     },
     outgoing: {
       title: 'Warenausgang',
