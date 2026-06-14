@@ -3736,6 +3736,56 @@ export const fr: typeof sq = {
         title: 'Le chauffeur a termin\u00e9 la commande',
         body: 'La commande "{{noteNumber}}" attend votre v\u00e9rification.',
       },
+      leaveApproved: {
+        title: 'Cong\u00e9 approuv\u00e9',
+        body: 'Votre demande de cong\u00e9 ({dates}) a \u00e9t\u00e9 approuv\u00e9e.',
+      },
+      leaveRejected: {
+        title: 'Cong\u00e9 refus\u00e9',
+        body: 'Votre demande de cong\u00e9 ({dates}) a \u00e9t\u00e9 refus\u00e9e. Motif : {reason}',
+      },
+      leaveRequested: {
+        title: 'Nouvelle demande de cong\u00e9',
+        body: '{employee} a demand\u00e9 un cong\u00e9 pour {dates}.',
+      },
+      vehicleAssigned: {
+        title: 'V\u00e9hicule assign\u00e9',
+        body: 'Le v\u00e9hicule {plate} ({brand} {model}) vous a \u00e9t\u00e9 assign\u00e9.',
+      },
+      deliveryReassignedFrom: {
+        title: 'Livraison r\u00e9assign\u00e9e',
+        body: 'Le bon de livraison {number} a \u00e9t\u00e9 r\u00e9assign\u00e9 de {fromDriver} \u00e0 vous.',
+      },
+      sortingRequested: {
+        title: 'Tri demand\u00e9',
+        body: '{number} est pr\u00eat pour le tri ({quantity} pi\u00e8ces de {category}).',
+      },
+      invoiceOverdue: {
+        title: 'Facture en retard',
+        body: 'La facture {number} ({amount}) a d\u00e9pass\u00e9 l\'\u00e9ch\u00e9ance.',
+      },
+      invoiceCancelledUnlink: {
+        title: 'Facture annul\u00e9e',
+        body: 'La facture {number} a \u00e9t\u00e9 annul\u00e9e. Les bons de livraison ont \u00e9t\u00e9 dissoci\u00e9s.',
+      },
+      deliveryReadyForInvoice: {
+        title: 'Livraison pr\u00eate \u00e0 facturer',
+        body: '{number} a \u00e9t\u00e9 confirm\u00e9e et peut \u00eatre factur\u00e9e.',
+      },
+    },
+    trailer: {
+      claimedTitle: 'Remorque prise en charge',
+      claimedMessage: '{driver} a pris en charge la remorque {plate}.',
+      removedTitle: 'Remorque retir\u00e9e',
+      removedMessage: 'La remorque {plate} a \u00e9t\u00e9 retir\u00e9e de l\'affectation.',
+      releasedTitle: 'Remorque lib\u00e9r\u00e9e',
+      releasedMessage: 'La remorque {plate} a \u00e9t\u00e9 lib\u00e9r\u00e9e par {driver}.',
+      assignedTitle: 'Remorque assign\u00e9e',
+      assignedMessage: 'La remorque {plate} vous a \u00e9t\u00e9 assign\u00e9e.',
+    },
+    routeExt: {
+      title: 'Route \u00e9tendue',
+      body: 'Votre route a \u00e9t\u00e9 \u00e9tendue avec un nouvel arr\u00eat : {destination}.',
     },
   },
   support: {

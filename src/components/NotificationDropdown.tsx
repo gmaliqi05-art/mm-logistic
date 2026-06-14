@@ -10,6 +10,7 @@ import {
   CheckCheck,
   Loader2,
   X,
+  UserCheck,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,6 +42,7 @@ const typeIcons: Record<string, typeof MessageSquare> = {
   delivery: Truck,
   delivery_note: Truck,
   stock: FileText,
+  assignment: UserCheck,
   system: Info,
 };
 
@@ -50,6 +52,7 @@ const typeColors: Record<string, string> = {
   delivery: 'bg-amber-100 text-amber-600',
   delivery_note: 'bg-amber-100 text-amber-600',
   stock: 'bg-orange-100 text-orange-600',
+  assignment: 'bg-violet-100 text-violet-600',
   system: 'bg-gray-100 text-gray-600',
 };
 

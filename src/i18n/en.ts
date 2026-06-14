@@ -3739,6 +3739,56 @@ export const en: typeof sq = {
         title: 'Driver completed the order',
         body: 'Order "{{noteNumber}}" awaits your review.',
       },
+      leaveApproved: {
+        title: 'Leave approved',
+        body: 'Your leave request ({dates}) was approved.',
+      },
+      leaveRejected: {
+        title: 'Leave rejected',
+        body: 'Your leave request ({dates}) was rejected. Reason: {reason}',
+      },
+      leaveRequested: {
+        title: 'New leave request',
+        body: '{employee} requested leave for {dates}.',
+      },
+      vehicleAssigned: {
+        title: 'Vehicle assigned',
+        body: 'Vehicle {plate} ({brand} {model}) has been assigned to you.',
+      },
+      deliveryReassignedFrom: {
+        title: 'Delivery reassigned',
+        body: 'Delivery note {number} was reassigned from {fromDriver} to you.',
+      },
+      sortingRequested: {
+        title: 'Sorting requested',
+        body: '{number} is ready for sorting ({quantity} pieces of {category}).',
+      },
+      invoiceOverdue: {
+        title: 'Invoice overdue',
+        body: 'Invoice {number} ({amount}) has passed its due date.',
+      },
+      invoiceCancelledUnlink: {
+        title: 'Invoice cancelled',
+        body: 'Invoice {number} was cancelled. Delivery notes were unlinked.',
+      },
+      deliveryReadyForInvoice: {
+        title: 'Delivery ready for invoicing',
+        body: '{number} has been confirmed and can be invoiced.',
+      },
+    },
+    trailer: {
+      claimedTitle: 'Trailer claimed',
+      claimedMessage: '{driver} claimed trailer {plate}.',
+      removedTitle: 'Trailer released',
+      removedMessage: 'Trailer {plate} was removed from assignment.',
+      releasedTitle: 'Trailer released',
+      releasedMessage: 'Trailer {plate} was released by {driver}.',
+      assignedTitle: 'Trailer assigned',
+      assignedMessage: 'Trailer {plate} has been assigned to you.',
+    },
+    routeExt: {
+      title: 'Route extended',
+      body: 'Your route was extended with a new stop: {destination}.',
     },
   },
   support: {

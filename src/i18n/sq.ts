@@ -3734,6 +3734,56 @@ export const sq = {
         title: 'Shoferi plotesoi porosine',
         body: 'Porosia "{{noteNumber}}" pret shqyrtimin tend.',
       },
+      leaveApproved: {
+        title: 'Pushimi u aprovua',
+        body: 'Kerkesa jote per pushim ({dates}) u aprovua.',
+      },
+      leaveRejected: {
+        title: 'Pushimi u refuzua',
+        body: 'Kerkesa jote per pushim ({dates}) u refuzua. Arsye: {reason}',
+      },
+      leaveRequested: {
+        title: 'Kerkese e re per pushim',
+        body: '{employee} ka kerkuar pushim per {dates}.',
+      },
+      vehicleAssigned: {
+        title: 'Automjet i caktuar',
+        body: 'T\'u caktua automjeti {plate} ({brand} {model}).',
+      },
+      deliveryReassignedFrom: {
+        title: 'Dergese e ricaktuar',
+        body: 'Fletedergesa {number} u ricaktua nga {fromDriver} tek ti.',
+      },
+      sortingRequested: {
+        title: 'Sortim i kerkuar',
+        body: '{number} eshte gati per sortim ({quantity} cope {category}).',
+      },
+      invoiceOverdue: {
+        title: 'Fature e vonuar',
+        body: 'Fatura {number} ({amount}) ka kaluar afatin e pageses.',
+      },
+      invoiceCancelledUnlink: {
+        title: 'Fature e anuluar',
+        body: 'Fatura {number} u anulua. Fletet e dergeses u shkeputen.',
+      },
+      deliveryReadyForInvoice: {
+        title: 'Dergese e gatshme per faturim',
+        body: '{number} eshte konfirmuar dhe mund te fakturohet.',
+      },
+    },
+    trailer: {
+      claimedTitle: 'Rimorkio u mor ne ngarkim',
+      claimedMessage: '{driver} mori rimorkion {plate}.',
+      removedTitle: 'Rimorkio u liroua',
+      removedMessage: 'Rimorkia {plate} u liroua nga ngarkimi.',
+      releasedTitle: 'Rimorkio e liruar',
+      releasedMessage: 'Rimorkia {plate} u liruar nga {driver}.',
+      assignedTitle: 'Rimorkio e caktuar',
+      assignedMessage: 'T\'u caktua rimorkia {plate}.',
+    },
+    routeExt: {
+      title: 'Zgjatje rruge',
+      body: 'Rruga jote eshte zgjatur me nje pike te re: {destination}.',
     },
   },
   support: {
