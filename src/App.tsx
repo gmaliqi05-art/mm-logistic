@@ -456,7 +456,7 @@ function AppRoutes() {
           <Route index element={<LogisticsDashboard />} />
           <Route path="dispatch" element={<LogisticsDispatch />} />
           <Route path="active" element={<LogisticsActive />} />
-          <Route path="live-map" element={<LogisticsLiveMap />} />
+          <Route path="live-map" element={<FeatureGate feature="driver_tracking"><LogisticsLiveMap /></FeatureGate>} />
           <Route path="drivers" element={<LogisticsDrivers />} />
           <Route path="manual" element={<Manual scope="logistics" />} />
         </Route>

@@ -64,6 +64,41 @@ const ALL_FEATURES: Array<{ key: Feature; labelKey: string; descriptionKey: stri
     labelKey: 'common.featureDataExport',
     descriptionKey: 'common.featureDataExportDesc',
   },
+  {
+    key: 'fleet_reports',
+    labelKey: 'subscription.features.fleet_reports',
+    descriptionKey: 'subscription.features.fleet_reports_desc',
+  },
+  {
+    key: 'hr',
+    labelKey: 'subscription.features.hr',
+    descriptionKey: 'subscription.features.hr_desc',
+  },
+  {
+    key: 'email_automation',
+    labelKey: 'subscription.features.email_automation',
+    descriptionKey: 'subscription.features.email_automation_desc',
+  },
+  {
+    key: 'api_webhooks',
+    labelKey: 'subscription.features.api_webhooks',
+    descriptionKey: 'subscription.features.api_webhooks_desc',
+  },
+  {
+    key: 'sorting',
+    labelKey: 'subscription.features.sorting',
+    descriptionKey: 'subscription.features.sorting_desc',
+  },
+  {
+    key: 'repairs',
+    labelKey: 'subscription.features.repairs',
+    descriptionKey: 'subscription.features.repairs_desc',
+  },
+  {
+    key: 'driver_tracking',
+    labelKey: 'subscription.features.driver_tracking',
+    descriptionKey: 'subscription.features.driver_tracking_desc',
+  },
 ];
 
 interface CompanyFeaturesManagerProps {
