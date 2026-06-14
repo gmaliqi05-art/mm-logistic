@@ -3716,6 +3716,18 @@ export const fr: typeof sq = {
         title: 'Livraison confirm\u00e9e par le chauffeur',
         body: '{number} a \u00e9t\u00e9 livr\u00e9e et confirm\u00e9e par le chauffeur.',
       },
+      palletAgingWarning: {
+        title: 'Compte palettes proche de la prescription',
+        body: 'Compte avec {partner} : {days} jours non r\u00e9concili\u00e9s. Solde actuel : {balance}.',
+      },
+      palletAgingCritical: {
+        title: 'CRITIQUE : compte palettes non r\u00e9concili\u00e9',
+        body: 'Le compte avec {partner} a {days} jours sans r\u00e9conciliation \u2014 prescription imminente. Solde : {balance}.',
+      },
+      palletAgingExpired: {
+        title: 'PRESCRIT : d\u00e9lai \u00a7439 HGB \u00e9coul\u00e9',
+        body: 'Le compte avec {partner} a {days} jours sans r\u00e9conciliation \u2014 le d\u00e9lai d\'un an \u00a7439 HGB est d\u00e9pass\u00e9. Solde : {balance}.',
+      },
       deliveryScannedPendingReview: {
         title: 'Livraison scann\u00e9e en attente de v\u00e9rification',
         body: '{number} a \u00e9t\u00e9 scann\u00e9e/t\u00e9l\u00e9vers\u00e9e par le chauffeur et attend approbation.',
