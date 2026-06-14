@@ -2891,6 +2891,9 @@ export const sq = {
       codeNotFound: 'Kodi "{code}" nuk u gjet',
       atLeastOne: 'Shto te pakten nje artikull valid',
       pickProductForCategory: 'Zgjedh produktin specifik per kategorin "{category}".',
+      pendingIntakeTitle: '{count} fletedergesa po presin pranim ne kete depo',
+      pendingIntakeDesc: 'Para se te shtoni manualisht, hapni fletedergesat e dorezuara — regjistrimi i tyre ne stok ben automatikisht nga sistemi pa nevoje per ri-shenim ketu.',
+      pendingIntakeCta: 'Hap fletedergesat',
     },
     outgoing: {
       title: 'Dalje malli',

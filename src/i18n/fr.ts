@@ -2893,6 +2893,9 @@ export const fr: typeof sq = {
       codeNotFound: 'Code "{code}" introuvable',
       atLeastOne: 'Ajouter au moins un article valide',
       pickProductForCategory: 'S\u00e9lectionnez le produit sp\u00e9cifique pour la cat\u00e9gorie "{category}".',
+      pendingIntakeTitle: '{count} bons de livraison en attente de r\u00e9ception dans ce d\u00e9p\u00f4t',
+      pendingIntakeDesc: 'Avant d\'ajouter du stock manuellement ici, ouvrez les bons livr\u00e9s \u2014 le syst\u00e8me les comptabilise automatiquement en stock, inutile de les ressaisir dans ce formulaire.',
+      pendingIntakeCta: 'Ouvrir les bons de livraison',
     },
     outgoing: {
       title: 'Sortie de marchandises',
