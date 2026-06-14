@@ -614,6 +614,8 @@ export default function InvoiceBuilder() {
       vat_rate: it.vat_rate,
       discount_amount: it.discount_amount,
       line_total: Math.max(0, it.quantity * it.unit_price - it.discount_amount),
+      vat_treatment: it.vat_treatment,
+      line_type: it.line_type,
     })),
     totals,
   }), [company, bank, contact, buyerVat, invoiceNumber, invoiceDate, dueDate,
