@@ -3721,6 +3721,18 @@ export const en: typeof sq = {
         title: 'Delivery confirmed by driver',
         body: '{number} was delivered and confirmed by the driver.',
       },
+      palletAgingWarning: {
+        title: 'Pallet account approaching reconciliation',
+        body: 'Account with {partner}: {days} days unreconciled. Current balance: {balance}.',
+      },
+      palletAgingCritical: {
+        title: 'CRITICAL: Pallet account unreconciled',
+        body: 'Account with {partner} has {days} days unreconciled — limitation approaching. Balance: {balance}.',
+      },
+      palletAgingExpired: {
+        title: 'EXPIRED: §439 HGB limitation lapsed',
+        body: 'Account with {partner} has {days} days unreconciled — the 1-year §439 HGB clock has elapsed. Balance: {balance}.',
+      },
       deliveryScannedPendingReview: {
         title: 'Delivery scanned for review',
         body: '{number} was scanned/uploaded by the driver and awaits approval.',

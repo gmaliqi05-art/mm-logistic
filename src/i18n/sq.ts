@@ -3716,6 +3716,18 @@ export const sq = {
         title: 'Dergesa u konfirmua nga shoferi',
         body: '{number} u dorezua dhe konfirmua nga shoferi.',
       },
+      palletAgingWarning: {
+        title: 'Pallet account afer pajtimit',
+        body: 'Llogaria me {partner}: {days} dite pa pajtim. Balanca aktuale: {balance}.',
+      },
+      palletAgingCritical: {
+        title: 'KRITIKE: Pallet account pa pajtim',
+        body: 'Llogaria me {partner} ka {days} dite pa pajtim — parashkrimi afrohet. Balanca: {balance}.',
+      },
+      palletAgingExpired: {
+        title: 'I SKADUAR: Parashkrim §439 HGB',
+        body: 'Llogaria me {partner} ka {days} dite pa pajtim — afati 1-vjeçar i §439 HGB ka kaluar. Balanca: {balance}.',
+      },
       deliveryScannedPendingReview: {
         title: 'Dergese e skanuar per shqyrtim',
         body: '{number} u skanua/ngarkua nga shoferi dhe pret miratim.',

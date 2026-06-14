@@ -3718,6 +3718,18 @@ export const de: typeof sq = {
         title: 'Lieferung vom Fahrer bestätigt',
         body: '{number} wurde vom Fahrer zugestellt und bestätigt.',
       },
+      palletAgingWarning: {
+        title: 'Palettenkonto nähert sich der Verjährung',
+        body: 'Konto mit {partner}: {days} Tage ohne Saldenbestätigung. Aktueller Saldo: {balance}.',
+      },
+      palletAgingCritical: {
+        title: 'KRITISCH: Palettenkonto unabgestimmt',
+        body: 'Konto mit {partner} ist seit {days} Tagen nicht abgestimmt — Verjährung steht bevor. Saldo: {balance}.',
+      },
+      palletAgingExpired: {
+        title: 'VERJÄHRT: §439 HGB-Frist abgelaufen',
+        body: 'Konto mit {partner}: {days} Tage ohne Saldenbestätigung — die 1-Jahres-Frist nach §439 HGB ist verstrichen. Saldo: {balance}.',
+      },
       deliveryScannedPendingReview: {
         title: 'Lieferung zur Prüfung gescannt',
         body: '{number} wurde vom Fahrer gescannt/hochgeladen und wartet auf Freigabe.',
