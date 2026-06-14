@@ -3116,6 +3116,12 @@ export const en: typeof sq = {
       gpsPending: 'Acquiring GPS...',
       save: 'Save proof',
       saved: 'Delivery proof saved',
+      queuedForRetry: 'No network — proof saved locally and will be uploaded automatically when you’re back online.',
+    },
+    podOutbox: {
+      queueTitle: '{count} proof(s) waiting to sync',
+      flushing: 'Uploading to server...',
+      willRetry: 'Will retry automatically when the network is back.',
     },
     deliveryNotes: {
       title: 'Delivery Notes',
