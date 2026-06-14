@@ -4917,6 +4917,10 @@ export const sq = {
       mixedCompanyReviewed: 'Artikujt per sortim jane vendosur nga kompania. Vetem artikujt per stok duhen konfirmuar.',
       mixedDesc: 'Artikujt do te ndahen: disa per stok, disa per sortim, disa per reparim.',
     },
+    palletPartner: {
+      missingTitle: 'Llogaria e paletave NUK do te perditesohet',
+      missingDesc: 'Kjo dergese ka artikuj paletash por nuk eshte caktuar nje partner kontakt (consignor / consignee ose goods owner). Pas aprovimit, levizja e paletave NUK do te regjistrohet ne llogarine e partnerit. Caktoni nje partner kontakt nga seksioni i rolit me lart per te shmangur kete.',
+    },
     tabs: {
       deliveries: 'Dergesa',
       pickups: 'Te Marra',

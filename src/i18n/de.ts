@@ -4919,6 +4919,10 @@ export const de: typeof sq = {
       mixedCompanyReviewed: 'Sortier-Artikel wurden vom Unternehmen festgelegt. Nur Bestandsartikel m\u00fcssen best\u00e4tigt werden.',
       mixedDesc: 'Artikel werden aufgeteilt: einige f\u00fcr Bestand, einige zum Sortieren, einige zur Reparatur.',
     },
+    palletPartner: {
+      missingTitle: 'Das Palettenkonto wird NICHT aktualisiert',
+      missingDesc: 'Diese Lieferung enth\u00e4lt Palettenpositionen, aber es ist kein Partnerkontakt zugewiesen (Versender / Empf\u00e4nger oder Warenbesitzer). Nach der Freigabe wird die Palettenbewegung NICHT auf das Partnerkonto gebucht. Weisen Sie oben im Rollenbereich einen Partnerkontakt zu, um diesen stillen Verlust zu vermeiden.',
+    },
     tabs: {
       deliveries: 'Lieferungen',
       pickups: 'Abholungen',

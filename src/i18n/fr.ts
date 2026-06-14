@@ -4919,6 +4919,10 @@ export const fr: typeof sq = {
       mixedCompanyReviewed: 'Les articles de tri ont \u00e9t\u00e9 d\u00e9finis par l\'entreprise. Seuls les articles de stock n\u00e9cessitent une confirmation.',
       mixedDesc: 'Les articles seront r\u00e9partis : certains pour le stock, certains pour le tri, certains pour la r\u00e9paration.',
     },
+    palletPartner: {
+      missingTitle: 'Le compte palettes NE sera PAS mis \u00e0 jour',
+      missingDesc: 'Cette livraison contient des palettes mais aucun contact partenaire n\'est d\u00e9fini (exp\u00e9diteur / destinataire ou propri\u00e9taire des marchandises). Apr\u00e8s approbation, le mouvement de palettes NE sera PAS comptabilis\u00e9 sur le compte partenaire. Affectez un contact partenaire dans la section de r\u00f4le ci-dessus pour \u00e9viter cet oubli silencieux.',
+    },
     tabs: {
       deliveries: 'Livraisons',
       pickups: 'Enl\u00e8vements',
