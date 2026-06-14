@@ -3168,6 +3168,8 @@ export const en: typeof sq = {
     home: {
       greeting: 'Hello',
       tasksSummary: 'You have {today} tasks today and {tomorrow} tomorrow',
+      offlineMode: 'Offline mode',
+      cachedAt: 'Cached data —',
       today: 'Today',
       tomorrow: 'Tomorrow',
       task: 'task',

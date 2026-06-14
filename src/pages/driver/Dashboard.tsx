@@ -39,6 +39,11 @@ import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/
 import { notifyUsers } from '../../utils/notifications';
 import DriverPermissionsGate from '../../components/DriverPermissionsGate';
 import DriverTrailersWidget from '../../components/driver/DriverTrailersWidget';
+import {
+  saveDriverTaskCache,
+  loadDriverTaskCache,
+  formatCacheAge,
+} from '../../utils/driverTaskCache';
 import { LicensePlate } from '../../components/trailers/TrailersManager';
 
 export type T = (key: string) => string;
@@ -79,6 +84,12 @@ export default function DriverDashboard() {
   const [notes, setNotes] = useState<NoteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Offline / cached-data UX. cacheFetchedAt is the timestamp of the
+  // most recent successful fetch (whether from network or restored from
+  // localStorage); isFromCache flips true when we surface a stale copy
+  // because the network failed. Both feed the "Synced X ago" badge.
+  const [cacheFetchedAt, setCacheFetchedAt] = useState<number | null>(null);
+  const [isFromCache, setIsFromCache] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [selected, setSelected] = useState<NoteRow | null>(null);
   const [search, setSearch] = useState('');
@@ -118,7 +129,18 @@ export default function DriverDashboard() {
   }
 
   useEffect(() => {
-    if (profile?.id) fetchData();
+    if (!profile?.id) return;
+    // Hydrate from cache *immediately* so the driver sees something on
+    // cold start, even before the network responds. fetchData() will
+    // overwrite this with fresh data once Supabase returns.
+    const cached = loadDriverTaskCache<NoteRow>(profile.id);
+    if (cached) {
+      setNotes(cached.rows);
+      setCacheFetchedAt(cached.fetchedAt);
+      setIsFromCache(true);
+      setLoading(false);
+    }
+    fetchData();
   }, [profile?.id]);
 
   useEffect(() => {
@@ -194,9 +216,25 @@ export default function DriverDashboard() {
         .order('scheduled_delivery_at', { ascending: true, nullsFirst: false })
         .limit(300);
       if (err) throw err;
-      setNotes((data as any) ?? []);
+      const rows = (data as any) ?? [];
+      setNotes(rows);
+      // Persist for offline access. The driver app stays usable in
+      // dead zones because the next boot will hydrate from this cache.
+      saveDriverTaskCache(profile!.id, rows);
+      setCacheFetchedAt(Date.now());
+      setIsFromCache(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      // Network or auth error. If we have a cached copy, surface it
+      // instead of leaving the driver with an empty screen.
+      const cached = loadDriverTaskCache<NoteRow>(profile!.id);
+      if (cached && notes.length === 0) {
+        setNotes(cached.rows);
+        setCacheFetchedAt(cached.fetchedAt);
+        setIsFromCache(true);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : String(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -280,6 +318,14 @@ export default function DriverDashboard() {
   return (
     <div className="space-y-5 pb-6">
       <DriverPermissionsGate />
+      {isFromCache && cacheFetchedAt && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2 text-xs flex items-center gap-2">
+          <span className="font-medium">{t('driver.home.offlineMode') || 'Offline mode'}</span>
+          <span className="text-amber-700">
+            {(t('driver.home.cachedAt') || 'Synced')} {formatCacheAge(cacheFetchedAt)}
+          </span>
+        </div>
+      )}
       <div>
         <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
           {t('driver.home.greeting')}, {profile?.full_name?.split(' ')[0] ?? t('roles.driver')}

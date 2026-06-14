@@ -3165,6 +3165,8 @@ export const fr: typeof sq = {
     home: {
       greeting: 'Bonjour',
       tasksSummary: 'Vous avez {today} t\u00e2ches aujourd\'hui et {tomorrow} demain',
+      offlineMode: 'Mode hors ligne',
+      cachedAt: 'Donn\u00e9es mises en cache \u2014',
       today: 'Aujourd\'hui',
       tomorrow: 'Demain',
       task: 't\u00e2che',

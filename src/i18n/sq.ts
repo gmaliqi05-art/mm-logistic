@@ -3163,6 +3163,8 @@ export const sq = {
     home: {
       greeting: 'Pershendetje',
       tasksSummary: 'Keni {today} detyra per sot dhe {tomorrow} per neser',
+      offlineMode: 'Modaliteti offline',
+      cachedAt: 'Te dhena nga cache —',
       today: 'Sot',
       tomorrow: 'Neser',
       task: 'detyre',
