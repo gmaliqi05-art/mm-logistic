@@ -104,7 +104,7 @@ type RangeKey = '7d' | '30d' | '90d';
 
 export default function CompanyDashboard() {
   const { profile } = useAuth();
-  const { accountingEnabled } = useSubscription();
+  const { accountingEnabled, canAccess } = useSubscription();
   const [liveDriverCount, setLiveDriverCount] = useState(0);
   const { t } = useTranslation();
   const reviewCounts = usePendingReviewCounts(profile?.company_id);
@@ -196,6 +196,13 @@ export default function CompanyDashboard() {
 
   useEffect(() => {
     if (!profile?.company_id) return;
+    // Skip the polling entirely when the company does not have driver
+    // tracking enabled — avoids hitting driver_locations every 30s and
+    // surfacing a count for a premium feature on the dashboard.
+    if (!canAccess('driver_tracking')) {
+      setLiveDriverCount(0);
+      return;
+    }
     let cancelled = false;
     async function pollLiveDrivers() {
       const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
@@ -214,7 +221,8 @@ export default function CompanyDashboard() {
       cancelled = true;
       window.clearInterval(iv);
     };
-  }, [profile?.company_id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.company_id, canAccess('driver_tracking')]);
 
   useEffect(() => {
     if (!profile?.company_id || !profile?.id) return;
@@ -677,27 +685,35 @@ export default function CompanyDashboard() {
         </Link>
       )}
 
-      {/* Secondary stats: repairs & sorting */}
-      {(stats.pendingRepairs > 0 || stats.activeSorting > 0 || stats.pendingPickups > 0) && (
+      {/* Secondary stats: repairs & sorting — gated per feature so non-premium
+          companies don't see premium numbers on the dashboard. The repairs
+          and sorting cards are hidden entirely when the feature is locked. */}
+      {((canAccess('repairs') && stats.pendingRepairs > 0) ||
+        (canAccess('sorting') && stats.activeSorting > 0) ||
+        stats.pendingPickups > 0) && (
         <div className="grid grid-cols-3 gap-3">
-          <Link to="/company/repair-reports" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-orange-200 transition-colors">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-orange-50"><Wrench className="w-4 h-4 text-orange-600" /></div>
-              <div>
-                <p className="text-[10px] text-gray-500 font-medium uppercase">{t('nav.repairs')}</p>
-                <p className="text-lg font-bold text-gray-900">{stats.pendingRepairs}</p>
+          {canAccess('repairs') && (
+            <Link to="/company/repair-reports" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-orange-200 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-orange-50"><Wrench className="w-4 h-4 text-orange-600" /></div>
+                <div>
+                  <p className="text-[10px] text-gray-500 font-medium uppercase">{t('nav.repairs')}</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.pendingRepairs}</p>
+                </div>
               </div>
-            </div>
-          </Link>
-          <Link to="/company/sorting-reports" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-teal-200 transition-colors">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-teal-50"><Layers className="w-4 h-4 text-teal-600" /></div>
-              <div>
-                <p className="text-[10px] text-gray-500 font-medium uppercase">{t('nav.sorting')}</p>
-                <p className="text-lg font-bold text-gray-900">{stats.activeSorting}</p>
+            </Link>
+          )}
+          {canAccess('sorting') && (
+            <Link to="/company/sorting-reports" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-teal-200 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-teal-50"><Layers className="w-4 h-4 text-teal-600" /></div>
+                <div>
+                  <p className="text-[10px] text-gray-500 font-medium uppercase">{t('nav.sorting')}</p>
+                  <p className="text-lg font-bold text-gray-900">{stats.activeSorting}</p>
+                </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          )}
           <Link to="/company/delivery-notes" className="bg-white rounded-xl border border-gray-100 shadow-sm p-3.5 hover:border-sky-200 transition-colors">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-sky-50"><Package className="w-4 h-4 text-sky-600" /></div>
