@@ -56,6 +56,7 @@ export default function InvoicePrint() {
           net: Number(it.line_total ?? 0),
           vat_rate: Number(it.vat_rate ?? 0),
           vat_category: 'S',
+          vat_treatment: it.vat_treatment ?? 'standard',
         }))
       );
 
@@ -104,6 +105,8 @@ export default function InvoicePrint() {
           vat_rate: Number(it.vat_rate ?? 0),
           discount_amount: Number(it.line_discount ?? 0),
           line_total: Number(it.line_total ?? 0),
+          vat_treatment: it.vat_treatment ?? 'standard',
+          line_type: it.line_type ?? null,
         })),
         totals: {
           subtotal: Number(inv.subtotal ?? 0),
