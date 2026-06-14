@@ -4678,6 +4678,24 @@ export const de: typeof sq = {
       pickExportType: 'Wählen Sie mindestens einen Exporttyp.',
     },
   },
+  compliance: {
+    lucid: {
+      warning: {
+        title: 'LUCID-Registrierung (VerpackG) fehlt',
+        missing: 'Ihr Unternehmen hat seinen Sitz in Deutschland, aber es ist keine LUCID-Registrierungsnummer hinterlegt. Jeder Vertreiber von Verpackungen (einschließlich B2B-Holzpaletten) muss sich vor dem ersten Inverkehrbringen bei der ZSVR registrieren — Bußgelder bis 200.000 € je Verstoß (§34 VerpackG).',
+        invalidFormat: 'Die hinterlegte LUCID-Nummer entspricht nicht dem offiziellen Format (DE + 13 Ziffern, z. B. DE1234567890123). Bitte im LUCID-Portal prüfen und in den Unternehmenseinstellungen korrigieren.',
+        missingDate: 'Die LUCID-Nummer ist hinterlegt, aber das Datum der ZSVR-Bestätigung fehlt. Dieses Datum ist Grundlage der jährlichen Mengenmeldung (fällig am 15. Mai jedes Jahres).',
+        cta: 'Unternehmenseinstellungen öffnen',
+        openLucid: 'LUCID-Portal öffnen',
+      },
+      number: 'LUCID-Registrierungsnummer',
+      numberHint: 'ZSVR-Format: DE + 13 Ziffern, z. B. DE1234567890123',
+      registeredAt: 'Datum der Registrierungsbestätigung',
+      registeredAtHint: 'Datum, an dem die ZSVR die Registrierung bestätigt hat. Grundlage für die jährliche Datenmeldungsfrist (15. Mai).',
+      country: 'Sitzland des Unternehmens',
+      countryHint: 'LUCID ist nur für Unternehmen mit Sitz in Deutschland verpflichtend.',
+    },
+  },
   settings: {
     companySettings: 'Unternehmenseinstellungen',
     companyDesc: 'Verwalten Sie die Daten Ihres Unternehmens',

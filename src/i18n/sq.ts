@@ -4676,6 +4676,24 @@ export const sq = {
       pickExportType: 'Zgjidhni te pakten nje lloj eksporti.',
     },
   },
+  compliance: {
+    lucid: {
+      warning: {
+        title: 'Regjistrim LUCID (VerpackG) mungon',
+        missing: 'Kompania juaj eshte ne Gjermani por nuk e ka numrin e regjistrimit LUCID. Cdo distribuitor i ambalazheve (perfshire paletat e drurit per B2B) duhet te regjistrohet ne ZSVR perpara se te vendose ambalazh ne tregun gjerman — me gjoba deri ne 200.000 € per shkelje (§34 VerpackG).',
+        invalidFormat: 'Numri LUCID i ruajtur nuk perputhet me formatin zyrtar (DE + 13 shifra, p.sh. DE1234567890123). Verifikojeni ne portalin LUCID dhe korrigjojeni ne cilesimet e kompanise.',
+        missingDate: 'Numri LUCID eshte i regjistruar por mungon data e konfirmimit nga ZSVR. Kjo date perdoret per te kujtuar afatin vjetor te deklarimit te sasive (15 maj te cdo viti).',
+        cta: 'Hap cilesimet e kompanise',
+        openLucid: 'Hap portalin LUCID',
+      },
+      number: 'Numri i regjistrimit LUCID',
+      numberHint: 'Formati ZSVR: DE + 13 shifra, p.sh. DE1234567890123',
+      registeredAt: 'Data e konfirmimit te regjistrimit',
+      registeredAtHint: 'Data kur ZSVR ka konfirmuar regjistrimin. Perdoret per te llogaritur afatin vjetor te deklarimit (15 maj).',
+      country: 'Shteti i kompanise',
+      countryHint: 'Detyrueshmeria LUCID aplikohet vetem per kompanite ne Gjermani.',
+    },
+  },
   settings: {
     companySettings: 'Cilesimet e Kompanise',
     companyDesc: 'Menaxho te dhenat e kompanise suaj',

@@ -4681,6 +4681,24 @@ export const en: typeof sq = {
       pickExportType: 'Select at least one export type.',
     },
   },
+  compliance: {
+    lucid: {
+      warning: {
+        title: 'LUCID (VerpackG) registration missing',
+        missing: 'Your company is based in Germany but has no LUCID registration number. Every distributor of packaging (including B2B wooden pallets) must register with ZSVR before placing packaging on the German market — fines up to €200,000 per violation (§34 VerpackG).',
+        invalidFormat: 'The stored LUCID number does not match the official format (DE + 13 digits, e.g. DE1234567890123). Verify it in the LUCID portal and correct it in company settings.',
+        missingDate: 'The LUCID number is set but the ZSVR confirmation date is missing. This date drives the annual mass-quantity declaration reminder (due 15 May each year).',
+        cta: 'Open company settings',
+        openLucid: 'Open LUCID portal',
+      },
+      number: 'LUCID registration number',
+      numberHint: 'ZSVR format: DE + 13 digits, e.g. DE1234567890123',
+      registeredAt: 'Registration confirmation date',
+      registeredAtHint: 'Date when ZSVR confirmed the registration. Used to compute the annual data-submission deadline (15 May).',
+      country: 'Company country',
+      countryHint: 'LUCID is only required for companies based in Germany.',
+    },
+  },
   settings: {
     companySettings: 'Company Settings',
     companyDesc: 'Manage your company information',
