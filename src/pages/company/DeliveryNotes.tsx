@@ -29,13 +29,14 @@ import { useTranslation } from '../../i18n';
 import DocumentScanner from '../../components/scanner/DocumentScanner';
 import DocumentPreviewModal from '../../components/accounting/DocumentPreviewModal';
 import { formatCurrency, type AccCurrency } from '../../types/accounting';
-import type { DeliveryNote, DeliveryNoteItem, Profile, Depot, ProductCategory } from '../../types';
+import type { DeliveryNote, DeliveryNoteItem, Profile, Depot, ProductCategory, StockCondition } from '../../types';
 import { createNotificationAndPush } from '../../utils/pushNotifications';
 import PartnerQuickRegister from './PartnerQuickRegister';
 import OurRoleSelector, { type OurRole } from '../../components/delivery/OurRoleSelector';
 import { type ThreePartyData } from '../../components/delivery/ThreePartyForm';
 import { useDriverComplianceMap } from '../../hooks/useDriverComplianceMap';
 import { notifyUsers } from '../../utils/notifications';
+import { qualityClassFor } from '../../utils/epalClassification';
 
 function emptyThreeParty(): ThreePartyData {
   return {
@@ -428,6 +429,12 @@ export default function CompanyDeliveryNotes() {
           condition: item.condition,
           notes: item.notes,
           intended_action: item.intended_action,
+          // Persist the EPAL grade derived from the operator's condition
+          // pick. Without this, manually-created notes leave
+          // `quality_class` NULL while OCR-created ones get it set —
+          // causing valuation, dunning and Saldenbestätigung reports
+          // to silently undercount manual entries.
+          quality_class: qualityClassFor(item.condition as StockCondition),
         }));
 
       if (itemsPayload.length > 0) {
