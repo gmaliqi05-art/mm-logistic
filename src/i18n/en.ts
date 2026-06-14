@@ -4922,6 +4922,10 @@ export const en: typeof sq = {
       mixedCompanyReviewed: 'Sorting items were set by the company. Only stock items need confirmation.',
       mixedDesc: 'Items will be split: some for stock, some for sorting, some for repair.',
     },
+    palletPartner: {
+      missingTitle: 'The pallet account WILL NOT be updated',
+      missingDesc: 'This delivery carries pallet items but no partner contact is set (consignor / consignee or goods owner). After approval, the pallet movement WILL NOT be posted to the partner ledger. Assign a partner contact in the role section above to avoid this silent miss.',
+    },
     tabs: {
       deliveries: 'Deliveries',
       pickups: 'Pickups',

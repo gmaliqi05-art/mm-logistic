@@ -31,6 +31,7 @@ import { matchProduct } from '../../utils/productMatcher';
 import { isEuroPaletteName, isNewPalletProduct, epalClassRank } from '../../utils/productSort';
 import { parseLineItemsFromNotes } from '../../utils/scanLineInference';
 import { notifyUsers } from '../../utils/notifications';
+import { assessPalletPartnerStatus } from '../../utils/palletPartnerCheck';
 import FlowRoleSelector from './FlowRoleSelector';
 import StockDeductionConfirmModal from './StockDeductionConfirmModal';
 import type { FlowRole } from '../../utils/counterpartyMatch';
@@ -1467,6 +1468,15 @@ function ReviewModal({
   const isPickup = note.type === 'pickup';
   const noScanFlag = !scannedUrl && /\[Pa skanim\]/i.test(note.notes || '');
 
+  const palletPartnerStatus = assessPalletPartnerStatus({
+    our_role: (note as any).our_role ?? null,
+    partner_id: note.partner_id ?? null,
+    pallet_items_total_quantity: rows.reduce(
+      (sum, r) => sum + (r.category_id ? Math.max(0, r.quantity || 0) : 0),
+      0,
+    ),
+  });
+
   return (
     <div className="fixed inset-0 z-[1100] flex items-end lg:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -1527,6 +1537,20 @@ function ReviewModal({
                     : note.company_reviewed_at
                       ? t('review.sortingBanner.mixedCompanyReviewed')
                       : t('review.sortingBanner.mixedDesc')}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {role === 'company_admin' && palletPartnerStatus === 'missing_partner' && (
+            <div className="rounded-xl p-3 flex items-start gap-3 border bg-amber-50 border-amber-300">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-amber-900">
+                  {t('review.palletPartner.missingTitle')}
+                </p>
+                <p className="text-xs text-amber-800 mt-0.5">
+                  {t('review.palletPartner.missingDesc')}
                 </p>
               </div>
             </div>
