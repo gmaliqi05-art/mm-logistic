@@ -3736,6 +3736,56 @@ export const de: typeof sq = {
         title: 'Fahrer hat den Auftrag abgeschlossen',
         body: 'Auftrag "{{noteNumber}}" wartet auf Ihre Prüfung.',
       },
+      leaveApproved: {
+        title: 'Urlaub genehmigt',
+        body: 'Dein Urlaubsantrag ({dates}) wurde genehmigt.',
+      },
+      leaveRejected: {
+        title: 'Urlaub abgelehnt',
+        body: 'Dein Urlaubsantrag ({dates}) wurde abgelehnt. Grund: {reason}',
+      },
+      leaveRequested: {
+        title: 'Neuer Urlaubsantrag',
+        body: '{employee} hat Urlaub für {dates} beantragt.',
+      },
+      vehicleAssigned: {
+        title: 'Fahrzeug zugewiesen',
+        body: 'Fahrzeug {plate} ({brand} {model}) wurde dir zugewiesen.',
+      },
+      deliveryReassignedFrom: {
+        title: 'Lieferung neu zugewiesen',
+        body: 'Lieferschein {number} wurde von {fromDriver} dir zugewiesen.',
+      },
+      sortingRequested: {
+        title: 'Sortierung angefordert',
+        body: '{number} ist bereit für die Sortierung ({quantity} Stück {category}).',
+      },
+      invoiceOverdue: {
+        title: 'Rechnung überfällig',
+        body: 'Rechnung {number} ({amount}) hat das Zahlungsziel überschritten.',
+      },
+      invoiceCancelledUnlink: {
+        title: 'Rechnung storniert',
+        body: 'Rechnung {number} wurde storniert. Lieferscheine wurden entkoppelt.',
+      },
+      deliveryReadyForInvoice: {
+        title: 'Lieferung bereit zur Abrechnung',
+        body: '{number} wurde bestätigt und kann abgerechnet werden.',
+      },
+    },
+    trailer: {
+      claimedTitle: 'Auflieger übernommen',
+      claimedMessage: '{driver} hat den Auflieger {plate} übernommen.',
+      removedTitle: 'Auflieger entfernt',
+      removedMessage: 'Auflieger {plate} wurde aus der Zuweisung entfernt.',
+      releasedTitle: 'Auflieger freigegeben',
+      releasedMessage: 'Auflieger {plate} wurde von {driver} freigegeben.',
+      assignedTitle: 'Auflieger zugewiesen',
+      assignedMessage: 'Auflieger {plate} wurde dir zugewiesen.',
+    },
+    routeExt: {
+      title: 'Route erweitert',
+      body: 'Deine Route wurde um einen neuen Stopp erweitert: {destination}.',
     },
   },
   support: {
