@@ -4678,6 +4678,24 @@ export const fr: typeof sq = {
       pickExportType: 'Sélectionnez au moins un type d\'export.',
     },
   },
+  compliance: {
+    lucid: {
+      warning: {
+        title: 'Enregistrement LUCID (VerpackG) manquant',
+        missing: 'Votre société est établie en Allemagne mais aucun numéro d\'enregistrement LUCID n\'est renseigné. Tout distributeur d\'emballages (y compris les palettes bois B2B) doit s\'enregistrer auprès du ZSVR avant la première mise sur le marché allemand — amendes jusqu\'à 200 000 € par infraction (§34 VerpackG).',
+        invalidFormat: 'Le numéro LUCID enregistré ne respecte pas le format officiel (DE + 13 chiffres, ex. DE1234567890123). Vérifiez-le dans le portail LUCID et corrigez-le dans les paramètres de l\'entreprise.',
+        missingDate: 'Le numéro LUCID est renseigné mais la date de confirmation par le ZSVR manque. Cette date sert au calcul du rappel annuel de déclaration des volumes (échéance 15 mai chaque année).',
+        cta: 'Ouvrir les paramètres de l\'entreprise',
+        openLucid: 'Ouvrir le portail LUCID',
+      },
+      number: 'Numéro d\'enregistrement LUCID',
+      numberHint: 'Format ZSVR : DE + 13 chiffres, ex. DE1234567890123',
+      registeredAt: 'Date de confirmation de l\'enregistrement',
+      registeredAtHint: 'Date à laquelle le ZSVR a confirmé l\'enregistrement. Sert à calculer l\'échéance annuelle de déclaration (15 mai).',
+      country: 'Pays de l\'entreprise',
+      countryHint: 'LUCID n\'est obligatoire que pour les entreprises établies en Allemagne.',
+    },
+  },
   settings: {
     companySettings: 'Parametres de l\'entreprise',
     companyDesc: 'Gerez les informations de votre entreprise',

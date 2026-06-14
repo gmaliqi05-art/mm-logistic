@@ -7,6 +7,8 @@ import { useTranslation } from '../../i18n';
 import BackButton from '../../components/BackButton';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
 import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCard';
+import LucidWarningBanner from '../../components/compliance/LucidWarningBanner';
+import { isLucidApplicable } from '../../utils/lucid';
 
 type TabKey = 'profile' | 'invoice' | 'integrations' | 'notifications' | 'compliance';
 
@@ -27,10 +29,13 @@ export default function CompanySettings() {
   const [companyAddress, setCompanyAddress] = useState('');
   const [companyPhone, setCompanyPhone] = useState('');
   const [companyEmail, setCompanyEmail] = useState('');
+  const [companyCountry, setCompanyCountry] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [vatNumber, setVatNumber] = useState('');
   const [taxNumber, setTaxNumber] = useState('');
   const [website, setWebsite] = useState('');
+  const [lucidNumber, setLucidNumber] = useState('');
+  const [lucidRegisteredAt, setLucidRegisteredAt] = useState('');
 
   const [invoicePrefix, setInvoicePrefix] = useState('RE');
   const [defaultCurrency, setDefaultCurrency] = useState('EUR');
@@ -62,10 +67,13 @@ export default function CompanySettings() {
         setCompanyAddress(data.address || '');
         setCompanyPhone(data.phone || '');
         setCompanyEmail(data.email || '');
+        setCompanyCountry(data.country || '');
         setLogoUrl(data.logo_url || '');
         setVatNumber(data.vat_number || '');
         setTaxNumber(data.tax_number || '');
         setWebsite(data.website || '');
+        setLucidNumber(data.lucid_registration_number || '');
+        setLucidRegisteredAt(data.lucid_registered_at || '');
         setInvoicePrefix(data.invoice_prefix || 'RE');
         setDefaultCurrency(data.default_currency || 'EUR');
         setDefaultVatRate(Number(data.default_vat_rate ?? 19));
@@ -123,6 +131,7 @@ export default function CompanySettings() {
       setSaving(true);
       setError(null);
       setSuccess(null);
+      const normalizedCountry = companyCountry.trim().toUpperCase();
       const { error: err } = await supabase
         .from('companies')
         .update({
@@ -130,10 +139,13 @@ export default function CompanySettings() {
           address: companyAddress.trim(),
           phone: companyPhone.trim(),
           email: companyEmail.trim(),
+          country: normalizedCountry || null,
           logo_url: logoUrl,
           vat_number: vatNumber.trim() || null,
           tax_number: taxNumber.trim() || null,
           website: website.trim() || null,
+          lucid_registration_number: lucidNumber.trim() || null,
+          lucid_registered_at: lucidRegisteredAt || null,
           invoice_prefix: invoicePrefix.trim() || 'RE',
           default_currency: defaultCurrency,
           default_vat_rate: defaultVatRate,
@@ -217,6 +229,12 @@ export default function CompanySettings() {
           {success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">{success}</div>
           )}
+          <LucidWarningBanner
+            country={companyCountry}
+            lucid_registration_number={lucidNumber}
+            lucid_registered_at={lucidRegisteredAt}
+          />
+
 
           {tab === 'profile' && (
             <div className="space-y-5">
@@ -290,6 +308,19 @@ export default function CompanySettings() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('compliance.lucid.country')}</label>
+                <input
+                  type="text"
+                  value={companyCountry}
+                  onChange={(e) => setCompanyCountry(e.target.value.toUpperCase().slice(0, 2))}
+                  placeholder="DE"
+                  maxLength={2}
+                  className="w-full md:w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">{t('compliance.lucid.countryHint')}</p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
                 <input
                   type="url"
@@ -329,6 +360,33 @@ export default function CompanySettings() {
                   />
                 </div>
               </div>
+
+              {isLucidApplicable(companyCountry) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('compliance.lucid.number')}</label>
+                    <input
+                      type="text"
+                      value={lucidNumber}
+                      onChange={(e) => setLucidNumber(e.target.value.toUpperCase().trim())}
+                      placeholder="DE1234567890123"
+                      maxLength={15}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 font-mono"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{t('compliance.lucid.numberHint')}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('compliance.lucid.registeredAt')}</label>
+                    <input
+                      type="date"
+                      value={lucidRegisteredAt}
+                      onChange={(e) => setLucidRegisteredAt(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">{t('compliance.lucid.registeredAtHint')}</p>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
