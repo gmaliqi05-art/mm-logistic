@@ -21,6 +21,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
+import { isDamageLike } from '../../utils/epalClassification';
+import type { StockCondition } from '../../types';
 
 type TabKey = 'summary' | 'stock' | 'movements' | 'sorting_repair' | 'damage' | 'partners' | 'financials';
 
@@ -637,7 +639,7 @@ export default function CompanyReports() {
       {activeTab === 'damage' && (
         <div className="space-y-6">
           <Card title={t('common.stokuAktualIDemtuar')} icon={AlertTriangle}>
-            {stockRows.filter((s) => s.condition === 'damaged' && (s.quantity ?? 0) > 0).length === 0 ? (
+            {stockRows.filter((s) => isDamageLike(s.condition as StockCondition) && (s.quantity ?? 0) > 0).length === 0 ? (
               <EmptyState icon={AlertTriangle} label="Asnje palete e demtuar ne stok." />
             ) : (
               <div className="overflow-x-auto">
@@ -652,7 +654,7 @@ export default function CompanyReports() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {stockRows
-                      .filter((s) => s.condition === 'damaged' && (s.quantity ?? 0) > 0)
+                      .filter((s) => isDamageLike(s.condition as StockCondition) && (s.quantity ?? 0) > 0)
                       .map((s, i) => (
                         <tr key={i} className="hover:bg-gray-50">
                           <td className="px-3 py-2 text-gray-700">{depots.find((d) => d.id === s.depot_id)?.name ?? '—'}</td>
@@ -669,7 +671,7 @@ export default function CompanyReports() {
 
           <Card title={t('common.hyrjeDaljeDefektLevizje')} icon={AlertTriangle} hint="Te gjitha levizjet me gjendjen defekt — kush e regjistroi dhe nga/per kend.">
             {(() => {
-              const damagedMoves = filteredMovements.filter(m => m.condition === 'damaged' && m.source_type === 'stock_movement');
+              const damagedMoves = filteredMovements.filter(m => isDamageLike(m.condition as StockCondition) && m.source_type === 'stock_movement');
               if (damagedMoves.length === 0) return <EmptyState icon={AlertTriangle} label="Asnje levizje defekt ne kete periudhe." />;
               return (
                 <div className="overflow-x-auto">

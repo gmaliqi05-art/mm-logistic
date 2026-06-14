@@ -82,6 +82,7 @@ interface NoteItem {
   auto_matched?: boolean;
   match_score?: number;
   match_type?: 'sku' | 'product_name' | 'category_name' | null;
+  quality_class?: string | null;
 }
 
 type RowState = {
@@ -97,6 +98,10 @@ type RowState = {
   condition: string;
   intended_action: 'stock' | 'sorting' | 'repair';
   notes: string | null;
+  // EPAL quality class detected by OCR or set manually. Persisted to
+  // delivery_note_items.quality_class so the EPAL grade isn't lost on
+  // save (was previously dropped silently per audit #3).
+  quality_class?: 'NEU' | 'A' | 'B' | 'C' | 'UNSORTED' | 'REPAIR_NEEDED' | 'SCRAP' | null;
   auto_matched?: boolean;
   match_type?: 'sku' | 'product_name' | 'category_name' | 'combined' | null;
   match_confidence?: 'high' | 'medium' | 'low' | 'none';
@@ -599,10 +604,12 @@ function ReviewModal({
 
       const matchedProdName = productId ? prods.find((p) => p.id === productId)?.name : null;
       const matchedCatName = categoryId ? cats.find((c) => c.id === categoryId)?.name : null;
+      let qualityClass: RowState['quality_class'] = (it.quality_class as RowState['quality_class']) ?? null;
       if (!condition || (!it.intended_action && it.notes)) {
         const d = deriveConditionAction(it.notes || '', matchedProdName, matchedCatName, isOutgoing);
         if (!condition) condition = d.condition;
         if (!it.intended_action) action = d.intended_action;
+        if (!qualityClass && d.quality_class) qualityClass = d.quality_class as RowState['quality_class'];
       }
 
       if (
@@ -645,6 +652,7 @@ function ReviewModal({
         condition: condition || 'good',
         intended_action: action,
         notes: it.notes,
+        quality_class: qualityClass,
         auto_matched: autoMatched,
         match_type: matchedOn,
         match_confidence: confidence,
@@ -679,6 +687,7 @@ function ReviewModal({
             condition: d.condition,
             intended_action: d.intended_action,
             notes: `${desc}${li.unit ? ' (' + li.unit + ')' : ''}`,
+            quality_class: (d.quality_class ?? null) as RowState['quality_class'],
             auto_matched: !!(mm.productId || mm.categoryId),
             match_type: mm.matchedOn,
             match_confidence: mm.confidence,
@@ -769,6 +778,7 @@ function ReviewModal({
             condition: r.condition,
             intended_action: r.intended_action,
             notes: r.notes,
+            quality_class: r.quality_class ?? null,
           })
           .eq('id', r._persistedId!);
       }
@@ -783,6 +793,7 @@ function ReviewModal({
           condition: r.condition,
           intended_action: r.intended_action,
           notes: r.notes,
+          quality_class: r.quality_class ?? null,
         }));
         const { data: inserted } = await supabase
           .from('delivery_note_items')
@@ -2458,6 +2469,7 @@ function SplitRow({
               auto_matched: false,
               condition: finalCondition,
               intended_action: isOutgoing ? 'stock' : d.intended_action,
+              quality_class: (d.quality_class ?? row.quality_class ?? null) as RowState['quality_class'],
             });
           }}
           disabled={!row.category_id}
