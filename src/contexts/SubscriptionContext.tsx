@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { supabase } from '../lib/supabase';
 import { logger } from '../utils/logger';
 import { useAuth } from './AuthContext';
+import { drainQueuedAudits, enqueueFailedAudit, type AuditLogEntry } from '../utils/auditLogQueue';
 import type { CompanySubscription, SubscriptionPlan, Feature, PlanTier, CompanyFeature } from '../types';
 
 interface SubscriptionContextType {
@@ -232,17 +233,44 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     // a plan that includes the audit log feature). Viewing the log is still
     // gated by canAccess('audit_log') at the route / menu level.
     if (!profile?.company_id) return;
-    const { error } = await supabase.from('audit_logs').insert({
+
+    const entry: AuditLogEntry = {
       company_id: profile.company_id,
       user_id: profile.id,
       action,
       entity_type: entityType,
       entity_id: entityId || null,
       details: details || {},
-    });
-    if (error) {
-      logger.warn('audit_logs insert failed', { error: error.message, action, entityType });
+    };
+
+    const writeOne = async (e: AuditLogEntry): Promise<boolean> => {
+      try {
+        const { error } = await supabase.from('audit_logs').insert(e);
+        return !error;
+      } catch {
+        return false;
+      }
+    };
+
+    const ok = await writeOne(entry);
+    if (!ok) {
+      // RLS denial, network blip, Supabase outage — persist locally so
+      // the audit trail can self-heal on the next successful call.
+      // Sentry gets a logger.error (not warn) so the gap is alertable.
+      const queueSize = enqueueFailedAudit(entry);
+      logger.error('audit_logs insert failed; queued for retry', {
+        action,
+        entityType,
+        queueSize,
+      });
+      return;
     }
+    // The current insert worked — try to flush anything that has been
+    // sitting in the retry queue from previous failures.
+    drainQueuedAudits(writeOne).catch(() => {
+      // Drainage is best-effort; failures here are caught and entries
+      // stay in the queue for the next opportunity.
+    });
   };
 
   const refreshSubscription = async () => {
