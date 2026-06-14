@@ -20,6 +20,15 @@ export type AccDeliveryNoteKind = 'sale' | 'purchase_receipt' | 'transfer' | 're
 // migration 20260613180000.
 export type ClearingModel = 'deposit' | 'exchange';
 
+// Pallet exchange protocol per partner relationship. 'koelner' =
+// direct swap by carrier at both A and B (Doppeltausch). 'bonner' =
+// receiver has a return obligation to ship back equivalents within
+// the agreed window. NULL = no formal Palettenkonto agreement.
+// Mirrors acc_contacts.exchange_protocol added in migration
+// 20260614092000. See OLG Düsseldorf 18 U 10/21 on the legal weight
+// of getting this right per partner.
+export type ExchangeProtocol = 'koelner' | 'bonner';
+
 // Per-line VAT rule for acc_invoice_items. 'standard' uses vat_rate
 // as-is. The other treatments force the effective rate to 0 with a
 // legal annotation on the printed invoice. Mirrors
@@ -64,6 +73,7 @@ export interface AccContact {
   notes: string;
   is_active: boolean;
   clearing_model: ClearingModel;
+  exchange_protocol?: ExchangeProtocol | null;
   created_at: string;
   updated_at: string;
 }

@@ -3862,6 +3862,12 @@ export const de: typeof sq = {
       deposit: 'Pfand (Standard-USt)',
       exchange: 'Offener Tausch (Sachdarlehen, ohne USt)',
     },
+    exchangeProtocol: {
+      label: 'Tauschprotokoll (Kölner / Bonner)',
+      none: 'Keine formelle Vereinbarung',
+      koelner: 'Kölner Tausch — Frachtführer bringt Leerpaletten zum Doppeltausch',
+      bonner: 'Bonner Tausch — Empfänger hat Rückführungspflicht innerhalb der Frist',
+    },
     lineType: {
       label: 'Positionstyp',
       goods: 'Waren',
