@@ -19,6 +19,8 @@ import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import DeliveryReviewPanel from '../../components/delivery/DeliveryReviewPanel';
 import ReparatureDashboard from './ReparatureDashboard';
+import { isDamageLike } from '../../utils/epalClassification';
+import type { StockCondition } from '../../types';
 
 interface StockValueRow {
   category_id: string;
@@ -149,7 +151,7 @@ function DepoistDashboard() {
       // queue. Otherwise rows in ready_a/b/c/sorting would silently vanish
       // from both the Te mira and the Defekt cards and the operator would
       // see Te mira + Defekt < Stoku total.
-      if (r.condition === 'damaged') {
+      if (isDamageLike(r.condition as StockCondition)) {
         damaged += r.quantity;
       } else if (r.condition === 'repaired') {
         repaired += r.quantity;

@@ -26,6 +26,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
+import { isDamageLike } from '../../utils/epalClassification';
+import type { StockCondition } from '../../types';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
@@ -308,7 +310,7 @@ export default function CompanyDashboard() {
 
       const stocks = stockRes.data ?? [];
       const totalStock = stocks.reduce((s, i) => s + (i.quantity || 0), 0);
-      const stockDamaged = stocks.filter(s => s.condition === 'damaged').reduce((s, i) => s + i.quantity, 0);
+      const stockDamaged = stocks.filter(s => isDamageLike(s.condition as StockCondition)).reduce((s, i) => s + i.quantity, 0);
       const stockRepaired = stocks.filter(s => s.condition === 'repaired').reduce((s, i) => s + i.quantity, 0);
       const stockGood = stocks.filter(s => !['damaged', 'repaired'].includes(s.condition ?? '')).reduce((s, i) => s + (i.quantity || 0), 0);
 
@@ -329,7 +331,7 @@ export default function CompanyDashboard() {
         const cur = productMap.get(key) ?? { category: catName, product: prodName, total: 0, good: 0, damaged: 0, repaired: 0 };
         const qty = row.quantity || 0;
         cur.total += qty;
-        if (row.condition === 'damaged') cur.damaged += qty;
+        if (isDamageLike(row.condition as StockCondition)) cur.damaged += qty;
         else if (row.condition === 'repaired') cur.repaired += qty;
         else cur.good += qty;
         productMap.set(key, cur);
@@ -399,7 +401,7 @@ export default function CompanyDashboard() {
       const triggeredAlerts = triggered.map((a) => {
         const rows = stocksForAlerts.filter((s) => s.depot_id === a.depot_id && s.category_id === a.category_id);
         const totalQty = rows.reduce((sum, s) => sum + (s.quantity ?? 0), 0);
-        const damagedQty = rows.filter((s) => s.condition === 'damaged').reduce((sum, s) => sum + (s.quantity ?? 0), 0);
+        const damagedQty = rows.filter((s) => isDamageLike(s.condition as StockCondition)).reduce((sum, s) => sum + (s.quantity ?? 0), 0);
         const current = a.alert_type === 'damaged_threshold' ? damagedQty : totalQty;
         const expanded = a as StockAlert & { depot?: { name: string }; category?: { name: string } };
         return {

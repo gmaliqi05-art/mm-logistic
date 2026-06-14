@@ -26,9 +26,10 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
-import type { Stock as StockType, StockMovement, Depot, ProductCategory } from '../../types';
+import type { Stock as StockType, StockMovement, Depot, ProductCategory, StockCondition } from '../../types';
 import { compareCategoriesByPriority, compareProducts, epalClassRank } from '../../utils/productSort';
 import InProcessPanel from '../../components/stock/InProcessPanel';
+import { isDamageLike } from '../../utils/epalClassification';
 
 interface CategoryProduct {
   id: string;
@@ -760,7 +761,7 @@ export default function CompanyStock() {
                       </div>
                       <p className="text-sm font-semibold text-gray-900 mt-0.5">{c.productName}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {c.byDepot.filter((d) => d.condition === 'damaged').map((d) => `${d.depotName}: ${d.quantity}`).join(' · ')}
+                        {c.byDepot.filter((d) => isDamageLike(d.condition as StockCondition)).map((d) => `${d.depotName}: ${d.quantity}`).join(' · ')}
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">

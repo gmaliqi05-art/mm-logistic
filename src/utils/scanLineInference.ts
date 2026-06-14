@@ -68,10 +68,11 @@ export function inferScanRows(
       const description = (li.description || '').trim();
       const match = matchProduct(description, products, categories);
       const matchedProduct = match.productId ? products.find((p) => p.id === match.productId) ?? null : null;
-      const { condition, intended_action } = deriveConditionAction(description, matchedProduct?.name);
+      const { condition, intended_action, quality_class } = deriveConditionAction(description, matchedProduct?.name);
       return {
         description,
         quantity: Math.max(1, Math.round(li.quantity || 0)),
+        quality_class,
         unit: li.unit || null,
         condition,
         intended_action,
