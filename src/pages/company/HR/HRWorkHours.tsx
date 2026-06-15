@@ -4,7 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
 import { summarizeWeeklyHours, WEEKLY_LIMIT_HARD, WEEKLY_LIMIT_SOFT } from '../../../utils/weeklyHours';
-import { assessArbzgDay, assessRest, hasArbzgViolation } from '../../../utils/arbzgCompliance';
+import { assessArbzgDay, assessProhibitedDay, assessRest, hasArbzgViolation } from '../../../utils/arbzgCompliance';
 
 interface WorkHourRow {
   id: string;
@@ -37,13 +37,23 @@ export default function HRWorkHours() {
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newEntry, setNewEntry] = useState({ user_id: '', date: '', start_time: '', end_time: '', break_minutes: 30, notes: '' });
+  const [holidayDates, setHolidayDates] = useState<string[]>([]);
 
   useEffect(() => {
     if (profile?.company_id) {
       fetchRecords();
       fetchEmployees();
+      fetchHolidays();
     }
   }, [profile?.company_id, currentMonth]);
+
+  async function fetchHolidays() {
+    const { data } = await supabase
+      .from('public_holidays')
+      .select('date')
+      .eq('company_id', profile!.company_id);
+    if (data) setHolidayDates(data.map((r) => r.date as string));
+  }
 
   async function fetchEmployees() {
     const { data } = await supabase
@@ -87,6 +97,18 @@ export default function HRWorkHours() {
     if (!newEntry.user_id || !newEntry.date || !newEntry.start_time || !newEntry.end_time) return;
 
     const { total, overtime } = calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes);
+
+    // §9 ArbZG: Sunday and public-holiday work is generally prohibited.
+    // §10 lists sectoral exceptions (transport, hospitality, ...) and
+    // §11 requires compensatory rest. We can't decide here whether the
+    // employee is exempt under §10, so this is a soft confirm spelling
+    // out the rule + caveats — auditable when an admin overrides.
+    const prohibited = assessProhibitedDay(newEntry.date, holidayDates);
+    if (prohibited !== 'ok') {
+      const msg = t(prohibited === 'sunday' ? 'hr.workHours.confirmSundayWork' : 'hr.workHours.confirmHolidayWork')
+        .replace('{date}', newEntry.date);
+      if (!confirm(msg)) return;
+    }
 
     // Soft confirmation when the new entry would push the user past the
     // EU Working Time Directive thresholds for that ISO week. Hard-blocking

@@ -5191,6 +5191,8 @@ export const sq = {
       confirmSoftOver: 'Pas ketij regjistrimi punonjesi do te kete {hours}h kete jave, mbi mesataren e lejuar prej {limit}h (EU 2002/15/EC). Vazhdo gjithsesi?',
       confirmArbzgViolation: 'Ky regjistrim shkel rregullat ditore te §3/§4 ArbZG (Gjermani):\n\n- Limiti ditor: {daily}\n- Pushimi: {breaks} (kerkohen {required} min, jane regjistruar {given} min)\n\nGjobat sipas §22 ArbZG arrijne deri ne 15.000 € per shkelje. Vazhdo gjithsesi?',
       confirmArbzgRestShort: 'Ky turn shkel §5 ArbZG: pushimi mes turneve eshte vetem {rest}h (kerkohen 11h).\n\n- Mbarimi i turnit te meparshem: {prev}\n- Fillimi i ketij turni: {next}\n\nVazhdo gjithsesi?',
+      confirmSundayWork: 'Data {date} eshte e diele. §9 ArbZG e ndalon punen ne te diela; §10 lejon perjashtime (transport, gastronomi, etj.) dhe §11(3) kerkon nje dite kompensimi brenda 8 javesh.\n\nVazhdo regjistrimin?',
+      confirmHolidayWork: 'Data {date} eshte feste publike. §9 ArbZG e ndalon punen ne festa; §10 lejon perjashtime sektoriale dhe §11(3) kerkon nje dite kompensimi brenda 2 javesh.\n\nVazhdo regjistrimin?',
       arbzgHintTitle: '§4 ArbZG',
       arbzgHintBody: 'Per kete kohe pune kerkohen te pakten {required} minuta pushim. Aktualisht jane regjistruar {given} minuta.',
       arbzgDaily: {

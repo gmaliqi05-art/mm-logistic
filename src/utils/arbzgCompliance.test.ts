@@ -3,6 +3,7 @@ import {
   assessArbzgDay,
   assessBreak,
   assessDailyHours,
+  assessProhibitedDay,
   assessRest,
   hasArbzgViolation,
   requiredBreakForWorkMinutes,
@@ -131,5 +132,33 @@ describe('hasArbzgViolation', () => {
 
   it('is false for a compliant 8h day', () => {
     expect(hasArbzgViolation(assessArbzgDay(8 * 60, 30))).toBe(false);
+  });
+});
+
+describe('assessProhibitedDay (§9 ArbZG)', () => {
+  it('returns sunday when the date is a Sunday', () => {
+    expect(assessProhibitedDay('2026-06-14', [])).toBe('sunday'); // Sun
+    expect(assessProhibitedDay('2026-12-27', [])).toBe('sunday'); // Sun
+  });
+
+  it('returns holiday when the date matches a holiday string', () => {
+    expect(assessProhibitedDay('2026-12-25', ['2026-12-25'])).toBe('holiday');
+    expect(assessProhibitedDay('2026-05-01', ['2026-05-01', '2026-10-03'])).toBe('holiday');
+  });
+
+  it('prefers sunday over holiday when both apply', () => {
+    // 2026-08-15 is a Saturday; let's pick a Sunday that is also a holiday.
+    // 2027-12-26 is a Sunday and (in some German states) Boxing Day.
+    expect(assessProhibitedDay('2027-12-26', ['2027-12-26'])).toBe('sunday');
+  });
+
+  it('returns ok for ordinary weekdays', () => {
+    expect(assessProhibitedDay('2026-06-15', [])).toBe('ok'); // Mon
+    expect(assessProhibitedDay('2026-06-18', ['2026-12-25'])).toBe('ok'); // Thu
+  });
+
+  it('handles empty / invalid date safely', () => {
+    expect(assessProhibitedDay('', ['2026-12-25'])).toBe('ok');
+    expect(assessProhibitedDay('not-a-date', [])).toBe('ok');
   });
 });
