@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, Download, Loader2 } from 'lucide-react';
+import { BarChart3, Download, FileText, Loader2 } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
+import {
+  buildArbzg16Csv,
+  buildBurlGCsv,
+  type Arbzg16Row,
+  type BurlGRow,
+} from '../../../utils/arbzg16Export';
 
 interface EmployeeLeaveRow {
   user_name: string;
@@ -106,6 +112,118 @@ export default function HRReports() {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * §16 ArbZG / §17 MiLoG compliance export — full-year per-employee
+   * per-day working-time record. Pulls work_hours_log + public_holidays
+   * for the selected year and renders the canonical German CSV via
+   * buildArbzg16Csv(). This is the document the Gewerbeaufsicht or
+   * Zollverwaltung asks for during a spot check.
+   */
+  async function exportArbzg16() {
+    if (!profile?.company_id) return;
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const [hoursRes, holidaysRes] = await Promise.all([
+      supabase
+        .from('work_hours_log')
+        .select('date, start_time, end_time, break_minutes, total_hours, overtime_hours, notes, user_id, user:profiles!work_hours_log_user_id_fkey(full_name)')
+        .eq('company_id', profile.company_id)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: true }),
+      supabase
+        .from('public_holidays')
+        .select('date')
+        .eq('company_id', profile.company_id),
+    ]);
+
+    const holidaySet = new Set<string>(((holidaysRes.data ?? []) as { date: string }[]).map((h) => h.date));
+    const arbzgRows: Arbzg16Row[] = ((hoursRes.data ?? []) as unknown as Array<{
+      date: string;
+      start_time: string | null;
+      end_time: string | null;
+      break_minutes: number;
+      total_hours: number | null;
+      overtime_hours: number | null;
+      notes: string | null;
+      user_id: string;
+      user: { full_name: string } | null;
+    }>).map((r) => {
+      const d = new Date(`${r.date}T00:00:00Z`);
+      const isSunday = !Number.isNaN(d.getTime()) && d.getUTCDay() === 0;
+      return {
+        date: r.date,
+        userName: r.user?.full_name ?? '',
+        userId: r.user_id,
+        startTime: r.start_time,
+        endTime: r.end_time,
+        breakMinutes: r.break_minutes,
+        totalHours: r.total_hours ?? 0,
+        overtimeHours: r.overtime_hours ?? 0,
+        sundayOrHoliday: isSunday || holidaySet.has(r.date),
+        notes: r.notes,
+      };
+    });
+    arbzgRows.sort((a, b) => a.date.localeCompare(b.date) || a.userName.localeCompare(b.userName));
+
+    const csv = buildArbzg16Csv(arbzgRows);
+    downloadCsv(csv, `arbzg16-${year}.csv`);
+  }
+
+  /**
+   * §15 BUrlG documentation: per-employee per-leave-type yearly
+   * statement. Reuses the already-loaded balance rows.
+   */
+  async function exportBurlG() {
+    if (!profile?.company_id) return;
+    const { data } = await supabase
+      .from('employee_leave_balances')
+      .select(`
+        allocated_days, used_days, pending_days, carried_over_days, user_id,
+        user:profiles!employee_leave_balances_user_id_fkey(full_name),
+        leave_type:leave_types(name_en, name_de, code)
+      `)
+      .eq('company_id', profile.company_id)
+      .eq('year', year);
+
+    const burlGRows: BurlGRow[] = ((data ?? []) as unknown as Array<{
+      allocated_days: number;
+      used_days: number;
+      pending_days: number;
+      carried_over_days: number;
+      user_id: string;
+      user: { full_name: string } | null;
+      leave_type: { name_en: string; name_de: string; code: string } | null;
+    }>).map((d) => ({
+      userName: d.user?.full_name ?? '',
+      userId: d.user_id,
+      leaveTypeName: d.leave_type?.name_de ?? d.leave_type?.name_en ?? d.leave_type?.code ?? '',
+      year,
+      allocatedDays: d.allocated_days,
+      carriedOverDays: d.carried_over_days,
+      usedDays: d.used_days,
+      pendingDays: d.pending_days,
+      remainingDays: Math.max(0, d.allocated_days + d.carried_over_days - d.used_days - d.pending_days),
+    }));
+    burlGRows.sort((a, b) => a.userName.localeCompare(b.userName) || a.leaveTypeName.localeCompare(b.leaveTypeName));
+
+    const csv = buildBurlGCsv(burlGRows);
+    downloadCsv(csv, `burlg15-${year}.csv`);
+  }
+
+  function downloadCsv(csv: string, filename: string) {
+    // UTF-8 BOM so Excel on Windows reads umlauts correctly without
+    // the user having to open the import wizard.
+    const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -113,14 +231,34 @@ export default function HRReports() {
           <h1 className="text-2xl font-bold text-gray-900">{t('hr.reports.title')}</h1>
           <p className="text-sm text-gray-500 mt-1">{t('hr.subtitle')}</p>
         </div>
-        <button
-          type="button"
-          onClick={exportCSV}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors text-sm"
-        >
-          <Download className="w-4 h-4" />
-          {t('hr.reports.exportExcel')}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={exportCSV}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors text-sm"
+          >
+            <Download className="w-4 h-4" />
+            {t('hr.reports.exportExcel')}
+          </button>
+          <button
+            type="button"
+            onClick={exportArbzg16}
+            title={t('hr.reports.exportArbzg16Title')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 border border-teal-200 text-teal-700 rounded-xl font-medium hover:bg-teal-50 transition-colors text-sm"
+          >
+            <FileText className="w-4 h-4" />
+            {t('hr.reports.exportArbzg16')}
+          </button>
+          <button
+            type="button"
+            onClick={exportBurlG}
+            title={t('hr.reports.exportBurlGTitle')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 border border-teal-200 text-teal-700 rounded-xl font-medium hover:bg-teal-50 transition-colors text-sm"
+          >
+            <FileText className="w-4 h-4" />
+            {t('hr.reports.exportBurlG')}
+          </button>
+        </div>
       </div>
 
       {/* Controls */}

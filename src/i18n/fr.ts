@@ -5214,6 +5214,10 @@ export const fr: typeof sq = {
       overtimeReport: 'Rapport heures supplémentaires',
       exportExcel: 'Exporter Excel',
       exportPdf: 'Exporter PDF',
+      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
+      exportArbzg16Title: 'Registre annuel du temps de travail pour l\'autorité allemande (Gewerbeaufsicht / Zoll). Une ligne par employé par jour. Conservation 2 ans.',
+      exportBurlG: '§15 BUrlG (CSV)',
+      exportBurlGTitle: 'Documentation annuelle des congés selon §15 BUrlG : droits, jours pris, restants par employé.',
     },
     settings: {
       title: 'Paramètres RH',
