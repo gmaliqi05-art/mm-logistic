@@ -5186,6 +5186,7 @@ export const de: typeof sq = {
       confirmHardOver: 'Nach diesem Eintrag wird der Mitarbeiter diese Woche {hours}h haben, über der absoluten Grenze von {limit}h (EU 2002/15/EG). Trotzdem fortfahren?',
       confirmSoftOver: 'Nach diesem Eintrag wird der Mitarbeiter diese Woche {hours}h haben, über dem zulässigen Durchschnitt von {limit}h (EU 2002/15/EG). Trotzdem fortfahren?',
       confirmArbzgViolation: 'Dieser Eintrag verstößt gegen §3/§4 ArbZG:\n\n- Tageshöchstarbeitszeit: {daily}\n- Pause: {breaks} ({required} Min erforderlich, {given} Min erfasst)\n\nBußgelder nach §22 ArbZG bis zu 15.000 € je Verstoß. Trotzdem fortfahren?',
+      confirmArbzgRestShort: 'Dieser Eintrag verstößt gegen §5 ArbZG: nur {rest}h Ruhezeit vor diesem Dienst (11h erforderlich).\n\n- Vorheriger Dienst endete: {prev}\n- Dieser Dienst beginnt: {next}\n\nTrotzdem fortfahren?',
       arbzgHintTitle: '§4 ArbZG',
       arbzgHintBody: 'Für diese Arbeitsdauer ist eine Ruhepause von mindestens {required} Minuten vorgeschrieben. Aktuell erfasst: {given} Minuten.',
       arbzgDaily: {
