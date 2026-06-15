@@ -149,7 +149,25 @@ export default function WorkerRepairEntry() {
       if (entriesRes.error) throw entriesRes.error;
       if (reportsRes.error) throw reportsRes.error;
 
-      setWorker(workerRes.data as Profile | null);
+      // Defense-in-depth target validation. RLS already gates by
+      // company_id, and the backend RPC validates that p_worker_id is
+      // a reparature worker — but if the URL :workerId points to
+      // someone with a different role/category, we shouldn't render
+      // their page at all. Audit finding K3 (general audit).
+      const w = workerRes.data as Profile | null;
+      if (!w) {
+        setWorker(null);
+        return;
+      }
+      if (w.company_id !== profile!.company_id
+          || w.role !== 'depot_worker'
+          || w.worker_category !== 'reparature') {
+        setWorker(null);
+        setError(t('common.notFound') || 'Not found');
+        return;
+      }
+
+      setWorker(w);
       setCategories((catsRes.data ?? []) as ProductCategory[]);
       setCatalog((catalogRes.data ?? []) as CatalogProduct[]);
       setEntries((entriesRes.data ?? []) as unknown as RepairEntry[]);
