@@ -5185,6 +5185,20 @@ export const fr: typeof sq = {
       othersLabel: 'autres',
       confirmHardOver: 'Apres cette saisie l\'employe aura {hours}h cette semaine, au-dessus de la limite absolue de {limit}h (UE 2002/15/CE). Continuer quand meme?',
       confirmSoftOver: 'Apres cette saisie l\'employe aura {hours}h cette semaine, au-dessus de la moyenne autorisee de {limit}h (UE 2002/15/CE). Continuer quand meme?',
+      confirmArbzgViolation: 'Cette saisie enfreint les règles journalières §3/§4 ArbZG (Allemagne) :\n\n- Limite journalière : {daily}\n- Pause : {breaks} ({required} min requises, {given} min enregistrées)\n\nAmendes selon §22 ArbZG : jusqu\'à 15 000 € par infraction. Continuer quand même ?',
+      arbzgHintTitle: '§4 ArbZG',
+      arbzgHintBody: 'Cette durée de travail nécessite au moins {required} minutes de pause. Actuellement enregistrées : {given} minutes.',
+      arbzgDaily: {
+        ok: 'OK (≤ 8h)',
+        extended: 'Étendue (8-10h, légale seulement si compensée sous 24 semaines)',
+        over_limit: 'Au-dessus de la limite (> 10h)',
+      },
+      arbzgBreaks: {
+        not_required: 'Non requise',
+        ok: 'OK',
+        short: 'Courte',
+        missing: 'Manquante',
+      },
     },
     reports: {
       title: 'Rapports RH',

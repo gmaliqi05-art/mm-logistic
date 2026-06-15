@@ -5183,6 +5183,20 @@ export const sq = {
       othersLabel: 'te tjere',
       confirmHardOver: 'Pas ketij regjistrimi punonjesi do te kete {hours}h kete jave, mbi limitin absolut prej {limit}h (EU 2002/15/EC). Vazhdo gjithsesi?',
       confirmSoftOver: 'Pas ketij regjistrimi punonjesi do te kete {hours}h kete jave, mbi mesataren e lejuar prej {limit}h (EU 2002/15/EC). Vazhdo gjithsesi?',
+      confirmArbzgViolation: 'Ky regjistrim shkel rregullat ditore te §3/§4 ArbZG (Gjermani):\n\n- Limiti ditor: {daily}\n- Pushimi: {breaks} (kerkohen {required} min, jane regjistruar {given} min)\n\nGjobat sipas §22 ArbZG arrijne deri ne 15.000 € per shkelje. Vazhdo gjithsesi?',
+      arbzgHintTitle: '§4 ArbZG',
+      arbzgHintBody: 'Per kete kohe pune kerkohen te pakten {required} minuta pushim. Aktualisht jane regjistruar {given} minuta.',
+      arbzgDaily: {
+        ok: 'OK (≤ 8h)',
+        extended: 'Zgjatur (8-10h, legal vetem nese kompensohet brenda 24 javesh)',
+        over_limit: 'Mbi limitin (> 10h)',
+      },
+      arbzgBreaks: {
+        not_required: 'Nuk kerkohet',
+        ok: 'OK',
+        short: 'I shkurter',
+        missing: 'Mungon',
+      },
     },
     reports: {
       title: 'Raportet HR',

@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
 import { summarizeWeeklyHours, WEEKLY_LIMIT_HARD, WEEKLY_LIMIT_SOFT } from '../../../utils/weeklyHours';
+import { assessArbzgDay, hasArbzgViolation } from '../../../utils/arbzgCompliance';
 
 interface WorkHourRow {
   id: string;
@@ -106,6 +107,22 @@ export default function HRWorkHours() {
       const msg = t(tplKey)
         .replace('{hours}', String(userSummary.totalHours))
         .replace('{limit}', String(limit));
+      if (!confirm(msg)) return;
+    }
+
+    // §3 / §4 ArbZG (German Working Time Act) daily check. Soft
+    // confirmation rather than a hard block — admins occasionally
+    // correct a historical record where the actual rest pattern is
+    // documented elsewhere — but we make sure the violation is
+    // explicit so the choice is auditable. Fines under §22 ArbZG
+    // reach €15,000 per violation.
+    const arbzg = assessArbzgDay(Math.round(total * 60), newEntry.break_minutes);
+    if (hasArbzgViolation(arbzg)) {
+      const msg = t('hr.workHours.confirmArbzgViolation')
+        .replace('{daily}', t(`hr.workHours.arbzgDaily.${arbzg.daily}`))
+        .replace('{breaks}', t(`hr.workHours.arbzgBreaks.${arbzg.breaks}`))
+        .replace('{required}', String(arbzg.requiredBreakMinutes))
+        .replace('{given}', String(arbzg.breakMinutes));
       if (!confirm(msg)) return;
     }
 
@@ -299,14 +316,29 @@ export default function HRWorkHours() {
               <input type="number" value={newEntry.break_minutes} onChange={(e) => setNewEntry(n => ({ ...n, break_minutes: Number(e.target.value) }))} min={0} max={180} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
             </div>
 
-            {newEntry.start_time && newEntry.end_time && (
-              <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-800 font-medium">
-                {t('hr.attendance.totalHours')}: {calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes).total}h
-                {calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes).overtime > 0 && (
-                  <span className="ml-2">({t('hr.attendance.overtime')}: +{calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes).overtime}h)</span>
-                )}
-              </div>
-            )}
+            {newEntry.start_time && newEntry.end_time && (() => {
+              const calc = calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes);
+              const arbzg = assessArbzgDay(Math.round(calc.total * 60), newEntry.break_minutes);
+              const violated = hasArbzgViolation(arbzg);
+              return (
+                <>
+                  <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-800 font-medium">
+                    {t('hr.attendance.totalHours')}: {calc.total}h
+                    {calc.overtime > 0 && (
+                      <span className="ml-2">({t('hr.attendance.overtime')}: +{calc.overtime}h)</span>
+                    )}
+                  </div>
+                  {arbzg.requiredBreakMinutes > 0 && (
+                    <div className={`p-3 rounded-xl text-xs border ${violated ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-gray-50 border-gray-200 text-gray-700'}`}>
+                      <span className="font-semibold">{t('hr.workHours.arbzgHintTitle')}: </span>
+                      {t('hr.workHours.arbzgHintBody')
+                        .replace('{required}', String(arbzg.requiredBreakMinutes))
+                        .replace('{given}', String(newEntry.break_minutes))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>

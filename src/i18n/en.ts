@@ -5188,6 +5188,20 @@ export const en: typeof sq = {
       othersLabel: 'others',
       confirmHardOver: 'After this entry the employee will have {hours}h this week, above the absolute limit of {limit}h (EU 2002/15/EC). Continue anyway?',
       confirmSoftOver: 'After this entry the employee will have {hours}h this week, above the allowed average of {limit}h (EU 2002/15/EC). Continue anyway?',
+      confirmArbzgViolation: 'This entry violates the daily rules of §3/§4 ArbZG (Germany):\n\n- Daily limit: {daily}\n- Break: {breaks} ({required} min required, {given} min recorded)\n\nFines under §22 ArbZG reach €15,000 per violation. Continue anyway?',
+      arbzgHintTitle: '§4 ArbZG',
+      arbzgHintBody: 'This work duration requires at least {required} minutes of break. Currently recorded: {given} minutes.',
+      arbzgDaily: {
+        ok: 'OK (≤ 8h)',
+        extended: 'Extended (8-10h, legal only if compensated within 24 weeks)',
+        over_limit: 'Over limit (> 10h)',
+      },
+      arbzgBreaks: {
+        not_required: 'Not required',
+        ok: 'OK',
+        short: 'Short',
+        missing: 'Missing',
+      },
     },
     reports: {
       title: 'HR Reports',
