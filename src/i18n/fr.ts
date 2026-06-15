@@ -5193,6 +5193,8 @@ export const fr: typeof sq = {
       confirmSoftOver: 'Apres cette saisie l\'employe aura {hours}h cette semaine, au-dessus de la moyenne autorisee de {limit}h (UE 2002/15/CE). Continuer quand meme?',
       confirmArbzgViolation: 'Cette saisie enfreint les règles journalières §3/§4 ArbZG (Allemagne) :\n\n- Limite journalière : {daily}\n- Pause : {breaks} ({required} min requises, {given} min enregistrées)\n\nAmendes selon §22 ArbZG : jusqu\'à 15 000 € par infraction. Continuer quand même ?',
       confirmArbzgRestShort: 'Ce service enfreint §5 ArbZG : seulement {rest}h de repos avant ce service (11h requises).\n\n- Fin du service précédent : {prev}\n- Début de ce service : {next}\n\nContinuer quand même ?',
+      confirmSundayWork: '{date} est un dimanche. §9 ArbZG interdit le travail dominical ; §10 prévoit des exceptions sectorielles (transport, hôtellerie, …) et §11(3) exige un jour de repos compensatoire sous 8 semaines.\n\nContinuer la saisie ?',
+      confirmHolidayWork: '{date} est un jour férié. §9 ArbZG interdit le travail férié ; §10 autorise des exceptions sectorielles et §11(3) exige un jour de repos compensatoire sous 2 semaines.\n\nContinuer la saisie ?',
       arbzgHintTitle: '§4 ArbZG',
       arbzgHintBody: 'Cette durée de travail nécessite au moins {required} minutes de pause. Actuellement enregistrées : {given} minutes.',
       arbzgDaily: {

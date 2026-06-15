@@ -139,3 +139,43 @@ export function assessRest(
 export function hasArbzgViolation(a: ArbzgDailyAssessment): boolean {
   return a.daily === 'over_limit' || a.breaks === 'short' || a.breaks === 'missing';
 }
+
+/**
+ * §9 ArbZG (Sun- und Feiertagsruhe). Work on Sundays and public
+ * holidays is generally prohibited from 00:00 to 24:00. §10 lists
+ * sectoral exceptions (transport, hospitality, agriculture, etc.) —
+ * mm-logistic spans some of those — but the rule applies broadly and
+ * §11 still requires:
+ *   - 15 paid Sundays free per year (§11(2))
+ *   - Compensatory rest day within 2 weeks for holiday work / 8
+ *     weeks for Sunday work (§11(3))
+ *
+ * We can't decide here whether an employee is exempt under §10, so
+ * the assessment is a *flag*: callers turn it into a soft confirm
+ * dialog with the §10/§11 caveat spelled out.
+ */
+export type ProhibitedDayStatus = 'ok' | 'sunday' | 'holiday';
+
+/**
+ * Returns 'sunday' if the date falls on a Sunday, 'holiday' if it
+ * matches one of the supplied YYYY-MM-DD holiday strings, else 'ok'.
+ * Sunday takes precedence — a Sunday that is also a public holiday
+ * is reported as 'sunday' to avoid masking the §11(2) 15-free-Sundays
+ * rule under the §11(3) compensatory-rest rule.
+ *
+ * `dateStr` is YYYY-MM-DD; we parse it in UTC to keep the weekday
+ * calculation independent of the user's local timezone. That matches
+ * the rest of the HR module which stores `date` as a naked DATE (no
+ * timezone).
+ */
+export function assessProhibitedDay(
+  dateStr: string,
+  holidays: ReadonlyArray<string>,
+): ProhibitedDayStatus {
+  if (!dateStr) return 'ok';
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return 'ok';
+  if (d.getUTCDay() === 0) return 'sunday';
+  if (holidays.includes(dateStr)) return 'holiday';
+  return 'ok';
+}
