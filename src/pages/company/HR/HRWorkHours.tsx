@@ -4,7 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
 import { summarizeWeeklyHours, WEEKLY_LIMIT_HARD, WEEKLY_LIMIT_SOFT } from '../../../utils/weeklyHours';
-import { assessArbzgDay, hasArbzgViolation } from '../../../utils/arbzgCompliance';
+import { assessArbzgDay, assessRest, hasArbzgViolation } from '../../../utils/arbzgCompliance';
 
 interface WorkHourRow {
   id: string;
@@ -123,6 +123,36 @@ export default function HRWorkHours() {
         .replace('{breaks}', t(`hr.workHours.arbzgBreaks.${arbzg.breaks}`))
         .replace('{required}', String(arbzg.requiredBreakMinutes))
         .replace('{given}', String(arbzg.breakMinutes));
+      if (!confirm(msg)) return;
+    }
+
+    // §5 ArbZG: minimum 11h consecutive rest between the end of one
+    // shift and the start of the next. The previous shift may live in
+    // an earlier month so we pull the most recent prior row directly —
+    // the in-memory `records` only holds the current month. This is
+    // best-effort: if the user has never been recorded before we skip.
+    let prevShiftEnd: Date | null = null;
+    const { data: priorRows } = await supabase
+      .from('work_hours_log')
+      .select('date, end_time')
+      .eq('user_id', newEntry.user_id)
+      .eq('company_id', profile!.company_id)
+      .lt('date', newEntry.date)
+      .not('end_time', 'is', null)
+      .order('date', { ascending: false })
+      .limit(1);
+    if (priorRows && priorRows.length > 0 && priorRows[0].end_time) {
+      prevShiftEnd = new Date(`${priorRows[0].date}T${priorRows[0].end_time}`);
+    }
+    const thisShiftStart = new Date(`${newEntry.date}T${newEntry.start_time}`);
+    const rest = assessRest(prevShiftEnd, thisShiftStart);
+    if (rest === 'short' && prevShiftEnd) {
+      const restMinutes = Math.floor((thisShiftStart.getTime() - prevShiftEnd.getTime()) / 60_000);
+      const restHours = Math.max(0, Math.round((restMinutes / 60) * 10) / 10);
+      const msg = t('hr.workHours.confirmArbzgRestShort')
+        .replace('{rest}', String(restHours))
+        .replace('{prev}', `${priorRows![0].date} ${(priorRows![0].end_time as string).slice(0, 5)}`)
+        .replace('{next}', `${newEntry.date} ${newEntry.start_time.slice(0, 5)}`);
       if (!confirm(msg)) return;
     }
 

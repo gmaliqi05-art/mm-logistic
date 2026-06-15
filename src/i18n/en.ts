@@ -5195,6 +5195,7 @@ export const en: typeof sq = {
       confirmHardOver: 'After this entry the employee will have {hours}h this week, above the absolute limit of {limit}h (EU 2002/15/EC). Continue anyway?',
       confirmSoftOver: 'After this entry the employee will have {hours}h this week, above the allowed average of {limit}h (EU 2002/15/EC). Continue anyway?',
       confirmArbzgViolation: 'This entry violates the daily rules of §3/§4 ArbZG (Germany):\n\n- Daily limit: {daily}\n- Break: {breaks} ({required} min required, {given} min recorded)\n\nFines under §22 ArbZG reach €15,000 per violation. Continue anyway?',
+      confirmArbzgRestShort: 'This shift violates §5 ArbZG: only {rest}h of rest before this shift (11h required).\n\n- Previous shift ended: {prev}\n- This shift starts: {next}\n\nContinue anyway?',
       arbzgHintTitle: '§4 ArbZG',
       arbzgHintBody: 'This work duration requires at least {required} minutes of break. Currently recorded: {given} minutes.',
       arbzgDaily: {
