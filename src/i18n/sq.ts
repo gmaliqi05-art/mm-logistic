@@ -5268,6 +5268,7 @@ export const sq = {
       selectDriver: 'Zgjidh shoferin...',
       noActiveDrivers: 'Nuk ka shofere aktive',
       assignError: 'Caktimi i shoferit deshtoi',
+      alreadyAssigned: 'Kjo dergese eshte caktuar tashme nga nje dispatcher tjeter.',
     },
     status: {
       pending: 'Ne pritje',

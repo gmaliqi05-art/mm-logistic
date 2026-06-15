@@ -5273,6 +5273,7 @@ export const en: typeof sq = {
       selectDriver: 'Select driver...',
       noActiveDrivers: 'No active drivers',
       assignError: 'Failed to assign driver',
+      alreadyAssigned: 'This delivery has already been assigned by another dispatcher.',
     },
     status: {
       pending: 'Pending',
