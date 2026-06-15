@@ -3113,6 +3113,12 @@ export const de: typeof sq = {
       gpsPending: 'GPS wird ermittelt...',
       save: 'Nachweis speichern',
       saved: 'Liefernachweis gespeichert',
+      queuedForRetry: 'Kein Netz — Nachweis lokal gespeichert und wird automatisch gesendet, sobald die Verbindung wieder besteht.',
+    },
+    podOutbox: {
+      queueTitle: '{count} Nachweis(e) warten auf Synchronisation',
+      flushing: 'Wird zum Server hochgeladen...',
+      willRetry: 'Wird automatisch erneut versucht, sobald wieder Verbindung besteht.',
     },
     deliveryNotes: {
       title: 'Lieferscheine',

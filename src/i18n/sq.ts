@@ -3111,6 +3111,12 @@ export const sq = {
       gpsPending: 'Po merret GPS...',
       save: 'Ruaj deshmine',
       saved: 'Deshmia u ruajt',
+      queuedForRetry: 'Pa rrjet — deshmia u ruajt lokalisht dhe do te dergohet automatikisht sapo te kthehet interneti.',
+    },
+    podOutbox: {
+      queueTitle: '{count} dergesa(a) ne pritje per t’u sinkronizuar',
+      flushing: 'Po dergohen ne server...',
+      willRetry: 'Do te provohet automatikisht sapo te kthehet rrjeti.',
     },
     deliveryNotes: {
       title: 'Fletedergesat',
