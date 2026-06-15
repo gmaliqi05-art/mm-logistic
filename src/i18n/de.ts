@@ -5214,6 +5214,10 @@ export const de: typeof sq = {
       overtimeReport: 'Überstundenbericht',
       exportExcel: 'Excel exportieren',
       exportPdf: 'PDF exportieren',
+      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
+      exportArbzg16Title: 'Jährliche Arbeitszeit-Aufzeichnung für Gewerbeaufsicht / Zollverwaltung. Eine Zeile pro Mitarbeiter pro Tag. Aufbewahrungspflicht 2 Jahre.',
+      exportBurlG: '§15 BUrlG (CSV)',
+      exportBurlGTitle: 'Jährliche Urlaubsdokumentation nach §15 BUrlG: Anspruch, genommen, verbleibend je Mitarbeiter.',
     },
     settings: {
       title: 'HR Einstellungen',

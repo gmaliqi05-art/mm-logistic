@@ -5217,6 +5217,10 @@ export const en: typeof sq = {
       overtimeReport: 'Overtime Report',
       exportExcel: 'Export Excel',
       exportPdf: 'Export PDF',
+      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
+      exportArbzg16Title: 'Annual working-time record for the German supervisory authority (Gewerbeaufsicht / Zollverwaltung). One row per employee per day. Must be kept 2 years.',
+      exportBurlG: '§15 BUrlG (CSV)',
+      exportBurlGTitle: 'Annual leave documentation per §15 BUrlG: entitlement, days taken, remaining for each employee.',
     },
     settings: {
       title: 'HR Settings',

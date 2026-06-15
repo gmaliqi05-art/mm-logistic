@@ -5212,6 +5212,10 @@ export const sq = {
       overtimeReport: 'Raporti i Oreve Shtese',
       exportExcel: 'Eksporto Excel',
       exportPdf: 'Eksporto PDF',
+      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
+      exportArbzg16Title: 'Regjistri vjetor i orarit te punes per autoritetin gjerman (Gewerbeaufsicht / Zoll). Per-punonjes per-dite. Duhet ruajtur 2 vjet.',
+      exportBurlG: '§15 BUrlG (CSV)',
+      exportBurlGTitle: 'Dokumentacioni vjetor i pushimeve sipas §15 BUrlG: e drejta, ditet e marra, te mbetura per cdo punonjes.',
     },
     settings: {
       title: 'Cilesimet HR',
