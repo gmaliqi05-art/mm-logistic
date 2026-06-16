@@ -69,8 +69,19 @@ function makeEmptyForm(defaultVatRate: number = 0): PurchaseForm {
   };
 }
 
-function calcLineTotal(qty: number, price: number, vat: number): number {
-  return qty * price * (1 + vat / 100);
+// L1: line_total is the NET amount per line (qty × unit_price), matching
+// the accounting convention used everywhere else in the codebase:
+//   - Invoices.tsx: line_total = qty × price (NET, with discount).
+//   - Reports.tsx + GermanFinancials.tsx + ProductDetail.tsx all read
+//     line_total as NET and compute VAT separately via `* vat_rate/100`.
+//   - The previous Purchases formula returned GROSS (`× (1 + vat/100)`),
+//     which made the same SQL aggregator double-count VAT in reports
+//     (one VAT pass already baked in, another then multiplied on top).
+// VAT for a purchase line is now derived once at total-roll-up time
+// (`vatTotal` useMemo + `vat_amount` save column), exactly mirroring
+// the invoice path.
+function calcLineTotal(qty: number, price: number, _vat: number): number {
+  return Math.round(qty * price * 100) / 100;
 }
 
 export default function Purchases() {
