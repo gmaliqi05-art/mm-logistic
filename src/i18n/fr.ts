@@ -3113,12 +3113,6 @@ export const fr: typeof sq = {
       gpsPending: 'Acquisition GPS...',
       save: 'Enregistrer la preuve',
       saved: 'Preuve de livraison enregistree',
-      queuedForRetry: 'Pas de réseau — la preuve est enregistrée localement et sera envoyée automatiquement dès la reconnexion.',
-    },
-    podOutbox: {
-      queueTitle: '{count} preuve(s) en attente de synchronisation',
-      flushing: 'Envoi au serveur en cours...',
-      willRetry: 'Nouvelle tentative automatique au retour du réseau.',
     },
     deliveryNotes: {
       title: 'Bons de livraison',
@@ -5191,23 +5185,6 @@ export const fr: typeof sq = {
       othersLabel: 'autres',
       confirmHardOver: 'Apres cette saisie l\'employe aura {hours}h cette semaine, au-dessus de la limite absolue de {limit}h (UE 2002/15/CE). Continuer quand meme?',
       confirmSoftOver: 'Apres cette saisie l\'employe aura {hours}h cette semaine, au-dessus de la moyenne autorisee de {limit}h (UE 2002/15/CE). Continuer quand meme?',
-      confirmArbzgViolation: 'Cette saisie enfreint les règles journalières §3/§4 ArbZG (Allemagne) :\n\n- Limite journalière : {daily}\n- Pause : {breaks} ({required} min requises, {given} min enregistrées)\n\nAmendes selon §22 ArbZG : jusqu\'à 15 000 € par infraction. Continuer quand même ?',
-      confirmArbzgRestShort: 'Ce service enfreint §5 ArbZG : seulement {rest}h de repos avant ce service (11h requises).\n\n- Fin du service précédent : {prev}\n- Début de ce service : {next}\n\nContinuer quand même ?',
-      confirmSundayWork: '{date} est un dimanche. §9 ArbZG interdit le travail dominical ; §10 prévoit des exceptions sectorielles (transport, hôtellerie, …) et §11(3) exige un jour de repos compensatoire sous 8 semaines.\n\nContinuer la saisie ?',
-      confirmHolidayWork: '{date} est un jour férié. §9 ArbZG interdit le travail férié ; §10 autorise des exceptions sectorielles et §11(3) exige un jour de repos compensatoire sous 2 semaines.\n\nContinuer la saisie ?',
-      arbzgHintTitle: '§4 ArbZG',
-      arbzgHintBody: 'Cette durée de travail nécessite au moins {required} minutes de pause. Actuellement enregistrées : {given} minutes.',
-      arbzgDaily: {
-        ok: 'OK (≤ 8h)',
-        extended: 'Étendue (8-10h, légale seulement si compensée sous 24 semaines)',
-        over_limit: 'Au-dessus de la limite (> 10h)',
-      },
-      arbzgBreaks: {
-        not_required: 'Non requise',
-        ok: 'OK',
-        short: 'Courte',
-        missing: 'Manquante',
-      },
     },
     reports: {
       title: 'Rapports RH',
@@ -5216,10 +5193,6 @@ export const fr: typeof sq = {
       overtimeReport: 'Rapport heures supplémentaires',
       exportExcel: 'Exporter Excel',
       exportPdf: 'Exporter PDF',
-      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
-      exportArbzg16Title: 'Registre annuel du temps de travail pour l\'autorité allemande (Gewerbeaufsicht / Zoll). Une ligne par employé par jour. Conservation 2 ans.',
-      exportBurlG: '§15 BUrlG (CSV)',
-      exportBurlGTitle: 'Documentation annuelle des congés selon §15 BUrlG : droits, jours pris, restants par employé.',
     },
     settings: {
       title: 'Paramètres RH',
@@ -5270,7 +5243,6 @@ export const fr: typeof sq = {
       selectDriver: 'Choisir un chauffeur...',
       noActiveDrivers: 'Aucun chauffeur actif',
       assignError: 'Échec de l\'assignation du chauffeur',
-      alreadyAssigned: 'Cette livraison a déjà été assignée par un autre dispatcher.',
     },
     status: {
       pending: 'En attente',

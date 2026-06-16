@@ -4,7 +4,6 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTranslation } from '../../../i18n';
 import { summarizeWeeklyHours, WEEKLY_LIMIT_HARD, WEEKLY_LIMIT_SOFT } from '../../../utils/weeklyHours';
-import { assessArbzgDay, assessProhibitedDay, assessRest, hasArbzgViolation } from '../../../utils/arbzgCompliance';
 
 interface WorkHourRow {
   id: string;
@@ -37,23 +36,13 @@ export default function HRWorkHours() {
   const [showAdd, setShowAdd] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newEntry, setNewEntry] = useState({ user_id: '', date: '', start_time: '', end_time: '', break_minutes: 30, notes: '' });
-  const [holidayDates, setHolidayDates] = useState<string[]>([]);
 
   useEffect(() => {
     if (profile?.company_id) {
       fetchRecords();
       fetchEmployees();
-      fetchHolidays();
     }
   }, [profile?.company_id, currentMonth]);
-
-  async function fetchHolidays() {
-    const { data } = await supabase
-      .from('public_holidays')
-      .select('date')
-      .eq('company_id', profile!.company_id);
-    if (data) setHolidayDates(data.map((r) => r.date as string));
-  }
 
   async function fetchEmployees() {
     const { data } = await supabase
@@ -98,18 +87,6 @@ export default function HRWorkHours() {
 
     const { total, overtime } = calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes);
 
-    // §9 ArbZG: Sunday and public-holiday work is generally prohibited.
-    // §10 lists sectoral exceptions (transport, hospitality, ...) and
-    // §11 requires compensatory rest. We can't decide here whether the
-    // employee is exempt under §10, so this is a soft confirm spelling
-    // out the rule + caveats — auditable when an admin overrides.
-    const prohibited = assessProhibitedDay(newEntry.date, holidayDates);
-    if (prohibited !== 'ok') {
-      const msg = t(prohibited === 'sunday' ? 'hr.workHours.confirmSundayWork' : 'hr.workHours.confirmHolidayWork')
-        .replace('{date}', newEntry.date);
-      if (!confirm(msg)) return;
-    }
-
     // Soft confirmation when the new entry would push the user past the
     // EU Working Time Directive thresholds for that ISO week. Hard-blocking
     // is wrong because legitimate edge cases exist (correcting a wrong
@@ -129,52 +106,6 @@ export default function HRWorkHours() {
       const msg = t(tplKey)
         .replace('{hours}', String(userSummary.totalHours))
         .replace('{limit}', String(limit));
-      if (!confirm(msg)) return;
-    }
-
-    // §3 / §4 ArbZG (German Working Time Act) daily check. Soft
-    // confirmation rather than a hard block — admins occasionally
-    // correct a historical record where the actual rest pattern is
-    // documented elsewhere — but we make sure the violation is
-    // explicit so the choice is auditable. Fines under §22 ArbZG
-    // reach €15,000 per violation.
-    const arbzg = assessArbzgDay(Math.round(total * 60), newEntry.break_minutes);
-    if (hasArbzgViolation(arbzg)) {
-      const msg = t('hr.workHours.confirmArbzgViolation')
-        .replace('{daily}', t(`hr.workHours.arbzgDaily.${arbzg.daily}`))
-        .replace('{breaks}', t(`hr.workHours.arbzgBreaks.${arbzg.breaks}`))
-        .replace('{required}', String(arbzg.requiredBreakMinutes))
-        .replace('{given}', String(arbzg.breakMinutes));
-      if (!confirm(msg)) return;
-    }
-
-    // §5 ArbZG: minimum 11h consecutive rest between the end of one
-    // shift and the start of the next. The previous shift may live in
-    // an earlier month so we pull the most recent prior row directly —
-    // the in-memory `records` only holds the current month. This is
-    // best-effort: if the user has never been recorded before we skip.
-    let prevShiftEnd: Date | null = null;
-    const { data: priorRows } = await supabase
-      .from('work_hours_log')
-      .select('date, end_time')
-      .eq('user_id', newEntry.user_id)
-      .eq('company_id', profile!.company_id)
-      .lt('date', newEntry.date)
-      .not('end_time', 'is', null)
-      .order('date', { ascending: false })
-      .limit(1);
-    if (priorRows && priorRows.length > 0 && priorRows[0].end_time) {
-      prevShiftEnd = new Date(`${priorRows[0].date}T${priorRows[0].end_time}`);
-    }
-    const thisShiftStart = new Date(`${newEntry.date}T${newEntry.start_time}`);
-    const rest = assessRest(prevShiftEnd, thisShiftStart);
-    if (rest === 'short' && prevShiftEnd) {
-      const restMinutes = Math.floor((thisShiftStart.getTime() - prevShiftEnd.getTime()) / 60_000);
-      const restHours = Math.max(0, Math.round((restMinutes / 60) * 10) / 10);
-      const msg = t('hr.workHours.confirmArbzgRestShort')
-        .replace('{rest}', String(restHours))
-        .replace('{prev}', `${priorRows![0].date} ${(priorRows![0].end_time as string).slice(0, 5)}`)
-        .replace('{next}', `${newEntry.date} ${newEntry.start_time.slice(0, 5)}`);
       if (!confirm(msg)) return;
     }
 
@@ -368,29 +299,14 @@ export default function HRWorkHours() {
               <input type="number" value={newEntry.break_minutes} onChange={(e) => setNewEntry(n => ({ ...n, break_minutes: Number(e.target.value) }))} min={0} max={180} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm" />
             </div>
 
-            {newEntry.start_time && newEntry.end_time && (() => {
-              const calc = calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes);
-              const arbzg = assessArbzgDay(Math.round(calc.total * 60), newEntry.break_minutes);
-              const violated = hasArbzgViolation(arbzg);
-              return (
-                <>
-                  <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-800 font-medium">
-                    {t('hr.attendance.totalHours')}: {calc.total}h
-                    {calc.overtime > 0 && (
-                      <span className="ml-2">({t('hr.attendance.overtime')}: +{calc.overtime}h)</span>
-                    )}
-                  </div>
-                  {arbzg.requiredBreakMinutes > 0 && (
-                    <div className={`p-3 rounded-xl text-xs border ${violated ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-gray-50 border-gray-200 text-gray-700'}`}>
-                      <span className="font-semibold">{t('hr.workHours.arbzgHintTitle')}: </span>
-                      {t('hr.workHours.arbzgHintBody')
-                        .replace('{required}', String(arbzg.requiredBreakMinutes))
-                        .replace('{given}', String(newEntry.break_minutes))}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+            {newEntry.start_time && newEntry.end_time && (
+              <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-800 font-medium">
+                {t('hr.attendance.totalHours')}: {calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes).total}h
+                {calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes).overtime > 0 && (
+                  <span className="ml-2">({t('hr.attendance.overtime')}: +{calculateHours(newEntry.start_time, newEntry.end_time, newEntry.break_minutes).overtime}h)</span>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>

@@ -105,36 +105,15 @@ export default function LogisticsDispatch() {
       setAssignSubmitting(true);
       setError(null);
 
-      // K15: gate the UPDATE on `assigned_driver_id IS NULL` so two
-      // dispatchers who had the modal open on the same note can't both
-      // succeed. The first call lands `null → driverA`; the second
-      // sees zero matching rows and bails out, refreshing the list so
-      // the operator sees that the note already has an owner. Without
-      // this conditional, the second UPDATE would overwrite the first
-      // assignment and the originally-assigned driver would receive
-      // a "you're assigned" notification while the actual delivery
-      // sat with someone else.
-      const { data: updated, error: dnErr } = await supabase
+      const { error: dnErr } = await supabase
         .from('delivery_notes')
         .update({
           assigned_driver_id: assignDriverId,
           status: 'sent',
           dispatched_at: new Date().toISOString(),
         })
-        .eq('id', assignTarget.id)
-        .is('assigned_driver_id', null)
-        .select('id');
+        .eq('id', assignTarget.id);
       if (dnErr) throw dnErr;
-      if (!updated || updated.length === 0) {
-        setError(
-          t('logistics.dispatch.alreadyAssigned')
-          || 'Kjo dergese eshte caktuar tashme nga nje dispatcher tjeter.',
-        );
-        setAssignTarget(null);
-        setAssignDriverId('');
-        await load();
-        return;
-      }
 
       // Tell the driver they've been dispatched. The dispatch list only shows
       // currently-unassigned deliveries (see load(): `.is('assigned_driver_id',

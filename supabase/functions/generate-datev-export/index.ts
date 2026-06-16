@@ -174,14 +174,7 @@ Deno.serve(async (req: Request) => {
         .from("acc_invoices")
         // Pull the country and seller VAT fields explicitly so the
         // reverse-charge / intra-Community / export detection works.
-        // Items are needed because vat_treatment is stored per-line:
-        // an invoice with `reverse_charge=false` at header level may
-        // still have lines tagged `vat_treatment='reverse_charge'`
-        // (e.g., when the operator forgot the header flag during
-        // creation). DATEV must book the whole document under SKR03
-        // 8336 + BU 94, never as standard 0% domestic — Finanzamt
-        // audits catch the under-reporting (audit finding L4).
-        .select("*, contact:acc_contacts(id, contact_type, country), items:acc_invoice_items(vat_treatment, vat_category, vat_rate)")
+        .select("*, contact:acc_contacts(id, contact_type, country)")
         .eq("company_id", company_id)
         .gte("invoice_date", date_from)
         .lte("invoice_date", date_to);
@@ -201,36 +194,13 @@ Deno.serve(async (req: Request) => {
           ? Math.round((vatAmt / subtotal) * 100)
           : 0;
 
-        // L4: derive the special-case flags from items too. A pure
-        // 0% domestic sale (catch-all 8100) and a reverse-charge book
-        // (8336 + BU 94) look identical at the rate-only level — both
-        // produce vatAmt = 0. Use vat_treatment on items as the source
-        // of truth, falling back to the invoice-level boolean when the
-        // legacy column is set explicitly.
-        const items = Array.isArray(inv.items) ? inv.items as Array<{
-          vat_treatment?: string | null;
-          vat_category?: string | null;
-        }> : [];
-        const itemsAllReverseCharge = items.length > 0
-          && items.every((it) => (it?.vat_treatment ?? "") === "reverse_charge");
-        const itemsAllIntraCommunity = items.length > 0
-          && items.every((it) => (it?.vat_treatment ?? "") === "intra_community"
-                              || (it?.vat_category ?? "") === "intra_community");
-
         // Augment invoice with derived fields the helper needs.
-        // `reverse_charge` / `intra_community_supply` fall back to
-        // the per-item flags when the legacy header columns are
-        // unset, so DATEV always books with the correct BU key.
         const invForMapping = {
           ...inv,
           buyer_country: (inv as Record<string, unknown>).buyer_country
             ?? (inv as { contact?: { country?: string } }).contact?.country
             ?? null,
           seller_country: sellerCountry,
-          reverse_charge: (inv as { reverse_charge?: boolean }).reverse_charge === true
-            || itemsAllReverseCharge,
-          intra_community_supply: (inv as { intra_community_supply?: boolean }).intra_community_supply === true
-            || itemsAllIntraCommunity,
         };
         const { account: revenueAcc, buKey } = revenueAccountForInvoice(
           invForMapping,

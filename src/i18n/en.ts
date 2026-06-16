@@ -3116,12 +3116,6 @@ export const en: typeof sq = {
       gpsPending: 'Acquiring GPS...',
       save: 'Save proof',
       saved: 'Delivery proof saved',
-      queuedForRetry: 'No network — proof saved locally and will be uploaded automatically when you’re back online.',
-    },
-    podOutbox: {
-      queueTitle: '{count} proof(s) waiting to sync',
-      flushing: 'Uploading to server...',
-      willRetry: 'Will retry automatically when the network is back.',
     },
     deliveryNotes: {
       title: 'Delivery Notes',
@@ -5194,23 +5188,6 @@ export const en: typeof sq = {
       othersLabel: 'others',
       confirmHardOver: 'After this entry the employee will have {hours}h this week, above the absolute limit of {limit}h (EU 2002/15/EC). Continue anyway?',
       confirmSoftOver: 'After this entry the employee will have {hours}h this week, above the allowed average of {limit}h (EU 2002/15/EC). Continue anyway?',
-      confirmArbzgViolation: 'This entry violates the daily rules of §3/§4 ArbZG (Germany):\n\n- Daily limit: {daily}\n- Break: {breaks} ({required} min required, {given} min recorded)\n\nFines under §22 ArbZG reach €15,000 per violation. Continue anyway?',
-      confirmArbzgRestShort: 'This shift violates §5 ArbZG: only {rest}h of rest before this shift (11h required).\n\n- Previous shift ended: {prev}\n- This shift starts: {next}\n\nContinue anyway?',
-      confirmSundayWork: '{date} is a Sunday. §9 ArbZG prohibits Sunday work; §10 lists sectoral exceptions (transport, hospitality, ...) and §11(3) requires a compensatory rest day within 8 weeks.\n\nContinue with the entry?',
-      confirmHolidayWork: '{date} is a public holiday. §9 ArbZG prohibits holiday work; §10 allows sectoral exceptions and §11(3) requires a compensatory rest day within 2 weeks.\n\nContinue with the entry?',
-      arbzgHintTitle: '§4 ArbZG',
-      arbzgHintBody: 'This work duration requires at least {required} minutes of break. Currently recorded: {given} minutes.',
-      arbzgDaily: {
-        ok: 'OK (≤ 8h)',
-        extended: 'Extended (8-10h, legal only if compensated within 24 weeks)',
-        over_limit: 'Over limit (> 10h)',
-      },
-      arbzgBreaks: {
-        not_required: 'Not required',
-        ok: 'OK',
-        short: 'Short',
-        missing: 'Missing',
-      },
     },
     reports: {
       title: 'HR Reports',
@@ -5219,10 +5196,6 @@ export const en: typeof sq = {
       overtimeReport: 'Overtime Report',
       exportExcel: 'Export Excel',
       exportPdf: 'Export PDF',
-      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
-      exportArbzg16Title: 'Annual working-time record for the German supervisory authority (Gewerbeaufsicht / Zollverwaltung). One row per employee per day. Must be kept 2 years.',
-      exportBurlG: '§15 BUrlG (CSV)',
-      exportBurlGTitle: 'Annual leave documentation per §15 BUrlG: entitlement, days taken, remaining for each employee.',
     },
     settings: {
       title: 'HR Settings',
@@ -5273,7 +5246,6 @@ export const en: typeof sq = {
       selectDriver: 'Select driver...',
       noActiveDrivers: 'No active drivers',
       assignError: 'Failed to assign driver',
-      alreadyAssigned: 'This delivery has already been assigned by another dispatcher.',
     },
     status: {
       pending: 'Pending',

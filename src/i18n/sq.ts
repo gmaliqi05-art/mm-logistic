@@ -3111,12 +3111,6 @@ export const sq = {
       gpsPending: 'Po merret GPS...',
       save: 'Ruaj deshmine',
       saved: 'Deshmia u ruajt',
-      queuedForRetry: 'Pa rrjet — deshmia u ruajt lokalisht dhe do te dergohet automatikisht sapo te kthehet interneti.',
-    },
-    podOutbox: {
-      queueTitle: '{count} dergesa(a) ne pritje per t’u sinkronizuar',
-      flushing: 'Po dergohen ne server...',
-      willRetry: 'Do te provohet automatikisht sapo te kthehet rrjeti.',
     },
     deliveryNotes: {
       title: 'Fletedergesat',
@@ -5189,23 +5183,6 @@ export const sq = {
       othersLabel: 'te tjere',
       confirmHardOver: 'Pas ketij regjistrimi punonjesi do te kete {hours}h kete jave, mbi limitin absolut prej {limit}h (EU 2002/15/EC). Vazhdo gjithsesi?',
       confirmSoftOver: 'Pas ketij regjistrimi punonjesi do te kete {hours}h kete jave, mbi mesataren e lejuar prej {limit}h (EU 2002/15/EC). Vazhdo gjithsesi?',
-      confirmArbzgViolation: 'Ky regjistrim shkel rregullat ditore te §3/§4 ArbZG (Gjermani):\n\n- Limiti ditor: {daily}\n- Pushimi: {breaks} (kerkohen {required} min, jane regjistruar {given} min)\n\nGjobat sipas §22 ArbZG arrijne deri ne 15.000 € per shkelje. Vazhdo gjithsesi?',
-      confirmArbzgRestShort: 'Ky turn shkel §5 ArbZG: pushimi mes turneve eshte vetem {rest}h (kerkohen 11h).\n\n- Mbarimi i turnit te meparshem: {prev}\n- Fillimi i ketij turni: {next}\n\nVazhdo gjithsesi?',
-      confirmSundayWork: 'Data {date} eshte e diele. §9 ArbZG e ndalon punen ne te diela; §10 lejon perjashtime (transport, gastronomi, etj.) dhe §11(3) kerkon nje dite kompensimi brenda 8 javesh.\n\nVazhdo regjistrimin?',
-      confirmHolidayWork: 'Data {date} eshte feste publike. §9 ArbZG e ndalon punen ne festa; §10 lejon perjashtime sektoriale dhe §11(3) kerkon nje dite kompensimi brenda 2 javesh.\n\nVazhdo regjistrimin?',
-      arbzgHintTitle: '§4 ArbZG',
-      arbzgHintBody: 'Per kete kohe pune kerkohen te pakten {required} minuta pushim. Aktualisht jane regjistruar {given} minuta.',
-      arbzgDaily: {
-        ok: 'OK (≤ 8h)',
-        extended: 'Zgjatur (8-10h, legal vetem nese kompensohet brenda 24 javesh)',
-        over_limit: 'Mbi limitin (> 10h)',
-      },
-      arbzgBreaks: {
-        not_required: 'Nuk kerkohet',
-        ok: 'OK',
-        short: 'I shkurter',
-        missing: 'Mungon',
-      },
     },
     reports: {
       title: 'Raportet HR',
@@ -5214,10 +5191,6 @@ export const sq = {
       overtimeReport: 'Raporti i Oreve Shtese',
       exportExcel: 'Eksporto Excel',
       exportPdf: 'Eksporto PDF',
-      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
-      exportArbzg16Title: 'Regjistri vjetor i orarit te punes per autoritetin gjerman (Gewerbeaufsicht / Zoll). Per-punonjes per-dite. Duhet ruajtur 2 vjet.',
-      exportBurlG: '§15 BUrlG (CSV)',
-      exportBurlGTitle: 'Dokumentacioni vjetor i pushimeve sipas §15 BUrlG: e drejta, ditet e marra, te mbetura per cdo punonjes.',
     },
     settings: {
       title: 'Cilesimet HR',
@@ -5268,7 +5241,6 @@ export const sq = {
       selectDriver: 'Zgjidh shoferin...',
       noActiveDrivers: 'Nuk ka shofere aktive',
       assignError: 'Caktimi i shoferit deshtoi',
-      alreadyAssigned: 'Kjo dergese eshte caktuar tashme nga nje dispatcher tjeter.',
     },
     status: {
       pending: 'Ne pritje',

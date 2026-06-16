@@ -57,10 +57,6 @@ export default function SuperAdminCompanies() {
   const [featureManagingCompany, setFeatureManagingCompany] = useState<CompanyWithSub | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  // Per-row toggle lock — set to the company.id while its is_active
-  // UPDATE is in flight so the row's button can't fire a second toggle
-  // before the first settles. Audit finding K9.
-  const [togglingId, setTogglingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -108,12 +104,6 @@ export default function SuperAdminCompanies() {
   }
 
   async function toggleStatus(company: CompanyWithSub) {
-    // Defensive: ignore re-entrant clicks on the same row while the
-    // previous UPDATE is still in flight. The button is also disabled
-    // in the JSX below, but the keyboard activation path (Enter while
-    // focused) can still bypass that on some browsers.
-    if (togglingId === company.id) return;
-    setTogglingId(company.id);
     try {
       const { error: err } = await supabase
         .from('companies')
@@ -123,8 +113,6 @@ export default function SuperAdminCompanies() {
       await fetchCompanies();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('common.error'));
-    } finally {
-      setTogglingId(null);
     }
   }
 
@@ -366,19 +354,14 @@ export default function SuperAdminCompanies() {
                           </button>
                           <button
                             onClick={() => toggleStatus(company)}
-                            disabled={togglingId === company.id}
-                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                            className={`p-2 rounded-lg transition-colors ${
                               company.is_active
                                 ? 'text-green-500 hover:text-red-500 hover:bg-red-50'
                                 : 'text-red-400 hover:text-green-500 hover:bg-green-50'
                             }`}
                             title={company.is_active ? t('common.inactive') : t('common.active')}
                           >
-                            {togglingId === company.id
-                              ? <Loader2 className="w-5 h-5 animate-spin" />
-                              : company.is_active
-                                ? <ToggleRight className="w-5 h-5" />
-                                : <ToggleLeft className="w-5 h-5" />}
+                            {company.is_active ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                           </button>
                         </div>
                       </td>

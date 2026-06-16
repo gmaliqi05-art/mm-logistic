@@ -26,7 +26,6 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import DriverTrackingIndicator from '../components/DriverTrackingBanner';
 import DriverShiftEndModal from '../components/DriverShiftEndModal';
-import PodOutboxDrainer from '../components/driver/PodOutboxDrainer';
 import { DriverTrackingProvider } from '../contexts/DriverTrackingContext';
 import DeletionBanner from '../components/DeletionBanner';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -269,7 +268,6 @@ export default function DriverLayout() {
 
         <DriverShiftEndModal />
         <DeletionBanner />
-        <PodOutboxDrainer />
         <main className="flex-1 p-4 lg:p-6 pb-safe-nav overflow-auto">
           <Outlet />
         </main>

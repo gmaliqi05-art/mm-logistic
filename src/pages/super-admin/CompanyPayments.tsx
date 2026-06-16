@@ -163,14 +163,6 @@ export default function CompanyPayments() {
 
   async function handleAction() {
     if (!actionModal || !profile) return;
-    // Re-entry guard. The submit button is rendered with
-    // disabled={saving} so React stops re-mounted clicks, but the
-    // keyboard activation path (Enter while focused) and the audit
-    // finding K10 specifically warn about concurrent activate /
-    // cancel / extend calls duplicating audit_logs and payment_
-    // transactions rows. Bail out synchronously so two parallel
-    // invocations cannot both reach the edge function.
-    if (saving) return;
     const { company, action } = actionModal;
     const sub = company.subscription;
     if (!sub) return;

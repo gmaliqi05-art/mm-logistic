@@ -37,8 +37,6 @@ import { useDriverComplianceMap } from '../../hooks/useDriverComplianceMap';
 import type { DeliveryNote } from '../../types';
 import SmartDocScanner, { type SmartScanResult } from '../../components/scanner/SmartDocScanner';
 import { notifyUsers } from '../../utils/notifications';
-import { enqueuePod, fileToPodPayload } from '../../utils/podOutbox';
-import { logger } from '../../utils/logger';
 import DriverPermissionsGate from '../../components/DriverPermissionsGate';
 import DriverTrailersWidget from '../../components/driver/DriverTrailersWidget';
 import {
@@ -1801,35 +1799,7 @@ function DeliveryProofModal({ note, t, onClose, onSaved }: {
       }
       await onSaved();
     } catch (e) {
-      // Direct save failed (dead zone, RLS hiccup, transient 5xx).
-      // Encode the POD payload into the offline outbox so the global
-      // <PodOutboxDrainer /> can flush it when the network recovers,
-      // and let the driver move on instead of being blocked on this
-      // delivery for the rest of the shift.
-      logger.warn('pod direct save failed; trying offline outbox', { error: e });
-      try {
-        const photoPayload = await fileToPodPayload(photoFile);
-        if (!photoPayload) throw e;
-        const signaturePayload = signatureFile ? await fileToPodPayload(signatureFile) : null;
-        enqueuePod({
-          id: crypto.randomUUID(),
-          delivery_note_id: note.id,
-          company_id: note.company_id,
-          captured_by_profile_id: profile?.id ?? null,
-          note_number: note.note_number,
-          gps_lat: gps?.lat ?? null,
-          gps_lng: gps?.lng ?? null,
-          photo: photoPayload,
-          signature: signaturePayload,
-        });
-        setErr(t('driver.proof.queuedForRetry'));
-        // Close the modal after a short pause so the driver sees the
-        // "queued" confirmation but isn't blocked on the screen.
-        setTimeout(() => { void onSaved(); }, 1500);
-      } catch (queueErr) {
-        logger.error('pod outbox enqueue failed', { error: queueErr });
-        setErr(e instanceof Error ? e.message : t('driver.taskDetail.errorGeneric'));
-      }
+      setErr(e instanceof Error ? e.message : t('driver.taskDetail.errorGeneric'));
     } finally {
       setSaving(false);
     }

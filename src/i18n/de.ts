@@ -3113,12 +3113,6 @@ export const de: typeof sq = {
       gpsPending: 'GPS wird ermittelt...',
       save: 'Nachweis speichern',
       saved: 'Liefernachweis gespeichert',
-      queuedForRetry: 'Kein Netz — Nachweis lokal gespeichert und wird automatisch gesendet, sobald die Verbindung wieder besteht.',
-    },
-    podOutbox: {
-      queueTitle: '{count} Nachweis(e) warten auf Synchronisation',
-      flushing: 'Wird zum Server hochgeladen...',
-      willRetry: 'Wird automatisch erneut versucht, sobald wieder Verbindung besteht.',
     },
     deliveryNotes: {
       title: 'Lieferscheine',
@@ -5191,23 +5185,6 @@ export const de: typeof sq = {
       othersLabel: 'weitere',
       confirmHardOver: 'Nach diesem Eintrag wird der Mitarbeiter diese Woche {hours}h haben, über der absoluten Grenze von {limit}h (EU 2002/15/EG). Trotzdem fortfahren?',
       confirmSoftOver: 'Nach diesem Eintrag wird der Mitarbeiter diese Woche {hours}h haben, über dem zulässigen Durchschnitt von {limit}h (EU 2002/15/EG). Trotzdem fortfahren?',
-      confirmArbzgViolation: 'Dieser Eintrag verstößt gegen §3/§4 ArbZG:\n\n- Tageshöchstarbeitszeit: {daily}\n- Pause: {breaks} ({required} Min erforderlich, {given} Min erfasst)\n\nBußgelder nach §22 ArbZG bis zu 15.000 € je Verstoß. Trotzdem fortfahren?',
-      confirmArbzgRestShort: 'Dieser Eintrag verstößt gegen §5 ArbZG: nur {rest}h Ruhezeit vor diesem Dienst (11h erforderlich).\n\n- Vorheriger Dienst endete: {prev}\n- Dieser Dienst beginnt: {next}\n\nTrotzdem fortfahren?',
-      confirmSundayWork: '{date} ist ein Sonntag. §9 ArbZG verbietet Sonntagsarbeit; §10 enthält Branchenausnahmen (Verkehr, Gastronomie, …) und §11(3) verlangt einen Ersatzruhetag binnen 8 Wochen.\n\nEintrag fortsetzen?',
-      confirmHolidayWork: '{date} ist ein gesetzlicher Feiertag. §9 ArbZG verbietet Feiertagsarbeit; §10 erlaubt Branchenausnahmen und §11(3) verlangt einen Ersatzruhetag binnen 2 Wochen.\n\nEintrag fortsetzen?',
-      arbzgHintTitle: '§4 ArbZG',
-      arbzgHintBody: 'Für diese Arbeitsdauer ist eine Ruhepause von mindestens {required} Minuten vorgeschrieben. Aktuell erfasst: {given} Minuten.',
-      arbzgDaily: {
-        ok: 'OK (≤ 8h)',
-        extended: 'Verlängert (8-10h, nur zulässig bei Ausgleich binnen 24 Wochen)',
-        over_limit: 'Überschritten (> 10h)',
-      },
-      arbzgBreaks: {
-        not_required: 'Nicht erforderlich',
-        ok: 'OK',
-        short: 'Zu kurz',
-        missing: 'Fehlend',
-      },
     },
     reports: {
       title: 'HR Berichte',
@@ -5216,10 +5193,6 @@ export const de: typeof sq = {
       overtimeReport: 'Überstundenbericht',
       exportExcel: 'Excel exportieren',
       exportPdf: 'PDF exportieren',
-      exportArbzg16: '§16 ArbZG / §17 MiLoG (CSV)',
-      exportArbzg16Title: 'Jährliche Arbeitszeit-Aufzeichnung für Gewerbeaufsicht / Zollverwaltung. Eine Zeile pro Mitarbeiter pro Tag. Aufbewahrungspflicht 2 Jahre.',
-      exportBurlG: '§15 BUrlG (CSV)',
-      exportBurlGTitle: 'Jährliche Urlaubsdokumentation nach §15 BUrlG: Anspruch, genommen, verbleibend je Mitarbeiter.',
     },
     settings: {
       title: 'HR Einstellungen',
@@ -5270,7 +5243,6 @@ export const de: typeof sq = {
       selectDriver: 'Fahrer auswählen...',
       noActiveDrivers: 'Keine aktiven Fahrer',
       assignError: 'Fahrerzuweisung fehlgeschlagen',
-      alreadyAssigned: 'Diese Lieferung wurde bereits von einem anderen Dispatcher zugewiesen.',
     },
     status: {
       pending: 'Ausstehend',
