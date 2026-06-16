@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { TableRowsSkeleton, CardListSkeleton } from '../../components/ui/Skeleton';
+import { validateDeepLink } from '../../utils/safeUrl';
 
 type Tab = 'overview' | 'compose' | 'templates' | 'channels' | 'permissions' | 'logs' | 'platform' | 'devices';
 
@@ -301,6 +302,21 @@ function ComposeTab() {
     setSubmitting(true);
     setResult(null);
     try {
+      // K14: validate the deep-link URL before persisting. Operators
+      // can paste arbitrary text into the URL field; without this
+      // guard a `javascript:`, `data:`, or attacker-controlled URL
+      // would be sent to every recipient device.
+      const linkVerdict = validateDeepLink(url);
+      if (!linkVerdict.ok) {
+        setResult(
+          linkVerdict.reason === 'empty'
+            ? 'URL e brendshme nuk mund te jete bosh.'
+            : 'URL e dergesa-deep-link nuk lejohet. Perdor nje path qe nis me / ose nje URL https ne domain-in zyrtar.',
+        );
+        return;
+      }
+      const safeUrl = linkVerdict.normalized;
+
       const when = scheduleNow ? new Date().toISOString() : new Date(scheduledAt).toISOString();
       const recipient_user_ids = recipientType === 'users'
         ? userIdsInput.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean)
@@ -311,7 +327,7 @@ function ComposeTab() {
         channel_code: channelCode,
         title,
         body,
-        data: { url },
+        data: { url: safeUrl },
         recipient_user_ids,
         recipient_roles,
         recipient_company_ids: [],
