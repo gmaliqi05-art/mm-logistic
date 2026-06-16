@@ -45,8 +45,19 @@ Deno.serve(async (req: Request) => {
   const caller = await requireCaller(req, { corsHeaders });
   if (!caller.ok) return caller.response;
 
+  // Declared outside the try so the catch block can use them to
+  // release the K7 soft-lock if anything between claim and clear
+  // throws.
+  let invoice_id: string | undefined;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const supabase = createClient(supabaseUrl, serviceKey);
+
   try {
-    const { invoice_id, recipients, locale } = await req.json();
+    const body = await req.json();
+    invoice_id = body.invoice_id as string | undefined;
+    const recipients = body.recipients;
+    const locale = body.locale;
     if (
       !invoice_id ||
       !Array.isArray(recipients) ||
@@ -62,11 +73,6 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-    const supabase = createClient(supabaseUrl, serviceKey);
 
     // Fetch invoice with contact and bank account
     const { data: invoice } = await supabase
@@ -92,6 +98,33 @@ Deno.serve(async (req: Request) => {
       invoice.company_id !== caller.profile.company_id
     ) {
       return forbidden(corsHeaders, "Cross-tenant access denied");
+    }
+
+    // K7: soft-lock to prevent double-send race. Two parallel callers
+    // (manual click + cron retry, two tabs, network retry) previously
+    // both reached Resend and both UPDATEd acc_invoices afterwards,
+    // sending the customer two emails and overwriting sent_at with
+    // the second call's timestamp. We atomically claim the lock with
+    // a conditional UPDATE: if another caller set email_send_started_at
+    // in the last 60 seconds, the WHERE clause matches zero rows.
+    const { data: lockRows, error: lockErr } = await supabase
+      .from("acc_invoices")
+      .update({ email_send_started_at: new Date().toISOString() })
+      .eq("id", invoice_id)
+      .or("email_send_started_at.is.null,email_send_started_at.lt." +
+        new Date(Date.now() - 60_000).toISOString())
+      .select("id");
+    if (lockErr) {
+      return new Response(
+        JSON.stringify({ error: `Lock acquire failed: ${lockErr.message}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!lockRows || lockRows.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "send_in_progress", message: "Email-i per kete fature po dergohet tashme. Provo serish pas pak." }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Fetch company name
@@ -212,15 +245,18 @@ Deno.serve(async (req: Request) => {
           sent_at: new Date().toISOString(),
           email_recipients: recipients,
           status: "sent",
+          email_send_started_at: null,
         })
         .eq("id", invoice_id);
     } else {
       // Record the attempt + recipients for audit, but keep the draft
-      // status so the operator can retry.
+      // status so the operator can retry. Also release the soft-lock
+      // so the retry can proceed immediately rather than wait 60s.
       await supabase
         .from("acc_invoices")
         .update({
           email_recipients: recipients,
+          email_send_started_at: null,
         })
         .eq("id", invoice_id);
     }
@@ -237,6 +273,17 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (e) {
+    // Best-effort lock release on unexpected failure so retries are
+    // not blocked for the full 60-second stale-lock window. invoice_id
+    // is in scope from the parsed body; if parsing itself failed we
+    // never claimed the lock.
+    if (invoice_id) {
+      await supabase
+        .from("acc_invoices")
+        .update({ email_send_started_at: null })
+        .eq("id", invoice_id)
+        .then(() => undefined, () => undefined);
+    }
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
