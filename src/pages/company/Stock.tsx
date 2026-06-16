@@ -377,61 +377,29 @@ export default function CompanyStock() {
     try {
       setSaving(true);
       setError(null);
-      const companyId = profile!.company_id!;
       const productId = regForm.category_product_id || null;
 
-      let existingQuery = supabase
-        .from('stock')
-        .select('id, quantity')
-        .eq('company_id', companyId)
-        .eq('depot_id', regForm.depot_id)
-        .eq('category_id', regForm.category_id)
-        .eq('condition', regForm.condition);
-      existingQuery = productId
-        ? existingQuery.eq('category_product_id', productId)
-        : existingQuery.is('category_product_id', null);
-      const { data: existing } = await existingQuery.maybeSingle();
-
-      if (regForm.movement_type === 'exit') {
-        if (!existing || existing.quantity < qty) {
-          setError(t('companyAdmin.stock.errInsufficientStock'));
-          setSaving(false);
-          return;
-        }
-      }
-
-      if (existing) {
-        const newQty = regForm.movement_type === 'exit'
-          ? Math.max(0, existing.quantity - qty)
-          : existing.quantity + qty;
-        await supabase
-          .from('stock')
-          .update({ quantity: newQty, updated_at: new Date().toISOString() })
-          .eq('id', existing.id);
-      } else if (regForm.movement_type !== 'exit') {
-        await supabase.from('stock').insert({
-          company_id: companyId,
-          depot_id: regForm.depot_id,
-          category_id: regForm.category_id,
-          category_product_id: productId,
-          quantity: qty,
-          condition: regForm.condition,
-        });
-      }
-
-      const { error: mvErr } = await supabase.from('stock_movements').insert({
-        company_id: companyId,
-        depot_id: regForm.depot_id,
-        category_id: regForm.category_id,
-        category_product_id: productId,
-        movement_type: regForm.movement_type,
-        quantity: qty,
-        condition_before: regForm.condition,
-        condition_after: regForm.condition,
-        notes: regForm.notes || 'Regjistrim nga admin i kompanise',
-        performed_by: profile!.id,
+      // apply_stock_movement locks the (company, depot, category,
+      // product, condition) row with FOR UPDATE and writes the
+      // quantity + stock_movements audit row atomically. Replaces
+      // the previous read-then-write client logic that allowed two
+      // parallel admin clicks to both pass an "exit" guard and
+      // double-debit the same stock row.
+      const { error: rpcErr } = await supabase.rpc('apply_stock_movement', {
+        p_depot_id: regForm.depot_id,
+        p_category_id: regForm.category_id,
+        p_product_id: productId,
+        p_condition: regForm.condition,
+        p_quantity: qty,
+        p_movement_type: regForm.movement_type,
+        p_notes: regForm.notes || null,
       });
-      if (mvErr) throw mvErr;
+      if (rpcErr) {
+        // Server raises with a localised message — preserve it.
+        setError(rpcErr.message || t('companyAdmin.stock.errInsufficientStock'));
+        setSaving(false);
+        return;
+      }
 
       setShowRegisterModal(false);
       setRegForm({ depot_id: '', category_id: '', category_product_id: '', movement_type: 'entry', quantity: '', condition: 'good', notes: '' });
