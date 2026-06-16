@@ -5270,6 +5270,7 @@ export const fr: typeof sq = {
       selectDriver: 'Choisir un chauffeur...',
       noActiveDrivers: 'Aucun chauffeur actif',
       assignError: 'Échec de l\'assignation du chauffeur',
+      alreadyAssigned: 'Cette livraison a déjà été assignée par un autre dispatcher.',
     },
     status: {
       pending: 'En attente',

@@ -5270,6 +5270,7 @@ export const de: typeof sq = {
       selectDriver: 'Fahrer auswählen...',
       noActiveDrivers: 'Keine aktiven Fahrer',
       assignError: 'Fahrerzuweisung fehlgeschlagen',
+      alreadyAssigned: 'Diese Lieferung wurde bereits von einem anderen Dispatcher zugewiesen.',
     },
     status: {
       pending: 'Ausstehend',
