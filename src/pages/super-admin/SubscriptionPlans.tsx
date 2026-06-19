@@ -145,6 +145,43 @@ export default function SubscriptionPlans() {
       return;
     }
 
+    // K11: cross-field validation between price and Stripe price IDs.
+    // A free plan (price=0) MUST NOT carry a stripe_price_id —
+    // otherwise stripe-checkout silently uses price_data with the
+    // saved 0 €, the webhook records a 0 € transaction, and the
+    // operator gets free service while we still pay Stripe fees.
+    // Conversely, a paid plan with no stripe_price_id but a yearly
+    // option set, or vice versa, is an obvious misconfiguration.
+    const monthly = Number(formData.price_monthly) || 0;
+    const yearly = Number(formData.price_yearly) || 0;
+    const hasStripeM = !!(formData.stripe_price_id && formData.stripe_price_id.trim());
+    const hasStripeY = !!(formData.stripe_price_id_yearly && formData.stripe_price_id_yearly.trim());
+
+    if (monthly === 0 && hasStripeM) {
+      setError(
+        'Plan falas (price_monthly = 0) nuk mund te kete Stripe price ID muajor. '
+        + 'Hiqe stripe_price_id ose vendos nje cmim > 0.',
+      );
+      return;
+    }
+    if (yearly === 0 && hasStripeY) {
+      setError(
+        'Plan falas vjetor (price_yearly = 0) nuk mund te kete Stripe price ID vjetor. '
+        + 'Hiqe stripe_price_id_yearly ose vendos nje cmim > 0.',
+      );
+      return;
+    }
+    if (monthly > 0 && !hasStripeM) {
+      // Soft confirm: the plan exists at a price but checkout will
+      // have to build price_data dynamically. Most operators want
+      // a Stripe price ID for clean accounting; warn but allow.
+      const ok = window.confirm(
+        `Plan me cmim ${monthly} € por pa stripe_price_id. `
+        + 'Stripe checkout do te perdore price_data dinamike. Vazhdo gjithsesi?',
+      );
+      if (!ok) return;
+    }
+
     try {
       setSaving(true);
       setError(null);
