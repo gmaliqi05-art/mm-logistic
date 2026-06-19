@@ -60,22 +60,42 @@ async function pg<T = unknown>(path: string, init: RequestInit = {}): Promise<T>
   return (await res.json()) as T;
 }
 
+// KE2 / L13 hardening: numbers from a JSON body or stale DB rows
+// can deserialise as strings or NaN. Every URL builder below must
+// validate finiteness first, otherwise a future RLS regression
+// letting a delivery_notes row carry `46;@evil.example.com` in a
+// lat/lng field would shape the upstream URL.
+function isFiniteCoord(n: unknown): n is number {
+  return typeof n === 'number' && Number.isFinite(n);
+}
+
 async function geocodeOSM(q: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
     const r = await fetch(url, { headers: { "User-Agent": "MM-Logistic/1.0" } });
     const arr = await r.json();
     if (Array.isArray(arr) && arr.length > 0) {
-      return { lat: parseFloat(arr[0].lat), lng: parseFloat(arr[0].lon) };
+      const lat = parseFloat(arr[0].lat);
+      const lng = parseFloat(arr[0].lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      return { lat, lng };
     }
   } catch (_) { /* ignore */ }
   return null;
 }
 
 async function osrmRoute(oLat: number, oLng: number, dLat: number, dLng: number): Promise<{ duration: number; distance: number; geometry: unknown } | null> {
+  if (![oLat, oLng, dLat, dLng].every(isFiniteCoord)) return null;
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${oLng},${oLat};${dLng},${dLat}?overview=simplified&geometries=geojson`;
-    const r = await fetch(url);
+    // URL constructor + numeric formatting kills any injection
+    // through lat/lng. OSRM expects `{lng},{lat};{lng},{lat}` path
+    // segments — clean fixed decimals so a NaN cannot reach the wire.
+    const o = `${oLng.toFixed(7)},${oLat.toFixed(7)}`;
+    const d = `${dLng.toFixed(7)},${dLat.toFixed(7)}`;
+    const u = new URL(`https://router.project-osrm.org/route/v1/driving/${o};${d}`);
+    u.searchParams.set('overview', 'simplified');
+    u.searchParams.set('geometries', 'geojson');
+    const r = await fetch(u.toString());
     const j = await r.json();
     if (j?.routes?.[0]) {
       return { duration: j.routes[0].duration, distance: j.routes[0].distance, geometry: j.routes[0].geometry };
@@ -86,9 +106,18 @@ async function osrmRoute(oLat: number, oLng: number, dLat: number, dLng: number)
 
 async function tomtomTraffic(oLat: number, oLng: number, dLat: number, dLng: number, apiKey: string): Promise<{ delaySec: number; totalSec: number } | null> {
   if (!apiKey) return null;
+  if (![oLat, oLng, dLat, dLng].every(isFiniteCoord)) return null;
   try {
-    const url = `https://api.tomtom.com/routing/1/calculateRoute/${oLat},${oLng}:${dLat},${dLng}/json?traffic=true&travelMode=truck&key=${apiKey}`;
-    const r = await fetch(url);
+    // TomTom path is `{lat},{lng}:{lat},{lng}`. Same coordinate
+    // hygiene as OSRM. The API key MUST sit in the query string
+    // (TomTom has no header auth), so we keep it there but never
+    // log the URL — fetch() doesn't log and the catch only swallows.
+    const path = `${oLat.toFixed(7)},${oLng.toFixed(7)}:${dLat.toFixed(7)},${dLng.toFixed(7)}`;
+    const u = new URL(`https://api.tomtom.com/routing/1/calculateRoute/${path}/json`);
+    u.searchParams.set('traffic', 'true');
+    u.searchParams.set('travelMode', 'truck');
+    u.searchParams.set('key', apiKey);
+    const r = await fetch(u.toString());
     const j = await r.json();
     const s = j?.routes?.[0]?.summary;
     if (s) {
