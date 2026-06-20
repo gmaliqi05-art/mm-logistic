@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { requireCaller, forbidden } from '../_shared/requireCaller.ts';
+import { parseJson, quantitySchema, uuidSchema, z } from '../_shared/schemas.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,22 +8,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-type Action = 'create' | 'confirm' | 'complete';
-interface Item {
-  category_product_id?: string | null;
-  category_id?: string | null;
-  quantity: number;
-  condition?: string;
-}
-interface Body {
-  action: Action;
-  delivery_note_id?: string;
-  type?: 'delivery' | 'pickup';
-  items?: Item[];
-  company_id?: string;
-  partner_id?: string;
-  pallet_type?: string;
-}
+const ItemSchema = z.object({
+  category_product_id: z.union([uuidSchema, z.null()]).optional(),
+  category_id: z.union([uuidSchema, z.null()]).optional(),
+  quantity: quantitySchema,
+  condition: z.string().max(64).optional(),
+});
+
+const Body = z.object({
+  action: z.enum(['create', 'confirm', 'complete'], {
+    errorMap: () => ({ message: "Veprimi duhet te jete 'create', 'confirm' ose 'complete'" }),
+  }),
+  delivery_note_id: uuidSchema.optional(),
+  type: z.enum(['delivery', 'pickup']).optional(),
+  items: z.array(ItemSchema).max(500, 'Tepric artikujsh').optional(),
+  company_id: uuidSchema.optional(),
+  partner_id: uuidSchema.optional(),
+  pallet_type: z.string().max(64).optional(),
+});
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -33,7 +36,9 @@ Deno.serve(async (req: Request) => {
   if (!caller.ok) return caller.response;
 
   try {
-    const body = (await req.json()) as Body;
+    const parsed = await parseJson(req, Body, corsHeaders);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
     const warnings: string[] = [];
     const blockers: string[] = [];
 
