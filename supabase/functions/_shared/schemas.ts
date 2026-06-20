@@ -55,6 +55,34 @@ export const platformSchema = z.enum(["ios", "android"], {
 });
 
 /**
+ * Optional string with a max length. Empty / null / undefined collapse to
+ * undefined so the downstream handler can use `?? ""` or `?? null` without
+ * worrying about the difference. Mirrors the ad-hoc `optionalStringMax`
+ * helper that lived inside individual handlers before validation moved
+ * into shared schemas.
+ */
+export const optionalString = (max: number, label = "Fusha") =>
+  z
+    .union([z.string(), z.null(), z.undefined()])
+    .transform((v) => (v == null || v === "" ? undefined : v))
+    .pipe(
+      z
+        .string()
+        .max(max, `${label} nuk mund te kete me shume se ${max} karaktere`)
+        .optional(),
+    );
+
+/**
+ * Non-negative integer quantity (>=0). Accepts both `5` and `"5"`; rejects
+ * negatives, NaN, and non-integers. Used by stock / delivery line items.
+ */
+export const quantitySchema = z.coerce
+  .number({ invalid_type_error: "Sasia duhet te jete numer" })
+  .int("Sasia duhet te jete numer i plote")
+  .nonnegative("Sasia nuk mund te jete negative");
+
+
+/**
  * Parse and validate a JSON request body against a Zod schema.
  * Returns { ok: true, data } on success or { ok: false, response } with a
  * ready-to-return 400 response on failure.

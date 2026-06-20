@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 import { requireEnv } from "../_shared/env.ts";
+import { emailSchema, optionalString, passwordSchema, uuidSchema, z } from "../_shared/schemas.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,27 +9,41 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-interface RegisterPayload {
-  companyName: string;
-  companyEmail: string;
-  companyPhone: string;
-  companyAddress: string;
-  country?: string;
-  city?: string;
-  postalCode?: string;
-  website?: string;
-  vatNumber?: string;
-  taxNumber?: string;
-  commercialRegister?: string;
-  legalForm?: string;
-  registrationCourt?: string;
-  adminName: string;
-  adminEmail: string;
-  adminPassword: string;
-  planId?: string;
-  planName?: string;
-  businessType?: "logistics" | "accounting";
-}
+// Frontend (RegisterPage) reads `{ success, error }` and shows `error` verbatim
+// in Albanian, so each Zod issue carries an Albanian message and the handler
+// throws the first one — keeps the legacy error contract while moving from
+// hand-rolled regex/length checks to a single schema.
+const RegisterPayload = z
+  .object({
+    companyName: z
+      .string({ required_error: "Emri i kompanise i pavlefshem" })
+      .trim()
+      .min(1, "Emri i kompanise i pavlefshem")
+      .max(200, "Emri i kompanise i pavlefshem"),
+    companyEmail: optionalString(254, "Email-i i kompanise"),
+    companyPhone: optionalString(50, "Telefoni"),
+    companyAddress: optionalString(500, "Adresa"),
+    country: optionalString(100, "Shteti"),
+    city: optionalString(100, "Qyteti"),
+    postalCode: optionalString(20, "Kodi postar"),
+    website: optionalString(500, "Faqja web"),
+    vatNumber: optionalString(50, "VAT"),
+    taxNumber: optionalString(50, "Tax"),
+    commercialRegister: optionalString(100, "Regjistri tregtar"),
+    legalForm: optionalString(100, "Forma ligjore"),
+    registrationCourt: optionalString(200, "Gjykata"),
+    adminName: optionalString(200, "Emri i adminit"),
+    adminEmail: emailSchema,
+    adminPassword: passwordSchema,
+    planId: uuidSchema.optional(),
+    planName: z.string().max(100, "Plani i pavlefshem").optional(),
+    businessType: z.enum(["logistics", "accounting"]).optional(),
+  })
+  .refine((d) => !!(d.planId || d.planName), {
+    message: "Fushat e detyrueshme mungojne",
+    path: ["planId"],
+  });
+type RegisterPayload = z.infer<typeof RegisterPayload>;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -40,7 +55,16 @@ Deno.serve(async (req: Request) => {
     const rl = await checkRateLimit(`register-company:ip=${ip}`, 10, 60_000);
     if (!rl.allowed) return rateLimitResponse(rl, corsHeaders);
 
-    const payload: RegisterPayload = await req.json();
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      throw new Error("Body JSON i pavlefshem");
+    }
+    const parsed = RegisterPayload.safeParse(rawBody);
+    if (!parsed.success) {
+      throw new Error(parsed.error.issues[0]?.message ?? "Te dhena te pavlefshme");
+    }
     const {
       companyName,
       companyEmail,
@@ -60,51 +84,9 @@ Deno.serve(async (req: Request) => {
       adminPassword,
       planId,
       planName,
-    } = payload;
-    const businessType = payload.businessType === "accounting" ? "accounting" : "logistics";
+    } = parsed.data;
+    const businessType = parsed.data.businessType === "accounting" ? "accounting" : "logistics";
     const primaryRole = businessType === "accounting" ? "accountant" : "company_admin";
-
-    if (!companyName || !adminEmail || !adminPassword || (!planId && !planName)) {
-      throw new Error("Fushat e detyrueshme mungojne");
-    }
-
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (typeof adminEmail !== "string" || !emailRe.test(adminEmail) || adminEmail.length > 254) {
-      throw new Error("Email i pavlefshem");
-    }
-    if (typeof adminPassword !== "string" || adminPassword.length < 8 || adminPassword.length > 128) {
-      throw new Error("Fjalekalimi duhet te kete 8 deri 128 karaktere");
-    }
-    if (typeof companyName !== "string" || companyName.trim().length === 0 || companyName.length > 200) {
-      throw new Error("Emri i kompanise i pavlefshem");
-    }
-    if (planId) {
-      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (typeof planId !== "string" || !uuidRe.test(planId)) {
-        throw new Error("Plani i pavlefshem");
-      }
-    } else if (typeof planName !== "string" || planName.length > 100) {
-      throw new Error("Plani i pavlefshem");
-    }
-    const optionalStringMax = (v: unknown, max: number, label: string) => {
-      if (v === undefined || v === null || v === "") return;
-      if (typeof v !== "string" || v.length > max) {
-        throw new Error(`${label} i pavlefshem`);
-      }
-    };
-    optionalStringMax(adminName, 200, "Emri i adminit");
-    optionalStringMax(companyEmail, 254, "Email-i i kompanise");
-    optionalStringMax(companyPhone, 50, "Telefoni");
-    optionalStringMax(companyAddress, 500, "Adresa");
-    optionalStringMax(country, 100, "Shteti");
-    optionalStringMax(city, 100, "Qyteti");
-    optionalStringMax(postalCode, 20, "Kodi postar");
-    optionalStringMax(website, 500, "Faqja web");
-    optionalStringMax(vatNumber, 50, "VAT");
-    optionalStringMax(taxNumber, 50, "Tax");
-    optionalStringMax(commercialRegister, 100, "Regjistri tregtar");
-    optionalStringMax(legalForm, 100, "Forma ligjore");
-    optionalStringMax(registrationCourt, 200, "Gjykata");
 
     const supabaseAdmin = createClient(
       requireEnv("SUPABASE_URL"),
