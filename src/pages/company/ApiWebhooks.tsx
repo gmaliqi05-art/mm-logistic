@@ -3,6 +3,7 @@ import { Key, Webhook as WebhookIcon, Plus, Loader2, Copy, Trash2, AlertTriangle
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { validateWebhookUrl } from '../../utils/webhookUrlValidation';
 
 type Tab = 'keys' | 'webhooks' | 'docs';
 
@@ -117,6 +118,18 @@ export default function ApiWebhooks() {
 
   async function createWebhook() {
     if (!hookUrl.trim() || hookEvents.length === 0) return;
+    const check = validateWebhookUrl(hookUrl);
+    if (!check.valid) {
+      const messages: Record<typeof check.reason, string> = {
+        empty: 'URL eshte e zbrazet.',
+        not_https: 'URL duhet te filloje me https:// (http nuk lejohet).',
+        has_whitespace: 'URL nuk mund te permbaje hapesira ose rreshta te ri.',
+        invalid_url: 'URL nuk eshte e vlefshme.',
+        blocked_host: 'URL nuk mund te tregoje ne nje host lokal ose te brendshem (loopback/RFC1918/link-local).',
+      };
+      setError(messages[check.reason]);
+      return;
+    }
     const secret = hookSecret.trim() || ('whs_' + Math.random().toString(36).slice(2, 14));
     const { error: err } = await supabase.from('webhooks').insert({
       company_id: profile!.company_id!,

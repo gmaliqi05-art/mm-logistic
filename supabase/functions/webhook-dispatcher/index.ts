@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { isServiceRoleCall, forbidden } from "../_shared/requireCaller.ts";
 import { requireEnv } from "../_shared/env.ts";
+import { safeFetch, SafeFetchError } from "../_shared/safeFetch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,7 +60,7 @@ Deno.serve(async (req: Request) => {
         const signature = await hmacSha256Hex(h.secret, body);
 
         try {
-          const res = await fetch(h.url, {
+          const res = await safeFetch(h.url, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -69,7 +70,10 @@ Deno.serve(async (req: Request) => {
             body,
           });
           const ok = res.status >= 200 && res.status < 300;
-          const respText = (await res.text()).slice(0, 2000);
+          // K16: keep enough body for legitimate debugging but cap small
+          // — the dispatcher fetches with SSRF protection, so the body
+          // comes from an external https endpoint, not an internal one.
+          const respText = (await res.text()).slice(0, 500);
 
           await admin.from("webhook_deliveries").insert({
             webhook_id: h.id,
@@ -90,12 +94,19 @@ Deno.serve(async (req: Request) => {
 
           if (ok) delivered++; else failed++;
         } catch (err) {
+          // SafeFetchError carries a stable error code; log it, but DO NOT
+          // include any DNS / address detail in the persisted body — that
+          // detail would itself leak which internal hosts exist.
+          const isSafeFetch = err instanceof SafeFetchError;
+          const persistedMessage = isSafeFetch
+            ? `blocked: ${err.code}`
+            : (err instanceof Error ? err.message.slice(0, 200) : "network error");
           await admin.from("webhook_deliveries").insert({
             webhook_id: h.id,
             event_id: ev.id,
             event: ev.event,
             status_code: 0,
-            response_body: err instanceof Error ? err.message : "network error",
+            response_body: persistedMessage,
             succeeded: false,
           });
           failed++;
