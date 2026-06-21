@@ -13,6 +13,7 @@ import mammoth from "npm:mammoth@1.8.0";
 import * as XLSX from "npm:xlsx@0.18.5";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 import { requireEnv } from "../_shared/env.ts";
+import { sniffMime } from "../_shared/mimeSniff.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -158,31 +159,7 @@ function stripOwn(name: string, ourName: string, ourVat: string): string {
 
 const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-// Byte-sniff the first 12 bytes against the standard file signatures.
-// Returns null for unrecognised content so the caller can decide what to
-// do (we reject anything not in the allowlist).
-function sniffMime(buf: Uint8Array): string | null {
-  if (buf.length < 4) return null;
-  // PNG: 89 50 4E 47
-  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return "image/png";
-  // JPEG: FF D8 FF
-  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
-  // PDF: %PDF (25 50 44 46)
-  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return "application/pdf";
-  // GIF: 47 49 46 38
-  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return "image/gif";
-  // WEBP: RIFF....WEBP
-  if (buf.length >= 12 &&
-      buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
-      buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return "image/webp";
-  // HEIC/HEIF: ....ftypheic / ftypheif / ftypmif1 / ftypmsf1
-  if (buf.length >= 12 &&
-      buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70) {
-    const brand = String.fromCharCode(buf[8], buf[9], buf[10], buf[11]);
-    if (["heic", "heix", "heif", "mif1", "msf1"].includes(brand)) return "image/heic";
-  }
-  return null;
-}
+// sniffMime moved to _shared/mimeSniff.ts so scan-fleet-document can share it.
 
 function bufferToBase64(buf: Uint8Array): string {
   let bin = "";
@@ -322,17 +299,30 @@ If a party is missing from the document, leave its fields as empty strings. Neve
     if (!resp.ok) {
       const errText = await resp.text();
       console.error("Anthropic API error:", resp.status, errText.slice(0, 300));
-      return emptyExtracted();
+      throw new Error(`AI_REQUEST_FAILED: ${resp.status}`);
     }
     const data = await resp.json();
     const text = data?.content?.[0]?.text || "{}";
     const cleaned = text.replace(/```json|```/g, "").trim();
     const match = cleaned.match(/\{[\s\S]*\}/);
     const jsonStr = match ? match[0] : cleaned;
-    return { ...emptyExtracted(), ...JSON.parse(jsonStr) };
+    let parsed: Partial<Extracted>;
+    try {
+      parsed = JSON.parse(jsonStr);
+    } catch (parseErr) {
+      console.error("AI returned unparseable JSON:", parseErr, jsonStr.slice(0, 300));
+      throw new Error("AI_PARSE_FAILED");
+    }
+    return { ...emptyExtracted(), ...parsed };
   } catch (err) {
+    // Re-throw so the handler can mark the scan as failed instead of
+    // storing emptyExtracted under status="parsed" (which would let the
+    // user confirm blank data as if it were a real extraction).
+    if (err instanceof Error && (err.message.startsWith("AI_PARSE_FAILED") || err.message.startsWith("AI_REQUEST_FAILED"))) {
+      throw err;
+    }
     console.error("AI extraction failed:", err);
-    return emptyExtracted();
+    throw new Error("AI_EXTRACTION_FAILED");
   }
 }
 
@@ -756,8 +746,27 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     console.error("scan-document error:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    // If we had resolved a scanId before the failure, mark the row as
+    // failed with the message so the frontend doesn't poll status="parsed"
+    // on a half-processed scan. Best-effort — swallow update errors.
+    try {
+      const payload = await req.clone().json().catch(() => ({} as { scanId?: string }));
+      if (payload?.scanId) {
+        const admin = createClient(
+          requireEnv("SUPABASE_URL"),
+          requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+        );
+        await admin
+          .from("acc_scanned_documents")
+          .update({ status: "failed", error_message: errMsg.slice(0, 500), updated_at: new Date().toISOString() })
+          .eq("id", payload.scanId);
+      }
+    } catch (markErr) {
+      console.error("Failed to mark scan as failed:", markErr);
+    }
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
+      JSON.stringify({ error: errMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
