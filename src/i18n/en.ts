@@ -2985,6 +2985,7 @@ export const en: typeof sq = {
       title: 'Repair Process',
       subtitle: 'Click a worker to log their repairs',
       noRepairsToday: 'No repairs to report today.',
+      insufficientDamagedStock: 'Only {available} damaged pallets available (requested {requested})',
       subtitleWorker: 'Log and report repairs',
       empty: 'No repair workers registered by the company',
       todayTotal: 'Today\u2019s total',

@@ -2982,6 +2982,7 @@ export const fr: typeof sq = {
       title: 'Processus de R\u00e9paration',
       subtitle: 'Cliquez sur un r\u00e9parateur pour enregistrer ses r\u00e9parations',
       noRepairsToday: 'Aucune r\u00e9paration \u00e0 signaler aujourd\'hui.',
+      insufficientDamagedStock: 'Seules {available} palettes endommagees disponibles (demande {requested})',
       subtitleWorker: 'Enregistrer et signaler les r\u00e9parations',
       empty: 'Aucun r\u00e9parateur enregistr\u00e9 par la soci\u00e9t\u00e9',
       todayTotal: "Total aujourd'hui",
