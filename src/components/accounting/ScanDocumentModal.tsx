@@ -390,7 +390,8 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
         vat_rate: l.vat_rate || 19,
         line_total: l.line_total || (l.quantity || 1) * (l.unit_price || 0),
       }));
-      await supabase.from('acc_purchase_items').insert(items);
+      const { error: itemsErr } = await supabase.from('acc_purchase_items').insert(items);
+      if (itemsErr) throw itemsErr;
     }
     return data.id as string;
   }
@@ -547,7 +548,8 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
         vat_rate: l.vat_rate || 0,
         line_total: l.line_total || (l.quantity || 1) * (l.unit_price || 0),
       }));
-      await supabase.from('acc_delivery_note_items').insert(items);
+      const { error: itemsErr } = await supabase.from('acc_delivery_note_items').insert(items);
+      if (itemsErr) throw itemsErr;
     }
 
     await bridgeToLogistics(direction, data.id as string, url, contactId);
@@ -602,7 +604,8 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
           intended_action: 'stock',
         };
       });
-      await supabase.from('delivery_note_items').insert(items);
+      const { error: itemsErr } = await supabase.from('delivery_note_items').insert(items);
+      if (itemsErr) throw itemsErr;
     }
   }
 

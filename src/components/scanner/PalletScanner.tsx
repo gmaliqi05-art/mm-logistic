@@ -27,6 +27,10 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
   const [manualCode, setManualCode] = useState('');
   const [torchOn, setTorchOn] = useState(false);
   const [lastScanned, setLastScanned] = useState<string | null>(null);
+  // Ref mirrors lastScanned so the scanner callback can dedup without
+  // keeping lastScanned in the effect deps — re-running the effect tears
+  // down and reinitializes the camera on every scan.
+  const lastScannedRef = useRef<string | null>(null);
   const lastScanAt = useRef<number>(0);
 
   const logScan = async (code: string, format: string) => {
@@ -58,8 +62,9 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
           { fps: 10, qrbox: { width: 250, height: 180 } },
           (decoded, result) => {
             const now = Date.now();
-            if (decoded === lastScanned && now - lastScanAt.current < 1500) return;
+            if (decoded === lastScannedRef.current && now - lastScanAt.current < 1500) return;
             lastScanAt.current = now;
+            lastScannedRef.current = decoded;
             setLastScanned(decoded);
             const fmt = (result?.result?.format?.formatName as string | undefined) ?? 'QR_CODE';
             void logScan(decoded, fmt);
@@ -98,7 +103,7 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
       cancelled = true;
       void stop();
     };
-  }, [open, manual, continuous, onClose, onScan, context, lastScanned, profile?.company_id, profile?.id]);
+  }, [open, manual, continuous, onClose, onScan, context, profile?.company_id, profile?.id]);
 
   const toggleTorch = async () => {
     try {

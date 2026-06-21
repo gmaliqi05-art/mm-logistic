@@ -624,6 +624,15 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Per-caller rate limit on top of the IP gate above: a single IP behind
+    // NAT or a shared egress can otherwise burn another tenant's budget.
+    const callerRl = await checkRateLimit(
+      `scan-document:co=${profile.company_id}:u=${userData.user.id}`,
+      10,
+      60_000,
+    );
+    if (!callerRl.allowed) return rateLimitResponse(callerRl, corsHeaders);
+
     const { data: company } = await adminSb
       .from("companies")
       .select("id, name, vat_number")
