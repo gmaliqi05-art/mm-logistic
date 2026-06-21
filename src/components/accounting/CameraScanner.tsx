@@ -123,7 +123,7 @@ export default function CameraScanner({ onCapture, onClose }: Props) {
       setSearchTimedOut(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : t('common.couldNotAccessCamera');
-      setError(`Gabim kamere: ${msg}. Sigurohu qe ke dhene leje per kameren.`);
+      setError(`${t('common.cameraError')}: ${msg}. ${t('common.cameraPermissionHint')}`);
     }
   }
 

@@ -83,6 +83,10 @@ export default function DepotReceiving() {
     } else {
       const tpl = t('depot.receiving.codeNotFound') || 'Kodi "{code}" nuk u gjet';
       setError(tpl.replace('{code}', code));
+      // Continuous-mode scanner sits above the page error toast, so the
+      // worker would otherwise keep re-scanning the same bad code blind.
+      // Close it so the error is visible and they can add the row manually.
+      setShowPalletScanner(false);
     }
   }
   const [aiNotice, setAiNotice] = useState<string | null>(null);

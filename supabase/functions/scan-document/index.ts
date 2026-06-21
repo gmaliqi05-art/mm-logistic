@@ -633,6 +633,14 @@ Deno.serve(async (req: Request) => {
     );
     if (!callerRl.allowed) return rateLimitResponse(callerRl, corsHeaders);
 
+    // The caller-supplied `role` only affects routing suggestions in the
+    // returned response, but we still pin it to the profile so a driver
+    // can't request the company_admin routing path.
+    let effectiveRole: ScanPayload["role"] = role;
+    if (profile.role === "driver") effectiveRole = "driver";
+    else if (profile.role === "depot_worker") effectiveRole = "depot";
+    else if (!effectiveRole) effectiveRole = "company_admin";
+
     const { data: company } = await adminSb
       .from("companies")
       .select("id, name, vat_number")
@@ -725,7 +733,7 @@ Deno.serve(async (req: Request) => {
       extracted,
       company || { id: profile.company_id, name: "", vat_number: null },
       contacts || [],
-      role,
+      effectiveRole,
       docDirection
     );
 
