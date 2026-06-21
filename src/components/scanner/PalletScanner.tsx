@@ -137,7 +137,7 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">{scannerTitle}</h2>
-              <p className="text-xs text-slate-500">{continuous ? 'Continuous mode' : 'Single scan'}</p>
+              <p className="text-xs text-slate-500">{continuous ? t('common.scannerContinuousMode') : t('common.scannerSingleScan')}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-100">
@@ -154,17 +154,17 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
               )}
               {lastScanned && continuous && (
                 <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded p-2 font-mono">
-                  Last: {lastScanned}
+                  {t('common.scannerLastScanned')} {lastScanned}
                 </div>
               )}
               <div className="flex gap-2">
                 <button onClick={toggleTorch} className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">
                   {torchOn ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
-                  Torch
+                  {t('common.torch')}
                 </button>
                 <button onClick={() => setManual(true)} className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">
                   <Keyboard className="w-4 h-4" />
-                  Manual entry
+                  {t('common.manualEntry')}
                 </button>
               </div>
             </>
@@ -181,10 +181,10 @@ export default function PalletScanner({ open, onClose, onScan, context, continuo
               />
               <div className="flex gap-2">
                 <button onClick={() => { setManual(false); setError(null); }} className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">
-                  Back to camera
+                  {t('common.scannerBackToCamera')}
                 </button>
                 <button onClick={submitManual} disabled={!manualCode.trim()} className="flex-1 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:opacity-50">
-                  Submit
+                  {t('common.scannerSubmit')}
                 </button>
               </div>
             </>
