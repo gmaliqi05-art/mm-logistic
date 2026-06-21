@@ -2980,6 +2980,7 @@ export const sq = {
       title: 'Procesi i Reparimit',
       subtitle: 'Kliko nje puntor per te regjistruar reparimet e tij',
       noRepairsToday: 'Nuk ka reparime te sotme per te raportuar.',
+      insufficientDamagedStock: 'Stoku defekt i disponueshem eshte vetem {available} cope (kerkuar {requested})',
       subtitleWorker: 'Regjistro dhe raporto reparimet',
       empty: 'Nuk ka puntor reparature te regjistruar nga kompania',
       todayTotal: 'Totali sot',

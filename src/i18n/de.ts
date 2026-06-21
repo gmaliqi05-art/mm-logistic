@@ -2982,6 +2982,7 @@ export const de: typeof sq = {
       title: 'Reparaturprozess',
       subtitle: 'Klicken Sie auf einen Mitarbeiter, um Reparaturen zu erfassen',
       noRepairsToday: 'Heute liegen keine Reparaturen zur Meldung vor.',
+      insufficientDamagedStock: 'Nur {available} defekte Paletten verfuegbar (angefordert {requested})',
       subtitleWorker: 'Reparaturen erfassen und melden',
       empty: 'Keine Reparaturmitarbeiter von der Firma registriert',
       todayTotal: 'Heute gesamt',
