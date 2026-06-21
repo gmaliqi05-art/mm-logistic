@@ -12,6 +12,19 @@ import { matchProduct, type ProductLike, type CategoryLike } from '../../utils/p
 
 type DocKind = 'purchase' | 'expense' | 'investment' | 'sale' | 'delivery_out' | 'delivery_in';
 
+// Coerce AI-returned numeric fields. The Extracted interface types them
+// as `number`, but the runtime value could be a string ("999.99", "999,99")
+// or garbage; passing those straight into setFormTotal would later insert
+// "NaN" or a malformed string into the DB.
+function toNum(v: unknown): number {
+  if (typeof v === 'number') return Number.isFinite(v) && v >= 0 ? v : 0;
+  if (typeof v === 'string') {
+    const n = parseFloat(v.replace(/\s/g, '').replace(',', '.'));
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+  return 0;
+}
+
 interface Extracted {
   document_nature_guess: DocKind | 'unknown';
   supplier_name: string;
@@ -273,10 +286,19 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
     setFormDueDate(ex.due_date || '');
     setFormInvoiceNumber(ex.invoice_number || '');
     setFormCurrency((ex.currency === 'CHF' ? 'CHF' : 'EUR'));
-    setFormTotal(ex.total || 0);
-    setFormVat(ex.vat_amount || 0);
-    setFormSubtotal(ex.subtotal || Math.max(0, (ex.total || 0) - (ex.vat_amount || 0)));
-    setFormLines(ex.line_items || []);
+    const total = toNum(ex.total);
+    const vat = toNum(ex.vat_amount);
+    const subtotal = toNum(ex.subtotal);
+    setFormTotal(total);
+    setFormVat(vat);
+    setFormSubtotal(subtotal || Math.max(0, total - vat));
+    setFormLines((ex.line_items || []).map((li) => ({
+      ...li,
+      quantity: toNum(li.quantity) || 1,
+      unit_price: toNum(li.unit_price),
+      vat_rate: toNum(li.vat_rate),
+      line_total: toNum(li.line_total),
+    })));
     const matches = (ex.line_items || []).map((li) => {
       const mm = matchProduct(li.description || '', catalogProducts, catalogCategories);
       const prod = mm.productId ? catalogProducts.find((p) => p.id === mm.productId) : null;
@@ -316,9 +338,30 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
     return { url: signed?.signedUrl || newPath, mime: file.type };
   }
 
+  // Dedupe an AI-extracted contact against the local cache before inserting.
+  // VAT match wins (canonical); name match is the fallback. Two scans of the
+  // same supplier with slightly different name formatting would otherwise
+  // each create a fresh acc_contacts row.
+  function findExistingContact(
+    name: string,
+    vat: string | undefined,
+    type: 'supplier' | 'customer',
+  ): string | null {
+    const normVat = (vat || '').replace(/\s/g, '').toUpperCase();
+    if (normVat) {
+      const byVat = contacts.find(
+        (c) => (c.vat_number || '').replace(/\s/g, '').toUpperCase() === normVat,
+      );
+      if (byVat) return byVat.id;
+    }
+    return fuzzyFindContact(name, type) || null;
+  }
+
   async function ensureSupplier(): Promise<string | null> {
     if (formSupplierId) return formSupplierId;
     if (!extracted?.supplier_name) return null;
+    const existing = findExistingContact(extracted.supplier_name, extracted.supplier_vat, 'supplier');
+    if (existing) return existing;
     const { data, error: insErr } = await supabase
       .from('acc_contacts')
       .insert({
@@ -339,6 +382,8 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
     if (formCustomerId) return formCustomerId;
     if (!extracted?.customer_name && !extracted?.supplier_name) return null;
     const name = extracted.customer_name || extracted.supplier_name;
+    const existing = findExistingContact(name, extracted.supplier_vat, 'customer');
+    if (existing) return existing;
     const { data, error: insErr } = await supabase
       .from('acc_contacts')
       .insert({
@@ -580,7 +625,29 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
         scanned_photo_url: documentUrl || null,
         attachment_url: documentUrl || null,
         notes: (extracted?.notes || formDescription || '').slice(0, 500),
-        ai_extracted_json: extracted ? { ...extracted, _acc_delivery_note_id: accNoteId, _acc_contact_id: contactId } : null,
+        ai_extracted_json: extracted ? {
+          // Explicit allowlist: never spread AI output, since downstream
+          // consumers might read fields by name and an attacker-shaped
+          // document could inject keys the rest of the app trusts.
+          document_nature_guess: extracted.document_nature_guess,
+          supplier_name: extracted.supplier_name,
+          supplier_vat: extracted.supplier_vat,
+          customer_name: extracted.customer_name,
+          invoice_number: extracted.invoice_number,
+          invoice_date: extracted.invoice_date,
+          due_date: extracted.due_date,
+          currency: extracted.currency,
+          subtotal: extracted.subtotal,
+          vat_amount: extracted.vat_amount,
+          total: extracted.total,
+          payment_method: extracted.payment_method,
+          line_items: extracted.line_items,
+          confidence: extracted.confidence,
+          notes: extracted.notes,
+          document_number: extracted.document_number,
+          _acc_delivery_note_id: accNoteId,
+          _acc_contact_id: contactId,
+        } : null,
         ai_confidence: extracted?.confidence ?? null,
         origin: 'scan',
         document_number: extracted?.document_number || extracted?.invoice_number || formInvoiceNumber || null,

@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { requireCaller, forbidden } from "../_shared/requireCaller.ts";
 import { requireEnv } from "../_shared/env.ts";
+import { sniffMime } from "../_shared/mimeSniff.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -315,7 +316,18 @@ Deno.serve(async (req: Request) => {
     if (fileErr || !fileData) throw new Error("File download failed");
 
     const buf = new Uint8Array(await fileData.arrayBuffer());
-    const mime = scan.file_mime || "application/octet-stream";
+    // Sniff the actual file bytes — scan.file_mime is uploader-supplied and
+    // not trustworthy. Reject anything outside the AI-supported allowlist
+    // before paying for an Anthropic call on garbage.
+    const sniffed = sniffMime(buf);
+    const mime = sniffed || scan.file_mime || "application/octet-stream";
+    if (!sniffed || (!IMAGE_MIMES.includes(sniffed) && sniffed !== "application/pdf")) {
+      await supabase
+        .from("fleet_scanned_documents")
+        .update({ status: "failed", error_message: `Unsupported file type: ${sniffed || "unknown"}`, updated_at: new Date().toISOString() })
+        .eq("id", scanId);
+      return forbidden(corsHeaders, "Unsupported file type — only JPEG/PNG/WebP/GIF/PDF accepted");
+    }
     let extracted: Extracted;
 
     try {
