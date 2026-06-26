@@ -17,6 +17,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { formatCurrency, type AccCurrency } from '../../types/accounting';
+import { formatScanRoutingReason } from '../../utils/formatScanRoutingReason';
 
 type DocKind = 'purchase' | 'expense' | 'investment' | 'sale';
 type RoutingDecision = 'auto_saved' | 'pending_confirmation' | 'new_company_required';
@@ -74,7 +75,12 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
   const { profile } = useAuth();
   const { t } = useTranslation();
   const extracted = (scan.extracted_json ?? {}) as Record<string, unknown>;
-  const routing = (extracted._routing ?? {}) as { candidates?: Candidate[]; matched_contact_id?: string | null; match_reason?: string };
+  const routing = (extracted._routing ?? {}) as {
+    candidates?: Candidate[];
+    matched_contact_id?: string | null;
+    match_reason?: string;
+    match_reason_parts?: import('../../utils/formatScanRoutingReason').ScanReasonPart[];
+  };
   const initialKind = deriveKind(scan);
   const [kind, setKind] = useState<DocKind>(initialKind);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(routing.matched_contact_id ?? null);
@@ -356,9 +362,10 @@ export default function ScanReviewModal({ scan, onClose, onSaved }: Props) {
             </div>
           )}
 
-          {routing.match_reason && (
+          {(routing.match_reason || routing.match_reason_parts?.length) && (
             <div className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
-              <span className="font-semibold text-slate-700">Arsyeja: </span>{routing.match_reason}
+              <span className="font-semibold text-slate-700">{t('scanner.routing.reasonLabel')}: </span>
+              {formatScanRoutingReason(routing.match_reason_parts, routing.match_reason, t)}
             </div>
           )}
 
