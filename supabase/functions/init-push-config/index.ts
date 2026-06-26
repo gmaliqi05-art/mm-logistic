@@ -15,7 +15,7 @@ Deno.serve(async (req: Request) => {
 
   // Bootstrap-only endpoint: writes service-role key into app_config.
   // Disabled by default; enable by setting SETUP_TOKEN env var.
-  const tokenErr = requireSetupToken(req, corsHeaders);
+  const tokenErr = await requireSetupToken(req, corsHeaders);
   if (tokenErr) return tokenErr;
 
   try {
