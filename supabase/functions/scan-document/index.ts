@@ -652,13 +652,23 @@ Deno.serve(async (req: Request) => {
     // the UI; this is defense-in-depth for direct calls to the function.
     // Super_admin bypasses for support flows.
     if (profile.role !== "super_admin") {
-      const { data: activeSubs } = await adminSb
+      const { data: liveSubs } = await adminSb
         .from("company_subscriptions")
-        .select("id")
+        .select("id, status, current_period_end, trial_end")
         .eq("company_id", profile.company_id)
-        .in("status", ["trial", "active"])
-        .limit(1);
-      if (!activeSubs || activeSubs.length === 0) {
+        .in("status", ["trial", "active"]);
+      // Mirror api-v1: an `active` row whose current_period_end has already
+      // passed (e.g. a missed renewal webhook left a stale row) must NOT keep
+      // spending Anthropic tokens. Likewise an expired trial.
+      const nowMs = Date.now();
+      const hasLiveSub = (liveSubs ?? []).some((s) => {
+        if (s.status === "active") {
+          return !s.current_period_end ||
+            new Date(s.current_period_end as string).getTime() > nowMs;
+        }
+        return !s.trial_end || new Date(s.trial_end as string).getTime() > nowMs;
+      });
+      if (!hasLiveSub) {
         return new Response(
           JSON.stringify({ error: "Company has no active subscription" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
