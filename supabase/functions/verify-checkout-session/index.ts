@@ -256,8 +256,9 @@ Deno.serve(async (req: Request) => {
       period_end: periodEnd,
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    console.error("verify-checkout-session error:", message);
-    return jsonRes({ error: message }, 500);
+    // Log server-side; return generic text. This path is reachable without a
+    // session (Stripe redirect return), so don't echo internal error detail.
+    console.error("verify-checkout-session error:", err instanceof Error ? err.message : err);
+    return jsonRes({ error: "Internal server error" }, 500);
   }
 });

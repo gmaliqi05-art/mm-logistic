@@ -263,9 +263,11 @@ Deno.serve(async (req: Request) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    // Log the real error; return a generic message so internal/SQL error
+    // text isn't disclosed in the response body.
+    console.error("import-bank-statement error:", err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ success: false, error: message }),
+      JSON.stringify({ success: false, error: "Could not import bank statement" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

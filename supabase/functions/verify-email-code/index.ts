@@ -90,10 +90,10 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    console.error("Verify email code error:", message);
+    // Log server-side, return generic text (pre-auth endpoint — no leak).
+    console.error("Verify email code error:", err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
