@@ -92,8 +92,9 @@ Deno.serve(async (req: Request) => {
       { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error("create-demo-accountant error:", err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
