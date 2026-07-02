@@ -19,7 +19,6 @@
  */
 
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { checkRateLimit, getClientIp, rateLimitResponse } from "./rateLimit.ts";
 
 export interface CallerProfile {
   id: string;
@@ -189,35 +188,16 @@ export function assertOwnCompany(
 }
 
 /**
- * Constant-time string compare: prevents an attacker from learning the
- * SETUP_TOKEN one byte at a time by measuring response time. Short-
- * circuiting on length is acceptable because the token's length is a
- * known fixed configuration value, not a secret per-request.
- */
-function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
-/**
  * Setup-token guard for bootstrap endpoints (create-super-admin,
- * seed-demo-users, create-demo-accountant, init-push-config). When
- * `SETUP_TOKEN` is set in the environment, requests must include
- * `X-Setup-Token` matching that value. If the env var is not set the
- * endpoint is BLOCKED — no accidental world-writable boot endpoints.
- *
- * Hardening: per-IP rate limit (5 attempts / 15 min) keeps a leaked or
- * weak token out of reach of a brute-force loop, and a constant-time
- * compare avoids the timing-side-channel a naive `!==` would expose.
- * Mismatches and lockouts are warn-logged so an operator can spot a
- * sustained probe in the function logs.
+ * seed-demo-users, create-demo-accountant). When `SETUP_TOKEN` is set
+ * in the environment, requests must include `X-Setup-Token` matching
+ * that value. If the env var is not set the endpoint is BLOCKED — no
+ * accidental world-writable boot endpoints.
  */
-export async function requireSetupToken(
+export function requireSetupToken(
   req: Request,
   corsHeaders: Record<string, string> = {},
-): Promise<Response | null> {
+): Response | null {
   const expected = Deno.env.get("SETUP_TOKEN");
   if (!expected) {
     return jsonError(
@@ -226,17 +206,8 @@ export async function requireSetupToken(
       corsHeaders,
     );
   }
-
-  const ip = getClientIp(req);
-  const rl = await checkRateLimit(`setup-token:ip=${ip}`, 5, 15 * 60_000);
-  if (!rl.allowed) {
-    console.warn(`requireSetupToken: rate limit hit ip=${ip} retryAfter=${rl.retryAfter}s`);
-    return rateLimitResponse(rl, corsHeaders);
-  }
-
   const provided = req.headers.get("X-Setup-Token") || req.headers.get("x-setup-token") || "";
-  if (!constantTimeEqual(provided, expected)) {
-    console.warn(`requireSetupToken: mismatch ip=${ip}`);
+  if (provided !== expected) {
     return jsonError(401, "Invalid setup token", corsHeaders);
   }
   return null;

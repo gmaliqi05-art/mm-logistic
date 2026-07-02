@@ -3,7 +3,6 @@ import { X, Upload, Loader2, Sparkles, AlertTriangle, FileText, Camera, Check, R
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
-import { formatScanRoutingReason } from '../../utils/formatScanRoutingReason';
 import CameraScanner from '../accounting/CameraScanner';
 
 export type DocKind =
@@ -64,7 +63,6 @@ export interface SmartScanResult {
     matched_contact_id: string | null;
     matched_contact_name: string | null;
     match_reason: string;
-    match_reason_parts?: import('../../utils/formatScanRoutingReason').ScanReasonPart[];
     confidence: number;
     ambiguity_flag?: boolean;
     direction_confidence?: number;
@@ -310,7 +308,7 @@ export default function SmartDocScanner({ role, title, subtitle, allowedKinds, d
                     </p>
                   )}
                   {role !== 'driver' && (
-                    <p className={`text-xs mt-1 ${disallowed ? 'text-amber-700' : 'text-teal-700'}`}>{formatScanRoutingReason(result.routing?.match_reason_parts, result.routing?.match_reason, t)}</p>
+                    <p className={`text-xs mt-1 ${disallowed ? 'text-amber-700' : 'text-teal-700'}`}>{result.routing?.match_reason}</p>
                   )}
                   {disallowed && (
                     <p className="text-xs text-amber-800 mt-2 font-medium">{t('common.scanner.notAllowed')}</p>

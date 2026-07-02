@@ -210,7 +210,7 @@ function ProtectedRoute({ children, roles, workerCategories }: { children: React
 
   if (loading || subLoading) return <LoadingScreen />;
   if (!session || !profile) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(profile.role)) return <Navigate to="/no-access" replace />;
+  if (roles && !roles.includes(profile.role)) return <Navigate to="/login" replace />;
 
   // Super admins bypass all subscription checks.
   if (profile.role !== 'super_admin') {

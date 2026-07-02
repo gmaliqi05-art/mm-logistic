@@ -1,7 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { requireCaller } from "../_shared/requireCaller.ts";
 import { parseJson, z } from "../_shared/schemas.ts";
-import { buildCorsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
 
 const CreateApiKeyBody = z.object({
   name: z.string().trim().min(1, "Emri mungon").max(100, "Emri shume i gjate"),
@@ -24,7 +29,6 @@ function randomToken(bytes = 32): string {
 }
 
 Deno.serve(async (req: Request) => {
-  const corsHeaders = buildCorsHeaders(req, { methods: "POST, OPTIONS" });
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
   // Use the shared helper so role enforcement is consistent across

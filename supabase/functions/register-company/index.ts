@@ -2,7 +2,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "../_shared/rateLimit.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { emailSchema, optionalString, passwordSchema, uuidSchema, z } from "../_shared/schemas.ts";
-import { buildCorsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
 
 // Frontend (RegisterPage) reads `{ success, error }` and shows `error` verbatim
 // in Albanian, so each Zod issue carries an Albanian message and the handler
@@ -41,7 +46,6 @@ const RegisterPayload = z
 type RegisterPayload = z.infer<typeof RegisterPayload>;
 
 Deno.serve(async (req: Request) => {
-  const corsHeaders = buildCorsHeaders(req, { methods: "POST, OPTIONS" });
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }

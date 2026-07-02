@@ -15,7 +15,7 @@ Deno.serve(async (req: Request) => {
 
   // Bootstrap-only endpoint: writes service-role key into app_config.
   // Disabled by default; enable by setting SETUP_TOKEN env var.
-  const tokenErr = await requireSetupToken(req, corsHeaders);
+  const tokenErr = requireSetupToken(req, corsHeaders);
   if (tokenErr) return tokenErr;
 
   try {
@@ -50,9 +50,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("init-push-config error:", err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: err instanceof Error ? err.message : "error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

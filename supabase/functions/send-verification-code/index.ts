@@ -237,11 +237,10 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err: unknown) {
-    // Log the real error server-side, return a generic message so internal /
-    // SQL error text isn't disclosed to the (pre-auth) caller.
-    console.error("Send verification code error:", err instanceof Error ? err.message : err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    console.error("Send verification code error:", message);
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
