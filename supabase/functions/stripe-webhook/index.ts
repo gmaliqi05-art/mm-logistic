@@ -49,6 +49,59 @@ async function getStripeSecrets(
   return { stripeKey, webhookSecret };
 }
 
+// Stripe moved `current_period_start` / `current_period_end` OFF the
+// Subscription object and ONTO its items in API version 2025-03-31.basil.
+// Newer accounts (and webhook payloads serialized with a newer version)
+// therefore deliver subscription objects where `current_period_end` is
+// undefined. The previous code did `new Date(undefined * 1000).toISOString()`
+// → RangeError, which crashed handleSubscriptionUpdated on every
+// customer.subscription.updated event and ultimately got the live endpoint
+// disabled by Stripe after nine consecutive days of failures.
+//
+// Read the item-level field first, fall back to the (legacy) top-level
+// field, and return null when neither is a valid unix timestamp.
+function toIsoOrNull(unixSeconds: unknown): string | null {
+  if (typeof unixSeconds !== "number" || !Number.isFinite(unixSeconds)) return null;
+  const d = new Date(unixSeconds * 1000);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function getSubscriptionPeriod(
+  subscription: Stripe.Subscription,
+): { start: string | null; end: string | null } {
+  const top = subscription as unknown as {
+    current_period_start?: number;
+    current_period_end?: number;
+  };
+  const item = subscription.items?.data?.[0] as unknown as {
+    current_period_start?: number;
+    current_period_end?: number;
+  } | undefined;
+
+  return {
+    start: toIsoOrNull(top.current_period_start ?? item?.current_period_start),
+    end: toIsoOrNull(top.current_period_end ?? item?.current_period_end),
+  };
+}
+
+// `invoice.subscription` was likewise relocated to
+// `invoice.parent.subscription_details.subscription` in newer API versions.
+// Resolve from either shape so renewal invoices keep updating the right
+// company_subscriptions row instead of silently no-op'ing.
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const direct = (invoice as unknown as { subscription?: string | { id?: string } }).subscription;
+  if (typeof direct === "string" && direct) return direct;
+  if (direct && typeof direct === "object" && direct.id) return direct.id;
+
+  const parent = (invoice as unknown as {
+    parent?: { subscription_details?: { subscription?: string | { id?: string } } };
+  }).parent;
+  const ps = parent?.subscription_details?.subscription;
+  if (typeof ps === "string" && ps) return ps;
+  if (ps && typeof ps === "object" && ps.id) return ps.id;
+  return null;
+}
+
 async function notifySuperAdmins(
   companyName: string,
   planName: string,
@@ -192,7 +245,7 @@ Deno.serve(async (req: Request) => {
             invoice_id: invoice.id,
             invoice_number: invoice.number,
             customer: invoice.customer,
-            subscription: invoice.subscription,
+            subscription: getInvoiceSubscriptionId(invoice),
             amount_paid: invoice.amount_paid,
             currency: invoice.currency,
           };
@@ -204,7 +257,7 @@ Deno.serve(async (req: Request) => {
           details = {
             invoice_id: invoice.id,
             customer: invoice.customer,
-            subscription: invoice.subscription,
+            subscription: getInvoiceSubscriptionId(invoice),
             attempt_count: invoice.attempt_count,
             next_payment_attempt: invoice.next_payment_attempt,
           };
@@ -218,7 +271,7 @@ Deno.serve(async (req: Request) => {
             subscription_id: subscription.id,
             new_status: subscription.status,
             cancel_at_period_end: subscription.cancel_at_period_end,
-            current_period_end: subscription.current_period_end,
+            current_period_end: getSubscriptionPeriod(subscription).end,
           };
           break;
         }
@@ -283,12 +336,24 @@ async function handleCheckoutCompleted(
     .update({ status: "completed", completed_at: new Date().toISOString() })
     .eq("stripe_session_id", session.id);
 
-  const stripeSubscription = await stripe.subscriptions.retrieve(
-    session.subscription as string
-  );
+  // The subscription may have been cancelled/deleted between checkout and
+  // webhook delivery (or a retry days later). Don't let a missing
+  // subscription throw — fall back to the id Stripe already gave us on the
+  // session and leave the period columns untouched.
+  let stripeSubscription: Stripe.Subscription | null = null;
+  const subscriptionId = session.subscription as string | null;
+  if (subscriptionId) {
+    try {
+      stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+    } catch (e) {
+      console.error("checkout: subscription retrieve failed", subscriptionId, e);
+    }
+  }
 
-  const periodStart = new Date(stripeSubscription.current_period_start * 1000).toISOString();
-  const periodEnd = new Date(stripeSubscription.current_period_end * 1000).toISOString();
+  const period = stripeSubscription
+    ? getSubscriptionPeriod(stripeSubscription)
+    : { start: null, end: null };
+  const resolvedSubId = stripeSubscription?.id ?? subscriptionId;
 
   const { data: pendingSub } = await supabase
     .from("company_subscriptions")
@@ -305,10 +370,12 @@ async function handleCheckoutCompleted(
       .update({
         status: "active",
         plan_id: planId,
-        stripe_subscription_id: stripeSubscription.id,
+        stripe_subscription_id: resolvedSubId,
         stripe_customer_id: session.customer as string,
-        current_period_start: periodStart,
-        current_period_end: periodEnd,
+        // Only overwrite period columns when we actually resolved them, so a
+        // missing field doesn't blank out an otherwise-valid period.
+        ...(period.start ? { current_period_start: period.start } : {}),
+        ...(period.end ? { current_period_end: period.end } : {}),
         payment_method: "stripe",
         // Burn the single-use unauth checkout token so a leaked value cannot
         // be replayed to mint a second checkout in this tenant's name.
@@ -328,10 +395,10 @@ async function handleCheckoutCompleted(
       company_id: companyId,
       plan_id: planId,
       status: "active",
-      stripe_subscription_id: stripeSubscription.id,
+      stripe_subscription_id: resolvedSubId,
       stripe_customer_id: session.customer as string,
-      current_period_start: periodStart,
-      current_period_end: periodEnd,
+      ...(period.start ? { current_period_start: period.start } : {}),
+      ...(period.end ? { current_period_end: period.end } : {}),
       payment_method: "stripe",
     });
   }
@@ -400,7 +467,7 @@ async function handleInvoicePaid(
   supabase: ReturnType<typeof createClient>,
   invoice: Stripe.Invoice
 ) {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
   if (!subscriptionId) return;
 
   const { data: sub } = await supabase
@@ -437,7 +504,7 @@ async function handlePaymentFailed(
   supabase: ReturnType<typeof createClient>,
   invoice: Stripe.Invoice
 ) {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
   if (!subscriptionId) return;
 
   const { data: sub } = await supabase
@@ -471,7 +538,7 @@ async function handleSubscriptionUpdated(
   const companyId = subscription.metadata?.company_id;
   if (!companyId) return;
 
-  const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+  const { end: periodEnd } = getSubscriptionPeriod(subscription);
   let status = "active";
   let revokeAccess = false;
 
@@ -483,7 +550,9 @@ async function handleSubscriptionUpdated(
     .from("company_subscriptions")
     .update({
       status,
-      current_period_end: periodEnd,
+      // Skip the period column when Stripe didn't include it (newer API
+      // versions omit it on the subscription object) rather than crashing.
+      ...(periodEnd ? { current_period_end: periodEnd } : {}),
     })
     .eq("stripe_subscription_id", subscription.id);
 

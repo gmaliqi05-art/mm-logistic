@@ -112,6 +112,6 @@ Deno.serve(async (req: Request) => {
     return jsonRes({ success: true, id: data?.id });
   } catch (error) {
     console.error("register-device-token error", error);
-    return jsonRes({ error: error instanceof Error ? error.message : "Internal error" }, 500);
+    return jsonRes({ error: "Internal error" }, 500);
   }
 });
