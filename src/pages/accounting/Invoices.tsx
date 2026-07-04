@@ -145,6 +145,9 @@ export default function Invoices() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // GoBD: block edits to an already-issued invoice (status other than
+  // draft/cancelled). The DB enforces this too (trg_acc_invoices_immutability).
+  const [editingLocked, setEditingLocked] = useState(false);
   const [form, setForm] = useState<InvoiceForm>({ ...emptyForm, items: [emptyItem()] });
 
   const [contacts, setContacts] = useState<AccContact[]>([]);
@@ -349,6 +352,7 @@ export default function Invoices() {
 
   function openAdd() {
     setEditingId(null);
+    setEditingLocked(false);
     setForm({ ...emptyForm, items: [emptyItem(defaultVat)] });
     setContactSearch('');
     fetchFormData();
@@ -357,6 +361,7 @@ export default function Invoices() {
 
   async function openEdit(invoice: AccInvoice) {
     setEditingId(invoice.id);
+    setEditingLocked(invoice.status !== 'draft' && invoice.status !== 'cancelled');
     await fetchFormData();
 
     const { data: items } = await supabase
@@ -431,6 +436,10 @@ export default function Invoices() {
   }
 
   async function handleSave() {
+    if (editingId && editingLocked) {
+      setError(t('accounting.invoiceBuilder.lockedBanner') || 'Kjo fature eshte leshuar dhe nuk mund te ndryshohet (GoBD). Per korrigjim, krijoni nje nota kreditit.');
+      return;
+    }
     if (!form.contact_id) {
       setError(t('accounting.invoices.pickCustomer') || 'Zgjidhni nje klient');
       return;

@@ -4150,6 +4150,7 @@ export const en: typeof sq = {
       invoiceCreated: 'Invoice created',
       print: 'Print',
       saveDraft: 'Save draft',
+      lockedBanner: 'This invoice has been issued and cannot be edited (GoBD). To correct it, create a credit note.',
       saved: 'Saved',
       finalize: 'Finalize',
     },

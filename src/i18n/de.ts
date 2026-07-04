@@ -4147,6 +4147,7 @@ export const de: typeof sq = {
       invoiceCreated: 'Rechnung erstellt',
       print: 'Drucken',
       saveDraft: 'Entwurf speichern',
+      lockedBanner: 'Diese Rechnung wurde ausgestellt und kann nicht geändert werden (GoBD). Erstellen Sie zur Korrektur eine Gutschrift.',
       saved: 'Gespeichert',
       finalize: 'Finalisieren',
     },

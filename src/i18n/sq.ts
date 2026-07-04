@@ -4145,6 +4145,7 @@ export const sq = {
       invoiceCreated: 'Fatura u krijua',
       print: 'Printo',
       saveDraft: 'Ruaj draft',
+      lockedBanner: 'Kjo fature eshte leshuar dhe nuk mund te ndryshohet (GoBD). Per korrigjim, krijoni nje nota kreditit.',
       saved: 'Ruajtur',
       finalize: 'Finalizo',
     },
