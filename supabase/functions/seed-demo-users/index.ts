@@ -58,7 +58,7 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  const tokenError = requireSetupToken(req, corsHeaders);
+  const tokenError = await requireSetupToken(req, corsHeaders);
   if (tokenError) return tokenError;
 
   try {
@@ -137,8 +137,9 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error("seed-demo-users error:", err instanceof Error ? err.message : err);
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

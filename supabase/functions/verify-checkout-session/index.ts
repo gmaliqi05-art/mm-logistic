@@ -17,6 +17,35 @@ const jsonRes = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+// Stripe moved current_period_start/end off the Subscription object and onto
+// its items in API version 2025-03-31.basil. On newer accounts these top-level
+// fields are undefined, and `new Date(undefined * 1000).toISOString()` throws a
+// RangeError — the exact crash that disabled the live webhook. Read item-level
+// first, fall back to the legacy top-level field, return null when neither is a
+// valid unix timestamp. (Mirrors stripe-webhook/index.ts.)
+function toIsoOrNull(unixSeconds: unknown): string | null {
+  if (typeof unixSeconds !== "number" || !Number.isFinite(unixSeconds)) return null;
+  const d = new Date(unixSeconds * 1000);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function getSubscriptionPeriod(
+  subscription: Stripe.Subscription,
+): { start: string | null; end: string | null } {
+  const top = subscription as unknown as {
+    current_period_start?: number;
+    current_period_end?: number;
+  };
+  const item = subscription.items?.data?.[0] as unknown as {
+    current_period_start?: number;
+    current_period_end?: number;
+  } | undefined;
+  return {
+    start: toIsoOrNull(top.current_period_start ?? item?.current_period_start),
+    end: toIsoOrNull(top.current_period_end ?? item?.current_period_end),
+  };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -96,28 +125,33 @@ Deno.serve(async (req: Request) => {
       return jsonRes({ status: "already_active", subscription_id: existingActive.id });
     }
 
-    // Get subscription details from Stripe
-    const stripeSubscription = session.subscription as Stripe.Subscription | null;
-    let periodStart: string;
-    let periodEnd: string;
-    let stripeSubId: string;
+    // Get subscription details from Stripe. Resolve the subscription object
+    // (already expanded, or retrieve by id), then extract the period via the
+    // version-safe helper so a newer API shape can't crash this path.
+    const expanded = session.subscription;
+    let stripeSub: Stripe.Subscription | null = null;
+    if (expanded && typeof expanded === "object") {
+      stripeSub = expanded as Stripe.Subscription;
+    } else if (typeof expanded === "string") {
+      try {
+        stripeSub = await stripe.subscriptions.retrieve(expanded);
+      } catch (e) {
+        console.error("verify: subscription retrieve failed", expanded, e);
+      }
+    }
 
-    if (stripeSubscription && typeof stripeSubscription === "object") {
-      periodStart = new Date(stripeSubscription.current_period_start * 1000).toISOString();
-      periodEnd = new Date(stripeSubscription.current_period_end * 1000).toISOString();
-      stripeSubId = stripeSubscription.id;
-    } else if (typeof session.subscription === "string") {
-      const sub = await stripe.subscriptions.retrieve(session.subscription);
-      periodStart = new Date(sub.current_period_start * 1000).toISOString();
-      periodEnd = new Date(sub.current_period_end * 1000).toISOString();
-      stripeSubId = sub.id;
-    } else {
-      periodStart = new Date().toISOString();
+    const period = stripeSub ? getSubscriptionPeriod(stripeSub) : { start: null, end: null };
+    const stripeSubId = stripeSub?.id ?? (typeof expanded === "string" ? expanded : "");
+
+    // Preserve the previous fallback: when Stripe gives us no usable period
+    // (no subscription, or fields absent), default to a 30-day window so the
+    // tenant is still activated rather than left in pending_payment.
+    const periodStart = period.start ?? new Date().toISOString();
+    const periodEnd = period.end ?? (() => {
       const end = new Date();
       end.setDate(end.getDate() + 30);
-      periodEnd = end.toISOString();
-      stripeSubId = "";
-    }
+      return end.toISOString();
+    })();
 
     const customerId = typeof session.customer === "string"
       ? session.customer
@@ -222,8 +256,9 @@ Deno.serve(async (req: Request) => {
       period_end: periodEnd,
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    console.error("verify-checkout-session error:", message);
-    return jsonRes({ error: message }, 500);
+    // Log server-side; return generic text. This path is reachable without a
+    // session (Stripe redirect return), so don't echo internal error detail.
+    console.error("verify-checkout-session error:", err instanceof Error ? err.message : err);
+    return jsonRes({ error: "Internal server error" }, 500);
   }
 });

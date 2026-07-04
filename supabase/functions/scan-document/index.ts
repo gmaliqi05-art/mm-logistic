@@ -30,6 +30,25 @@ interface ScanPayload {
 
 type OurRole = "consignor" | "carrier" | "consignee" | "custodian_in" | "custodian_out" | "internal_transfer" | "unknown";
 
+// Structured reason parts let the frontend translate routing explanations.
+// `match_reason` (string) is preserved for older clients that don't yet
+// consume `match_reason_parts`.
+type ReasonCode =
+  | "our_role_consignor"
+  | "our_role_consignee"
+  | "our_role_carrier"
+  | "our_role_internal_transfer"
+  | "ambiguity_company_not_in_doc"
+  | "third_parties_register_consignor"
+  | "roles_not_recognized"
+  | "partner_to_register_consignor"
+  | "partner_to_register_consignee"
+  | "partner_to_register_none";
+interface ReasonPart {
+  code: ReasonCode;
+  params?: { name?: string };
+}
+
 interface Routing {
   suggested_kind: "purchase" | "expense" | "investment" | "sale" | "delivery_out" | "delivery_in" | "carrier_service" | "custody_service" | "internal_transfer" | "pending_review" | "unknown";
   our_role: OurRole;
@@ -38,6 +57,7 @@ interface Routing {
   matched_contact_name: string | null;
   matched_contact_type: string | null;
   match_reason: string;
+  match_reason_parts: ReasonPart[];
   confidence: number;
   ambiguity_flag: boolean;
   direction_confidence: number;
@@ -485,28 +505,39 @@ async function decideRouting(
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
-  // Reason
+  // Reason — emit BOTH a structured parts array (frontend translates) and
+  // a flat Albanian string (legacy clients + audit log readability).
   const reasonParts: string[] = [];
-  if (our_role === "consignor") reasonParts.push("Kompania jone eshte derguesi (consignor)");
-  else if (our_role === "consignee") reasonParts.push("Kompania jone eshte marresi (consignee)");
-  else if (our_role === "carrier") reasonParts.push("Kompania jone eshte vetem spedicion (carrier)");
-  else if (our_role === "internal_transfer") reasonParts.push("Transfer i brendshem mes depove tona");
-  else {
+  const reasonPartsStructured: ReasonPart[] = [];
+  const pushReason = (code: ReasonCode, text: string, params?: ReasonPart["params"]) => {
+    reasonParts.push(text);
+    reasonPartsStructured.push(params ? { code, params } : { code });
+  };
+
+  if (our_role === "consignor") {
+    pushReason("our_role_consignor", "Kompania jone eshte derguesi (consignor)");
+  } else if (our_role === "consignee") {
+    pushReason("our_role_consignee", "Kompania jone eshte marresi (consignee)");
+  } else if (our_role === "carrier") {
+    pushReason("our_role_carrier", "Kompania jone eshte vetem spedicion (carrier)");
+  } else if (our_role === "internal_transfer") {
+    pushReason("our_role_internal_transfer", "Transfer i brendshem mes depove tona");
+  } else {
     if (ambiguity_flag) {
-      reasonParts.push("Kompania jone nuk gjendet ne dokument — drejtimi i mallit eshte i paqarte. Nevojitet konfirmim manual");
+      pushReason("ambiguity_company_not_in_doc", "Kompania jone nuk gjendet ne dokument — drejtimi i mallit eshte i paqarte. Nevojitet konfirmim manual");
     } else if (partner_to_register !== "none") {
-      reasonParts.push("Kompania jone nuk gjendet ne dokument — dokumenti eshte mes paleve te treta. Pala A (derguesi) regjistrohet si partner/klient");
+      pushReason("third_parties_register_consignor", "Kompania jone nuk gjendet ne dokument — dokumenti eshte mes paleve te treta. Pala A (derguesi) regjistrohet si partner/klient");
     } else {
-      reasonParts.push("Rolet nuk u njohen automatikisht");
+      pushReason("roles_not_recognized", "Rolet nuk u njohen automatikisht");
     }
   }
 
   if (partner_to_register === "consignor" && ex.consignor_name) {
-    reasonParts.push(`Partneri per regjistrim: ${ex.consignor_name} (derguesi)`);
+    pushReason("partner_to_register_consignor", `Partneri per regjistrim: ${ex.consignor_name} (derguesi)`, { name: ex.consignor_name });
   } else if (partner_to_register === "consignee" && ex.consignee_name) {
-    reasonParts.push(`Partneri per regjistrim: ${ex.consignee_name} (marresi)`);
+    pushReason("partner_to_register_consignee", `Partneri per regjistrim: ${ex.consignee_name} (marresi)`, { name: ex.consignee_name });
   } else if (partner_to_register === "none") {
-    reasonParts.push("Asnje partner nuk regjistrohet (klient i klientit ose transfer i brendshem)");
+    pushReason("partner_to_register_none", "Asnje partner nuk regjistrohet (klient i klientit ose transfer i brendshem)");
   }
 
   let routingDecision: Routing["routing_decision"];
@@ -527,6 +558,7 @@ async function decideRouting(
     matched_contact_name: bestContact?.name ?? null,
     matched_contact_type: bestContact?.type ?? null,
     match_reason: reasonParts.join(". "),
+    match_reason_parts: reasonPartsStructured,
     confidence: Math.min(1, (ex.confidence || 0.5) + (bestContact ? 0.15 : 0) + (our_role !== "unknown" ? 0.1 : 0)),
     ambiguity_flag,
     direction_confidence,
@@ -612,6 +644,36 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "No company" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
+    }
+
+    // Subscription gate: scan-document spends Anthropic tokens on every
+    // request, so refuse callers whose company has no active (or trial)
+    // subscription. AccountingRoute / FeatureGate in the SPA already gates
+    // the UI; this is defense-in-depth for direct calls to the function.
+    // Super_admin bypasses for support flows.
+    if (profile.role !== "super_admin") {
+      const { data: liveSubs } = await adminSb
+        .from("company_subscriptions")
+        .select("id, status, current_period_end, trial_end")
+        .eq("company_id", profile.company_id)
+        .in("status", ["trial", "active"]);
+      // Mirror api-v1: an `active` row whose current_period_end has already
+      // passed (e.g. a missed renewal webhook left a stale row) must NOT keep
+      // spending Anthropic tokens. Likewise an expired trial.
+      const nowMs = Date.now();
+      const hasLiveSub = (liveSubs ?? []).some((s) => {
+        if (s.status === "active") {
+          return !s.current_period_end ||
+            new Date(s.current_period_end as string).getTime() > nowMs;
+        }
+        return !s.trial_end || new Date(s.trial_end as string).getTime() > nowMs;
+      });
+      if (!hasLiveSub) {
+        return new Response(
+          JSON.stringify({ error: "Company has no active subscription" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     // Per-caller rate limit on top of the IP gate above: a single IP behind

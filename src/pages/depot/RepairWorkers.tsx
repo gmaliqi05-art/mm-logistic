@@ -307,40 +307,38 @@ export default function DepotRepairWorkers() {
       const depotId = profile!.depot_id ?? null;
       const qty = getWorkerBatchSize(selectedWorker!.id);
 
-      const { data: damagedRows, error: stockErr } = await supabase
-        .from('stock')
-        .select('id, quantity')
-        .eq('company_id', companyId)
-        .eq('condition', 'damaged')
-        .eq('category_id', selectedProduct!.category_id)
-        .gt('quantity', 0)
-        .order('quantity', { ascending: false })
-        .limit(1);
+      const { data: damagedRows, error: stockErr } = depotId
+        ? await supabase
+            .from('stock')
+            .select('id, quantity')
+            .eq('company_id', companyId)
+            .eq('depot_id', depotId)
+            .eq('condition', 'damaged')
+            .eq('category_id', selectedProduct!.category_id)
+            .gt('quantity', 0)
+            .order('quantity', { ascending: false })
+            .limit(1)
+        : await supabase
+            .from('stock')
+            .select('id, quantity')
+            .eq('company_id', companyId)
+            .eq('condition', 'damaged')
+            .eq('category_id', selectedProduct!.category_id)
+            .gt('quantity', 0)
+            .order('quantity', { ascending: false })
+            .limit(1);
       if (stockErr) throw stockErr;
-
-      if (depotId) {
-        const { data: depotRows, error: depotErr } = await supabase
-          .from('stock')
-          .select('id, quantity')
-          .eq('company_id', companyId)
-          .eq('depot_id', depotId)
-          .eq('condition', 'damaged')
-          .eq('category_id', selectedProduct!.category_id)
-          .gt('quantity', 0)
-          .order('quantity', { ascending: false })
-          .limit(1);
-        if (depotErr) throw depotErr;
-        if (depotRows && depotRows.length > 0) {
-          damagedRows?.splice(0, damagedRows.length, ...depotRows);
-        }
-      }
 
       if (!damagedRows || damagedRows.length === 0) {
         throw new Error(t('common.noDamagedStockAvailableForCategory'));
       }
       const stockRow = damagedRows[0];
       if (stockRow.quantity < qty) {
-        throw new Error(`Stoku defekt i disponueshem eshte vetem ${stockRow.quantity} cope (kerkuar ${qty})`);
+        throw new Error(
+          (t('depot.repairWorkers.insufficientDamagedStock') || 'Stoku defekt i disponueshem eshte vetem {available} cope (kerkuar {requested})')
+            .replace('{available}', String(stockRow.quantity))
+            .replace('{requested}', String(qty)),
+        );
       }
 
       const { error: rpcErr } = await supabase.rpc('apply_repair_from_stock', {

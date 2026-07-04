@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  const tokenError = requireSetupToken(req, corsHeaders);
+  const tokenError = await requireSetupToken(req, corsHeaders);
   if (tokenError) return tokenError;
 
   try {

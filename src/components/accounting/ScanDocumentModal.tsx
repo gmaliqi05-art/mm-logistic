@@ -5,6 +5,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
+import { formatScanRoutingReason } from '../../utils/formatScanRoutingReason';
 import { formatCurrency } from '../../types/accounting';
 import type { AccContact } from '../../types/accounting';
 import CameraScanner from './CameraScanner';
@@ -96,6 +97,7 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
     matched_contact_name: string | null;
     matched_contact_type: string | null;
     match_reason: string;
+    match_reason_parts?: import('../../utils/formatScanRoutingReason').ScanReasonPart[];
     confidence: number;
     company_match: boolean;
   } | null>(null);
@@ -848,7 +850,7 @@ export default function ScanDocumentModal({ onClose, onSaved, initialKind }: Pro
                     <strong>{t('accounting.scanModal.aiClassifiedAs')} "{KIND_META[routing.suggested_kind === 'unknown' ? chosenKind : routing.suggested_kind as DocKind]?.label}"</strong>
                     {routing.matched_contact_name && <> {t('accounting.scanModal.aiMatchedContact')} <strong>{routing.matched_contact_name}</strong> {t('accounting.scanModal.aiFromDb')}</>}
                   </p>
-                  <p className="text-[11px] text-teal-700 mt-0.5">{routing.match_reason}</p>
+                  <p className="text-[11px] text-teal-700 mt-0.5">{formatScanRoutingReason(routing.match_reason_parts, routing.match_reason, t)}</p>
                 </div>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-teal-700 font-semibold">
                   {Math.round(routing.confidence * 100)}%

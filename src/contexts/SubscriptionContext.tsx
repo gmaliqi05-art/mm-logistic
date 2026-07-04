@@ -115,10 +115,28 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    companyIdRef.current = profile?.company_id ?? null;
-    if (profile?.company_id) {
-      fetchSubscription(profile.company_id).finally(() => setLoading(false));
+    const companyId = profile?.company_id ?? null;
+    companyIdRef.current = companyId;
+    if (companyId) {
+      // Clear the previous tenant's cached subscription state and re-gate on
+      // `loading` until the new company's data resolves. Without this, a
+      // logout→login or an account switch on the same device leaves the prior
+      // tenant's plan/accountingEnabled in memory, so AccountingRoute /
+      // FeatureGate could briefly evaluate against another company's plan
+      // (cross-tenant feature flash). `loading=true` makes the route guards
+      // render LoadingScreen during the refetch instead of stale content.
+      setLoading(true);
+      setSubscription(null);
+      setPlan(null);
+      setCompanyFeatures([]);
+      setAccountingEnabled(false);
+      fetchSubscription(companyId).finally(() => setLoading(false));
     } else {
+      // Logged out / no company — drop all cached subscription state.
+      setSubscription(null);
+      setPlan(null);
+      setCompanyFeatures([]);
+      setAccountingEnabled(false);
       setLoading(false);
     }
   }, [profile?.company_id, profile?.role]);
