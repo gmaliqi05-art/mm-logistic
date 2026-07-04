@@ -4147,6 +4147,7 @@ export const fr: typeof sq = {
       invoiceCreated: 'Facture créée',
       print: 'Imprimer',
       saveDraft: 'Enregistrer le brouillon',
+      lockedBanner: 'Cette facture a été émise et ne peut pas être modifiée (GoBD). Pour la corriger, créez un avoir.',
       saved: 'Enregistré',
       finalize: 'Finaliser',
     },

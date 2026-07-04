@@ -178,6 +178,10 @@ export default function InvoiceBuilder() {
   const [paymentTermsDays, setPaymentTermsDays] = useState(14);
   const [notes, setNotes] = useState('');
   const [buyerVatOverride, setBuyerVatOverride] = useState('');
+  // GoBD: a finalized invoice (status other than draft/cancelled) is locked —
+  // it cannot be edited in place, only viewed/printed or corrected via a
+  // credit note. The DB enforces this too (trg_acc_invoices_immutability).
+  const [locked, setLocked] = useState(false);
   const [items, setItems] = useState<Item[]>([newItem()]);
   const [deliveryNoteId, setDeliveryNoteId] = useState<string | null>(null);
   const [deliveryNoteNumber, setDeliveryNoteNumber] = useState<string>('');
@@ -450,6 +454,8 @@ export default function InvoiceBuilder() {
         currency: string; language_code: string; contact_id: string | null; bank_account_id: string | null;
         payment_reference: string; payment_terms_days: number; notes: string; buyer_vat_number: string | null; };
       const i = inv as unknown as Inv;
+      const st = (inv as { status?: string }).status ?? 'draft';
+      setLocked(st !== 'draft' && st !== 'cancelled');
       setInvoiceType((i.invoice_type as 'invoice' | 'credit_note' | 'proforma') ?? 'invoice');
       setInvoiceNumber(i.invoice_number ?? '');
       setInvoiceDate(i.invoice_date ?? new Date().toISOString().slice(0, 10));
@@ -688,6 +694,10 @@ export default function InvoiceBuilder() {
 
   async function save(silent = false): Promise<string | null> {
     if (!profile?.company_id) return null;
+    // GoBD: never re-save (and never downgrade to draft) a finalized invoice.
+    // Applies to auto-save too, so a stale dirty flag can't mutate an issued
+    // document. The DB blocks this as well; this keeps the UX clean.
+    if (locked) return invoiceDbIdRef.current;
     if (!silent) setSaving(true);
     setError(null);
     try {
@@ -772,6 +782,7 @@ export default function InvoiceBuilder() {
   }
 
   async function finalizeAndSend() {
+    if (locked) return;
     const id = await save(false);
     if (!id) return;
 
@@ -886,24 +897,35 @@ export default function InvoiceBuilder() {
               <CheckCircle2 className="w-3.5 h-3.5" /> {t('accounting.invoiceBuilder.saved')} {new Date(savedAt).toLocaleTimeString()}
             </span>
           )}
-          <button onClick={() => save()} disabled={saving} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {t('accounting.invoiceBuilder.saveDraft')}
-          </button>
+          {!locked && (
+            <button onClick={() => save()} disabled={saving} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {t('accounting.invoiceBuilder.saveDraft')}
+            </button>
+          )}
           <button onClick={() => setShowPreview(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">
             <Eye className="w-4 h-4" /> {t('accounting.invoiceBuilder.preview')}
           </button>
           <button onClick={printPreview} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">
             <Printer className="w-4 h-4" /> {t('accounting.invoiceBuilder.print')}
           </button>
-          <button onClick={finalizeAndSend} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-bold hover:bg-teal-700">
-            <Send className="w-4 h-4" /> {t('accounting.invoiceBuilder.finalize')}
-          </button>
+          {!locked && (
+            <button onClick={finalizeAndSend} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-bold hover:bg-teal-700">
+              <Send className="w-4 h-4" /> {t('accounting.invoiceBuilder.finalize')}
+            </button>
+          )}
         </div>
       </div>
 
       {error && (
         <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 flex items-center gap-2 print:hidden">
           <AlertCircle className="w-4 h-4" /> {error}
+        </div>
+      )}
+
+      {locked && (
+        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800 flex items-center gap-2 print:hidden">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {t('accounting.invoiceBuilder.lockedBanner') || 'Kjo fature eshte leshuar dhe nuk mund te ndryshohet (GoBD). Per korrigjim, krijoni nje nota kreditit.'}
         </div>
       )}
 
