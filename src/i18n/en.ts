@@ -973,6 +973,10 @@ export const en: typeof sq = {
     noPalletAccountsYet: 'No pallet accounts yet.',
     noTransactionsYet: 'No transactions yet.',
     plus5OrMinus3: '+5 or -3',
+    palletForecast: {
+      atRisk: "Won't return in time",
+      stalled: 'No returns',
+    },
     palletReconciliation: {
       title: 'Balance reconciliation (Saldenbestätigung)',
       newReconciliation: 'New reconciliation',
