@@ -19,6 +19,7 @@ import {
   Calculator,
   Eye,
   EyeOff,
+  TrendingDown,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -33,8 +34,9 @@ import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
-import type { DeliveryNote, StockAlert, Stock as StockType } from '../../types';
+import type { DeliveryNote, StockAlert, Stock as StockType, StockMovement } from '../../types';
 import { getTriggeredStockAlerts } from '../../utils/stockAlerts';
+import { forecastStockRunouts } from '../../utils/stockForecast';
 import { countComplianceExpirations, type ExpiryCounts } from '../../utils/complianceExpiry';
 import { extractAuditSummary } from '../../utils/auditLogSummary';
 
@@ -84,6 +86,8 @@ interface Stats {
   recentMovements: { id: string; noteNumber: string; partner: string; date: string }[];
   dayBuckets: DayBucket[];
   triggeredAlerts: { id: string; depotName: string; categoryName: string; type: string; threshold: number; current: number }[];
+  /** Predictive run-out forecasts (locations with stock now that will deplete within the warning horizon). */
+  stockForecasts: { id: string; depotName: string; categoryName: string; daysToRunout: number | null; severity: string; currentQuantity: number }[];
   complianceExpiry: ExpiryCounts;
   recentActivity: { id: string; action: string; entity_type: string; created_at: string; userName: string; summary: string }[];
   overdueDeliveriesCount: number;
@@ -96,6 +100,7 @@ const emptyStats: Stats = {
   stockGood: 0, stockDamaged: 0, stockRepaired: 0, pendingRepairs: 0, activeSorting: 0,
   statusCounts: {}, stockByDepot: [], stockByProduct: [], driverStats: [], recentMovements: [], dayBuckets: [],
   triggeredAlerts: [],
+  stockForecasts: [],
   complianceExpiry: { expired: 0, critical: 0, warning: 0, attention: 0 },
   recentActivity: [],
   overdueDeliveriesCount: 0,
@@ -272,6 +277,7 @@ export default function CompanyDashboard() {
         vehInspRes, vehInsRes, vehTaxRes, drvLicRes, drvQualRes, drvMedRes,
         auditRes,
         overdueRes,
+        movementsForForecastRes,
       ] = await Promise.all([
         supabase.from('depots').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('is_active', true),
         supabase.from('profiles').select('id, full_name').eq('company_id', companyId).eq('role', 'driver').eq('is_active', true),
@@ -314,6 +320,11 @@ export default function CompanyDashboard() {
           .eq('company_id', companyId)
           .in('status', ['sent', 'in_transit', 'pending_company_review', 'pending_stock_confirmation', 'delivered'])
           .or(`and(type.eq.delivery,scheduled_delivery_at.lt.${overdueCutoff.toISOString()}),and(type.eq.pickup,scheduled_pickup_at.lt.${overdueCutoff.toISOString()})`),
+        supabase.from('stock_movements')
+          .select('depot_id, category_id, category_product_id, movement_type, quantity, created_at')
+          .eq('company_id', companyId)
+          .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+          .limit(10000),
       ]);
 
       const stocks = stockRes.data ?? [];
@@ -422,6 +433,29 @@ export default function CompanyDashboard() {
         };
       });
 
+      // Predictive run-out: from the last 30 days of stock movements, forecast
+      // which (depot, category) that still holds stock will deplete soon.
+      const forecastMovements = (movementsForForecastRes.data ?? []) as StockMovement[];
+      const depotNameById = new Map<string, string>(
+        ((depotListRes.data ?? []) as { id: string; name: string }[]).map((d) => [d.id, d.name]),
+      );
+      const categoryNameById = new Map<string, string>();
+      for (const r of (stockProductRes.data ?? []) as Array<{ category_id?: string | null; product_categories?: { name?: string } | { name?: string }[] | null }>) {
+        const pc = Array.isArray(r.product_categories) ? r.product_categories[0] : r.product_categories;
+        if (r.category_id && pc?.name) categoryNameById.set(r.category_id, pc.name);
+      }
+      const stockForecasts = forecastStockRunouts(stocksForAlerts, forecastMovements, { asOf: new Date().toISOString() })
+        .filter((f) => f.severity === 'critical' || f.severity === 'warning')
+        .slice(0, 20)
+        .map((f) => ({
+          id: `${f.depot_id}:${f.category_id}`,
+          depotName: depotNameById.get(f.depot_id) ?? '—',
+          categoryName: categoryNameById.get(f.category_id) ?? '—',
+          daysToRunout: f.daysToRunout,
+          severity: f.severity,
+          currentQuantity: f.currentQuantity,
+        }));
+
       const auditRows = ((auditRes.data ?? []) as Array<{
         id: string;
         action: string;
@@ -506,6 +540,7 @@ export default function CompanyDashboard() {
         stockGood, stockDamaged, stockRepaired, pendingRepairs, activeSorting,
         statusCounts, stockByDepot, stockByProduct, driverStats, recentMovements, dayBuckets,
         triggeredAlerts,
+        stockForecasts,
         complianceExpiry,
         recentActivity,
         overdueDeliveriesCount: overdueRes.count ?? 0,
@@ -683,6 +718,41 @@ export default function CompanyDashboard() {
               </ul>
             </div>
             <ArrowRight className="w-4 h-4 text-red-500 flex-shrink-0 mt-1" />
+          </div>
+        </Link>
+      )}
+
+      {/* Predictive run-out banner — locations that still hold stock but, at the
+          current 30-day outflow rate, are forecast to deplete within the warning horizon */}
+      {stats.stockForecasts.length > 0 && (
+        <Link to="/company/stock-alerts" className="block bg-amber-50 border border-amber-200 rounded-xl p-4 hover:border-amber-300 transition-colors">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-amber-100 flex-shrink-0">
+              <TrendingDown className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-800">
+                {stats.stockForecasts.length} {stats.stockForecasts.length === 1 ? t('company.dashboard.forecastRunoutOne') : t('company.dashboard.forecastRunoutMany')}
+              </p>
+              <p className="text-xs text-amber-600 mt-0.5">{t('company.dashboard.forecastSubtitle')}</p>
+              <ul className="mt-2 space-y-1 text-xs text-amber-700">
+                {stats.stockForecasts.slice(0, 3).map((f) => (
+                  <li key={f.id}>
+                    <span className="font-medium">{f.categoryName}</span>
+                    {' @ '}
+                    <span className="font-medium">{f.depotName}</span>
+                    {' — '}
+                    {f.daysToRunout} {t('company.dashboard.forecastDaysUnit')} ({f.currentQuantity})
+                  </li>
+                ))}
+                {stats.stockForecasts.length > 3 && (
+                  <li className="text-amber-600 font-medium">
+                    +{stats.stockForecasts.length - 3} {t('company.dashboard.moreLabel')}
+                  </li>
+                )}
+              </ul>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-500 flex-shrink-0 mt-1" />
           </div>
         </Link>
       )}
