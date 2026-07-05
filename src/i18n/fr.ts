@@ -973,6 +973,10 @@ export const fr: typeof sq = {
     noPalletAccountsYet: 'Aucun compte de palettes pour l\'instant.',
     noTransactionsYet: 'Aucune transaction pour l\'instant.',
     plus5OrMinus3: '+5 ou -3',
+    palletForecast: {
+      atRisk: 'Retour hors délai',
+      stalled: 'Aucun retour',
+    },
     palletReconciliation: {
       title: 'Confirmation de solde (Saldenbestätigung)',
       newReconciliation: 'Nouvelle confirmation',

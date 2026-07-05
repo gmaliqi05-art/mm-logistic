@@ -971,6 +971,10 @@ export const sq = {
     noPalletAccountsYet: 'Asnje llogari paletash ende.',
     noTransactionsYet: 'Asnje transaksion ende.',
     plus5OrMinus3: '+5 ose -3',
+    palletForecast: {
+      atRisk: 'Nuk kthehet ne afat',
+      stalled: 'Pa kthime',
+    },
     palletReconciliation: {
       title: 'Pajtimi i bilancit (Saldenbestätigung)',
       newReconciliation: 'Pajtim i ri',

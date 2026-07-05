@@ -7,6 +7,7 @@ import { useTranslation } from '../../i18n';
 import { logger } from '../../utils/logger';
 import LimitationBadge from '../../components/accounting/LimitationBadge';
 import { needsReconciliation } from '../../utils/palletReconciliation';
+import { forecastPalletReturns, type PalletReturnStatus, type PalletReturnTxn } from '../../utils/palletReturnForecast';
 
 interface PalletAccountRow {
   id: string;
@@ -16,6 +17,7 @@ interface PalletAccountRow {
   last_movement_at: string | null;
   partner_name: string;
   oldest_open_txn_age_days: number | null;
+  returnStatus: PalletReturnStatus;
 }
 
 export default function PalletAccounts() {
@@ -32,7 +34,8 @@ export default function PalletAccounts() {
         // Run the base query + the aging view in parallel. The view was
         // added in migration 20260613190000 and exposes the days since the
         // oldest unreconciled transaction. We merge it by pallet_account_id.
-        const [accountsRes, agingRes] = await Promise.all([
+        const since90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const [accountsRes, agingRes, txnsRes] = await Promise.all([
           supabase
             .from('pallet_accounts')
             .select('id, partner_contact_id, pallet_type, current_balance, last_movement_at, acc_contacts(name)')
@@ -42,11 +45,27 @@ export default function PalletAccounts() {
             .from('v_pallet_account_aging')
             .select('pallet_account_id, oldest_open_txn_age_days')
             .eq('company_id', profile.company_id),
+          supabase
+            .from('pallet_account_transactions')
+            .select('pallet_account_id, direction, quantity, transaction_date')
+            .eq('company_id', profile.company_id)
+            .gte('transaction_date', since90),
         ]);
         if (accountsRes.error) throw accountsRes.error;
         const agingByAccount = new Map<string, number | null>();
         for (const a of (agingRes.data ?? []) as Array<{ pallet_account_id: string; oldest_open_txn_age_days: number | null }>) {
           agingByAccount.set(String(a.pallet_account_id), a.oldest_open_txn_age_days);
+        }
+        // Predictive: from the last 90 days of return velocity, forecast which
+        // partners will not clear their balance before the §439 HGB limitation.
+        const balances = ((accountsRes.data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+          pallet_account_id: String(r.id),
+          current_balance: Number(r.current_balance ?? 0),
+          oldest_open_txn_age_days: agingByAccount.get(String(r.id)) ?? null,
+        }));
+        const forecastByAccount = new Map<string, PalletReturnStatus>();
+        for (const f of forecastPalletReturns(balances, (txnsRes.data ?? []) as PalletReturnTxn[], { asOf: new Date().toISOString() })) {
+          forecastByAccount.set(f.pallet_account_id, f.status);
         }
         const mapped: PalletAccountRow[] = ((accountsRes.data ?? []) as Array<Record<string, unknown>>).map((r) => ({
           id: String(r.id),
@@ -56,6 +75,7 @@ export default function PalletAccounts() {
           last_movement_at: (r.last_movement_at as string | null) ?? null,
           partner_name: ((r.acc_contacts as { name?: string } | null)?.name) ?? '—',
           oldest_open_txn_age_days: agingByAccount.get(String(r.id)) ?? null,
+          returnStatus: forecastByAccount.get(String(r.id)) ?? 'settled',
         }));
         setRows(mapped);
       } catch (err) {
@@ -160,6 +180,16 @@ export default function PalletAccounts() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
+                  {r.returnStatus === 'at_risk' && (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 whitespace-nowrap">
+                      {t('common.palletForecast.atRisk')}
+                    </span>
+                  )}
+                  {r.returnStatus === 'stalled' && (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 whitespace-nowrap">
+                      {t('common.palletForecast.stalled')}
+                    </span>
+                  )}
                   <LimitationBadge ageDays={r.oldest_open_txn_age_days} compact />
                   <span className={`text-lg font-bold ${r.current_balance > 0 ? 'text-emerald-700' : r.current_balance < 0 ? 'text-red-700' : 'text-slate-500'}`}>
                     {r.current_balance > 0 ? '+' : ''}{r.current_balance}
