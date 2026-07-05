@@ -2733,6 +2733,28 @@ export const en: typeof sq = {
         category: 'Category',
       },
     },
+    reportAssistant: {
+      title: 'Ask in words',
+      placeholder: 'Ask: e.g. "stock by depot" or "unpaid invoices"',
+      ask: 'Ask',
+      loading: 'Searching...',
+      notUnderstood: "I didn't understand the question. Try one of the examples below.",
+      showing: 'Showing',
+      noResults: 'No results.',
+      cols: {
+        depot: 'Depot', quantity: 'Quantity', product: 'Product', category: 'Category',
+        daysLeft: 'Days left', invoice: 'Invoice', partner: 'Partner',
+        amount: 'Amount', dueDate: 'Due date', palletType: 'Type', balance: 'Balance',
+      },
+      intents: {
+        stockOverview: 'Stock by depot',
+        stockRunout: 'Stock running out',
+        damagedStock: 'Damaged stock',
+        unpaidInvoices: 'Unpaid invoices',
+        overdueInvoices: 'Overdue invoices',
+        palletDebtors: 'Who owes us pallets',
+      },
+    },
     stockAlerts: {
       title: 'Stock Alerts',
       subtitle: 'Configure automatic notifications for stock levels',

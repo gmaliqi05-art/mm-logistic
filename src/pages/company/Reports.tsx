@@ -23,6 +23,7 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import { isDamageLike } from '../../utils/epalClassification';
 import type { StockCondition } from '../../types';
+import ReportAssistant from '../../components/reports/ReportAssistant';
 
 type TabKey = 'summary' | 'stock' | 'movements' | 'sorting_repair' | 'damage' | 'partners' | 'financials';
 
@@ -451,6 +452,8 @@ export default function CompanyReports() {
           )}
         </div>
       </div>
+
+      <ReportAssistant />
 
       <div className="border-b border-gray-200 flex flex-wrap gap-1">
         {tabs.map(tab => {

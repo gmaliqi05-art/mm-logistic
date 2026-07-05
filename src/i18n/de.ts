@@ -2730,6 +2730,28 @@ export const de: typeof sq = {
         category: 'Kategorie',
       },
     },
+    reportAssistant: {
+      title: 'In Worten fragen',
+      placeholder: 'Fragen: z. B. "Bestand pro Lager" oder "offene Rechnungen"',
+      ask: 'Fragen',
+      loading: 'Suche...',
+      notUnderstood: 'Ich habe die Frage nicht verstanden. Probieren Sie ein Beispiel unten.',
+      showing: 'Anzeige',
+      noResults: 'Keine Ergebnisse.',
+      cols: {
+        depot: 'Lager', quantity: 'Menge', product: 'Produkt', category: 'Kategorie',
+        daysLeft: 'Tage übrig', invoice: 'Rechnung', partner: 'Partner',
+        amount: 'Betrag', dueDate: 'Fällig am', palletType: 'Typ', balance: 'Saldo',
+      },
+      intents: {
+        stockOverview: 'Bestand pro Lager',
+        stockRunout: 'Bestand geht zur Neige',
+        damagedStock: 'Beschädigter Bestand',
+        unpaidInvoices: 'Offene Rechnungen',
+        overdueInvoices: 'Überfällige Rechnungen',
+        palletDebtors: 'Wer schuldet uns Paletten',
+      },
+    },
     stockAlerts: {
       title: 'Bestandsalarme',
       subtitle: 'Automatische Benachrichtigungen für Bestandsmengen konfigurieren',

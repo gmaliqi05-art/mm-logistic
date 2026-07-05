@@ -2728,6 +2728,28 @@ export const sq = {
         category: 'Kategori',
       },
     },
+    reportAssistant: {
+      title: 'Pyet me fjale',
+      placeholder: 'Pyet: p.sh. "stoku sipas depos" ose "fatura te papaguara"',
+      ask: 'Pyet',
+      loading: 'Duke kerkuar...',
+      notUnderstood: 'Nuk e kuptova pyetjen. Provo nje nga shembujt me poshte.',
+      showing: 'Po tregoj',
+      noResults: 'Asnje rezultat.',
+      cols: {
+        depot: 'Depo', quantity: 'Sasia', product: 'Produkti', category: 'Kategoria',
+        daysLeft: 'Dite deri ne fund', invoice: 'Fatura', partner: 'Partneri',
+        amount: 'Vlera', dueDate: 'Afati', palletType: 'Lloji', balance: 'Bilanci',
+      },
+      intents: {
+        stockOverview: 'Stoku sipas depos',
+        stockRunout: 'Stok qe po mbaron',
+        damagedStock: 'Stok i demtuar',
+        unpaidInvoices: 'Fatura te papaguara',
+        overdueInvoices: 'Fatura te vonuara',
+        palletDebtors: 'Kush me ka borxh paleta',
+      },
+    },
     stockAlerts: {
       title: 'Alarmet e Stokut',
       subtitle: 'Konfiguro njoftime automatike per nivelet e stokut',
