@@ -2740,6 +2740,7 @@ export const sq = {
         depot: 'Depo', quantity: 'Sasia', product: 'Produkti', category: 'Kategoria',
         daysLeft: 'Dite deri ne fund', invoice: 'Fatura', partner: 'Partneri',
         amount: 'Vlera', dueDate: 'Afati', palletType: 'Lloji', balance: 'Bilanci',
+        note: 'Fletedergesa', scheduled: 'Planifikuar', overdueBy: 'Vonese (dite)', deliveries: 'Dergesa',
       },
       intents: {
         stockOverview: 'Stoku sipas depos',
@@ -2748,6 +2749,8 @@ export const sq = {
         unpaidInvoices: 'Fatura te papaguara',
         overdueInvoices: 'Fatura te vonuara',
         palletDebtors: 'Kush me ka borxh paleta',
+        overdueDeliveries: 'Dergesa te vonuara',
+        topPartners: 'Partneret kryesore',
       },
     },
     stockAlerts: {

@@ -2745,6 +2745,7 @@ export const en: typeof sq = {
         depot: 'Depot', quantity: 'Quantity', product: 'Product', category: 'Category',
         daysLeft: 'Days left', invoice: 'Invoice', partner: 'Partner',
         amount: 'Amount', dueDate: 'Due date', palletType: 'Type', balance: 'Balance',
+        note: 'Delivery note', scheduled: 'Scheduled', overdueBy: 'Overdue (days)', deliveries: 'Deliveries',
       },
       intents: {
         stockOverview: 'Stock by depot',
@@ -2753,6 +2754,8 @@ export const en: typeof sq = {
         unpaidInvoices: 'Unpaid invoices',
         overdueInvoices: 'Overdue invoices',
         palletDebtors: 'Who owes us pallets',
+        overdueDeliveries: 'Overdue deliveries',
+        topPartners: 'Top partners',
       },
     },
     stockAlerts: {

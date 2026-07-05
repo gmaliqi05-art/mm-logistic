@@ -2742,6 +2742,7 @@ export const de: typeof sq = {
         depot: 'Lager', quantity: 'Menge', product: 'Produkt', category: 'Kategorie',
         daysLeft: 'Tage übrig', invoice: 'Rechnung', partner: 'Partner',
         amount: 'Betrag', dueDate: 'Fällig am', palletType: 'Typ', balance: 'Saldo',
+        note: 'Lieferschein', scheduled: 'Geplant', overdueBy: 'Verzug (Tage)', deliveries: 'Lieferungen',
       },
       intents: {
         stockOverview: 'Bestand pro Lager',
@@ -2750,6 +2751,8 @@ export const de: typeof sq = {
         unpaidInvoices: 'Offene Rechnungen',
         overdueInvoices: 'Überfällige Rechnungen',
         palletDebtors: 'Wer schuldet uns Paletten',
+        overdueDeliveries: 'Überfällige Lieferungen',
+        topPartners: 'Top-Partner',
       },
     },
     stockAlerts: {
