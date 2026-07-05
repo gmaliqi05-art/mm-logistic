@@ -2730,6 +2730,28 @@ export const fr: typeof sq = {
         category: 'Cat\u00e9gorie',
       },
     },
+    reportAssistant: {
+      title: 'Demander en mots',
+      placeholder: 'Demandez : p. ex. « stock par dépôt » ou « factures impayées »',
+      ask: 'Demander',
+      loading: 'Recherche...',
+      notUnderstood: "Je n'ai pas compris la question. Essayez un des exemples ci-dessous.",
+      showing: 'Affichage',
+      noResults: 'Aucun résultat.',
+      cols: {
+        depot: 'Dépôt', quantity: 'Quantité', product: 'Produit', category: 'Catégorie',
+        daysLeft: 'Jours restants', invoice: 'Facture', partner: 'Partenaire',
+        amount: 'Montant', dueDate: 'Échéance', palletType: 'Type', balance: 'Solde',
+      },
+      intents: {
+        stockOverview: 'Stock par dépôt',
+        stockRunout: 'Stock bientôt épuisé',
+        damagedStock: 'Stock endommagé',
+        unpaidInvoices: 'Factures impayées',
+        overdueInvoices: 'Factures en retard',
+        palletDebtors: 'Qui nous doit des palettes',
+      },
+    },
     stockAlerts: {
       title: 'Alertes de stock',
       subtitle: 'Configurer des notifications automatiques pour les niveaux de stock',
