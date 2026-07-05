@@ -124,6 +124,52 @@ export default function ReportAssistant() {
           rows,
         };
       }
+
+      case 'overdue_deliveries': {
+        const nowIso = new Date().toISOString();
+        const { data } = await supabase
+          .from('delivery_notes')
+          .select('note_number, type, partner_name, scheduled_delivery_at, scheduled_pickup_at')
+          .eq('company_id', companyId)
+          .in('status', ['sent', 'in_transit', 'pending_company_review', 'pending_stock_confirmation', 'delivered'])
+          .or(`and(type.eq.delivery,scheduled_delivery_at.lt.${nowIso}),and(type.eq.pickup,scheduled_pickup_at.lt.${nowIso})`)
+          .limit(200);
+        const rows = ((data ?? []) as Array<{ note_number: string; type: string; partner_name: string; scheduled_delivery_at: string | null; scheduled_pickup_at: string | null }>)
+          .map((r) => {
+            const sched = r.type === 'pickup' ? r.scheduled_pickup_at : r.scheduled_delivery_at;
+            const days = sched ? Math.floor((Date.parse(nowIso) - Date.parse(sched)) / 86_400_000) : 0;
+            return [r.note_number ?? '—', r.partner_name || '—', sched ? sched.slice(0, 10) : '—', days] as (string | number)[];
+          })
+          .sort((a, b) => Number(b[3]) - Number(a[3]));
+        return {
+          columns: [t('company.reportAssistant.cols.note'), t('company.reportAssistant.cols.partner'), t('company.reportAssistant.cols.scheduled'), t('company.reportAssistant.cols.overdueBy')],
+          rows,
+        };
+      }
+
+      case 'top_partners': {
+        const { data } = await supabase
+          .from('delivery_notes')
+          .select('partner_name, pallets_delivered')
+          .eq('company_id', companyId)
+          .not('partner_name', 'is', null)
+          .limit(5000);
+        const agg = new Map<string, { notes: number; pallets: number }>();
+        for (const r of (data ?? []) as Array<{ partner_name: string; pallets_delivered: number | null }>) {
+          const name = r.partner_name || '—';
+          const cur = agg.get(name) ?? { notes: 0, pallets: 0 };
+          cur.notes += 1;
+          cur.pallets += r.pallets_delivered ?? 0;
+          agg.set(name, cur);
+        }
+        const rows = [...agg.entries()]
+          .map(([name, v]) => [name, v.notes, v.pallets] as (string | number)[])
+          .sort((a, b) => Number(b[2]) - Number(a[2]) || Number(b[1]) - Number(a[1]));
+        return {
+          columns: [t('company.reportAssistant.cols.partner'), t('company.reportAssistant.cols.deliveries'), t('company.reportAssistant.cols.quantity')],
+          rows,
+        };
+      }
     }
   }
 

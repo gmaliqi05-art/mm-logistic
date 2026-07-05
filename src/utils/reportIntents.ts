@@ -18,7 +18,9 @@ export type ReportIntentId =
   | 'damaged_stock'
   | 'unpaid_invoices'
   | 'overdue_invoices'
-  | 'pallet_debtors';
+  | 'pallet_debtors'
+  | 'overdue_deliveries'
+  | 'top_partners';
 
 export interface ReportIntent {
   id: ReportIntentId;
@@ -102,6 +104,26 @@ export const REPORT_INTENTS: ReportIntent[] = [
       'qui nous doit des palettes', 'solde palettes', 'dette de palettes',
     ],
   },
+  {
+    id: 'overdue_deliveries',
+    labelKey: 'company.reportAssistant.intents.overdueDeliveries',
+    keywords: [
+      'overdue deliveries', 'late deliveries', 'delayed deliveries', 'past due deliveries', 'late shipments',
+      'dergesa te vonuara', 'dergesa mbi afat', 'dergesa me vonese', 'vonesa dergese',
+      'überfällige lieferungen', 'verspätete lieferungen', 'lieferverzug',
+      'livraisons en retard', 'livraisons tardives',
+    ],
+  },
+  {
+    id: 'top_partners',
+    labelKey: 'company.reportAssistant.intents.topPartners',
+    keywords: [
+      'top partners', 'best partners', 'biggest partners', 'partners by volume', 'most deliveries',
+      'partneret kryesore', 'partneret me te medhenj', 'sipas volumit', 'me shume dergesa',
+      'top partner', 'grösste partner', 'beste kunden', 'nach volumen',
+      'meilleurs partenaires', 'principaux partenaires', 'par volume',
+    ],
+  },
 ];
 
 /**
@@ -137,9 +159,9 @@ export function matchReportIntent(question: string | null | undefined): ReportIn
       const nkw = normalizeQuestion(kw);
       if (!nkw) continue;
       if (q.includes(nkw)) {
-        // Longer, multi-word phrases are more specific → higher weight.
-        const w = nkw.includes(' ') ? 2 : 1;
-        weight += w;
+        // Longer phrases are more specific → weight by word count, so e.g.
+        // "dergesa te vonuara" (deliveries) beats the generic "te vonuara".
+        weight += nkw.split(' ').length;
         matched.push(kw);
       }
     }

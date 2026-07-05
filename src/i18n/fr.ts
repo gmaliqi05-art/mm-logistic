@@ -2742,6 +2742,7 @@ export const fr: typeof sq = {
         depot: 'Dépôt', quantity: 'Quantité', product: 'Produit', category: 'Catégorie',
         daysLeft: 'Jours restants', invoice: 'Facture', partner: 'Partenaire',
         amount: 'Montant', dueDate: 'Échéance', palletType: 'Type', balance: 'Solde',
+        note: 'Bon de livraison', scheduled: 'Planifié', overdueBy: 'Retard (jours)', deliveries: 'Livraisons',
       },
       intents: {
         stockOverview: 'Stock par dépôt',
@@ -2750,6 +2751,8 @@ export const fr: typeof sq = {
         unpaidInvoices: 'Factures impayées',
         overdueInvoices: 'Factures en retard',
         palletDebtors: 'Qui nous doit des palettes',
+        overdueDeliveries: 'Livraisons en retard',
+        topPartners: 'Meilleurs partenaires',
       },
     },
     stockAlerts: {

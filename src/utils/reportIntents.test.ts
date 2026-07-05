@@ -24,6 +24,15 @@ describe('matchReportIntent', () => {
     expect(matchReportIntent('which invoices are overdue')?.intentId).toBe('overdue_invoices');
     expect(matchReportIntent('who owes us pallets')?.intentId).toBe('pallet_debtors');
     expect(matchReportIntent('how much damaged stock')?.intentId).toBe('damaged_stock');
+    expect(matchReportIntent('show overdue deliveries')?.intentId).toBe('overdue_deliveries');
+    expect(matchReportIntent('who are our top partners')?.intentId).toBe('top_partners');
+  });
+
+  it('matches the new operational intents across languages', () => {
+    expect(matchReportIntent('dergesa te vonuara')?.intentId).toBe('overdue_deliveries');
+    expect(matchReportIntent('überfällige lieferungen')?.intentId).toBe('overdue_deliveries');
+    expect(matchReportIntent('partneret kryesore')?.intentId).toBe('top_partners');
+    expect(matchReportIntent('meilleurs partenaires')?.intentId).toBe('top_partners');
   });
 
   it('matches Albanian questions', () => {
