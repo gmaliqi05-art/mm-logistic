@@ -7,7 +7,11 @@ export const fr: typeof sq = {
     listening: 'J\'écoute...',
     thinking: 'Vérification...',
     youAsked: 'Vous avez demandé',
-    hint: 'p. ex. « combien de Klasse A en stock »',
+    placeholder: 'Écrivez ou parlez...',
+    send: 'Envoyer',
+    assistant: 'Assistant',
+    errorGeneric: 'Une erreur est survenue. Veuillez réessayer.',
+    hint: 'p. ex. « le compte Kautex » ou « combien de Klasse A »',
     unsupported: 'Votre navigateur ne prend pas en charge la reconnaissance vocale. Essayez Chrome sur ordinateur ou Android.',
     answer: {
       youHave: 'Vous avez',

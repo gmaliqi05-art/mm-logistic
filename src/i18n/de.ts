@@ -7,7 +7,11 @@ export const de: typeof sq = {
     listening: 'Höre zu...',
     thinking: 'Prüfe...',
     youAsked: 'Sie fragten',
-    hint: 'z. B. "wie viele Klasse A auf Lager"',
+    placeholder: 'Tippen oder sprechen...',
+    send: 'Senden',
+    assistant: 'Assistent',
+    errorGeneric: 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
+    hint: 'z. B. "das Kautex-Konto" oder "wie viele Klasse A"',
     unsupported: 'Ihr Browser unterstützt keine Spracherkennung. Versuchen Sie Chrome am Desktop oder Android.',
     answer: {
       youHave: 'Sie haben',

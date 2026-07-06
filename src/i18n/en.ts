@@ -7,7 +7,11 @@ export const en: typeof sq = {
     listening: 'Listening...',
     thinking: 'Checking...',
     youAsked: 'You asked',
-    hint: 'e.g. "how many Klasse A in stock"',
+    placeholder: 'Type or speak...',
+    send: 'Send',
+    assistant: 'Assistant',
+    errorGeneric: 'Something went wrong. Please try again.',
+    hint: 'e.g. "the Kautex account" or "how many Klasse A"',
     unsupported: 'Your browser does not support speech recognition. Try Chrome on desktop or Android.',
     answer: {
       youHave: 'You have',
