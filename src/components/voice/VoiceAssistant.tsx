@@ -6,11 +6,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { interpretStockQuestion, type VoiceStockRow } from '../../utils/voiceStockQuery';
 import { stripMarkdown } from '../../utils/stripMarkdown';
+import { isStopCommand } from '../../utils/voiceCommands';
 import ManagerAvatar from './ManagerAvatar';
 
 interface SpeechRecognitionLike {
   lang: string; continuous: boolean; interimResults: boolean; maxAlternatives: number;
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> & { length: number } }) => void) | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
   start(): void; stop(): void;
@@ -36,6 +37,24 @@ function clampPos(x: number, y: number) {
   return { x: Math.max(8, Math.min(x, maxX)), y: Math.max(8, Math.min(y, maxY)) };
 }
 
+/**
+ * Score a voice so we prefer the most natural-sounding one available. Modern
+ * browsers ship "neural"/"natural"/online voices that sound far less robotic
+ * than the legacy local ones — reward those, and reward an exact language match.
+ */
+function scoreVoice(v: SpeechSynthesisVoice, bcp47: string, lang: string): number {
+  const name = v.name.toLowerCase();
+  let s = 0;
+  if (v.lang === bcp47) s += 40;
+  else if (v.lang.replace('_', '-').toLowerCase().startsWith(lang)) s += 20;
+  if (/(neural|natural|premium|enhanced|wavenet|studio)/.test(name)) s += 30;
+  if (name.includes('google')) s += 12;
+  if (name.includes('microsoft')) s += 8;
+  // A male-sounding voice suits the "manager" persona when we have a choice.
+  if (/(male|daniel|matthew|thomas|markus|conrad|henri|liam|onder)/.test(name)) s += 4;
+  return s;
+}
+
 export default function VoiceAssistant() {
   const { profile } = useAuth();
   const { t, language } = useTranslation();
@@ -46,8 +65,14 @@ export default function VoiceAssistant() {
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [convo, setConvo] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  // Refs mirror state for use inside speech/recognition callbacks (which close
+  // over stale state otherwise).
+  const convoRef = useRef(false);
+  const messagesRef = useRef<ChatMessage[]>([]);
+  messagesRef.current = messages;
 
   const [pos, setPos] = useState(() => {
     try {
@@ -63,15 +88,16 @@ export default function VoiceAssistant() {
   const active = listening || busy || speaking;
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')?.content ?? '';
 
-  // Pick the clearest available voice for the current language.
+  // Pick the clearest, most natural available voice for the current language.
   useEffect(() => {
     if (typeof window.speechSynthesis === 'undefined') return;
     const pick = () => {
       const vs = window.speechSynthesis.getVoices();
-      voiceRef.current =
-        vs.find((v) => v.lang === bcp47 && v.localService) ||
-        vs.find((v) => v.lang === bcp47) ||
-        vs.find((v) => v.lang.replace('_', '-').toLowerCase().startsWith(language)) || null;
+      const scored = vs
+        .map((v) => ({ v, s: scoreVoice(v, bcp47, language) }))
+        .filter((x) => x.s > 0)
+        .sort((a, b) => b.s - a.s);
+      voiceRef.current = scored[0]?.v ?? vs.find((v) => v.lang.toLowerCase().startsWith(language)) ?? null;
     };
     pick();
     window.speechSynthesis.onvoiceschanged = pick;
@@ -84,21 +110,43 @@ export default function VoiceAssistant() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Clean up any in-flight speech / recognition when the widget unmounts.
+  useEffect(() => () => {
+    convoRef.current = false;
+    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+  }, []);
+
+  /**
+   * Speak a response as naturally as we can, and — when we are in hands-free
+   * conversation mode — automatically re-open the mic once we finish so the
+   * user can simply keep talking (no button press), just like a real dialogue.
+   */
   function speak(text: string) {
     try {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = bcp47;
       if (voiceRef.current) u.voice = voiceRef.current;
-      u.rate = 1.02;
-      u.pitch = 1;
+      // Slightly slower than default with a warm pitch reads far less robotic.
+      u.rate = 0.96;
+      u.pitch = 1.04;
+      u.volume = 1;
       u.onstart = () => setSpeaking(true);
-      u.onend = () => setSpeaking(false);
+      u.onend = () => {
+        setSpeaking(false);
+        // Hands-free: keep the conversation going without a button.
+        if (convoRef.current) setTimeout(() => startListening(), 300);
+      };
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     } catch { /* text is the fallback */ }
   }
 
+  // Full stop — used by the Stop button, the voice "ndalu/stop" command, and
+  // closing the widget. Ends conversation mode so nothing re-arms itself.
   function stop() {
+    convoRef.current = false;
+    setConvo(false);
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
     setSpeaking(false);
     try { recognitionRef.current?.stop(); } catch { /* ignore */ }
@@ -130,7 +178,7 @@ export default function VoiceAssistant() {
     // Barge-in: cut any current speech the moment the user sends.
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
     setSpeaking(false);
-    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content: q }];
+    const nextMessages: ChatMessage[] = [...messagesRef.current, { role: 'user', content: q }];
     setMessages(nextMessages);
     setInput('');
     setBusy(true);
@@ -163,9 +211,13 @@ export default function VoiceAssistant() {
     }
   }
 
+  // Start (or restart) listening. In conversation mode this is called
+  // automatically after each spoken reply, so the user never taps the mic
+  // to continue the dialogue.
   function startListening() {
     const Ctor = getRecognitionCtor();
     if (!Ctor) return;
+    if (busy) return;
     // Barge-in: if the assistant is speaking, stop it and listen.
     try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
     setSpeaking(false);
@@ -177,13 +229,25 @@ export default function VoiceAssistant() {
     rec.onresult = (e) => {
       const said = e.results?.[0]?.[0]?.transcript ?? '';
       setListening(false);
-      if (said) void send(said);
+      if (!said) return;
+      // Voice-activated stop: saying "ndalu / stop / halt / arrête" ends the
+      // conversation instead of being sent as a question.
+      if (isStopCommand(said, language)) { stop(); return; }
+      void send(said);
     };
     rec.onerror = () => setListening(false);
     rec.onend = () => setListening(false);
     recognitionRef.current = rec;
     setListening(true);
     try { rec.start(); } catch { setListening(false); }
+  }
+
+  // Tapping the mic opens hands-free conversation mode and starts listening.
+  function toggleConversation() {
+    if (convoRef.current || listening || speaking) { stop(); return; }
+    convoRef.current = true;
+    setConvo(true);
+    startListening();
   }
 
   function onPointerDown(e: React.PointerEvent) {
@@ -218,7 +282,7 @@ export default function VoiceAssistant() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         style={{ left: pos.x, top: pos.y, width: AV, height: AV, touchAction: 'none' }}
-        className="fixed z-40 rounded-full shadow-xl cursor-grab active:cursor-grabbing select-none ring-2 ring-white/70"
+        className="fixed z-40 select-none cursor-grab active:cursor-grabbing"
       >
         <ManagerAvatar size={AV} />
       </div>
@@ -229,7 +293,7 @@ export default function VoiceAssistant() {
           <div className="relative flex items-center justify-center">
             <span className={`absolute rounded-full bg-teal-400/30 ${listening ? 'animate-ping' : ''}`} style={{ width: 200, height: 200 }} />
             <span className="absolute rounded-full bg-teal-500/10 animate-pulse" style={{ width: 260, height: 260 }} />
-            <div className="relative rounded-full shadow-2xl ring-4 ring-white/80">
+            <div className="relative">
               <ManagerAvatar size={150} speaking={speaking} />
             </div>
           </div>
@@ -237,6 +301,9 @@ export default function VoiceAssistant() {
             <p className="text-sm font-medium text-slate-800 bg-white/85 backdrop-blur rounded-xl px-4 py-2 shadow">
               {listening ? t('voice.listening') : busy ? t('voice.thinking') : lastAssistant}
             </p>
+            {convo && (
+              <p className="mt-2 text-xs text-slate-500">{t('voice.sayStop')}</p>
+            )}
           </div>
           <button onClick={stop} className="pointer-events-auto mt-4 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-rose-500 text-white text-sm font-medium shadow-lg hover:bg-rose-600">
             <Square className="w-4 h-4" /> {t('voice.stop')}
@@ -258,7 +325,11 @@ export default function VoiceAssistant() {
             )}
             <div className="flex items-center gap-2">
               {speechSupported && (
-                <button onClick={startListening} disabled={busy} className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                <button
+                  onClick={toggleConversation}
+                  title={t('voice.tapToSpeak')}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${convo || listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                >
                   <Mic className="w-5 h-5" />
                 </button>
               )}

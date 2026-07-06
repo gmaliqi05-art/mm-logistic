@@ -8,6 +8,7 @@ export const sq = {
     placeholder: 'Shkruaj ose fol...',
     send: 'Dergo',
     stop: 'Ndalo',
+    sayStop: 'Thuaj "ndalu" per te ndaluar',
     assistant: 'Asistenti',
     errorGeneric: 'Ndodhi nje gabim. Provo perseri.',
     hint: 'p.sh. "gjendja me Kautex" ose "sa Klasse A kemi"',

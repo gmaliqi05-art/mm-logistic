@@ -12,12 +12,17 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
   — data. No free-form SQL.
 
   Two tool sets by role:
-    - company_admin / accountant / super_admin -> COMPANY_TOOLS (all roles:
-      orders, partner statements, stock, invoices, pallet balances).
+    - company_admin / accountant / super_admin -> COMPANY_TOOLS. Full access
+      across every area of THIS company: stock, orders/deliveries, movements
+      (who registered / which driver), partner statements, invoices, pallet
+      balances, fleet, drivers, HR, and navigation to every company page.
     - depot_worker -> DEPOT_TOOLS, additionally hard-scoped to the worker's own
-      depot_id (their depot only: stock, incoming deliveries, tasks, damaged).
+      depot_id. Everything the depot role can see: stock, incoming/outgoing
+      deliveries, sorting & repair tasks, damaged stock, depot movements, and
+      navigation to every depot page.
 
-  Self-contained single file. Requires ANTHROPIC_API_KEY; returns 503 until set.
+  Self-contained single file. Requires an Anthropic API key (ai_config table,
+  managed in Super Admin, or ANTHROPIC_API_KEY env); returns 503 until set.
 */
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
@@ -73,7 +78,23 @@ interface Tool {
   run: (admin: SupabaseClient, ctx: Ctx, input: Json) => Promise<Json>;
 }
 
-// ---- Company tools (all roles) --------------------------------------------
+// Resolve a set of category_product_ids / depot_ids to display names in one
+// round-trip each (used to make movement rows human-readable).
+async function nameMaps(admin: SupabaseClient, companyId: string, productIds: string[], depotIds: string[]) {
+  const products: Record<string, string> = {};
+  const depots: Record<string, string> = {};
+  const pIds = [...new Set(productIds.filter(Boolean))];
+  const dIds = [...new Set(depotIds.filter(Boolean))];
+  const [pRes, dRes] = await Promise.all([
+    pIds.length ? admin.from("category_products").select("id, name").eq("company_id", companyId).in("id", pIds) : Promise.resolve({ data: [] }),
+    dIds.length ? admin.from("depots").select("id, name").eq("company_id", companyId).in("id", dIds) : Promise.resolve({ data: [] }),
+  ]);
+  for (const r of (pRes.data ?? []) as Json[]) products[r.id] = r.name;
+  for (const r of (dRes.data ?? []) as Json[]) depots[r.id] = r.name;
+  return { products, depots };
+}
+
+// ---- Company tools (company_admin / accountant / super_admin) --------------
 const COMPANY_TOOLS: Tool[] = [
   {
     name: "get_stock_summary",
@@ -119,6 +140,52 @@ const COMPANY_TOOLS: Tool[] = [
     },
   },
   {
+    name: "list_recent_orders",
+    description: "Recent delivery notes/orders for this company, newest first. Optionally filter by type (delivery=outgoing, pickup=incoming), by status, or by partner name. Use for 'the last orders', 'incoming this week', 'pending orders'.",
+    input_schema: { type: "object", properties: {
+      type: { type: "string", enum: ["delivery", "pickup"] },
+      status: { type: "string", description: "e.g. sent, in_transit, delivered, pending_company_review, cancelled" },
+      partner: { type: "string" },
+    } },
+    run: async (admin, ctx, input) => {
+      let q = admin.from("delivery_notes").select("note_number, type, partner_name, status, created_at, delivered_at, stock_posted").eq("company_id", ctx.companyId).order("created_at", { ascending: false }).limit(20);
+      if (input?.type) q = q.eq("type", String(input.type));
+      if (input?.status) q = q.eq("status", String(input.status));
+      if (input?.partner) q = q.ilike("partner_name", `%${String(input.partner)}%`);
+      const { data } = await q;
+      return { orders: (data ?? []).map((r: Json) => ({ note: r.note_number, partner: r.partner_name, type: r.type, status: r.status, registered: r.stock_posted === true, date: r.created_at })) };
+    },
+  },
+  {
+    name: "get_recent_movements",
+    description: "Recent stock movements (registrations) for this company: what came in/out, WHO registered it (the depot worker) and WHICH driver delivered/collected it. Use for 'who registered', 'which driver brought the Kautex pallets', 'last movements'.",
+    input_schema: { type: "object", properties: {
+      partner: { type: "string" },
+      direction: { type: "string", enum: ["in", "out"], description: "in = received, out = shipped" },
+    } },
+    run: async (admin, ctx, input) => {
+      let q = admin.from("v_company_movements").select("movement_type, quantity_delta, condition, category_product_id, depot_id, movement_date, performed_by_full_name, driver_full_name, source_partner, source_contact_name").eq("company_id", ctx.companyId).order("movement_date", { ascending: false }).limit(25);
+      if (input?.direction === "in") q = q.gt("quantity_delta", 0);
+      if (input?.direction === "out") q = q.lt("quantity_delta", 0);
+      const { data } = await q;
+      let rows = (data ?? []) as Json[];
+      const p = String(input?.partner ?? "").trim().toLowerCase();
+      if (p) rows = rows.filter((r) => `${r.source_partner ?? ""} ${r.source_contact_name ?? ""}`.toLowerCase().includes(p));
+      const { products, depots } = await nameMaps(admin, ctx.companyId, rows.map((r) => r.category_product_id), rows.map((r) => r.depot_id));
+      return { movements: rows.map((r) => ({
+        type: r.movement_type,
+        product: products[r.category_product_id] ?? "—",
+        depot: depots[r.depot_id] ?? "—",
+        condition: r.condition,
+        quantity: r.quantity_delta,
+        registered_by: r.performed_by_full_name ?? "—",
+        driver: r.driver_full_name ?? "—",
+        partner: r.source_contact_name ?? r.source_partner ?? "—",
+        date: r.movement_date,
+      })) };
+    },
+  },
+  {
     name: "get_open_invoices",
     description: "This company's unpaid or overdue invoices.",
     input_schema: { type: "object", properties: { only_overdue: { type: "boolean" } } },
@@ -138,16 +205,75 @@ const COMPANY_TOOLS: Tool[] = [
     },
   },
   {
+    name: "search_partners",
+    description: "Look up this company's partners/contacts by name (or list them). Returns contact details.",
+    input_schema: { type: "object", properties: { query: { type: "string" } } },
+    run: async (admin, ctx, input) => {
+      let q = admin.from("acc_contacts").select("name, contact_type, city, country, vat_number, email, phone").eq("company_id", ctx.companyId).eq("is_active", true).order("name", { ascending: true }).limit(25);
+      const s = String(input?.query ?? "").trim();
+      if (s) q = q.ilike("name", `%${s}%`);
+      const { data } = await q;
+      return { partners: data ?? [] };
+    },
+  },
+  {
+    name: "get_fleet_overview",
+    description: "This company's fleet: vehicles (and trailers), the drivers, and any fleet/driver compliance documents expiring soon (TÜV, insurance, licences). Use for 'the fleet', 'which documents expire', 'how many trucks'.",
+    input_schema: { type: "object", properties: {} },
+    run: async (admin, ctx) => {
+      const soon = new Date(); soon.setDate(soon.getDate() + 60);
+      const [vehRes, drvRes, cmpRes] = await Promise.all([
+        admin.from("vehicles").select("vehicle_type, brand, model, license_plate, status").eq("company_id", ctx.companyId).order("created_at", { ascending: false }).limit(50),
+        admin.from("profiles").select("full_name, phone, is_active").eq("company_id", ctx.companyId).eq("role", "driver").limit(50),
+        admin.from("compliance_reminders").select("entity_type, compliance_type, expiry_date").eq("company_id", ctx.companyId).lte("expiry_date", soon.toISOString().slice(0, 10)).order("expiry_date", { ascending: true }).limit(25),
+      ]);
+      return {
+        vehicles: (vehRes.data ?? []).map((r: Json) => ({ type: r.vehicle_type, name: `${r.brand ?? ""} ${r.model ?? ""}`.trim(), plate: r.license_plate, status: r.status })),
+        drivers: (drvRes.data ?? []).map((r: Json) => ({ name: r.full_name, phone: r.phone, active: r.is_active === true })),
+        expiring_documents: (cmpRes.data ?? []).map((r: Json) => ({ entity: r.entity_type, document: r.compliance_type, expires: r.expiry_date })),
+      };
+    },
+  },
+  {
+    name: "get_hr_overview",
+    description: "HR snapshot for this company: pending leave requests awaiting approval and who is on leave today. Use for 'leave requests', 'who is off today', 'pending approvals'.",
+    input_schema: { type: "object", properties: {} },
+    run: async (admin, ctx) => {
+      const today = new Date().toISOString().slice(0, 10);
+      const [pendRes, offRes] = await Promise.all([
+        admin.from("leave_requests").select("start_date, end_date, total_days, status, reason, profiles_private!user_id(full_name), leave_types(name_sq, name_en)").eq("company_id", ctx.companyId).eq("status", "pending").order("start_date", { ascending: true }).limit(25),
+        admin.from("leave_requests").select("start_date, end_date, profiles_private!user_id(full_name), leave_types(name_sq, name_en)").eq("company_id", ctx.companyId).eq("status", "approved").lte("start_date", today).gte("end_date", today).limit(25),
+      ]);
+      return {
+        pending_requests: (pendRes.data ?? []).map((r: Json) => ({ who: r.profiles_private?.full_name ?? "—", type: r.leave_types?.name_sq ?? r.leave_types?.name_en ?? "—", from: r.start_date, to: r.end_date, days: r.total_days })),
+        on_leave_today: (offRes.data ?? []).map((r: Json) => ({ who: r.profiles_private?.full_name ?? "—", type: r.leave_types?.name_sq ?? r.leave_types?.name_en ?? "—", until: r.end_date })),
+      };
+    },
+  },
+  {
     name: "navigate_to",
-    description: "Open a page in the app for the user (they can then see or act on it). Use when the user asks to open/show a page, a partner's orders, or to start a new order. 'deliveries' can be filtered by partner and by type (delivery=outgoing, pickup=incoming). 'new_order' opens the create form ready.",
+    description: "Open a page in the app for the user (they can then see or act on it). Use whenever the user asks to open/show a page, a partner's orders, or to start a new order. 'deliveries' can be filtered by partner and by type (delivery=outgoing, pickup=incoming). 'new_order' opens the create form ready.",
     input_schema: { type: "object", required: ["page"], properties: {
-      page: { type: "string", enum: ["stock", "deliveries", "repairs", "sorting", "pallet_accounts", "partners", "reports", "invoices", "new_order"] },
+      page: { type: "string", enum: [
+        "stock", "deliveries", "repairs", "sorting", "pallet_accounts", "partners", "reports", "invoices", "new_order",
+        "fleet", "trailers", "drivers", "compliance", "live_map", "route_planner", "depots", "categories", "client_prices",
+        "hr", "hr_requests", "attendance", "work_hours", "financials", "audit_log", "worker_repair_stats",
+      ] },
       partner: { type: "string", description: "optional partner name to filter deliveries" },
       order_type: { type: "string", enum: ["delivery", "pickup"], description: "delivery = outgoing, pickup = incoming" },
     } },
     // deno-lint-ignore require-await
     run: async (_admin, _ctx, input) => {
-      const map: Record<string, string> = { stock: "/company/stock", deliveries: "/company/delivery-notes", repairs: "/company/repair-reports", sorting: "/company/sorting", pallet_accounts: "/company/pallet-accounts", partners: "/company/partners", reports: "/company/reports", invoices: "/company/financial-summary" };
+      const map: Record<string, string> = {
+        stock: "/company/stock", deliveries: "/company/delivery-notes", repairs: "/company/repair-reports",
+        sorting: "/company/sorting", pallet_accounts: "/company/pallet-accounts", partners: "/company/partners",
+        reports: "/company/reports", invoices: "/company/invoices", fleet: "/company/vehicles",
+        trailers: "/company/trailers", drivers: "/company/drivers", compliance: "/company/compliance",
+        live_map: "/company/live-map", route_planner: "/company/route-planner", depots: "/company/depots",
+        categories: "/company/categories", client_prices: "/company/client-prices", hr: "/company/hr",
+        hr_requests: "/company/hr/requests", attendance: "/company/hr/attendance", work_hours: "/company/hr/work-hours",
+        financials: "/company/financial-summary", audit_log: "/company/audit-log", worker_repair_stats: "/company/worker-repair-stats",
+      };
       const page = String(input?.page ?? "");
       const q = new URLSearchParams();
       let path = map[page] ?? "";
@@ -184,6 +310,37 @@ const DEPOT_TOOLS: Tool[] = [
     },
   },
   {
+    name: "list_depot_orders",
+    description: "Orders/delivery notes for THIS depot, newest first. Optionally filter by type (delivery=outgoing, pickup=incoming), status or partner. Use for 'the last orders here', 'what did we ship today'.",
+    input_schema: { type: "object", properties: {
+      type: { type: "string", enum: ["delivery", "pickup"] },
+      status: { type: "string" },
+      partner: { type: "string" },
+    } },
+    run: async (admin, ctx, input) => {
+      let q = admin.from("delivery_notes").select("note_number, type, partner_name, status, created_at, stock_posted").eq("company_id", ctx.companyId).eq("assigned_depot_id", ctx.depotId).order("created_at", { ascending: false }).limit(20);
+      if (input?.type) q = q.eq("type", String(input.type));
+      if (input?.status) q = q.eq("status", String(input.status));
+      if (input?.partner) q = q.ilike("partner_name", `%${String(input.partner)}%`);
+      const { data } = await q;
+      return { orders: (data ?? []).map((r: Json) => ({ note: r.note_number, partner: r.partner_name, type: r.type, status: r.status, registered: r.stock_posted === true, date: r.created_at })) };
+    },
+  },
+  {
+    name: "get_depot_movements",
+    description: "Recent stock movements in THIS depot: what was received/shipped, who registered it and which driver was involved. Use for 'who registered', 'last movements here'.",
+    input_schema: { type: "object", properties: { direction: { type: "string", enum: ["in", "out"] } } },
+    run: async (admin, ctx, input) => {
+      let q = admin.from("v_company_movements").select("movement_type, quantity_delta, condition, category_product_id, movement_date, performed_by_full_name, driver_full_name, source_partner, source_contact_name").eq("company_id", ctx.companyId).eq("depot_id", ctx.depotId).order("movement_date", { ascending: false }).limit(25);
+      if (input?.direction === "in") q = q.gt("quantity_delta", 0);
+      if (input?.direction === "out") q = q.lt("quantity_delta", 0);
+      const { data } = await q;
+      const rows = (data ?? []) as Json[];
+      const { products } = await nameMaps(admin, ctx.companyId, rows.map((r) => r.category_product_id), []);
+      return { movements: rows.map((r) => ({ type: r.movement_type, product: products[r.category_product_id] ?? "—", condition: r.condition, quantity: r.quantity_delta, registered_by: r.performed_by_full_name ?? "—", driver: r.driver_full_name ?? "—", partner: r.source_contact_name ?? r.source_partner ?? "—", date: r.movement_date })) };
+    },
+  },
+  {
     name: "get_depot_tasks",
     description: "Open work in THIS depot: sorting batches in progress and repair jobs not yet finished.",
     input_schema: { type: "object", properties: {} },
@@ -208,13 +365,18 @@ const DEPOT_TOOLS: Tool[] = [
   },
   {
     name: "navigate_to",
-    description: "Open a page in THIS depot's app for the user. Use when they ask to open/show a depot page or start receiving new goods.",
+    description: "Open a page in THIS depot's app for the user. Use whenever they ask to open/show a depot page or start receiving new goods.",
     input_schema: { type: "object", required: ["page"], properties: {
-      page: { type: "string", enum: ["stock", "receiving", "outgoing", "sorting", "repairs", "damage", "reports", "deliveries", "new_order"] },
+      page: { type: "string", enum: ["stock", "receiving", "outgoing", "sorting", "repairs", "repair_workers", "damage", "reports", "deliveries", "trailers", "documents", "attendance", "work_hours", "leave", "new_order"] },
     } },
     // deno-lint-ignore require-await
     run: async (_admin, _ctx, input) => {
-      const map: Record<string, string> = { stock: "/depot/stock", receiving: "/depot/receiving", outgoing: "/depot/outgoing", sorting: "/depot/sorting", repairs: "/depot/repairs", damage: "/depot/damage", reports: "/depot/reports", deliveries: "/depot/delivery-notes", new_order: "/depot/receiving" };
+      const map: Record<string, string> = {
+        stock: "/depot/stock", receiving: "/depot/receiving", outgoing: "/depot/outgoing", sorting: "/depot/sorting",
+        repairs: "/depot/repairs", repair_workers: "/depot/repair-workers", damage: "/depot/damage", reports: "/depot/reports",
+        deliveries: "/depot/delivery-notes", trailers: "/depot/trailers", documents: "/depot/documents",
+        attendance: "/depot/attendance", work_hours: "/depot/work-hours", leave: "/depot/leave", new_order: "/depot/receiving",
+      };
       const page = String(input?.page ?? "");
       const path = map[page];
       if (!path) return { error: "unknown page" };
@@ -256,9 +418,9 @@ Deno.serve(async (req) => {
   }
 
   const system = isDepot
-    ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You ONLY help with operations in THIS depot: stock on hand, incoming deliveries, sorting/repair tasks, and damaged stock. All tool results are already restricted to this depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question if needed. If a request is outside this depot's scope (e.g. invoices, other depots), say it is not available here. Never invent data.`
-    : `You are the MM Logistic assistant — a manager working INSIDE the platform for the company "${companyName}". You answer logistics, depot, fleet and accounting questions FOR THIS COMPANY ONLY. Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
-  const plain = " When the user asks to OPEN or SHOW a page, a partner's orders, or to START a new order, call the navigate_to tool and briefly confirm in words what you are opening (e.g. 'Po hap dërgesat për Kautex'). You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD. Do NOT use any markdown or symbols: no asterisks (**), no bullet points, no headings, no backticks. Write short natural sentences.";
+    ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You have FULL access to everything within this depot's privileges: stock on hand, incoming and outgoing deliveries/orders, stock movements (who registered them, which driver), sorting and repair tasks, damaged stock, and every depot page. All tool results are already restricted to THIS depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question only if truly needed. If a request is genuinely outside this depot's scope (e.g. company invoices, other depots), say it is not available here. Never invent data.`
+    : `You are the MM Logistic manager assistant — working INSIDE the platform for the company "${companyName}". You have FULL access to everything for THIS company across every role and area: stock, orders and deliveries (incoming and outgoing), stock movements (who registered them and which driver), partner statements and pallet accounts, invoices and finances, fleet and drivers, compliance documents, and HR (leave, attendance). Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
+  const plain = " When the user asks to OPEN or SHOW a page, a partner's orders, or to START a new order, call the navigate_to tool and briefly confirm in words what you are opening (e.g. 'Po hap dërgesat për Kautex'). You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
   const systemFinal = system + plain;
 
   const anthropicTools = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));

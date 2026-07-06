@@ -10,6 +10,7 @@ export const en: typeof sq = {
     placeholder: 'Type or speak...',
     send: 'Send',
     stop: 'Stop',
+    sayStop: 'Say "stop" to stop',
     assistant: 'Assistant',
     errorGeneric: 'Something went wrong. Please try again.',
     hint: 'e.g. "the Kautex account" or "how many Klasse A"',

@@ -10,6 +10,7 @@ export const de: typeof sq = {
     placeholder: 'Tippen oder sprechen...',
     send: 'Senden',
     stop: 'Stopp',
+    sayStop: 'Sagen Sie "Stopp" zum Anhalten',
     assistant: 'Assistent',
     errorGeneric: 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
     hint: 'z. B. "das Kautex-Konto" oder "wie viele Klasse A"',

@@ -10,6 +10,7 @@ export const fr: typeof sq = {
     placeholder: 'Écrivez ou parlez...',
     send: 'Envoyer',
     stop: 'Arrêter',
+    sayStop: 'Dites « stop » pour arrêter',
     assistant: 'Assistant',
     errorGeneric: 'Une erreur est survenue. Veuillez réessayer.',
     hint: 'p. ex. « le compte Kautex » ou « combien de Klasse A »',
