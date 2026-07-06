@@ -9,6 +9,7 @@ import {
   Wrench,
   BarChart3,
   Plus,
+  ArrowRightLeft,
   Loader2,
   Boxes,
   ShieldAlert,
@@ -29,6 +30,7 @@ import { useTranslation } from '../../i18n';
 import type { Stock as StockType, StockMovement, Depot, ProductCategory, StockCondition } from '../../types';
 import { compareCategoriesByPriority, compareProducts, epalClassRank } from '../../utils/productSort';
 import InProcessPanel from '../../components/stock/InProcessPanel';
+import StockConvertModal from '../../components/stock/StockConvertModal';
 import { isDamageLike } from '../../utils/epalClassification';
 
 interface CategoryProduct {
@@ -92,6 +94,7 @@ export default function CompanyStock() {
   const [tab, setTab] = useState<Tab>('active');
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showConvert, setShowConvert] = useState(false);
   const [reassignTarget, setReassignTarget] = useState<{ stockId: string; categoryId: string; depotName: string; quantity: number; condition: string } | null>(null);
   const [reassignProductId, setReassignProductId] = useState('');
   const [reassignSaving, setReassignSaving] = useState(false);
@@ -507,14 +510,41 @@ export default function CompanyStock() {
           <h1 className="text-2xl font-bold text-gray-900">{t('company.stock.title')}</h1>
           <p className="text-gray-500 mt-1">{t('company.stock.subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowRegisterModal(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          {t('companyAdmin.stock.registerStock')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowConvert(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-teal-300 text-teal-700 rounded-lg hover:bg-teal-50 transition-colors font-medium"
+          >
+            <ArrowRightLeft className="w-4 h-4" />
+            {t('company.stockConvert.title')}
+          </button>
+          <button
+            onClick={() => setShowRegisterModal(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            {t('companyAdmin.stock.registerStock')}
+          </button>
+        </div>
       </div>
+
+      {showConvert && profile?.company_id && (
+        <StockConvertModal
+          companyId={profile.company_id}
+          depots={depots.map((d) => ({ id: d.id, name: d.name }))}
+          rows={stocks.map((s) => ({
+            depot_id: s.depot_id,
+            category_id: s.category_id,
+            category_name: s.category?.name ?? null,
+            category_product_id: s.category_product_id,
+            product_name: s.product?.name ?? null,
+            condition: s.condition,
+            quantity: s.quantity,
+          }))}
+          onClose={() => setShowConvert(false)}
+          onDone={() => { void fetchAll(); }}
+        />
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">

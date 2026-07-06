@@ -5,6 +5,7 @@ import {
   X,
   Loader2,
   Plus,
+  ArrowRightLeft,
   ArrowUpCircle,
   ArrowDownCircle,
   Wrench,
@@ -24,6 +25,7 @@ import type { StockMovement, ProductCategory } from '../../types';
 import { compareCategoriesByPriority } from '../../utils/productSort';
 import PalletScanner from '../../components/scanner/PalletScanner';
 import ContactAutocomplete from '../../components/depot/ContactAutocomplete';
+import StockConvertModal from '../../components/stock/StockConvertModal';
 
 interface StockValueRow {
   company_id: string;
@@ -78,6 +80,7 @@ export default function DepotStock() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showConvert, setShowConvert] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [formType, setFormType] = useState<'entry' | 'exit' | 'repair'>('entry');
@@ -456,6 +459,12 @@ export default function DepotStock() {
             <ScanLine className="w-4 h-4" /> Scan
           </button>
           <button
+            onClick={() => setShowConvert(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 border border-teal-300 text-teal-700 rounded-lg hover:bg-teal-50 text-sm font-medium"
+          >
+            <ArrowRightLeft className="w-4 h-4" /> {t('company.stockConvert.title')}
+          </button>
+          <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-2 px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium"
           >
@@ -463,6 +472,16 @@ export default function DepotStock() {
           </button>
         </div>
       </div>
+
+      {showConvert && profile?.company_id && profile?.depot_id && (
+        <StockConvertModal
+          companyId={profile.company_id}
+          fixedDepotId={profile.depot_id}
+          rows={rows}
+          onClose={() => setShowConvert(false)}
+          onDone={() => { void fetchAll(); }}
+        />
+      )}
 
       <PalletScanner open={showScanner} onClose={() => setShowScanner(false)} onScan={handleScan} context="stock" title={t('common.scanPalletForStocktake')} />
 
