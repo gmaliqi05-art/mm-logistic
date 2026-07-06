@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react';
-import { Mic, X, Loader2, Send, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Mic, X, Loader2, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { interpretStockQuestion, type VoiceStockRow } from '../../utils/voiceStockQuery';
+import ManagerAvatar from './ManagerAvatar';
 
-/* Minimal typing for the browser Speech API (not in the standard lib types). */
 interface SpeechRecognitionLike {
   lang: string; continuous: boolean; interimResults: boolean; maxAlternatives: number;
   onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
@@ -16,6 +16,8 @@ interface SpeechRecognitionLike {
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
 const LANG_MAP: Record<string, string> = { sq: 'sq-AL', en: 'en-US', de: 'de-DE', fr: 'fr-FR' };
+const POS_KEY = 'mm-assistant-pos';
+const AV = 60; // avatar box size
 
 function getRecognitionCtor(): SpeechRecognitionCtor | null {
   const w = window as unknown as { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor };
@@ -23,16 +25,15 @@ function getRecognitionCtor(): SpeechRecognitionCtor | null {
 }
 
 interface ChatMessage { role: 'user' | 'assistant'; content: string }
-// deno / browser-agnostic loose typing for the agent preview payload
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Json = any;
 
-/**
- * Conversational company assistant. Sends the conversation to the `ai-agent`
- * edge function (which is company- and role-scoped server-side) and speaks the
- * reply. Falls back to the local stock interpreter when the AI backend is not
- * configured, so stock questions keep working. Input by voice or text.
- */
+function clampPos(x: number, y: number) {
+  const maxX = window.innerWidth - AV - 8;
+  const maxY = window.innerHeight - AV - 8;
+  return { x: Math.max(8, Math.min(x, maxX)), y: Math.max(8, Math.min(y, maxY)) };
+}
+
 export default function VoiceAssistant() {
   const { profile } = useAuth();
   const { t, language } = useTranslation();
@@ -42,15 +43,35 @@ export default function VoiceAssistant() {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  const [pos, setPos] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
+      if (saved && typeof saved.x === 'number') return clampPos(saved.x, saved.y);
+    } catch { /* ignore */ }
+    return { x: (typeof window !== 'undefined' ? window.innerWidth : 400) - AV - 16, y: (typeof window !== 'undefined' ? window.innerHeight : 800) - AV - 90 };
+  });
+  const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
 
   const speechSupported = getRecognitionCtor() !== null && typeof window.speechSynthesis !== 'undefined';
   const bcp47 = LANG_MAP[language] ?? 'en-US';
+  const active = listening || busy || speaking;
+  const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')?.content ?? '';
+
+  useEffect(() => {
+    const onResize = () => setPos((p) => clampPos(p.x, p.y));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   function speak(text: string) {
     try {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = bcp47;
+      u.onstart = () => setSpeaking(true);
+      u.onend = () => setSpeaking(false);
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     } catch { /* text is the fallback */ }
@@ -87,7 +108,6 @@ export default function VoiceAssistant() {
       const { data, error } = await supabase.functions.invoke('ai-agent', { body: { messages: nextMessages } });
       let answer: string;
       if (error || !data?.answer) {
-        // AI backend unavailable / not configured -> local stock fallback.
         answer = await localStockFallback(q);
       } else {
         answer = data.answer;
@@ -124,48 +144,86 @@ export default function VoiceAssistant() {
     try { rec.start(); } catch { setListening(false); }
   }
 
+  // --- draggable launcher ---
+  function onPointerDown(e: React.PointerEvent) {
+    drag.current = { active: true, moved: false, sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    if (!drag.current.active) return;
+    const dx = e.clientX - drag.current.sx;
+    const dy = e.clientY - drag.current.sy;
+    if (!drag.current.moved && Math.hypot(dx, dy) > 5) drag.current.moved = true;
+    if (drag.current.moved) setPos(clampPos(drag.current.ox + dx, drag.current.oy + dy));
+  }
+  function onPointerUp() {
+    if (!drag.current.active) return;
+    const moved = drag.current.moved;
+    drag.current.active = false;
+    if (moved) {
+      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch { /* ignore */ }
+    } else {
+      setOpen(true);
+    }
+  }
+
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
+      {/* Draggable manager launcher */}
+      <div
+        role="button"
         title={t('voice.title')}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-teal-600 text-white shadow-lg flex items-center justify-center hover:bg-teal-700 md:bottom-6"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        style={{ left: pos.x, top: pos.y, width: AV, height: AV, touchAction: 'none' }}
+        className="fixed z-40 rounded-full shadow-xl cursor-grab active:cursor-grabbing select-none ring-2 ring-white/70"
       >
-        <Sparkles className="w-6 h-6" />
-      </button>
+        <ManagerAvatar size={AV} />
+      </div>
 
+      {/* Centered manager while listening / thinking / speaking */}
+      {active && (
+        <div className="fixed inset-0 z-[55] flex flex-col items-center justify-center pointer-events-none">
+          <div className="relative flex items-center justify-center">
+            <span className={`absolute rounded-full bg-teal-400/30 ${listening ? 'animate-ping' : ''}`} style={{ width: 200, height: 200 }} />
+            <span className="absolute rounded-full bg-teal-500/10 animate-pulse" style={{ width: 260, height: 260 }} />
+            <div className="relative rounded-full shadow-2xl ring-4 ring-white/80">
+              <ManagerAvatar size={150} speaking={speaking} />
+            </div>
+          </div>
+          <div className="mt-6 max-w-xs text-center px-4">
+            <p className="text-sm font-medium text-slate-800 bg-white/85 backdrop-blur rounded-xl px-4 py-2 shadow">
+              {listening ? t('voice.listening') : busy ? t('voice.thinking') : lastAssistant}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Chat panel */}
       {open && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setOpen(false)}>
           <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md flex flex-col max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-teal-600" />
+                <ManagerAvatar size={28} />
                 <h2 className="text-base font-semibold text-slate-900">{t('voice.title')}</h2>
               </div>
               <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-6">{t('voice.hint')}</p>
-              )}
+              {messages.length === 0 && <p className="text-sm text-slate-400 text-center py-6">{t('voice.hint')}</p>}
               {messages.map((m, i) => (
-                <div key={i} className={`text-sm rounded-lg px-3 py-2 max-w-[85%] ${m.role === 'user' ? 'bg-teal-600 text-white ml-auto' : 'bg-slate-100 text-slate-800'}`}>
-                  {m.content}
-                </div>
+                <div key={i} className={`text-sm rounded-lg px-3 py-2 max-w-[85%] ${m.role === 'user' ? 'bg-teal-600 text-white ml-auto' : 'bg-slate-100 text-slate-800'}`}>{m.content}</div>
               ))}
               {busy && <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> {t('voice.thinking')}</div>}
-
               {preview && preview.map((block, i) => <PreviewBlock key={i} block={block} />)}
             </div>
 
             <div className="p-3 border-t border-slate-100 flex items-center gap-2">
               {speechSupported && (
-                <button
-                  onClick={startListening}
-                  disabled={busy}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                >
+                <button onClick={startListening} disabled={busy} className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${listening ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                   <Mic className="w-5 h-5" />
                 </button>
               )}
@@ -187,7 +245,6 @@ export default function VoiceAssistant() {
   );
 }
 
-/** Renders the first array found in a tool result as a compact table. */
 function PreviewBlock({ block }: { block: Json }) {
   const result = block?.result;
   if (!result || typeof result !== 'object') return null;
