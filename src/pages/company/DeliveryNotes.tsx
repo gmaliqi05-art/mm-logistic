@@ -220,6 +220,25 @@ export default function CompanyDeliveryNotes() {
     if (profile?.company_id) fetchAll();
   }, [profile?.company_id]);
 
+  // Deep-link params from the voice assistant: ?partner=X, ?type=delivery|pickup,
+  // ?new=1 (open the create form ready). Consumed once, then cleared.
+  useEffect(() => {
+    const partner = searchParams.get('partner');
+    const typeParam = searchParams.get('type');
+    const isNew = searchParams.get('new') === '1';
+    if (!partner && !typeParam && !isNew) return;
+    if (typeParam === 'delivery' || typeParam === 'pickup') setTabType(typeParam);
+    if (partner) setSearch(partner);
+    if (isNew) {
+      setForm({ ...emptyForm, type: typeParam === 'pickup' ? 'pickup' : 'delivery' });
+      setShowCreateModal(true);
+    }
+    const sp = new URLSearchParams(searchParams);
+    ['partner', 'type', 'new'].forEach((k) => sp.delete(k));
+    setSearchParams(sp, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   async function fetchAll() {
     try {
       setLoading(true);
