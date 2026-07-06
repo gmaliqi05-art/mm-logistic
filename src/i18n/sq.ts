@@ -1,4 +1,19 @@
 export const sq = {
+  voice: {
+    title: 'Asistenti zanor',
+    tapToSpeak: 'Shtyp dhe fol',
+    listening: 'Po degjoj...',
+    thinking: 'Po kontrolloj...',
+    youAsked: 'Ti pyete',
+    hint: 'p.sh. "sa Klasse A kemi ne stok"',
+    unsupported: 'Shfletuesi juaj nuk e mbeshtet njohjen e zerit. Provoni Chrome ne kompjuter ose Android.',
+    answer: {
+      youHave: 'Keni',
+      inStock: 'ne stok',
+      palletsTotal: 'paleta gjithsej',
+      unknown: 'Nuk e kuptova. Provo p.sh. "sa Klasse A kemi ne stok".',
+    },
+  },
   common: {
     confirmDeleteDocument: 'Fshi kete dokument?',
     confirmDelete: 'A je i sigurt?',
