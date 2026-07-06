@@ -239,8 +239,11 @@ export default function CompanyDeliveryNotes() {
     if (partner) setSearch(partner);
     if (isNew) {
       const prefilled: NoteForm = { ...emptyForm, type: typeParam === 'pickup' ? 'pickup' : 'delivery' };
-      const partnerName = partner || title;
-      if (partnerName) prefilled.partner_name = partnerName;
+      // "Titull / Identifikim" is the required note_number field; fill it from the
+      // spoken title (or the partner name if no title was given).
+      const titleVal = title || partner;
+      if (titleVal) prefilled.note_number = titleVal;
+      if (partner) prefilled.partner_name = partner;
       if (driverName) {
         const needle = driverName.toLowerCase();
         const match = drivers.find((d) => (d.full_name ?? '').toLowerCase().includes(needle));
