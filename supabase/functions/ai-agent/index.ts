@@ -259,8 +259,10 @@ const COMPANY_TOOLS: Tool[] = [
         "fleet", "trailers", "drivers", "compliance", "live_map", "route_planner", "depots", "categories", "client_prices",
         "hr", "hr_requests", "attendance", "work_hours", "financials", "audit_log", "worker_repair_stats",
       ] },
-      partner: { type: "string", description: "optional partner name to filter deliveries" },
+      partner: { type: "string", description: "optional partner name (filters deliveries; also pre-fills the partner on a new order)" },
       order_type: { type: "string", enum: ["delivery", "pickup"], description: "delivery = outgoing, pickup = incoming" },
+      driver: { type: "string", description: "optional driver name to pre-fill on a new order (new_order)" },
+      title: { type: "string", description: "optional title/subject to pre-fill as the partner on a new order (new_order)" },
     } },
     // deno-lint-ignore require-await
     run: async (_admin, _ctx, input) => {
@@ -277,7 +279,7 @@ const COMPANY_TOOLS: Tool[] = [
       const page = String(input?.page ?? "");
       const q = new URLSearchParams();
       let path = map[page] ?? "";
-      if (page === "new_order") { path = "/company/delivery-notes"; q.set("new", "1"); if (input?.order_type) q.set("type", String(input.order_type)); }
+      if (page === "new_order") { path = "/company/delivery-notes"; q.set("new", "1"); if (input?.order_type) q.set("type", String(input.order_type)); if (input?.partner) q.set("partner", String(input.partner)); if (input?.title) q.set("title", String(input.title)); if (input?.driver) q.set("driver", String(input.driver)); }
       else if (page === "deliveries") { if (input?.partner) q.set("partner", String(input.partner)); if (input?.order_type) q.set("type", String(input.order_type)); }
       if (!path) return { error: "unknown page" };
       const qs = q.toString();
@@ -420,7 +422,7 @@ Deno.serve(async (req) => {
   const system = isDepot
     ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You have FULL access to everything within this depot's privileges: stock on hand, incoming and outgoing deliveries/orders, stock movements (who registered them, which driver), sorting and repair tasks, damaged stock, and every depot page. All tool results are already restricted to THIS depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question only if truly needed. If a request is genuinely outside this depot's scope (e.g. company invoices, other depots), say it is not available here. Never invent data.`
     : `You are the MM Logistic manager assistant — working INSIDE the platform for the company "${companyName}". You have FULL access to everything for THIS company across every role and area: stock, orders and deliveries (incoming and outgoing), stock movements (who registered them and which driver), partner statements and pallet accounts, invoices and finances, fleet and drivers, compliance documents, and HR (leave, attendance). Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
-  const plain = " ACTIONS: When the user asks to OPEN, SHOW, START or CREATE anything (a page, a partner's orders, a new order, a new invoice), you MUST actually call the navigate_to tool in this same turn. NEVER say you have opened, created or started something unless you have just called navigate_to for it — do not fake it. Call the tool first, then briefly confirm in words what you are opening (e.g. 'Po hap faturën e re'). You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, warmly, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
+  const plain = " ACTIONS: When the user asks to OPEN, SHOW, START or CREATE anything (a page, a partner's orders, a new order, a new invoice), you MUST actually call the navigate_to tool in this same turn. NEVER say you have opened, created or started something unless you have just called navigate_to for it — do not fake it. Call the tool first, then briefly confirm in words what you are opening (e.g. 'Po hap faturën e re'). For a new order you can pre-fill it: pass the partner (or title) and the driver name to navigate_to with page 'new_order'; the form opens ready and the user confirms and saves it — you never claim the order is created, only that you opened it prepared. SPELLING: voice input often mis-hears names. If a partner or driver name does not exactly match, use search_partners (for partners) to find the closest real name, and if you find a near match, CONFIRM it in your reply before or while acting (e.g. user said 'kautes' → 'A e ke fjalën për Kautex? Po e hap porosinë për Kautex.'). Never invent a name; prefer the closest existing one and confirm. You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, warmly, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
   const systemFinal = system + plain;
 
   const anthropicTools = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));
