@@ -29,6 +29,7 @@ import { useCompanyBranding } from '../hooks/useCompanyBranding';
 import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import DeletionBanner from '../components/DeletionBanner';
+import VoiceAssistant from '../components/voice/VoiceAssistant';
 
 import type { Feature } from '../types';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -396,6 +397,7 @@ export default function DepotLayout() {
         </div>
       )}
 
+      <VoiceAssistant />
     </div>
   );
 }
