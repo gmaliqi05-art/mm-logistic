@@ -6,6 +6,7 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { useTranslation } from '../../i18n';
 import BackButton from '../../components/BackButton';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
+import VoiceWakeSettings from '../../components/voice/VoiceWakeSettings';
 import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCard';
 import LucidWarningBanner from '../../components/compliance/LucidWarningBanner';
 import { isLucidApplicable } from '../../utils/lucid';
@@ -544,7 +545,12 @@ export default function CompanySettings() {
             </div>
           )}
 
-          {tab === 'notifications' && <PushNotificationSettings />}
+          {tab === 'notifications' && (
+            <div className="space-y-4">
+              <VoiceWakeSettings />
+              <PushNotificationSettings />
+            </div>
+          )}
 
           {tab !== 'notifications' && tab !== 'compliance' && (
             <div className="flex justify-end pt-4 border-t border-gray-200">

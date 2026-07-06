@@ -126,6 +126,14 @@ export default function VoiceAssistant() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Keep the wake toggle in sync when it is changed from the Settings page.
+  useEffect(() => {
+    const sync = () => { try { setWakeOn(localStorage.getItem(WAKE_KEY) === '1'); } catch { /* ignore */ } };
+    window.addEventListener('mm-wake-changed', sync);
+    window.addEventListener('storage', sync);
+    return () => { window.removeEventListener('mm-wake-changed', sync); window.removeEventListener('storage', sync); };
+  }, []);
+
   // Clean up any in-flight speech / recognition when the widget unmounts.
   useEffect(() => () => {
     convoRef.current = false;

@@ -3,6 +3,7 @@ import { Settings as SettingsIcon, User, Bell, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import PushNotificationSettings from '../../components/PushNotificationSettings';
+import VoiceWakeSettings from '../../components/voice/VoiceWakeSettings';
 import { useTranslation } from '../../i18n';
 
 export default function DepotSettings() {
@@ -74,6 +75,7 @@ export default function DepotSettings() {
           <h2 className="text-sm font-semibold text-gray-900">Njoftimet Push</h2>
         </div>
         <div className="px-5 py-4">
+          <VoiceWakeSettings />
           <PushNotificationSettings />
         </div>
       </div>
