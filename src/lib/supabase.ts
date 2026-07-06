@@ -75,6 +75,9 @@ export const supabase = createClient(
   },
 );
 
+/** Base URL for edge functions, e.g. `${base}/tts`. Empty if misconfigured. */
+export const supabaseFunctionsBase = supabaseUrl ? `${supabaseUrl.replace(/\/$/, '')}/functions/v1` : '';
+
 export async function edgeFnHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token ?? supabaseAnonKey ?? '';
