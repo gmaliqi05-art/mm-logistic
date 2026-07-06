@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, X, Loader2, Send, Square } from 'lucide-react';
+import { Mic, X, Loader2, Send, Square, Ear } from 'lucide-react';
 import { supabase, supabaseFunctionsBase, edgeFnHeaders } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -20,7 +20,15 @@ type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
 const LANG_MAP: Record<string, string> = { sq: 'sq-AL', en: 'en-US', de: 'de-DE', fr: 'fr-FR' };
 const POS_KEY = 'mm-assistant-pos';
+const WAKE_KEY = 'mm-assistant-wake';
+const GREET_KEY = 'mm-assistant-greet-date';
 const AV = 60;
+
+// The spoken wake phrase that opens the assistant hands-free ("Hej Toni").
+function isWakePhrase(text: string): boolean {
+  const t = text.toLowerCase().replace(/[.,!?;:]/g, ' ').replace(/\s+/g, ' ').trim();
+  return /\b(hej|hey|he|o)\s+toni\b/.test(t) || /\btoni\s+(hej|hey)\b/.test(t);
+}
 
 function getRecognitionCtor(): SpeechRecognitionCtor | null {
   const w = window as unknown as { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor };
@@ -66,7 +74,11 @@ export default function VoiceAssistant() {
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [convo, setConvo] = useState(false);
+  const [wakeOn, setWakeOn] = useState(() => {
+    try { return localStorage.getItem(WAKE_KEY) === '1'; } catch { return false; }
+  });
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const wakeRecRef = useRef<SpeechRecognitionLike | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Which TTS engine to use: try ElevenLabs (human voice) first; if it is not
@@ -119,6 +131,7 @@ export default function VoiceAssistant() {
     convoRef.current = false;
     cancelSpeech();
     try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+    try { wakeRecRef.current?.stop(); } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -301,6 +314,61 @@ export default function VoiceAssistant() {
     startListening();
   }
 
+  // Open the assistant with a spoken greeting, then start the conversation. The
+  // first time each day it opens warmer ("how is your day"), otherwise a short
+  // "how can I help". Used by the wake word and can greet on manual open too.
+  function greetAndConverse() {
+    setOpen(true);
+    let firstToday = true;
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      firstToday = localStorage.getItem(GREET_KEY) !== today;
+      localStorage.setItem(GREET_KEY, today);
+    } catch { /* ignore */ }
+    const greeting = firstToday ? t('voice.greetingFirst') : t('voice.greeting');
+    setMessages((m) => [...m, { role: 'assistant', content: greeting }]);
+    // Enter conversation mode so the mic re-opens after the greeting is spoken.
+    convoRef.current = true;
+    setConvo(true);
+    void speak(greeting);
+  }
+
+  // Wake-word listener: while enabled and the assistant is idle, listen
+  // continuously for "Hej Toni" and open + greet when heard. Off by default
+  // (it keeps the mic on); the user enables it with the ear toggle.
+  useEffect(() => {
+    if (!wakeOn || !speechSupported) return;
+    if (active || open) return; // don't run the wake mic while busy/talking/open
+    const Ctor = getRecognitionCtor();
+    if (!Ctor) return;
+    let stopped = false;
+    const rec = new Ctor();
+    rec.lang = bcp47;
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => {
+      const res = e.results;
+      let text = '';
+      for (let i = 0; i < res.length; i++) text += ' ' + (res[i]?.[0]?.transcript ?? '');
+      if (isWakePhrase(text)) { stopped = true; try { rec.stop(); } catch { /* ignore */ } greetAndConverse(); }
+    };
+    rec.onerror = () => { /* auto-restarts via onend */ };
+    rec.onend = () => { if (!stopped) { try { rec.start(); } catch { /* ignore */ } } };
+    wakeRecRef.current = rec;
+    try { rec.start(); } catch { /* ignore */ }
+    return () => { stopped = true; try { rec.stop(); } catch { /* ignore */ } };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wakeOn, active, open, speechSupported, bcp47]);
+
+  function toggleWake() {
+    setWakeOn((on) => {
+      const next = !on;
+      try { localStorage.setItem(WAKE_KEY, next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
   function onPointerDown(e: React.PointerEvent) {
     drag.current = { active: true, moved: false, sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
     (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
@@ -318,6 +386,9 @@ export default function VoiceAssistant() {
     drag.current.active = false;
     if (moved) {
       try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch { /* ignore */ }
+    } else if (speechSupported) {
+      // A tap opens the assistant with a spoken greeting and starts talking.
+      greetAndConverse();
     } else {
       setOpen(true);
     }
@@ -369,7 +440,16 @@ export default function VoiceAssistant() {
             <div className="flex items-center gap-2">
               <ManagerAvatar size={26} />
               <span className="text-sm font-semibold text-slate-900">{t('voice.title')}</span>
-              <button onClick={() => { stop(); setOpen(false); }} className="ml-auto text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+              {speechSupported && (
+                <button
+                  onClick={toggleWake}
+                  title={t('voice.wake')}
+                  className={`ml-auto flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${wakeOn ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                >
+                  <Ear className="w-4 h-4" /> {wakeOn ? t('voice.wakeOn') : t('voice.wakeOff')}
+                </button>
+              )}
+              <button onClick={() => { stop(); setOpen(false); }} className={`${speechSupported ? '' : 'ml-auto'} text-slate-400 hover:text-slate-600`}><X className="w-5 h-5" /></button>
             </div>
             {lastAssistant && !active && (
               <p className="text-sm text-slate-700 bg-slate-50 rounded-lg px-3 py-2 max-h-24 overflow-y-auto">{lastAssistant}</p>

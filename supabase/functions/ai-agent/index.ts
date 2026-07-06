@@ -251,6 +251,30 @@ const COMPANY_TOOLS: Tool[] = [
     },
   },
   {
+    name: "get_worker_stats",
+    description: "Repair history and productivity for a specific depot worker BY NAME: total pallets repaired, total scrapped, number of jobs, and recent jobs. Use for 'sa paleta ka reparuar Idi', 'historiku i punetorit X', 'how many pallets did worker Y repair'.",
+    input_schema: { type: "object", required: ["worker"], properties: { worker: { type: "string" } } },
+    run: async (admin, ctx, input) => {
+      const name = String(input?.worker ?? "").trim();
+      if (!name) return { error: "worker name required" };
+      const { data: workers } = await admin.from("profiles").select("id, full_name").eq("company_id", ctx.companyId).ilike("full_name", `%${name}%`).limit(5);
+      if (!workers || workers.length === 0) return { found: false, worker: name };
+      const ids = (workers as Json[]).map((w) => w.id);
+      const { data: reps } = await admin.from("depot_repairs").select("worker_id, quantity_repaired, quantity_scrapped, logged_at, category_products(name)").eq("company_id", ctx.companyId).in("worker_id", ids).order("logged_at", { ascending: false }).limit(300);
+      const stats = (workers as Json[]).map((w) => {
+        const rows = ((reps ?? []) as Json[]).filter((r) => r.worker_id === w.id);
+        return {
+          worker: w.full_name,
+          total_repaired: rows.reduce((s, r) => s + (r.quantity_repaired ?? 0), 0),
+          total_scrapped: rows.reduce((s, r) => s + (r.quantity_scrapped ?? 0), 0),
+          jobs: rows.length,
+          recent: rows.slice(0, 5).map((r) => ({ product: r.category_products?.name ?? "—", repaired: r.quantity_repaired, scrapped: r.quantity_scrapped, date: r.logged_at })),
+        };
+      });
+      return { workers: stats };
+    },
+  },
+  {
     name: "navigate_to",
     description: "Open a page in the app for the user (they can then see or act on it). Use whenever the user asks to open/show a page, a partner's orders, or to start something new. 'deliveries' can be filtered by partner and by type (delivery=outgoing, pickup=incoming). 'new_order' opens the create-order form ready. 'new_invoice' opens the create-invoice form ready. You MUST call this tool to actually open anything — describing it in words does NOT open it.",
     input_schema: { type: "object", required: ["page"], properties: {
@@ -363,6 +387,30 @@ const DEPOT_TOOLS: Tool[] = [
     run: async (admin, ctx) => {
       const { data } = await admin.from("stock").select("quantity, category_products(name)").eq("company_id", ctx.companyId).eq("depot_id", ctx.depotId).eq("condition", "damaged").gt("quantity", 0);
       return { damaged: (data ?? []).map((r: Json) => ({ product: r.category_products?.name ?? "—", quantity: r.quantity })) };
+    },
+  },
+  {
+    name: "get_worker_stats",
+    description: "Repair history for a worker in THIS depot BY NAME: total pallets repaired, scrapped, jobs, and recent jobs. Use for 'sa paleta ka reparuar Idi', 'historiku i punetorit X'.",
+    input_schema: { type: "object", required: ["worker"], properties: { worker: { type: "string" } } },
+    run: async (admin, ctx, input) => {
+      const name = String(input?.worker ?? "").trim();
+      if (!name) return { error: "worker name required" };
+      const { data: workers } = await admin.from("profiles").select("id, full_name").eq("company_id", ctx.companyId).eq("depot_id", ctx.depotId).ilike("full_name", `%${name}%`).limit(5);
+      if (!workers || workers.length === 0) return { found: false, worker: name };
+      const ids = (workers as Json[]).map((w) => w.id);
+      const { data: reps } = await admin.from("depot_repairs").select("worker_id, quantity_repaired, quantity_scrapped, logged_at, category_products(name)").eq("company_id", ctx.companyId).eq("depot_id", ctx.depotId).in("worker_id", ids).order("logged_at", { ascending: false }).limit(300);
+      const stats = (workers as Json[]).map((w) => {
+        const rows = ((reps ?? []) as Json[]).filter((r) => r.worker_id === w.id);
+        return {
+          worker: w.full_name,
+          total_repaired: rows.reduce((s, r) => s + (r.quantity_repaired ?? 0), 0),
+          total_scrapped: rows.reduce((s, r) => s + (r.quantity_scrapped ?? 0), 0),
+          jobs: rows.length,
+          recent: rows.slice(0, 5).map((r) => ({ product: r.category_products?.name ?? "—", repaired: r.quantity_repaired, scrapped: r.quantity_scrapped, date: r.logged_at })),
+        };
+      });
+      return { workers: stats };
     },
   },
   {
