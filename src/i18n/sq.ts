@@ -2,6 +2,7 @@ export const sq = {
   voice: {
     title: 'Asistenti zanor',
     tapToSpeak: 'Shtyp dhe fol',
+    speakLang: 'Flas:',
     listening: 'Po degjoj...',
     thinking: 'Po kontrolloj...',
     youAsked: 'Ti pyete',
