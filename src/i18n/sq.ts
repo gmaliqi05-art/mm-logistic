@@ -7,6 +7,7 @@ export const sq = {
     youAsked: 'Ti pyete',
     placeholder: 'Shkruaj ose fol...',
     send: 'Dergo',
+    stop: 'Ndalo',
     assistant: 'Asistenti',
     errorGeneric: 'Ndodhi nje gabim. Provo perseri.',
     hint: 'p.sh. "gjendja me Kautex" ose "sa Klasse A kemi"',

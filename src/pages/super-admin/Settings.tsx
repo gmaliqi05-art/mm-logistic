@@ -12,6 +12,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
+import AiAssistantConfig from '../../components/superadmin/AiAssistantConfig';
 
 interface PlatformSettings {
   platformName: string;
@@ -88,6 +89,8 @@ export default function SuperAdminSettings() {
           {saving ? t('common.processing') : saved ? t('common.save') : t('common.saveChanges')}
         </button>
       </div>
+
+      <AiAssistantConfig />
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">

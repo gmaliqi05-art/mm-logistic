@@ -195,9 +195,12 @@ Deno.serve(async (req) => {
   if (!authResult.ok) return authResult.res;
   const { companyId, depotId, role, admin } = authResult.caller;
 
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!apiKey) return json(503, { error: "AI assistant not configured. Set ANTHROPIC_API_KEY in project secrets." });
-  const model = Deno.env.get("ANTHROPIC_MODEL") || DEFAULT_MODEL;
+  // Config comes from the super-admin-managed ai_config table first, then env.
+  const { data: cfg } = await admin.from("ai_config").select("anthropic_api_key, model, enabled").eq("id", true).maybeSingle();
+  if (cfg && cfg.enabled === false) return json(503, { error: "AI assistant is disabled by the administrator." });
+  const apiKey = (cfg?.anthropic_api_key && cfg.anthropic_api_key.length > 0) ? cfg.anthropic_api_key : Deno.env.get("ANTHROPIC_API_KEY");
+  if (!apiKey) return json(503, { error: "AI assistant not configured. Set the Anthropic API key in Super Admin settings." });
+  const model = (cfg?.model && cfg.model.length > 0) ? cfg.model : (Deno.env.get("ANTHROPIC_MODEL") || DEFAULT_MODEL);
 
   let body: Json;
   try { body = await req.json(); } catch { return json(400, { error: "Invalid JSON" }); }
@@ -219,6 +222,8 @@ Deno.serve(async (req) => {
   const system = isDepot
     ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You ONLY help with operations in THIS depot: stock on hand, incoming deliveries, sorting/repair tasks, and damaged stock. All tool results are already restricted to this depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question if needed. If a request is outside this depot's scope (e.g. invoices, other depots), say it is not available here. Never invent data.`
     : `You are the MM Logistic assistant — a manager working INSIDE the platform for the company "${companyName}". You answer logistics, depot, fleet and accounting questions FOR THIS COMPANY ONLY. Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
+  const plain = " IMPORTANT: reply in plain conversational text that will be READ ALOUD. Do NOT use any markdown or symbols: no asterisks (**), no bullet points, no headings, no backticks. Write short natural sentences.";
+  const systemFinal = system + plain;
 
   const anthropicTools = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));
   const convo: Json[] = messages.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
@@ -229,7 +234,7 @@ Deno.serve(async (req) => {
       const resp = await fetch(ANTHROPIC_URL, {
         method: "POST",
         headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-        body: JSON.stringify({ model, max_tokens: 1024, system, tools: anthropicTools, messages: convo }),
+        body: JSON.stringify({ model, max_tokens: 1024, system: systemFinal, tools: anthropicTools, messages: convo }),
       });
       if (!resp.ok) {
         console.error("anthropic error", resp.status, await resp.text());
