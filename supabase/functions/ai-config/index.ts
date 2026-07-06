@@ -45,11 +45,13 @@ async function requireSuperAdmin(req: Request): Promise<{ ok: true; admin: Supab
 }
 
 async function readStatus(admin: SupabaseClient) {
-  const { data } = await admin.from("ai_config").select("anthropic_api_key, model, enabled").eq("id", true).maybeSingle();
+  const { data } = await admin.from("ai_config").select("anthropic_api_key, model, enabled, elevenlabs_api_key, elevenlabs_voice_id").eq("id", true).maybeSingle();
   return {
     configured: !!(data?.anthropic_api_key && data.anthropic_api_key.length > 0),
     model: data?.model ?? "claude-haiku-4-5-20251001",
     enabled: data?.enabled ?? true,
+    voice_configured: !!(data?.elevenlabs_api_key && data.elevenlabs_api_key.length > 0),
+    voice_id: data?.elevenlabs_voice_id ?? "JBFqnCBsd6RMkjVDRZzb",
   };
 }
 
@@ -73,6 +75,8 @@ Deno.serve(async (req) => {
     if (typeof body?.api_key === "string" && body.api_key.trim().length > 0) update.anthropic_api_key = body.api_key.trim();
     if (typeof body?.model === "string" && body.model.trim().length > 0) update.model = body.model.trim();
     if (typeof body?.enabled === "boolean") update.enabled = body.enabled;
+    if (typeof body?.elevenlabs_api_key === "string" && body.elevenlabs_api_key.trim().length > 0) update.elevenlabs_api_key = body.elevenlabs_api_key.trim();
+    if (typeof body?.elevenlabs_voice_id === "string" && body.elevenlabs_voice_id.trim().length > 0) update.elevenlabs_voice_id = body.elevenlabs_voice_id.trim();
 
     const { error } = await admin.from("ai_config").upsert(update, { onConflict: "id" });
     if (error) return json(500, { error: "Failed to save config" });

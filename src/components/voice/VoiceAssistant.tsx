@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, X, Loader2, Send, Square } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseFunctionsBase, edgeFnHeaders } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { interpretStockQuestion, type VoiceStockRow } from '../../utils/voiceStockQuery';
@@ -68,6 +68,10 @@ export default function VoiceAssistant() {
   const [convo, setConvo] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Which TTS engine to use: try ElevenLabs (human voice) first; if it is not
+  // configured or fails, fall back to the browser voice for the rest of the session.
+  const ttsModeRef = useRef<'unknown' | 'eleven' | 'browser'>('unknown');
   // Refs mirror state for use inside speech/recognition callbacks (which close
   // over stale state otherwise).
   const convoRef = useRef(false);
@@ -113,33 +117,80 @@ export default function VoiceAssistant() {
   // Clean up any in-flight speech / recognition when the widget unmounts.
   useEffect(() => () => {
     convoRef.current = false;
-    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    cancelSpeech();
     try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Stop whatever is currently speaking, whichever engine produced it.
+  function cancelSpeech() {
+    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    const a = audioRef.current;
+    if (a) { try { a.pause(); a.onended = null; a.src = ''; } catch { /* ignore */ } }
+  }
+
+  // When a spoken reply finishes: drop the speaking state and, in hands-free
+  // conversation mode, re-open the mic so the user just keeps talking.
+  function onSpeechEnd() {
+    setSpeaking(false);
+    if (convoRef.current) setTimeout(() => startListening(), 300);
+  }
+
   /**
-   * Speak a response as naturally as we can, and — when we are in hands-free
-   * conversation mode — automatically re-open the mic once we finish so the
-   * user can simply keep talking (no button press), just like a real dialogue.
+   * Speak via ElevenLabs (human neural voice). Returns false if it is not
+   * configured or fails, so the caller can fall back to the browser voice.
    */
-  function speak(text: string) {
+  async function speakEleven(text: string): Promise<boolean> {
+    if (!supabaseFunctionsBase) return false;
+    try {
+      const resp = await fetch(`${supabaseFunctionsBase}/tts`, {
+        method: 'POST',
+        headers: await edgeFnHeaders(),
+        body: JSON.stringify({ text, lang: language }),
+      });
+      if (!resp.ok) return false;
+      const buf = await resp.arrayBuffer();
+      if (!buf.byteLength) return false;
+      const url = URL.createObjectURL(new Blob([buf], { type: 'audio/mpeg' }));
+      const audio = audioRef.current ?? new Audio();
+      audioRef.current = audio;
+      audio.src = url;
+      audio.onplay = () => setSpeaking(true);
+      audio.onended = () => { URL.revokeObjectURL(url); onSpeechEnd(); };
+      audio.onerror = () => { setSpeaking(false); };
+      await audio.play();
+      return true;
+    } catch { return false; }
+  }
+
+  // Browser speech synthesis — the fallback voice (slower rate + warm pitch).
+  function speakBrowser(text: string) {
     try {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = bcp47;
       if (voiceRef.current) u.voice = voiceRef.current;
-      // Slightly slower than default with a warm pitch reads far less robotic.
       u.rate = 0.96;
       u.pitch = 1.04;
       u.volume = 1;
       u.onstart = () => setSpeaking(true);
-      u.onend = () => {
-        setSpeaking(false);
-        // Hands-free: keep the conversation going without a button.
-        if (convoRef.current) setTimeout(() => startListening(), 300);
-      };
+      u.onend = onSpeechEnd;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     } catch { /* text is the fallback */ }
+  }
+
+  /**
+   * Speak a response as naturally as we can. Prefer the ElevenLabs human voice;
+   * if it is unavailable, use the browser voice for the rest of the session.
+   */
+  async function speak(text: string) {
+    cancelSpeech();
+    if (ttsModeRef.current !== 'browser') {
+      const ok = await speakEleven(text);
+      if (ok) { ttsModeRef.current = 'eleven'; return; }
+      ttsModeRef.current = 'browser';
+    }
+    speakBrowser(text);
   }
 
   // Full stop — used by the Stop button, the voice "ndalu/stop" command, and
@@ -147,7 +198,7 @@ export default function VoiceAssistant() {
   function stop() {
     convoRef.current = false;
     setConvo(false);
-    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    cancelSpeech();
     setSpeaking(false);
     try { recognitionRef.current?.stop(); } catch { /* ignore */ }
     setListening(false);
@@ -176,7 +227,7 @@ export default function VoiceAssistant() {
     const q = text.trim();
     if (!q || busy) return;
     // Barge-in: cut any current speech the moment the user sends.
-    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    cancelSpeech();
     setSpeaking(false);
     const nextMessages: ChatMessage[] = [...messagesRef.current, { role: 'user', content: q }];
     setMessages(nextMessages);
@@ -197,7 +248,7 @@ export default function VoiceAssistant() {
       }
       const clean = stripMarkdown(answer);
       setMessages([...nextMessages, { role: 'assistant', content: clean }]);
-      speak(clean);
+      void speak(clean);
       if (navPath) {
         // Give the confirmation a beat to start, then open the page.
         setTimeout(() => { navigate(navPath!); setOpen(false); }, 250);
@@ -205,7 +256,7 @@ export default function VoiceAssistant() {
     } catch {
       const answer = stripMarkdown(await localStockFallback(q).catch(() => t('voice.errorGeneric')));
       setMessages([...nextMessages, { role: 'assistant', content: answer }]);
-      speak(answer);
+      void speak(answer);
     } finally {
       setBusy(false);
     }
@@ -219,7 +270,7 @@ export default function VoiceAssistant() {
     if (!Ctor) return;
     if (busy) return;
     // Barge-in: if the assistant is speaking, stop it and listen.
-    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    cancelSpeech();
     setSpeaking(false);
     const rec = new Ctor();
     rec.lang = bcp47;

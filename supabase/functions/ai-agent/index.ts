@@ -26,7 +26,7 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 */
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+const DEFAULT_MODEL = "claude-opus-4-8";
 const MAX_TOOL_ROUNDS = 6;
 const ALLOWED_ROLES = ["company_admin", "accountant", "super_admin", "depot_worker"];
 
@@ -252,10 +252,10 @@ const COMPANY_TOOLS: Tool[] = [
   },
   {
     name: "navigate_to",
-    description: "Open a page in the app for the user (they can then see or act on it). Use whenever the user asks to open/show a page, a partner's orders, or to start a new order. 'deliveries' can be filtered by partner and by type (delivery=outgoing, pickup=incoming). 'new_order' opens the create form ready.",
+    description: "Open a page in the app for the user (they can then see or act on it). Use whenever the user asks to open/show a page, a partner's orders, or to start something new. 'deliveries' can be filtered by partner and by type (delivery=outgoing, pickup=incoming). 'new_order' opens the create-order form ready. 'new_invoice' opens the create-invoice form ready. You MUST call this tool to actually open anything — describing it in words does NOT open it.",
     input_schema: { type: "object", required: ["page"], properties: {
       page: { type: "string", enum: [
-        "stock", "deliveries", "repairs", "sorting", "pallet_accounts", "partners", "reports", "invoices", "new_order",
+        "stock", "deliveries", "repairs", "sorting", "pallet_accounts", "partners", "reports", "invoices", "new_order", "new_invoice",
         "fleet", "trailers", "drivers", "compliance", "live_map", "route_planner", "depots", "categories", "client_prices",
         "hr", "hr_requests", "attendance", "work_hours", "financials", "audit_log", "worker_repair_stats",
       ] },
@@ -267,7 +267,7 @@ const COMPANY_TOOLS: Tool[] = [
       const map: Record<string, string> = {
         stock: "/company/stock", deliveries: "/company/delivery-notes", repairs: "/company/repair-reports",
         sorting: "/company/sorting", pallet_accounts: "/company/pallet-accounts", partners: "/company/partners",
-        reports: "/company/reports", invoices: "/company/invoices", fleet: "/company/vehicles",
+        reports: "/company/reports", invoices: "/company/invoices", new_invoice: "/company/invoices/new", fleet: "/company/vehicles",
         trailers: "/company/trailers", drivers: "/company/drivers", compliance: "/company/compliance",
         live_map: "/company/live-map", route_planner: "/company/route-planner", depots: "/company/depots",
         categories: "/company/categories", client_prices: "/company/client-prices", hr: "/company/hr",
@@ -420,7 +420,7 @@ Deno.serve(async (req) => {
   const system = isDepot
     ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You have FULL access to everything within this depot's privileges: stock on hand, incoming and outgoing deliveries/orders, stock movements (who registered them, which driver), sorting and repair tasks, damaged stock, and every depot page. All tool results are already restricted to THIS depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question only if truly needed. If a request is genuinely outside this depot's scope (e.g. company invoices, other depots), say it is not available here. Never invent data.`
     : `You are the MM Logistic manager assistant — working INSIDE the platform for the company "${companyName}". You have FULL access to everything for THIS company across every role and area: stock, orders and deliveries (incoming and outgoing), stock movements (who registered them and which driver), partner statements and pallet accounts, invoices and finances, fleet and drivers, compliance documents, and HR (leave, attendance). Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
-  const plain = " When the user asks to OPEN or SHOW a page, a partner's orders, or to START a new order, call the navigate_to tool and briefly confirm in words what you are opening (e.g. 'Po hap dërgesat për Kautex'). You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
+  const plain = " ACTIONS: When the user asks to OPEN, SHOW, START or CREATE anything (a page, a partner's orders, a new order, a new invoice), you MUST actually call the navigate_to tool in this same turn. NEVER say you have opened, created or started something unless you have just called navigate_to for it — do not fake it. Call the tool first, then briefly confirm in words what you are opening (e.g. 'Po hap faturën e re'). You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, warmly, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
   const systemFinal = system + plain;
 
   const anthropicTools = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));
