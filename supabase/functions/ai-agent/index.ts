@@ -137,6 +137,27 @@ const COMPANY_TOOLS: Tool[] = [
       return { debtors: (data ?? []).map((r: Json) => ({ partner: r.acc_contacts?.name ?? "—", pallet_type: r.pallet_type, balance: r.current_balance })) };
     },
   },
+  {
+    name: "navigate_to",
+    description: "Open a page in the app for the user (they can then see or act on it). Use when the user asks to open/show a page, a partner's orders, or to start a new order. 'deliveries' can be filtered by partner and by type (delivery=outgoing, pickup=incoming). 'new_order' opens the create form ready.",
+    input_schema: { type: "object", required: ["page"], properties: {
+      page: { type: "string", enum: ["stock", "deliveries", "repairs", "sorting", "pallet_accounts", "partners", "reports", "invoices", "new_order"] },
+      partner: { type: "string", description: "optional partner name to filter deliveries" },
+      order_type: { type: "string", enum: ["delivery", "pickup"], description: "delivery = outgoing, pickup = incoming" },
+    } },
+    // deno-lint-ignore require-await
+    run: async (_admin, _ctx, input) => {
+      const map: Record<string, string> = { stock: "/company/stock", deliveries: "/company/delivery-notes", repairs: "/company/repair-reports", sorting: "/company/sorting", pallet_accounts: "/company/pallet-accounts", partners: "/company/partners", reports: "/company/reports", invoices: "/company/financial-summary" };
+      const page = String(input?.page ?? "");
+      const q = new URLSearchParams();
+      let path = map[page] ?? "";
+      if (page === "new_order") { path = "/company/delivery-notes"; q.set("new", "1"); if (input?.order_type) q.set("type", String(input.order_type)); }
+      else if (page === "deliveries") { if (input?.partner) q.set("partner", String(input.partner)); if (input?.order_type) q.set("type", String(input.order_type)); }
+      if (!path) return { error: "unknown page" };
+      const qs = q.toString();
+      return { navigate: qs ? `${path}?${qs}` : path, page };
+    },
+  },
 ];
 
 // ---- Depot tools (depot_worker) — hard-scoped to the worker's own depot ----
@@ -185,6 +206,21 @@ const DEPOT_TOOLS: Tool[] = [
       return { damaged: (data ?? []).map((r: Json) => ({ product: r.category_products?.name ?? "—", quantity: r.quantity })) };
     },
   },
+  {
+    name: "navigate_to",
+    description: "Open a page in THIS depot's app for the user. Use when they ask to open/show a depot page or start receiving new goods.",
+    input_schema: { type: "object", required: ["page"], properties: {
+      page: { type: "string", enum: ["stock", "receiving", "outgoing", "sorting", "repairs", "damage", "reports", "deliveries", "new_order"] },
+    } },
+    // deno-lint-ignore require-await
+    run: async (_admin, _ctx, input) => {
+      const map: Record<string, string> = { stock: "/depot/stock", receiving: "/depot/receiving", outgoing: "/depot/outgoing", sorting: "/depot/sorting", repairs: "/depot/repairs", damage: "/depot/damage", reports: "/depot/reports", deliveries: "/depot/delivery-notes", new_order: "/depot/receiving" };
+      const page = String(input?.page ?? "");
+      const path = map[page];
+      if (!path) return { error: "unknown page" };
+      return { navigate: path, page };
+    },
+  },
 ];
 
 Deno.serve(async (req) => {
@@ -222,7 +258,7 @@ Deno.serve(async (req) => {
   const system = isDepot
     ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You ONLY help with operations in THIS depot: stock on hand, incoming deliveries, sorting/repair tasks, and damaged stock. All tool results are already restricted to this depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question if needed. If a request is outside this depot's scope (e.g. invoices, other depots), say it is not available here. Never invent data.`
     : `You are the MM Logistic assistant — a manager working INSIDE the platform for the company "${companyName}". You answer logistics, depot, fleet and accounting questions FOR THIS COMPANY ONLY. Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
-  const plain = " IMPORTANT: reply in plain conversational text that will be READ ALOUD. Do NOT use any markdown or symbols: no asterisks (**), no bullet points, no headings, no backticks. Write short natural sentences.";
+  const plain = " When the user asks to OPEN or SHOW a page, a partner's orders, or to START a new order, call the navigate_to tool and briefly confirm in words what you are opening (e.g. 'Po hap dërgesat për Kautex'). You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD. Do NOT use any markdown or symbols: no asterisks (**), no bullet points, no headings, no backticks. Write short natural sentences.";
   const systemFinal = system + plain;
 
   const anthropicTools = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));
