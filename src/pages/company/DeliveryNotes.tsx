@@ -221,23 +221,39 @@ export default function CompanyDeliveryNotes() {
   }, [profile?.company_id]);
 
   // Deep-link params from the voice assistant: ?partner=X, ?type=delivery|pickup,
-  // ?new=1 (open the create form ready). Consumed once, then cleared.
+  // ?new=1 (open the create form ready), ?driver=Name, ?title=X (prefill the
+  // partner/customer). The form opens pre-filled; the user still confirms and
+  // submits it — nothing is created automatically. Consumed once, then cleared.
   useEffect(() => {
     const partner = searchParams.get('partner');
     const typeParam = searchParams.get('type');
     const isNew = searchParams.get('new') === '1';
-    if (!partner && !typeParam && !isNew) return;
+    const driverName = searchParams.get('driver');
+    const title = searchParams.get('title');
+    if (!partner && !typeParam && !isNew && !driverName && !title) return;
+    // If we need to resolve a driver by name but the drivers list has not
+    // loaded yet, wait for it (this effect re-runs when `drivers` changes)
+    // instead of consuming the params with an unmatched driver.
+    if (driverName && drivers.length === 0) return;
     if (typeParam === 'delivery' || typeParam === 'pickup') setTabType(typeParam);
     if (partner) setSearch(partner);
     if (isNew) {
-      setForm({ ...emptyForm, type: typeParam === 'pickup' ? 'pickup' : 'delivery' });
+      const prefilled: NoteForm = { ...emptyForm, type: typeParam === 'pickup' ? 'pickup' : 'delivery' };
+      const partnerName = partner || title;
+      if (partnerName) prefilled.partner_name = partnerName;
+      if (driverName) {
+        const needle = driverName.toLowerCase();
+        const match = drivers.find((d) => (d.full_name ?? '').toLowerCase().includes(needle));
+        if (match) prefilled.assigned_driver_id = match.id;
+      }
+      setForm(prefilled);
       setShowCreateModal(true);
     }
     const sp = new URLSearchParams(searchParams);
-    ['partner', 'type', 'new'].forEach((k) => sp.delete(k));
+    ['partner', 'type', 'new', 'driver', 'title'].forEach((k) => sp.delete(k));
     setSearchParams(sp, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, drivers]);
 
   async function fetchAll() {
     try {
