@@ -5,7 +5,11 @@ export const sq = {
     listening: 'Po degjoj...',
     thinking: 'Po kontrolloj...',
     youAsked: 'Ti pyete',
-    hint: 'p.sh. "sa Klasse A kemi ne stok"',
+    placeholder: 'Shkruaj ose fol...',
+    send: 'Dergo',
+    assistant: 'Asistenti',
+    errorGeneric: 'Ndodhi nje gabim. Provo perseri.',
+    hint: 'p.sh. "gjendja me Kautex" ose "sa Klasse A kemi"',
     unsupported: 'Shfletuesi juaj nuk e mbeshtet njohjen e zerit. Provoni Chrome ne kompjuter ose Android.',
     answer: {
       youHave: 'Keni',
