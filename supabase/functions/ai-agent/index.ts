@@ -251,6 +251,34 @@ const COMPANY_TOOLS: Tool[] = [
     },
   },
   {
+    name: "get_uninvoiced_deliveries",
+    description: "Outgoing delivery notes that do NOT yet have an invoice, newest first. Optional partner filter. Use for 'which delivery notes are not invoiced yet', 'the last delivery for Kautex we have not invoiced'. Each item includes a delivery_note_id to pass to navigate_to page 'new_invoice' to open an invoice pre-filled from that delivery note.",
+    input_schema: { type: "object", properties: { partner: { type: "string" } } },
+    run: async (admin, ctx, input) => {
+      let q = admin.from("delivery_notes").select("id, note_number, document_number, partner_name, delivered_at, created_at").eq("company_id", ctx.companyId).is("acc_invoice_id", null).eq("type", "delivery").order("created_at", { ascending: false }).limit(15);
+      if (input?.partner) q = q.ilike("partner_name", `%${String(input.partner)}%`);
+      const { data } = await q;
+      return { uninvoiced: (data ?? []).map((r: Json) => ({ delivery_note_id: r.id, note: r.note_number ?? r.document_number ?? "—", partner: r.partner_name, date: r.delivered_at ?? r.created_at })) };
+    },
+  },
+  {
+    name: "get_driver_activity",
+    description: "What a specific driver (BY NAME) has delivered or picked up — their delivery notes, newest first. Optional direction (delivery=outgoing, pickup=incoming). Use for 'which deliveries did driver Gentoni do', 'cili shofer solli mallin e Kautex'.",
+    input_schema: { type: "object", required: ["driver"], properties: { driver: { type: "string" }, direction: { type: "string", enum: ["delivery", "pickup"] } } },
+    run: async (admin, ctx, input) => {
+      const name = String(input?.driver ?? "").trim();
+      if (!name) return { error: "driver name required" };
+      const { data: drivers } = await admin.from("profiles").select("id, full_name").eq("company_id", ctx.companyId).eq("role", "driver").ilike("full_name", `%${name}%`).limit(5);
+      if (!drivers || drivers.length === 0) return { found: false, driver: name };
+      const nameById: Record<string, string> = {};
+      for (const d of drivers as Json[]) nameById[d.id] = d.full_name;
+      let q = admin.from("delivery_notes").select("note_number, type, partner_name, status, delivered_at, created_at, assigned_driver_id").eq("company_id", ctx.companyId).in("assigned_driver_id", Object.keys(nameById)).order("created_at", { ascending: false }).limit(20);
+      if (input?.direction) q = q.eq("type", String(input.direction));
+      const { data } = await q;
+      return { driver: Object.values(nameById).join(", "), activity: (data ?? []).map((r: Json) => ({ note: r.note_number, type: r.type, partner: r.partner_name, status: r.status, driver: nameById[r.assigned_driver_id] ?? "—", date: r.delivered_at ?? r.created_at })) };
+    },
+  },
+  {
     name: "get_worker_stats",
     description: "Repair history and productivity for a specific depot worker BY NAME: total pallets repaired, total scrapped, number of jobs, and recent jobs. Use for 'sa paleta ka reparuar Idi', 'historiku i punetorit X', 'how many pallets did worker Y repair'.",
     input_schema: { type: "object", required: ["worker"], properties: { worker: { type: "string" } } },
@@ -287,6 +315,7 @@ const COMPANY_TOOLS: Tool[] = [
       order_type: { type: "string", enum: ["delivery", "pickup"], description: "delivery = outgoing, pickup = incoming" },
       driver: { type: "string", description: "optional driver name to pre-fill on a new order (new_order)" },
       title: { type: "string", description: "optional title/subject to pre-fill as the partner on a new order (new_order)" },
+      delivery_note_id: { type: "string", description: "optional delivery note id to pre-fill a new invoice from (use with page new_invoice; get it from get_uninvoiced_deliveries)" },
     } },
     // deno-lint-ignore require-await
     run: async (_admin, _ctx, input) => {
@@ -304,6 +333,7 @@ const COMPANY_TOOLS: Tool[] = [
       const q = new URLSearchParams();
       let path = map[page] ?? "";
       if (page === "new_order") { path = "/company/delivery-notes"; q.set("new", "1"); if (input?.order_type) q.set("type", String(input.order_type)); if (input?.partner) q.set("partner", String(input.partner)); if (input?.title) q.set("title", String(input.title)); if (input?.driver) q.set("driver", String(input.driver)); }
+      else if (page === "new_invoice") { path = "/company/invoices/new"; if (input?.delivery_note_id) q.set("delivery_note_id", String(input.delivery_note_id)); }
       else if (page === "deliveries") { if (input?.partner) q.set("partner", String(input.partner)); if (input?.order_type) q.set("type", String(input.order_type)); }
       if (!path) return { error: "unknown page" };
       const qs = q.toString();
@@ -470,7 +500,7 @@ Deno.serve(async (req) => {
   const system = isDepot
     ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You have FULL access to everything within this depot's privileges: stock on hand, incoming and outgoing deliveries/orders, stock movements (who registered them, which driver), sorting and repair tasks, damaged stock, and every depot page. All tool results are already restricted to THIS depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question only if truly needed. If a request is genuinely outside this depot's scope (e.g. company invoices, other depots), say it is not available here. Never invent data.`
     : `You are the MM Logistic manager assistant — working INSIDE the platform for the company "${companyName}". You have FULL access to everything for THIS company across every role and area: stock, orders and deliveries (incoming and outgoing), stock movements (who registered them and which driver), partner statements and pallet accounts, invoices and finances, fleet and drivers, compliance documents, and HR (leave, attendance). Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
-  const plain = " ACTIONS: When the user asks to OPEN, SHOW, START or CREATE anything (a page, a partner's orders, a new order, a new invoice), you MUST actually call the navigate_to tool in this same turn. NEVER say you have opened, created or started something unless you have just called navigate_to for it — do not fake it. Call the tool first, then briefly confirm in words what you are opening (e.g. 'Po hap faturën e re'). For a new order you can pre-fill it: pass the partner (or title) and the driver name to navigate_to with page 'new_order'; the form opens ready and the user confirms and saves it — you never claim the order is created, only that you opened it prepared. SPELLING: voice input often mis-hears names. If a partner or driver name does not exactly match, use search_partners (for partners) to find the closest real name, and if you find a near match, CONFIRM it in your reply before or while acting (e.g. user said 'kautes' → 'A e ke fjalën për Kautex? Po e hap porosinë për Kautex.'). Never invent a name; prefer the closest existing one and confirm. You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, warmly, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
+  const plain = " ACTIONS: When the user asks to OPEN, SHOW, START or CREATE anything (a page, a partner's orders, a new order, a new invoice), you MUST actually call the navigate_to tool in this same turn. NEVER say you have opened, created or started something unless you have just called navigate_to for it — do not fake it. Call the tool first, then briefly confirm in words what you are opening (e.g. 'Po hap faturën e re'). For a new order you can pre-fill it: pass the partner (or title) and the driver name to navigate_to with page 'new_order'; the form opens ready and the user confirms and saves it — you never claim the order is created, only that you opened it prepared. INVOICING: to make an invoice from a delivery note, first call get_uninvoiced_deliveries (optionally by partner) to find delivery notes without an invoice. If the user asked for 'the last one' and there is a clear newest match, use it; if several are relevant, briefly list them and ASK which one. Then call navigate_to with page 'new_invoice' and that delivery_note_id — the invoice opens pre-filled from the delivery note for the user to confirm and save. SPELLING: voice input often mis-hears names. If a partner or driver name does not exactly match, use search_partners (for partners) to find the closest real name, and if you find a near match, CONFIRM it in your reply before or while acting (e.g. user said 'kautes' → 'A e ke fjalën për Kautex? Po e hap porosinë për Kautex.'). Never invent a name; prefer the closest existing one and confirm. You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, warmly, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
   const systemFinal = system + plain;
 
   const anthropicTools = tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));
