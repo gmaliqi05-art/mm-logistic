@@ -1,6 +1,21 @@
 import type { sq } from './sq';
 
 export const fr: typeof sq = {
+  voice: {
+    title: 'Assistant vocal',
+    tapToSpeak: 'Appuyez et parlez',
+    listening: 'J\'écoute...',
+    thinking: 'Vérification...',
+    youAsked: 'Vous avez demandé',
+    hint: 'p. ex. « combien de Klasse A en stock »',
+    unsupported: 'Votre navigateur ne prend pas en charge la reconnaissance vocale. Essayez Chrome sur ordinateur ou Android.',
+    answer: {
+      youHave: 'Vous avez',
+      inStock: 'en stock',
+      palletsTotal: 'palettes au total',
+      unknown: 'Je n\'ai pas compris. Essayez p. ex. « combien de Klasse A en stock ».',
+    },
+  },
   common: {
     confirmDeleteDocument: 'Supprimer ce document ?',
     confirmDelete: '\u00cates-vous s\u00fbr ?',
