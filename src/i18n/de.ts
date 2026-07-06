@@ -9,6 +9,7 @@ export const de: typeof sq = {
     youAsked: 'Sie fragten',
     placeholder: 'Tippen oder sprechen...',
     send: 'Senden',
+    stop: 'Stopp',
     assistant: 'Assistent',
     errorGeneric: 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
     hint: 'z. B. "das Kautex-Konto" oder "wie viele Klasse A"',

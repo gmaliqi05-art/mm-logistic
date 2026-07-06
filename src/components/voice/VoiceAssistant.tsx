@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import { interpretStockQuestion, type VoiceStockRow } from '../../utils/voiceStockQuery';
+import { stripMarkdown } from '../../utils/stripMarkdown';
 import ManagerAvatar from './ManagerAvatar';
 
 interface SpeechRecognitionLike {
@@ -113,15 +114,23 @@ export default function VoiceAssistant() {
         answer = data.answer;
         if (Array.isArray(data.data) && data.data.length > 0) setPreview(data.data);
       }
-      setMessages([...nextMessages, { role: 'assistant', content: answer }]);
-      speak(answer);
+      const clean = stripMarkdown(answer);
+      setMessages([...nextMessages, { role: 'assistant', content: clean }]);
+      speak(clean);
     } catch {
-      const answer = await localStockFallback(q).catch(() => t('voice.errorGeneric'));
+      const answer = stripMarkdown(await localStockFallback(q).catch(() => t('voice.errorGeneric')));
       setMessages([...nextMessages, { role: 'assistant', content: answer }]);
       speak(answer);
     } finally {
       setBusy(false);
     }
+  }
+
+  function stop() {
+    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    setSpeaking(false);
+    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+    setListening(false);
   }
 
   function startListening() {
@@ -197,6 +206,9 @@ export default function VoiceAssistant() {
               {listening ? t('voice.listening') : busy ? t('voice.thinking') : lastAssistant}
             </p>
           </div>
+          <button onClick={stop} className="pointer-events-auto mt-4 px-5 py-2 rounded-full bg-rose-500 text-white text-sm font-medium shadow-lg hover:bg-rose-600">
+            {t('voice.stop')}
+          </button>
         </div>
       )}
 
