@@ -79,6 +79,9 @@ export default function VoiceAssistant() {
   });
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const wakeRecRef = useRef<SpeechRecognitionLike | null>(null);
+  // While true the wake-word listener must NOT hold the mic (a conversation is
+  // using it). Prevents two microphones running at once on mobile.
+  const suppressWakeRef = useRef(false);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Which TTS engine to use: try ElevenLabs (human voice) first; if it is not
@@ -223,6 +226,8 @@ export default function VoiceAssistant() {
     setSpeaking(false);
     try { recognitionRef.current?.stop(); } catch { /* ignore */ }
     setListening(false);
+    // Let the wake-word listener take the mic back (once the bar is idle/closed).
+    suppressWakeRef.current = false;
   }
 
   async function localStockFallback(question: string): Promise<string> {
@@ -294,25 +299,32 @@ export default function VoiceAssistant() {
     // Barge-in: if the assistant is speaking, stop it and listen.
     cancelSpeech();
     setSpeaking(false);
-    const rec = new Ctor();
-    rec.lang = bcp47;
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e) => {
-      const said = e.results?.[0]?.[0]?.transcript ?? '';
-      setListening(false);
-      if (!said) return;
-      // Voice-activated stop: saying "ndalu / stop / halt / arrête" ends the
-      // conversation instead of being sent as a question.
-      if (isStopCommand(said, language)) { stop(); return; }
-      void send(said);
-    };
-    rec.onerror = () => setListening(false);
-    rec.onend = () => setListening(false);
-    recognitionRef.current = rec;
+    // Free the wake-word mic first — two mics at once break recognition on mobile.
+    suppressWakeRef.current = true;
+    try { wakeRecRef.current?.stop(); } catch { /* ignore */ }
     setListening(true);
-    try { rec.start(); } catch { setListening(false); }
+    const begin = () => {
+      const rec = new Ctor();
+      rec.lang = bcp47;
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onresult = (e) => {
+        const said = e.results?.[0]?.[0]?.transcript ?? '';
+        setListening(false);
+        if (!said) return;
+        // Voice-activated stop: saying "ndalu / stop / halt / arrête" ends the
+        // conversation instead of being sent as a question.
+        if (isStopCommand(said, language)) { stop(); return; }
+        void send(said);
+      };
+      rec.onerror = () => setListening(false);
+      rec.onend = () => setListening(false);
+      recognitionRef.current = rec;
+      try { rec.start(); } catch { setListening(false); }
+    };
+    // Small delay so the wake mic fully releases before we grab it again.
+    setTimeout(begin, 300);
   }
 
   // Tapping the mic opens hands-free conversation mode and starts listening.
@@ -328,6 +340,9 @@ export default function VoiceAssistant() {
   // "how can I help". Used by the wake word and can greet on manual open too.
   function greetAndConverse() {
     setOpen(true);
+    // The conversation now owns the mic — keep the wake listener off.
+    suppressWakeRef.current = true;
+    try { wakeRecRef.current?.stop(); } catch { /* ignore */ }
     let firstToday = true;
     try {
       const today = new Date().toISOString().slice(0, 10);
@@ -363,7 +378,9 @@ export default function VoiceAssistant() {
       if (isWakePhrase(text)) { stopped = true; try { rec.stop(); } catch { /* ignore */ } greetAndConverse(); }
     };
     rec.onerror = () => { /* auto-restarts via onend */ };
-    rec.onend = () => { if (!stopped) { try { rec.start(); } catch { /* ignore */ } } };
+    // Only auto-restart if this listener is still wanted AND a conversation is
+    // not using the mic (prevents a second microphone starting).
+    rec.onend = () => { if (!stopped && !suppressWakeRef.current && !convoRef.current) { try { rec.start(); } catch { /* ignore */ } } };
     wakeRecRef.current = rec;
     try { rec.start(); } catch { /* ignore */ }
     return () => { stopped = true; try { rec.stop(); } catch { /* ignore */ } };
