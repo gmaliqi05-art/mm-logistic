@@ -54,6 +54,8 @@ interface MovementRow {
   movement_date: string;
   performed_by?: string | null;
   performed_by_full_name?: string | null;
+  driver_id?: string | null;
+  driver_full_name?: string | null;
   source_partner?: string | null;
   source_contact_id?: string | null;
   source_contact_name?: string | null;
@@ -354,7 +356,7 @@ export default function CompanyReports() {
       ]);
       exportToCsv(headers, rows, 'stoku_kompanise');
     } else if (activeTab === 'movements') {
-      const headers = ['Data', 'Burimi', 'Tipi', 'Sasi', 'Gjendja', 'Depoja', 'Punetori', 'Nga / Per', 'Flow'];
+      const headers = ['Data', 'Burimi', 'Tipi', 'Sasi', 'Gjendja', 'Depoja', 'Punetori', 'Shoferi', 'Nga / Per', 'Flow'];
       const rows = filteredMovements.map(r => [
         new Date(r.movement_date).toLocaleString(),
         r.source_type,
@@ -363,6 +365,7 @@ export default function CompanyReports() {
         conditionLabel(r.condition),
         depots.find(d => d.id === r.depot_id)?.name ?? '',
         r.performed_by_full_name ?? '',
+        r.driver_full_name ?? '',
         r.source_contact_name ?? r.source_partner ?? '',
         r.flow_role ?? '',
       ]);
@@ -584,6 +587,7 @@ export default function CompanyReports() {
                     <th className="text-left px-3 py-2">Gjendja</th>
                     <th className="text-left px-3 py-2">Depoja</th>
                     <th className="text-left px-3 py-2">{t('common.punetori')}</th>
+                    <th className="text-left px-3 py-2">{t('common.shoferi')}</th>
                     <th className="text-left px-3 py-2">{t('common.fromTo')}</th>
                     <th className="text-right px-3 py-2">{t('common.sasi')}</th>
                     <th className="text-left px-3 py-2">Flow</th>
@@ -600,6 +604,7 @@ export default function CompanyReports() {
                       <td className="px-3 py-2 text-gray-700">{conditionLabel(m.condition)}</td>
                       <td className="px-3 py-2 text-gray-700">{depots.find(d => d.id === m.depot_id)?.name ?? '—'}</td>
                       <td className="px-3 py-2 text-gray-700">{m.performed_by_full_name ?? '—'}</td>
+                      <td className="px-3 py-2 text-gray-700">{m.driver_full_name ?? '—'}</td>
                       <td className="px-3 py-2 text-gray-700">
                         {m.source_contact_name ?? m.source_partner ?? '—'}
                         {m.source_contact_id && (
