@@ -255,7 +255,8 @@ export default function VoiceAssistant() {
     setInput('');
     setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-agent', { body: { messages: nextMessages } });
+      // Deployed under the slug "MML-Agent" in Supabase (see supabase/functions/ai-agent).
+      const { data, error } = await supabase.functions.invoke('MML-Agent', { body: { messages: nextMessages } });
       let answer: string;
       let navPath: string | null = null;
       if (error || !data?.answer) {
