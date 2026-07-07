@@ -19,8 +19,11 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   ChevronDown,
+  ChevronRight,
   Building2,
   Layers,
+  Truck,
+  Calendar,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -916,7 +919,7 @@ export default function CompanyDeliveryNotes() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
@@ -941,7 +944,11 @@ export default function CompanyDeliveryNotes() {
                 </tr>
               ) : (
                 displayed.map((note) => (
-                  <tr key={note.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={note.id}
+                    onClick={() => openDetail(note)}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       <div className="flex items-center gap-2">
                         {(note as any).document_number || note.note_number}
@@ -991,7 +998,7 @@ export default function CompanyDeliveryNotes() {
                       {new Date(note.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => openDetail(note)}
                           className="p-2 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
@@ -1020,6 +1027,78 @@ export default function CompanyDeliveryNotes() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile: tap-to-open cards. The table hides too much on small screens
+            (driver, date, address), so on mobile we show a richer, tappable
+            card per order that opens the full detail. */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {displayed.length === 0 ? (
+            <div className="px-4 py-12 text-center text-gray-400">
+              <FileText className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+              {t('company.deliveryNotes.noNotes')}
+            </div>
+          ) : (
+            displayed.map((note) => {
+              const address = note.type === 'delivery' ? note.delivery_address : note.pickup_address;
+              const driverName = (note.driver as any)?.full_name as string | undefined;
+              return (
+                <div
+                  key={note.id}
+                  onClick={() => openDetail(note)}
+                  className="px-4 py-3 active:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-gray-900 truncate">
+                          {(note as any).document_number || note.note_number}
+                        </span>
+                        {(note as any).attachment_url && <File className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />}
+                      </div>
+                      <p className="text-sm text-gray-700 truncate mt-0.5">{(note as any).partner_name || '—'}</p>
+                    </div>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium flex-shrink-0 ${statusConfig[note.status]?.className ?? 'bg-gray-100 text-gray-600'}`}>
+                      {statusConfig[note.status]?.label ?? note.status}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
+                  </div>
+
+                  <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${typeConfig[note.type]?.className ?? ''}`}>
+                      {typeConfig[note.type]?.label ?? note.type}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Truck className="w-3.5 h-3.5 text-gray-400" />
+                      {driverName || '—'}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                      {new Date(note.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {address && (
+                    <p className="flex items-center gap-1 text-xs text-gray-400 mt-1 truncate">
+                      <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{address}</span>
+                    </p>
+                  )}
+
+                  {note.status === 'draft' && note.assigned_driver_id && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); sendToDriver(note); }}
+                      disabled={sendingId === note.id}
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+                    >
+                      {sendingId === note.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                      {t('company.deliveryNotes.sendToDriver')}
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
