@@ -316,6 +316,7 @@ const COMPANY_TOOLS: Tool[] = [
       order_type: { type: "string", enum: ["delivery", "pickup"], description: "delivery = outgoing, pickup = incoming" },
       driver: { type: "string", description: "optional driver name to pre-fill on a new order (new_order)" },
       title: { type: "string", description: "optional title/subject to pre-fill as the partner on a new order (new_order)" },
+      items: { type: "array", description: "new_order: item lines to pre-fill — products by name with quantities (and optional condition good|damaged)", items: { type: "object", properties: { name: { type: "string" }, qty: { type: "number" }, condition: { type: "string", enum: ["good", "damaged"] } } } },
       delivery_note_id: { type: "string", description: "optional delivery note id to pre-fill a new invoice from (use with page new_invoice; get it from get_uninvoiced_deliveries)" },
     } },
     // deno-lint-ignore require-await
@@ -340,7 +341,7 @@ const COMPANY_TOOLS: Tool[] = [
       const page = String(input?.page ?? "");
       const q = new URLSearchParams();
       let path = map[page] ?? "";
-      if (page === "new_order") { path = "/company/delivery-notes"; q.set("new", "1"); if (input?.order_type) q.set("type", String(input.order_type)); if (input?.partner) q.set("partner", String(input.partner)); if (input?.title) q.set("title", String(input.title)); if (input?.driver) q.set("driver", String(input.driver)); }
+      if (page === "new_order") { path = "/company/delivery-notes"; q.set("new", "1"); if (input?.order_type) q.set("type", String(input.order_type)); if (input?.partner) q.set("partner", String(input.partner)); if (input?.title) q.set("title", String(input.title)); if (input?.driver) q.set("driver", String(input.driver)); if (Array.isArray(input?.items) && input.items.length) { const items = input.items.map((it: Json) => ({ name: String(it?.name ?? ""), qty: Math.max(0, Math.floor(Number(it?.qty) || 0)), condition: it?.condition === "damaged" ? "damaged" : "good" })).filter((it: Json) => it.name); if (items.length) q.set("items", JSON.stringify(items)); } }
       else if (page === "new_invoice") { path = "/company/invoices/new"; if (input?.delivery_note_id) q.set("delivery_note_id", String(input.delivery_note_id)); }
       else if (page === "deliveries") { if (input?.partner) q.set("partner", String(input.partner)); if (input?.order_type) q.set("type", String(input.order_type)); }
       if (!path) return { error: "unknown page" };
