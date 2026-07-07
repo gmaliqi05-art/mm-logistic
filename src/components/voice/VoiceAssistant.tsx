@@ -19,7 +19,12 @@ interface SpeechRecognitionLike {
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
 const LANG_MAP: Record<string, string> = { sq: 'sq-AL', en: 'en-US', de: 'de-DE', fr: 'fr-FR' };
+type Lang = 'sq' | 'en' | 'de' | 'fr';
+const LANGS: { code: Lang; label: string }[] = [
+  { code: 'sq', label: 'SQ' }, { code: 'en', label: 'EN' }, { code: 'de', label: 'DE' }, { code: 'fr', label: 'FR' },
+];
 const POS_KEY = 'mm-assistant-pos';
+const LANG_KEY = 'mm-assistant-lang';
 const WAKE_KEY = 'mm-assistant-wake';
 const GREET_KEY = 'mm-assistant-greet-date';
 const AV = 60;
@@ -77,6 +82,16 @@ export default function VoiceAssistant() {
   const [wakeOn, setWakeOn] = useState(() => {
     try { return localStorage.getItem(WAKE_KEY) === '1'; } catch { return false; }
   });
+  // The language the user SPEAKS to the assistant. Browsers can't auto-detect
+  // spoken language, so the user picks it; it drives speech recognition + TTS.
+  // Defaults to the app UI language. (Typed text is auto-detected by the agent.)
+  const [speakLang, setSpeakLang] = useState<Lang>(() => {
+    try {
+      const saved = localStorage.getItem(LANG_KEY) as Lang | null;
+      if (saved && LANGS.some((l) => l.code === saved)) return saved;
+    } catch { /* ignore */ }
+    return (['sq', 'en', 'de', 'fr'].includes(language) ? language : 'sq') as Lang;
+  });
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const wakeRecRef = useRef<SpeechRecognitionLike | null>(null);
   // While true the wake-word listener must NOT hold the mic (a conversation is
@@ -103,7 +118,12 @@ export default function VoiceAssistant() {
   const drag = useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
 
   const speechSupported = getRecognitionCtor() !== null && typeof window.speechSynthesis !== 'undefined';
-  const bcp47 = LANG_MAP[language] ?? 'en-US';
+  const bcp47 = LANG_MAP[speakLang] ?? 'en-US';
+
+  function pickLang(code: Lang) {
+    setSpeakLang(code);
+    try { localStorage.setItem(LANG_KEY, code); } catch { /* ignore */ }
+  }
   const active = listening || busy || speaking;
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')?.content ?? '';
 
@@ -113,15 +133,15 @@ export default function VoiceAssistant() {
     const pick = () => {
       const vs = window.speechSynthesis.getVoices();
       const scored = vs
-        .map((v) => ({ v, s: scoreVoice(v, bcp47, language) }))
+        .map((v) => ({ v, s: scoreVoice(v, bcp47, speakLang) }))
         .filter((x) => x.s > 0)
         .sort((a, b) => b.s - a.s);
-      voiceRef.current = scored[0]?.v ?? vs.find((v) => v.lang.toLowerCase().startsWith(language)) ?? null;
+      voiceRef.current = scored[0]?.v ?? vs.find((v) => v.lang.toLowerCase().startsWith(speakLang)) ?? null;
     };
     pick();
     window.speechSynthesis.onvoiceschanged = pick;
     return () => { window.speechSynthesis.onvoiceschanged = null; };
-  }, [bcp47, language]);
+  }, [bcp47, speakLang]);
 
   useEffect(() => {
     const onResize = () => setPos((p) => clampPos(p.x, p.y));
@@ -261,7 +281,7 @@ export default function VoiceAssistant() {
     setBusy(true);
     try {
       // Deployed under the slug "MML-Agent" in Supabase (see supabase/functions/ai-agent).
-      const { data, error } = await supabase.functions.invoke('MML-Agent', { body: { messages: nextMessages } });
+      const { data, error } = await supabase.functions.invoke('MML-Agent', { body: { messages: nextMessages, lang: speakLang } });
       let answer: string;
       let navPath: string | null = null;
       if (error || !data?.answer) {
@@ -476,6 +496,18 @@ export default function VoiceAssistant() {
                 </button>
               )}
               <button onClick={() => { stop(); setOpen(false); }} className={`${speechSupported ? '' : 'ml-auto'} text-slate-400 hover:text-slate-600`}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] text-slate-400 mr-1">{t('voice.speakLang')}</span>
+              {LANGS.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => pickLang(l.code)}
+                  className={`text-xs font-semibold px-2 py-0.5 rounded-md ${speakLang === l.code ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                >
+                  {l.label}
+                </button>
+              ))}
             </div>
             {lastAssistant && !active && (
               <p className="text-sm text-slate-700 bg-slate-50 rounded-lg px-3 py-2 max-h-24 overflow-y-auto">{lastAssistant}</p>

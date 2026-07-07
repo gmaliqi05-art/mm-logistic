@@ -307,9 +307,10 @@ const COMPANY_TOOLS: Tool[] = [
     description: "Open a page in the app for the user (they can then see or act on it). Use whenever the user asks to open/show a page, a partner's orders, or to start something new. 'deliveries' can be filtered by partner and by type (delivery=outgoing, pickup=incoming). 'new_order' opens the create-order form ready. 'new_invoice' opens the create-invoice form ready. You MUST call this tool to actually open anything — describing it in words does NOT open it.",
     input_schema: { type: "object", required: ["page"], properties: {
       page: { type: "string", enum: [
-        "stock", "deliveries", "repairs", "sorting", "pallet_accounts", "partners", "reports", "invoices", "new_order", "new_invoice",
-        "fleet", "trailers", "drivers", "compliance", "live_map", "route_planner", "depots", "categories", "client_prices",
-        "hr", "hr_requests", "attendance", "work_hours", "financials", "audit_log", "worker_repair_stats",
+        "stock", "deliveries", "repairs", "sorting", "sorting_reports", "pallet_accounts", "partners", "partner_flows", "reports", "invoices", "new_order", "new_invoice",
+        "fleet", "fleet_reports", "fleet_scans", "trailers", "drivers", "compliance", "live_map", "route_planner", "depots", "categories", "client_prices",
+        "hr", "hr_requests", "attendance", "work_hours", "hr_reports", "hr_leave", "financials", "audit_log", "audit_report", "worker_repair_stats",
+        "documents", "review", "overdue", "stock_alerts", "data_export", "chat", "email", "settings", "manual",
       ] },
       partner: { type: "string", description: "optional partner name (filters deliveries; also pre-fills the partner on a new order)" },
       order_type: { type: "string", enum: ["delivery", "pickup"], description: "delivery = outgoing, pickup = incoming" },
@@ -321,13 +322,20 @@ const COMPANY_TOOLS: Tool[] = [
     run: async (_admin, _ctx, input) => {
       const map: Record<string, string> = {
         stock: "/company/stock", deliveries: "/company/delivery-notes", repairs: "/company/repair-reports",
-        sorting: "/company/sorting", pallet_accounts: "/company/pallet-accounts", partners: "/company/partners",
+        sorting: "/company/sorting", sorting_reports: "/company/sorting-reports", pallet_accounts: "/company/pallet-accounts",
+        partners: "/company/partners", partner_flows: "/company/partner-flows",
         reports: "/company/reports", invoices: "/company/invoices", new_invoice: "/company/invoices/new", fleet: "/company/vehicles",
+        fleet_reports: "/company/fleet-reports", fleet_scans: "/company/fleet-scans",
         trailers: "/company/trailers", drivers: "/company/drivers", compliance: "/company/compliance",
         live_map: "/company/live-map", route_planner: "/company/route-planner", depots: "/company/depots",
         categories: "/company/categories", client_prices: "/company/client-prices", hr: "/company/hr",
         hr_requests: "/company/hr/requests", attendance: "/company/hr/attendance", work_hours: "/company/hr/work-hours",
-        financials: "/company/financial-summary", audit_log: "/company/audit-log", worker_repair_stats: "/company/worker-repair-stats",
+        hr_reports: "/company/hr/reports", hr_leave: "/company/hr/leave",
+        financials: "/company/financial-summary", audit_log: "/company/audit-log", audit_report: "/company/audit-report",
+        worker_repair_stats: "/company/worker-repair-stats",
+        documents: "/company/documents", review: "/company/review", overdue: "/company/overdue",
+        stock_alerts: "/company/stock-alerts", data_export: "/company/data-export", chat: "/company/chat",
+        email: "/company/email/templates", settings: "/company/settings", manual: "/company/manual",
       };
       const page = String(input?.page ?? "");
       const q = new URLSearchParams();
@@ -445,21 +453,36 @@ const DEPOT_TOOLS: Tool[] = [
   },
   {
     name: "navigate_to",
-    description: "Open a page in THIS depot's app for the user. Use whenever they ask to open/show a depot page or start receiving new goods.",
+    description: "Open a page in THIS depot's app for the user. Use whenever they ask to open/show a depot page or start receiving new goods. SORTING FILL: for page 'sorting' you can pre-fill the in-progress batch's quantities — pass a (Klasse A), b (Klasse B), c (Klasse C), d (Defekt) as numbers; the form opens with those numbers so the user can review and edit. Pass save=true ONLY when the user explicitly says to save/complete to stock (e.g. 'ruaj ne stok'). You MUST call this tool to actually open or fill anything.",
     input_schema: { type: "object", required: ["page"], properties: {
-      page: { type: "string", enum: ["stock", "receiving", "outgoing", "sorting", "repairs", "repair_workers", "damage", "reports", "deliveries", "trailers", "documents", "attendance", "work_hours", "leave", "new_order"] },
+      page: { type: "string", enum: ["stock", "receiving", "outgoing", "sorting", "sorting_reports", "repairs", "repair_workers", "damage", "reports", "deliveries", "trailers", "documents", "attendance", "work_hours", "leave", "chat", "settings", "manual", "new_order"] },
+      a: { type: "number", description: "Klasse A quantity (sorting)" },
+      b: { type: "number", description: "Klasse B quantity (sorting)" },
+      c: { type: "number", description: "Klasse C quantity (sorting)" },
+      d: { type: "number", description: "Defekt quantity (sorting)" },
+      save: { type: "boolean", description: "sorting: complete/save the batch to stock (only when the user says to save)" },
     } },
     // deno-lint-ignore require-await
     run: async (_admin, _ctx, input) => {
       const map: Record<string, string> = {
         stock: "/depot/stock", receiving: "/depot/receiving", outgoing: "/depot/outgoing", sorting: "/depot/sorting",
-        repairs: "/depot/repairs", repair_workers: "/depot/repair-workers", damage: "/depot/damage", reports: "/depot/reports",
-        deliveries: "/depot/delivery-notes", trailers: "/depot/trailers", documents: "/depot/documents",
-        attendance: "/depot/attendance", work_hours: "/depot/work-hours", leave: "/depot/leave", new_order: "/depot/receiving",
+        sorting_reports: "/depot/sorting", repairs: "/depot/repairs", repair_workers: "/depot/repair-workers", damage: "/depot/damage",
+        reports: "/depot/reports", deliveries: "/depot/delivery-notes", trailers: "/depot/trailers", documents: "/depot/documents",
+        attendance: "/depot/attendance", work_hours: "/depot/work-hours", leave: "/depot/leave", chat: "/depot/chat",
+        settings: "/depot/settings", manual: "/depot/manual", new_order: "/depot/receiving",
       };
       const page = String(input?.page ?? "");
       const path = map[page];
       if (!path) return { error: "unknown page" };
+      if (page === "sorting") {
+        const q = new URLSearchParams();
+        for (const k of ["a", "b", "c", "d"] as const) {
+          if (input?.[k] !== undefined && input?.[k] !== null) q.set(k, String(Math.max(0, Math.floor(Number(input[k]) || 0))));
+        }
+        if (input?.save === true) q.set("save", "1");
+        const qs = q.toString();
+        return { navigate: qs ? `${path}?${qs}` : path, page };
+      }
       return { navigate: path, page };
     },
   },
@@ -498,7 +521,7 @@ Deno.serve(async (req) => {
   }
 
   const system = isDepot
-    ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You have FULL access to everything within this depot's privileges: stock on hand, incoming and outgoing deliveries/orders, stock movements (who registered them, which driver), sorting and repair tasks, damaged stock, and every depot page. All tool results are already restricted to THIS depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question only if truly needed. If a request is genuinely outside this depot's scope (e.g. company invoices, other depots), say it is not available here. Never invent data.`
+    ? `You are the depot assistant for the depot "${depotName}" at company "${companyName}". You have FULL access to everything within this depot's privileges: stock on hand, incoming and outgoing deliveries/orders, stock movements (who registered them, which driver), sorting and repair tasks, damaged stock, and every depot page. All tool results are already restricted to THIS depot — never claim to access other depots, other companies, or company-wide finances. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete. Ask ONE short clarifying question only if truly needed. If a request is genuinely outside this depot's scope (e.g. company invoices, other depots), say it is not available here. Never invent data. SORTING: when the user dictates class quantities (e.g. "A 30, B 60, C 20, defekt 10") call navigate_to page 'sorting' with a/b/c/d so the numbers appear in the form; tell them to review, and only pass save=true when they explicitly say to save/complete to stock.`
     : `You are the MM Logistic manager assistant — working INSIDE the platform for the company "${companyName}". You have FULL access to everything for THIS company across every role and area: stock, orders and deliveries (incoming and outgoing), stock movements (who registered them and which driver), partner statements and pallet accounts, invoices and finances, fleet and drivers, compliance documents, and HR (leave, attendance). Use the tools to look up data; all tool results are already restricted to this company — never claim to access or compare other companies. Reply in the SAME language as the user's latest message (Albanian, English, German or French). Be concise and concrete: cite numbers, partner names and dates. If a request is ambiguous (e.g. which partner), ask ONE short clarifying question. If no tool covers the request, say so briefly. Never invent data.`;
   const plain = " ACTIONS: When the user asks to OPEN, SHOW, START or CREATE anything (a page, a partner's orders, a new order, a new invoice), you MUST actually call the navigate_to tool in this same turn. NEVER say you have opened, created or started something unless you have just called navigate_to for it — do not fake it. Call the tool first, then briefly confirm in words what you are opening (e.g. 'Po hap faturën e re'). For a new order you can pre-fill it: pass the partner (or title) and the driver name to navigate_to with page 'new_order'; the form opens ready and the user confirms and saves it — you never claim the order is created, only that you opened it prepared. INVOICING: to make an invoice from a delivery note, first call get_uninvoiced_deliveries (optionally by partner) to find delivery notes without an invoice. If the user asked for 'the last one' and there is a clear newest match, use it; if several are relevant, briefly list them and ASK which one. Then call navigate_to with page 'new_invoice' and that delivery_note_id — the invoice opens pre-filled from the delivery note for the user to confirm and save. SPELLING: voice input often mis-hears names. If a partner or driver name does not exactly match, use search_partners (for partners) to find the closest real name, and if you find a near match, CONFIRM it in your reply before or while acting (e.g. user said 'kautes' → 'A e ke fjalën për Kautex? Po e hap porosinë për Kautex.'). Never invent a name; prefer the closest existing one and confirm. You may look up data AND navigate in the same turn. IMPORTANT: reply in plain conversational text that will be READ ALOUD to the user. Speak naturally, warmly, like a helpful colleague talking, not like a report. Do NOT use any markdown or symbols: no asterisks, no bullet points, no headings, no backticks. Keep sentences short and natural.";
   const systemFinal = system + plain;

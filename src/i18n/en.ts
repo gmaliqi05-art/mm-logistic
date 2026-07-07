@@ -4,6 +4,7 @@ export const en: typeof sq = {
   voice: {
     title: 'Voice assistant',
     tapToSpeak: 'Tap and speak',
+    speakLang: 'I speak:',
     listening: 'Listening...',
     thinking: 'Checking...',
     youAsked: 'You asked',
