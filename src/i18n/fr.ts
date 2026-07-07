@@ -1470,7 +1470,7 @@ export const fr: typeof sq = {
     sorting: 'Tri',
     repairs: 'R\u00e9parations',
     repairWorkers: 'Processus de R\u00e9paration',
-    damage: 'Rapports de Dommages',
+    damage: 'Dommages',
     companies: 'Entreprises',
     plans: 'Plans',
     revenue: 'Revenus',
