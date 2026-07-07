@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Wrench,
   AlertTriangle,
@@ -62,7 +62,7 @@ type TabKey = 'reports' | 'damaged';
 export default function DepotRepairs() {
   const { profile } = useAuth();
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [tab, setTab] = useState<TabKey>(() => {
     const urlTab = searchParams.get('tab');
@@ -72,6 +72,40 @@ export default function DepotRepairs() {
   const [openRepairs, setOpenRepairs] = useState<OpenRepair[]>([]);
   const [damagedStock, setDamagedStock] = useState<DamagedStockRow[]>([]);
   const [activeStockId, setActiveStockId] = useState<string | null>(null);
+  const [repairInit, setRepairInit] = useState<{ repaired?: string; scrapped?: string }>({});
+  const repairFillDoneRef = useRef(false);
+
+  // Allow a fresh voice-fill once the repair modal closes.
+  useEffect(() => { if (!activeStockId) repairFillDoneRef.current = false; }, [activeStockId]);
+
+  // Voice fill from the assistant: ?repair=<product>&repaired=&scrapped= opens the
+  // repair modal for the matching damaged item with the numbers pre-filled; the
+  // user reviews and applies. (Repair always needs an explicit apply by the user.)
+  useEffect(() => {
+    const repairName = searchParams.get('repair');
+    const repaired = searchParams.get('repaired');
+    const scrapped = searchParams.get('scrapped');
+    if (repairName === null && repaired === null && scrapped === null) return;
+    if (damagedStock.length === 0 || repairFillDoneRef.current) return;
+
+    let target = damagedStock[0] && damagedStock.length === 1 ? damagedStock[0] : null;
+    if (repairName) {
+      const nm = repairName.toLowerCase();
+      target = damagedStock.find((r) =>
+        (r.product_name ?? '').toLowerCase().includes(nm) ||
+        nm.includes((r.product_name ?? '').toLowerCase()) ||
+        (r.category_name ?? '').toLowerCase().includes(nm)) ?? target;
+    }
+    if (target) {
+      setRepairInit({ repaired: repaired ?? undefined, scrapped: scrapped ?? undefined });
+      setActiveStockId(target.id);
+      repairFillDoneRef.current = true;
+    }
+    const sp = new URLSearchParams(searchParams);
+    ['repair', 'repaired', 'scrapped'].forEach((k) => sp.delete(k));
+    setSearchParams(sp, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, damagedStock]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -300,9 +334,12 @@ export default function DepotRepairs() {
       {activeStockId && (
         <RepairCompletionModal
           stockId={activeStockId}
-          onClose={() => setActiveStockId(null)}
+          initialRepaired={repairInit.repaired}
+          initialScrapped={repairInit.scrapped}
+          onClose={() => { setActiveStockId(null); setRepairInit({}); }}
           onApplied={() => {
             setActiveStockId(null);
+            setRepairInit({});
             fetchAll();
           }}
         />

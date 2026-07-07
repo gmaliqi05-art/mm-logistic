@@ -7,6 +7,9 @@ interface Props {
   stockId: string;
   onClose: () => void;
   onApplied?: () => void;
+  // Optional voice pre-fill: initial repaired/scrapped quantities.
+  initialRepaired?: string;
+  initialScrapped?: string;
 }
 
 interface StockDetail {
@@ -29,15 +32,15 @@ interface ReparatureOption {
   full_name: string;
 }
 
-export default function RepairCompletionModal({ stockId, onClose, onApplied }: Props) {
+export default function RepairCompletionModal({ stockId, onClose, onApplied, initialRepaired, initialScrapped }: Props) {
   const { t } = useTranslation();
   const [detail, setDetail] = useState<StockDetail | null>(null);
   const [products, setProducts] = useState<CategoryProduct[]>([]);
   const [reparatures, setReparatures] = useState<ReparatureOption[]>([]);
   const [targetProductId, setTargetProductId] = useState('');
   const [reparatorId, setReparatorId] = useState('');
-  const [repairedQty, setRepairedQty] = useState<string>('');
-  const [scrappedQty, setScrappedQty] = useState<string>('0');
+  const [repairedQty, setRepairedQty] = useState<string>(initialRepaired ?? '');
+  const [scrappedQty, setScrappedQty] = useState<string>(initialScrapped ?? '0');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

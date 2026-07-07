@@ -230,11 +230,12 @@ export default function CompanyDeliveryNotes() {
     const isNew = searchParams.get('new') === '1';
     const driverName = searchParams.get('driver');
     const title = searchParams.get('title');
-    if (!partner && !typeParam && !isNew && !driverName && !title) return;
-    // If we need to resolve a driver by name but the drivers list has not
-    // loaded yet, wait for it (this effect re-runs when `drivers` changes)
-    // instead of consuming the params with an unmatched driver.
+    const itemsRaw = searchParams.get('items');
+    if (!partner && !typeParam && !isNew && !driverName && !title && !itemsRaw) return;
+    // If we need to resolve a driver/products by name but the lists have not
+    // loaded yet, wait (this effect re-runs when `drivers`/`products` change).
     if (driverName && drivers.length === 0) return;
+    if (itemsRaw && products.length === 0) return;
     if (typeParam === 'delivery' || typeParam === 'pickup') setTabType(typeParam);
     if (partner) setSearch(partner);
     if (isNew) {
@@ -249,14 +250,30 @@ export default function CompanyDeliveryNotes() {
         const match = drivers.find((d) => (d.full_name ?? '').toLowerCase().includes(needle));
         if (match) prefilled.assigned_driver_id = match.id;
       }
+      // Item lines dictated by voice: ?items=[{name,qty,condition}] matched to products.
+      if (itemsRaw) {
+        try {
+          const parsed = JSON.parse(itemsRaw) as Array<{ name?: string; qty?: number | string; condition?: string }>;
+          const lines: NoteItemForm[] = parsed
+            .filter((x) => x && x.name)
+            .map((x) => {
+              const nm = String(x.name).toLowerCase();
+              const prod = products.find((p) => p.name.toLowerCase().includes(nm) || nm.includes(p.name.toLowerCase()));
+              const damaged = x.condition === 'damaged' || /defekt|defect|damaged|dëmtu|demtu/i.test(String(x.name));
+              return { ...emptyItem, category_id: prod?.category_id ?? '', product_id: prod?.id ?? '', quantity: Math.max(1, parseInt(String(x.qty ?? 1), 10) || 1), condition: damaged ? 'damaged' : 'good' } as NoteItemForm;
+            })
+            .filter((l) => l.category_id);
+          if (lines.length) prefilled.items = lines;
+        } catch { /* ignore malformed */ }
+      }
       setForm(prefilled);
       setShowCreateModal(true);
     }
     const sp = new URLSearchParams(searchParams);
-    ['partner', 'type', 'new', 'driver', 'title'].forEach((k) => sp.delete(k));
+    ['partner', 'type', 'new', 'driver', 'title', 'items'].forEach((k) => sp.delete(k));
     setSearchParams(sp, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, drivers]);
+  }, [searchParams, drivers, products]);
 
   async function fetchAll() {
     try {

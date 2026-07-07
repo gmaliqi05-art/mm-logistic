@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ArrowUpCircle,
   ArrowDownCircle,
@@ -12,7 +12,7 @@ import {
   Sparkles,
   Inbox,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -56,6 +56,50 @@ export default function DepotReceiving() {
   const [receivingNotes, setReceivingNotes] = useState('');
   const [sourcePartner, setSourcePartner] = useState('');
   const [sourceContactId, setSourceContactId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const recvFillDoneRef = useRef(false);
+
+  // Voice fill from the assistant: ?items=[{name,qty,condition}] adds product
+  // rows (matched by name), ?partner= sets the source, ?save=1 submits. The user
+  // reviews/edits before anything is saved.
+  useEffect(() => {
+    const itemsRaw = searchParams.get('items');
+    const partner = searchParams.get('partner');
+    const save = searchParams.get('save') === '1';
+    if (!itemsRaw && !partner && !save) return;
+    if (itemsRaw && products.length === 0) return; // wait for products to load
+
+    if (itemsRaw && !recvFillDoneRef.current) {
+      try {
+        const parsed = JSON.parse(itemsRaw) as Array<{ name?: string; qty?: number | string; condition?: string }>;
+        const rows: ItemRow[] = parsed
+          .filter((x) => x && x.name)
+          .map((x) => {
+            const nm = String(x.name).toLowerCase();
+            const prod = products.find((p) => p.name.toLowerCase().includes(nm) || nm.includes(p.name.toLowerCase()));
+            const damaged = x.condition === 'damaged' || /defekt|defect|damaged|dëmtu|demtu/i.test(String(x.name));
+            return {
+              id: crypto.randomUUID(),
+              category_id: prod?.category_id ?? '',
+              category_product_id: prod?.id ?? '',
+              quantity: String(Math.max(1, parseInt(String(x.qty ?? 1), 10) || 1)),
+              condition: damaged ? 'damaged' : 'good',
+            } as ItemRow;
+          })
+          .filter((r) => r.category_id);
+        if (rows.length) setReceivingRows(rows);
+        recvFillDoneRef.current = true;
+      } catch { /* ignore malformed */ }
+    }
+    if (partner) setSourcePartner(partner);
+
+    const sp = new URLSearchParams(searchParams);
+    ['items', 'partner', 'save'].forEach((k) => sp.delete(k));
+    setSearchParams(sp, { replace: true });
+
+    if (save) setTimeout(() => { void handleReceiving({ preventDefault: () => {} } as React.FormEvent); }, 400);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, products]);
 
   const [showScanner, setShowScanner] = useState(false);
   const [showPalletScanner, setShowPalletScanner] = useState(false);
