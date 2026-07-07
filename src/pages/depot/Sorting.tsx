@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Layers,
@@ -137,6 +137,7 @@ export default function DepotSorting() {
   const [itemInputs, setItemInputs] = useState<ItemInput[]>([]);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
   const [editTotal, setEditTotal] = useState('');
+  const fillDoneRef = useRef(false);
 
   useEffect(() => {
     if (profile?.company_id) fetchAll();
@@ -395,6 +396,49 @@ export default function DepotSorting() {
       setSubmitting(false);
     }
   }
+
+  // Reset the "fill applied" guard whenever the open batch changes.
+  useEffect(() => { fillDoneRef.current = false; }, [activeBatchId]);
+
+  // Voice fill from the assistant: ?a=&b=&c=&d= set the A/B/C/Defekt quantities
+  // on the in-progress batch; ?save=1 completes it to stock. The user can review
+  // and edit the numbers before anything is saved.
+  useEffect(() => {
+    const a = searchParams.get('a'); const b = searchParams.get('b');
+    const c = searchParams.get('c'); const d = searchParams.get('d');
+    const save = searchParams.get('save') === '1';
+    if (a === null && b === null && c === null && d === null && !save) return;
+
+    // Need a batch open. If none, auto-open the single in-progress one.
+    if (!activeBatchId) {
+      const inProg = batches.filter((x) => x.status === 'in_progress');
+      if (inProg.length === 1) openBatch(inProg[0]);
+      return; // re-runs after the rows populate
+    }
+    if (itemInputs.length === 0) return;
+
+    const hasFill = a !== null || b !== null || c !== null || d !== null;
+    if (hasFill && !fillDoneRef.current) {
+      const num = (v: string | null) => (v === null ? null : String(Math.max(0, parseInt(v, 10) || 0)));
+      const av = num(a), bv = num(b), cv = num(c), dv = num(d);
+      setItemInputs((prev) => prev.map((r) => {
+        if (r.category_product_id === DEFEKT_INPUT_ID) return dv !== null ? { ...r, quantity: dv } : r;
+        const pr = primaryRank(r.product_name);
+        if (pr === 0 && av !== null) return { ...r, quantity: av };
+        if (pr === 1 && bv !== null) return { ...r, quantity: bv };
+        if (pr === 2 && cv !== null) return { ...r, quantity: cv };
+        return r;
+      }));
+      fillDoneRef.current = true;
+    }
+
+    const sp = new URLSearchParams(searchParams);
+    ['a', 'b', 'c', 'd', 'save'].forEach((k) => sp.delete(k));
+    setSearchParams(sp, { replace: true });
+
+    if (save) setTimeout(() => { void handleComplete(); }, 400);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, batches, activeBatchId, itemInputs]);
 
   async function handleCancel(batchId: string) {
     if (!window.confirm(t('depot.sorting.confirmCancel'))) return;
