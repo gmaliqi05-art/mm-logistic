@@ -3033,6 +3033,7 @@ export const de: typeof sq = {
       committedToStock: 'Sortierung wurde im Lager gebucht',
       cancelBatch: 'Abbrechen',
       confirmCancel: 'Diesen Sortiervorgang abbrechen?',
+      resume: 'Sortierung fortsetzen',
       noProductsForCategory: 'Diese Kategorie hat keine Produkte',
       fromNote: 'Aus Lieferschein',
       dataFromCompany: 'Daten wurden vom Unternehmen festgelegt. Sie können die Mengen anpassen, falls abweichend erhalten.',

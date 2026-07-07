@@ -478,6 +478,26 @@ export default function DepotSorting() {
     }
   }
 
+  // A cancelled sorting batch is never lost: it can be resumed (put back to
+  // in_progress) and reopened to finish, so no incoming sorting disappears.
+  async function handleResume(batch: BatchWithItems) {
+    try {
+      setSubmitting(true);
+      setError(null);
+      const { error: updErr } = await supabase
+        .from('pallet_sorting_batches')
+        .update({ status: 'in_progress' })
+        .eq('id', batch.id);
+      if (updErr) throw updErr;
+      await fetchAll();
+      openBatch(batch);
+    } catch (err) {
+      setError(errMsg(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function handleSendReport(batch: BatchWithItems) {
     try {
       setSubmitting(true);
@@ -752,6 +772,14 @@ export default function DepotSorting() {
                       <CheckCircle2 className="w-3 h-3" />
                       <span className="font-medium">Raporti u dergua</span>
                     </div>
+                  )}
+                  {b.status === 'cancelled' && (
+                    <button
+                      onClick={() => handleResume(b)}
+                      disabled={submitting}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+                    >
+                      <ArrowRight className="w-3 h-3" />{t('depot.sorting.resume')}</button>
                   )}
                 </div>
               );

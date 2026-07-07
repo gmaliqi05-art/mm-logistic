@@ -3036,6 +3036,7 @@ export const en: typeof sq = {
       committedToStock: 'Sorting posted to stock',
       cancelBatch: 'Cancel',
       confirmCancel: 'Cancel this sorting batch?',
+      resume: 'Resume sorting',
       noProductsForCategory: 'This category has no configured products',
       fromNote: 'From note',
       dataFromCompany: 'Data was set by the company. You can adjust quantities if you received differently.',
