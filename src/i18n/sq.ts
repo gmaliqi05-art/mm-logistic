@@ -3032,6 +3032,7 @@ export const sq = {
       cancelBatch: 'Anulo',
       confirmCancel: 'Anulo kete grup selektimi?',
       resume: 'Vazhdo sortimin',
+      chooseBatch: 'Cilin sortim te mbush?',
       noProductsForCategory: 'Kjo kategori nuk ka produkte te konfiguruara',
       fromNote: 'Nga fletderga',
       dataFromCompany: 'Te dhenat jane vendosur nga kompania. Mund t\'i ndryshoni sasine nese keni marre ndryshe.',

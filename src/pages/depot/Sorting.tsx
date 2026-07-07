@@ -137,6 +137,7 @@ export default function DepotSorting() {
   const [itemInputs, setItemInputs] = useState<ItemInput[]>([]);
   const [extraItems, setExtraItems] = useState<ExtraItem[]>([]);
   const [editTotal, setEditTotal] = useState('');
+  const [needsBatchChoice, setNeedsBatchChoice] = useState(false);
   const fillDoneRef = useRef(false);
 
   useEffect(() => {
@@ -398,7 +399,18 @@ export default function DepotSorting() {
   }
 
   // Reset the "fill applied" guard whenever the open batch changes.
-  useEffect(() => { fillDoneRef.current = false; }, [activeBatchId]);
+  useEffect(() => {
+    fillDoneRef.current = false;
+    if (activeBatchId) setNeedsBatchChoice(false);
+  }, [activeBatchId]);
+
+  // Cancel the "which sorting?" picker and drop any pending voice-fill params.
+  const cancelBatchChoice = () => {
+    setNeedsBatchChoice(false);
+    const sp = new URLSearchParams(searchParams);
+    ['a', 'b', 'c', 'd', 'items', 'save'].forEach((k) => sp.delete(k));
+    setSearchParams(sp, { replace: true });
+  };
 
   // Voice fill from the assistant. Two ways to pass quantities:
   //   ?a=&b=&c=&d=            — the common Klasse A/B/C/Defekt shorthand, and
@@ -413,11 +425,14 @@ export default function DepotSorting() {
     const hasFill = a !== null || b !== null || c !== null || d !== null || itemsRaw !== null;
     if (!hasFill && !save) return;
 
-    // Need a batch open. If none, auto-open the single in-progress one.
+    // Need a batch open. Auto-open the single in-progress one; if several are
+    // in progress, ask the worker which one to fill instead of silently doing
+    // nothing (that used to make the assistant "fill" with no visible effect).
     if (!activeBatchId) {
       const inProg = batches.filter((x) => x.status === 'in_progress');
       if (inProg.length === 1) openBatch(inProg[0]);
-      return; // re-runs after the rows populate
+      else if (inProg.length > 1) setNeedsBatchChoice(true);
+      return; // re-runs after a batch is opened
     }
     if (itemInputs.length === 0) return;
 
@@ -786,6 +801,52 @@ export default function DepotSorting() {
             })}
           </div>
         </section>
+      )}
+
+      {/* "Which sorting?" picker — shown when a voice-fill arrives but several
+          batches are in progress, so the worker chooses which one to fill. */}
+      {needsBatchChoice && !currentBatch && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
+          <div className="fixed inset-0 bg-black/50" onClick={cancelBatchChoice} />
+          <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <h2 className="text-base font-bold text-gray-900">{t('depot.sorting.chooseBatch')}</h2>
+              <button
+                onClick={cancelBatchChoice}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-3 space-y-2 max-h-[70dvh] overflow-y-auto">
+              {inProgress.map((b) => {
+                const cat = categories.find((c) => c.id === b.category_id);
+                const partner = partnerLabel(b);
+                const sorted = b.items.reduce((s, i) => s + i.quantity, 0);
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => { setNeedsBatchChoice(false); openBatch(b); }}
+                    className="w-full text-left rounded-lg border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 transition-colors p-3 flex items-center gap-3"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{cat?.name ?? '-'}</p>
+                      <p className="text-[11px] text-gray-500 truncate">
+                        {partner && <span className="font-medium text-slate-600">{partner} · </span>}
+                        {b.reference_number_snapshot && <span className="text-teal-600">{b.reference_number_snapshot} · </span>}
+                        {sorted}/{b.total_received}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Active Batch Modal */}
