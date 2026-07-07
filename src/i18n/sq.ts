@@ -3033,6 +3033,7 @@ export const sq = {
       confirmCancel: 'Anulo kete grup selektimi?',
       resume: 'Vazhdo sortimin',
       continueRemaining: 'Vazhdo sortimin ({n} mbetur)',
+      cannotExceedIntake: 'Nuk mund te sortosh me shume se sasia ne hyrje ({sorted} > {total}).',
       chooseBatch: 'Cilin sortim te mbush?',
       noProductsForCategory: 'Kjo kategori nuk ka produkte te konfiguruara',
       fromNote: 'Nga fletderga',
