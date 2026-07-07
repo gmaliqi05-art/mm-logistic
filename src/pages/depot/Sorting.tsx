@@ -1092,17 +1092,10 @@ export default function DepotSorting() {
               )}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-gray-50 rounded-lg p-2.5">
-                  <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
+                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
                     {t('depot.sorting.totalReceived')}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    value={editTotal}
-                    onChange={(e) => setEditTotal(e.target.value)}
-                    className="w-full px-2 py-1.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-lg font-bold"
-                  />
+                  </p>
+                  <p className="text-2xl font-bold text-gray-800">{totalReceivedNum}</p>
                 </div>
                 <div className="bg-teal-50 rounded-lg p-2.5">
                   <p className="text-[10px] font-medium text-teal-700 uppercase tracking-wide mb-1">
