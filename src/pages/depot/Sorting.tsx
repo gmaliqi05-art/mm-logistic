@@ -400,14 +400,18 @@ export default function DepotSorting() {
   // Reset the "fill applied" guard whenever the open batch changes.
   useEffect(() => { fillDoneRef.current = false; }, [activeBatchId]);
 
-  // Voice fill from the assistant: ?a=&b=&c=&d= set the A/B/C/Defekt quantities
-  // on the in-progress batch; ?save=1 completes it to stock. The user can review
-  // and edit the numbers before anything is saved.
+  // Voice fill from the assistant. Two ways to pass quantities:
+  //   ?a=&b=&c=&d=            — the common Klasse A/B/C/Defekt shorthand, and
+  //   ?items=[{"name","qty"}] — ANY product by name (dynamic: every batch has
+  //                              different products), matched to the rows.
+  // ?save=1 completes the batch to stock. The user can review/edit before save.
   useEffect(() => {
     const a = searchParams.get('a'); const b = searchParams.get('b');
     const c = searchParams.get('c'); const d = searchParams.get('d');
+    const itemsRaw = searchParams.get('items');
     const save = searchParams.get('save') === '1';
-    if (a === null && b === null && c === null && d === null && !save) return;
+    const hasFill = a !== null || b !== null || c !== null || d !== null || itemsRaw !== null;
+    if (!hasFill && !save) return;
 
     // Need a batch open. If none, auto-open the single in-progress one.
     if (!activeBatchId) {
@@ -417,11 +421,27 @@ export default function DepotSorting() {
     }
     if (itemInputs.length === 0) return;
 
-    const hasFill = a !== null || b !== null || c !== null || d !== null;
     if (hasFill && !fillDoneRef.current) {
-      const num = (v: string | null) => (v === null ? null : String(Math.max(0, parseInt(v, 10) || 0)));
+      const num = (v: string | number | null | undefined) =>
+        (v === null || v === undefined || v === '' ? null : String(Math.max(0, parseInt(String(v), 10) || 0)));
       const av = num(a), bv = num(b), cv = num(c), dv = num(d);
+      // Parse the dynamic product list, if any.
+      let named: Array<{ name: string; qty: string | null }> = [];
+      if (itemsRaw) {
+        try {
+          const parsed = JSON.parse(itemsRaw) as Array<{ name?: string; qty?: number | string }>;
+          named = parsed.filter((x) => x && x.name).map((x) => ({ name: String(x.name).toLowerCase(), qty: num(x.qty) }));
+        } catch { /* ignore malformed */ }
+      }
+      const isDefektName = (n: string) => /defekt|defect|damaged|dëmtu|demtu/i.test(n);
       setItemInputs((prev) => prev.map((r) => {
+        const rowName = r.product_name.toLowerCase();
+        // 1) exact-ish product name match from the dynamic list wins.
+        const match = named.find((it) =>
+          r.category_product_id === DEFEKT_INPUT_ID ? isDefektName(it.name)
+            : (rowName.includes(it.name) || it.name.includes(rowName)) && !isDefektName(it.name));
+        if (match && match.qty !== null) return { ...r, quantity: match.qty };
+        // 2) fall back to the Klasse A/B/C/Defekt shorthand.
         if (r.category_product_id === DEFEKT_INPUT_ID) return dv !== null ? { ...r, quantity: dv } : r;
         const pr = primaryRank(r.product_name);
         if (pr === 0 && av !== null) return { ...r, quantity: av };
@@ -433,7 +453,7 @@ export default function DepotSorting() {
     }
 
     const sp = new URLSearchParams(searchParams);
-    ['a', 'b', 'c', 'd', 'save'].forEach((k) => sp.delete(k));
+    ['a', 'b', 'c', 'd', 'items', 'save'].forEach((k) => sp.delete(k));
     setSearchParams(sp, { replace: true });
 
     if (save) setTimeout(() => { void handleComplete(); }, 400);
