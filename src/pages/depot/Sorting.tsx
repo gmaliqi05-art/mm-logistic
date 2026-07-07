@@ -474,7 +474,7 @@ export default function DepotSorting() {
   const cancelBatchChoice = () => {
     setNeedsBatchChoice(false);
     const sp = new URLSearchParams(searchParams);
-    ['a', 'b', 'c', 'd', 'items', 'save'].forEach((k) => sp.delete(k));
+    ['a', 'b', 'c', 'd', 'items', 'save', 'open'].forEach((k) => sp.delete(k));
     setSearchParams(sp, { replace: true });
   };
 
@@ -488,8 +488,12 @@ export default function DepotSorting() {
     const c = searchParams.get('c'); const d = searchParams.get('d');
     const itemsRaw = searchParams.get('items');
     const save = searchParams.get('save') === '1';
+    // ?open=1 asks the page to open the in-progress sorting so the worker can
+    // continue it — used when the assistant is told to "open/continue the
+    // sorting" without dictating any quantities.
+    const openFlag = searchParams.get('open') === '1';
     const hasFill = a !== null || b !== null || c !== null || d !== null || itemsRaw !== null;
-    if (!hasFill && !save) return;
+    if (!hasFill && !save && !openFlag) return;
 
     // Need a batch open. Auto-open the single in-progress one; if several are
     // in progress, ask the worker which one to fill instead of silently doing
@@ -534,7 +538,7 @@ export default function DepotSorting() {
     }
 
     const sp = new URLSearchParams(searchParams);
-    ['a', 'b', 'c', 'd', 'items', 'save'].forEach((k) => sp.delete(k));
+    ['a', 'b', 'c', 'd', 'items', 'save', 'open'].forEach((k) => sp.delete(k));
     setSearchParams(sp, { replace: true });
 
     if (save) setTimeout(() => { void handleComplete(); }, 400);
