@@ -41,6 +41,7 @@ interface DeliveryNoteSource {
 interface BatchWithItems extends PalletSortingBatch {
   items: PalletSortingItem[];
   reference_number_snapshot?: string | null;
+  parent_batch_id?: string | null;
   report_sent_at?: string | null;
   creator?: { full_name?: string | null; role?: string | null } | null;
   completer?: { full_name?: string | null; role?: string | null } | null;
@@ -61,6 +62,53 @@ interface ExtraItem {
   product_name: string;
   quantity: string;
   condition: 'good' | 'damaged';
+}
+
+// A "load group" bundles the root sorting batch of an incoming load with all
+// its continuation batches (partial sortings), so the list shows one card per
+// load instead of one per session.
+interface LoadGroup {
+  key: string;
+  members: BatchWithItems[];        // all batches of the load, newest first
+  completedMembers: BatchWithItems[];
+  root: BatchWithItems;
+  originalTotal: number;            // the full intake quantity
+  committedSorted: number;          // sum sorted across completed members
+  remaining: number;                // originalTotal - committedSorted
+  activeMember: BatchWithItems | null;   // an in-progress continuation, if any
+  cancelledMember: BatchWithItems | null;
+  latestDate: string;
+  allReported: boolean;
+}
+
+function buildLoadGroups(batches: BatchWithItems[]): LoadGroup[] {
+  const byRoot = new Map<string, BatchWithItems[]>();
+  for (const b of batches) {
+    const rid = b.parent_batch_id ?? b.id;
+    const arr = byRoot.get(rid);
+    if (arr) arr.push(b);
+    else byRoot.set(rid, [b]);
+  }
+  const groups: LoadGroup[] = [];
+  for (const [rid, members] of byRoot) {
+    members.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const root = members.find((m) => m.id === rid) ?? members[members.length - 1];
+    const originalTotal = members.reduce((mx, m) => Math.max(mx, m.total_received), 0);
+    const completedMembers = members.filter((m) => m.status === 'completed');
+    const committedSorted = completedMembers.reduce(
+      (s, m) => s + m.items.reduce((x, i) => x + i.quantity, 0), 0,
+    );
+    const remaining = Math.max(0, originalTotal - committedSorted);
+    const activeMember = members.find((m) => m.status === 'in_progress') ?? null;
+    const cancelledMember = members.find((m) => m.status === 'cancelled') ?? null;
+    const latestDate = members[0]?.completed_at || members[0]?.updated_at || members[0]?.created_at;
+    const allReported = completedMembers.length > 0 && completedMembers.every((m) => m.report_sent_at);
+    groups.push({
+      key: rid, members, completedMembers, root, originalTotal,
+      committedSorted, remaining, activeMember, cancelledMember, latestDate, allReported,
+    });
+  }
+  return groups;
 }
 
 const DEFEKT_INPUT_ID = '__defekt__';
@@ -539,26 +587,40 @@ export default function DepotSorting() {
   // continue by creating a fresh batch for just the remainder and opening it.
   // This keeps stock correct (each batch commits its own items exactly once)
   // and never blocks a load until its full quantity is sorted.
-  async function handleContinueRemaining(batch: BatchWithItems) {
-    const sorted = batch.items.reduce((s, i) => s + i.quantity, 0);
-    const remaining = Math.max(0, batch.total_received - sorted);
-    if (remaining <= 0) return;
+  // Continue sorting the remainder of a load. If a continuation is already
+  // in progress, reuse it (correcting its total to the true remaining) instead
+  // of spawning duplicates; otherwise create a fresh continuation linked to the
+  // load's root batch so all partial sortings group under one card.
+  async function handleContinueRemaining(g: LoadGroup) {
+    if (g.remaining <= 0) return;
     try {
       setSubmitting(true);
       setError(null);
+      if (g.activeMember) {
+        const id = g.activeMember.id;
+        const { error: updErr } = await supabase
+          .from('pallet_sorting_batches')
+          .update({ total_received: g.remaining })
+          .eq('id', id);
+        if (updErr) throw updErr;
+        await fetchAll();
+        setSearchParams((prev) => { prev.set('batch', id); return prev; }, { replace: true });
+        return;
+      }
       const companyId = profile!.company_id!;
       const { data: created, error: insErr } = await supabase
         .from('pallet_sorting_batches')
         .insert({
           company_id: companyId,
           depot_id: profile?.depot_id ?? null,
-          category_id: batch.category_id,
-          total_received: remaining,
+          category_id: g.root.category_id,
+          total_received: g.remaining,
           status: 'in_progress',
           created_by: profile!.id,
-          source_delivery_note_id: batch.source_delivery_note_id ?? null,
-          reference_number_snapshot: batch.reference_number_snapshot ?? null,
-          notes: `Vazhdim i sortimit (${sorted}/${batch.total_received} u sortuan me pare)`,
+          parent_batch_id: g.root.id,
+          source_delivery_note_id: g.root.source_delivery_note_id ?? null,
+          reference_number_snapshot: g.root.reference_number_snapshot ?? null,
+          notes: `Vazhdim i sortimit (${g.committedSorted}/${g.originalTotal} u sortuan me pare)`,
         })
         .select('id')
         .single();
@@ -574,27 +636,37 @@ export default function DepotSorting() {
     }
   }
 
-  async function handleSendReport(batch: BatchWithItems) {
+  // Continue a load: reopen a cancelled-only load in place; otherwise continue
+  // the remainder (reusing/creating a continuation).
+  function handleLoadResume(g: LoadGroup) {
+    if (g.committedSorted === 0 && !g.activeMember && g.cancelledMember) {
+      void handleResume(g.cancelledMember);
+      return;
+    }
+    void handleContinueRemaining(g);
+  }
+
+  // One consolidated report per finished load: aggregates every completed
+  // partial sorting and marks them all reported.
+  async function handleSendGroupReport(g: LoadGroup) {
+    const ids = g.completedMembers.map((m) => m.id);
+    if (ids.length === 0) return;
     try {
       setSubmitting(true);
       setError(null);
       const { error: updErr } = await supabase
         .from('pallet_sorting_batches')
         .update({ report_sent_at: new Date().toISOString() })
-        .eq('id', batch.id);
+        .in('id', ids);
       if (updErr) throw updErr;
 
-      const cat = categories.find((c) => c.id === batch.category_id);
-      const itemsSummary = batch.items
-        .filter((i) => i.quantity > 0)
-        .map((i) => {
-          const label =
-            i.condition === 'damaged'
-              ? 'Defekt'
-              : products.find((p) => p.id === i.category_product_id)?.name || '-';
-          return `${label}: ${i.quantity}`;
-        })
-        .join(', ');
+      const cat = categories.find((c) => c.id === g.root.category_id);
+      const allItems = g.completedMembers.flatMap((m) => m.items).filter((i) => i.quantity > 0);
+      const labelOf = (i: PalletSortingItem) =>
+        i.condition === 'damaged' ? 'Defekt' : products.find((p) => p.id === i.category_product_id)?.name || '-';
+      const agg = new Map<string, number>();
+      for (const i of allItems) agg.set(labelOf(i), (agg.get(labelOf(i)) ?? 0) + i.quantity);
+      const itemsSummary = Array.from(agg.entries()).map(([l, q]) => `${l}: ${q}`).join(', ');
 
       const { data: admins } = await supabase
         .from('profiles')
@@ -608,22 +680,19 @@ export default function DepotSorting() {
           user_id: a.id,
           type: 'delivery',
           title: 'Raport sortimi',
-          message: `${cat?.name || 'Kategori'} (${batch.reference_number_snapshot || '-'}): ${itemsSummary}`,
+          message: `${cat?.name || 'Kategori'} (${g.root.reference_number_snapshot || '-'}): ${itemsSummary}`,
           data: JSON.stringify({
             url: '/company/sorting-reports',
-            batch_id: batch.id,
+            batch_id: g.root.id,
             category: cat?.name,
-            total_received: batch.total_received,
-            items: batch.items.filter((i) => i.quantity > 0).map((i) => ({
-              product_name:
-                i.condition === 'damaged'
-                  ? 'Defekt'
-                  : products.find((p) => p.id === i.category_product_id)?.name || '-',
-              quantity: i.quantity,
-              condition: i.condition,
+            total_received: g.originalTotal,
+            items: Array.from(agg.entries()).map(([name, quantity]) => ({
+              product_name: name,
+              quantity,
+              condition: name === 'Defekt' ? 'damaged' : 'good',
             })),
           }),
-          reference_id: batch.id,
+          reference_id: g.root.id,
           is_read: false,
           push_sent: false,
         }));
@@ -649,6 +718,15 @@ export default function DepotSorting() {
     () => (currentBatch ? categories.find((c) => c.id === currentBatch.category_id) ?? null : null),
     [currentBatch, categories],
   );
+  // Group every load's partial sortings under one card. Recent shows loads that
+  // have at least one finished (non-in-progress) partial, newest first.
+  const recentGroups = useMemo(
+    () => buildLoadGroups(batches)
+      .filter((g) => g.members.some((m) => m.status !== 'in_progress'))
+      .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
+      .slice(0, 12),
+    [batches],
+  );
   const sortedTotal = itemInputs.reduce(
     (s, r) => s + (parseInt(r.quantity || '0', 10) || 0),
     0,
@@ -661,7 +739,6 @@ export default function DepotSorting() {
   }
 
   const inProgress = batches.filter((b) => b.status === 'in_progress');
-  const recent = batches.filter((b) => b.status !== 'in_progress').slice(0, 8);
 
   return (
     <div className="space-y-6">
@@ -786,47 +863,55 @@ export default function DepotSorting() {
         )}
       </section>
 
-      {recent.length > 0 && (
+      {recentGroups.length > 0 && (
         <section>
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
             {t('depot.sorting.recent')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {recent.map((b) => {
-              const cat = categories.find((c) => c.id === b.category_id);
-              const sorted = b.items.reduce((s, i) => s + i.quantity, 0);
-              const partner = partnerLabel(b);
-              const bd = computeBreakdown(b.items, productNameById);
-              const isCompleted = b.status === 'completed';
+            {recentGroups.map((g) => {
+              const cat = categories.find((c) => c.id === g.root.category_id);
+              const partner = partnerLabel(g.root) ?? g.members.map(partnerLabel).find(Boolean) ?? null;
+              const bd = computeBreakdown(g.completedMembers.flatMap((m) => m.items), productNameById);
+              const isDone = g.remaining <= 0 && g.committedSorted > 0;
+              const isCancelledOnly = g.committedSorted === 0 && !g.activeMember && !!g.cancelledMember;
+              const statusLabel = isDone
+                ? t('depot.sorting.status.completed')
+                : isCancelledOnly
+                ? t('depot.sorting.status.cancelled')
+                : t('depot.sorting.partial');
+              const partialCount = g.completedMembers.length;
               return (
-                <div key={b.id} className="bg-white border border-gray-100 rounded-xl p-3 space-y-2">
+                <div key={g.key} className="bg-white border border-gray-100 rounded-xl p-3 space-y-2">
                   <div className="flex items-start gap-2.5">
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+                        isDone ? 'bg-green-100 text-green-700' : isCancelledOnly ? 'bg-gray-100 text-gray-400' : 'bg-amber-100 text-amber-700'
                       }`}
                     >
-                      {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                      {isDone ? <CheckCircle2 className="w-4 h-4" /> : isCancelledOnly ? <X className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-gray-900 truncate">{cat?.name ?? '-'}</p>
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                            isCompleted ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                            isDone ? 'bg-green-50 text-green-700' : isCancelledOnly ? 'bg-gray-100 text-gray-500' : 'bg-amber-50 text-amber-700'
                           }`}
                         >
-                          {t(`depot.sorting.status.${b.status}`)}
+                          {statusLabel}
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {partner && <span className="font-medium text-slate-600">{partner} · </span>}
-                        {b.reference_number_snapshot && <span className="text-teal-600">{b.reference_number_snapshot} · </span>}
-                        {sorted}/{b.total_received} · {new Date(b.completed_at || b.updated_at).toLocaleDateString()}
+                        {g.root.reference_number_snapshot && <span className="text-teal-600">{g.root.reference_number_snapshot} · </span>}
+                        <span className="font-semibold text-slate-700">{g.committedSorted}/{g.originalTotal}</span>
+                        {' · '}{new Date(g.latestDate).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  {isCompleted && sorted > 0 && (
+
+                  {g.committedSorted > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {bd.a > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">A: {bd.a}</span>}
                       {bd.b > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">B: {bd.b}</span>}
@@ -835,37 +920,64 @@ export default function DepotSorting() {
                       {bd.other > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Te tjera: {bd.other}</span>}
                     </div>
                   )}
-                  {isCompleted && !b.report_sent_at && (
+
+                  {partialCount > 1 && (
+                    <details className="rounded-lg border border-gray-100 bg-gray-50/60">
+                      <summary className="cursor-pointer list-none px-2.5 py-1.5 text-[11px] font-medium text-gray-600 flex items-center gap-1.5">
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-400 details-chevron" />
+                        {t('depot.sorting.partialSortings').replace('{n}', String(partialCount))}
+                      </summary>
+                      <div className="px-2.5 pb-2 space-y-1.5">
+                        {g.completedMembers.map((m) => {
+                          const mSorted = m.items.reduce((s, i) => s + i.quantity, 0);
+                          const mbd = computeBreakdown(m.items, productNameById);
+                          return (
+                            <div key={m.id} className="rounded-md bg-white border border-gray-100 px-2 py-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] text-gray-500">
+                                  {new Date(m.completed_at || m.updated_at || m.created_at).toLocaleDateString()}
+                                </span>
+                                <span className="text-[11px] font-semibold text-teal-700">{mSorted}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {mbd.a > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-50 text-emerald-700">A: {mbd.a}</span>}
+                                {mbd.b > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-700">B: {mbd.b}</span>}
+                                {mbd.c > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-sky-50 text-sky-700">C: {mbd.c}</span>}
+                                {mbd.defekt > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-rose-50 text-rose-700">Defekt: {mbd.defekt}</span>}
+                                {mbd.other > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-slate-100 text-slate-700">Te tjera: {mbd.other}</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  )}
+
+                  {g.remaining > 0 && (
                     <button
-                      onClick={() => handleSendReport(b)}
+                      onClick={() => handleLoadResume(g)}
+                      disabled={submitting}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+                    >
+                      <ArrowRight className="w-3 h-3" />
+                      {isCancelledOnly
+                        ? t('depot.sorting.resume')
+                        : t('depot.sorting.continueRemaining').replace('{n}', String(g.remaining))}
+                    </button>
+                  )}
+                  {isDone && !g.allReported && (
+                    <button
+                      onClick={() => handleSendGroupReport(g)}
                       disabled={submitting}
                       className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-50"
                     >
                       <Send className="w-3 h-3" />{t('common.dergoRaportin')}</button>
                   )}
-                  {isCompleted && b.report_sent_at && (
+                  {isDone && g.allReported && (
                     <div className="flex items-center gap-1.5 text-[11px] text-teal-700">
                       <CheckCircle2 className="w-3 h-3" />
                       <span className="font-medium">Raporti u dergua</span>
                     </div>
-                  )}
-                  {b.status === 'cancelled' && (
-                    <button
-                      onClick={() => handleResume(b)}
-                      disabled={submitting}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
-                    >
-                      <ArrowRight className="w-3 h-3" />{t('depot.sorting.resume')}</button>
-                  )}
-                  {isCompleted && b.total_received - sorted > 0 && (
-                    <button
-                      onClick={() => handleContinueRemaining(b)}
-                      disabled={submitting}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
-                    >
-                      <ArrowRight className="w-3 h-3" />
-                      {t('depot.sorting.continueRemaining').replace('{n}', String(b.total_received - sorted))}
-                    </button>
                   )}
                 </div>
               );

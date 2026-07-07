@@ -3035,6 +3035,8 @@ export const de: typeof sq = {
       confirmCancel: 'Diesen Sortiervorgang abbrechen?',
       resume: 'Sortierung fortsetzen',
       continueRemaining: 'Sortierung fortsetzen ({n} ubrig)',
+      partial: 'Teilweise',
+      partialSortings: 'Teilsortierungen ({n})',
       cannotExceedIntake: 'Sie konnen nicht mehr sortieren als die Eingangsmenge ({sorted} > {total}).',
       chooseBatch: 'Welche Sortierung ausfullen?',
       noProductsForCategory: 'Diese Kategorie hat keine Produkte',

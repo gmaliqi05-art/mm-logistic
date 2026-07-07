@@ -3038,6 +3038,8 @@ export const en: typeof sq = {
       confirmCancel: 'Cancel this sorting batch?',
       resume: 'Resume sorting',
       continueRemaining: 'Resume sorting ({n} left)',
+      partial: 'Partial',
+      partialSortings: 'Partial sortings ({n})',
       cannotExceedIntake: 'You cannot sort more than the received quantity ({sorted} > {total}).',
       chooseBatch: 'Which sorting to fill?',
       noProductsForCategory: 'This category has no configured products',

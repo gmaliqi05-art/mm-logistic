@@ -3035,6 +3035,8 @@ export const fr: typeof sq = {
       confirmCancel: 'Annuler ce lot de tri?',
       resume: 'Reprendre le tri',
       continueRemaining: 'Reprendre le tri ({n} restants)',
+      partial: 'Partiel',
+      partialSortings: 'Tris partiels ({n})',
       cannotExceedIntake: 'Vous ne pouvez pas trier plus que la quantite recue ({sorted} > {total}).',
       chooseBatch: 'Quel tri remplir ?',
       noProductsForCategory: 'Cette cat\u00e9gorie n\'a pas de produits configur\u00e9s',
