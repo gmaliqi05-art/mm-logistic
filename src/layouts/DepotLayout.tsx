@@ -73,7 +73,7 @@ const navEntries: NavEntry[] = [
     items: [
       { to: '/depot/repairs', icon: Wrench, labelKey: 'nav.repairs', end: false, bottomNav: false, categories: ['depoist'], feature: 'repairs' },
       { to: '/depot/repair-workers', icon: Wrench, labelKey: 'nav.repairWorkers', end: false, bottomNav: false, categories: ['depoist'], feature: 'repairs' },
-      { to: '/depot/damage', icon: AlertTriangle, labelKey: 'nav.damage', end: false, bottomNav: false, categories: ['depoist'], feature: 'repairs' },
+      { to: '/depot/damage', icon: AlertTriangle, labelKey: 'nav.damage', end: false, bottomNav: true, categories: ['depoist'], feature: 'repairs' },
     ],
   },
 

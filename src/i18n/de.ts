@@ -1470,7 +1470,7 @@ export const de: typeof sq = {
     sorting: 'Sortierung',
     repairs: 'Reparaturen',
     repairWorkers: 'Reparaturprozess',
-    damage: 'Schadensmeldungen',
+    damage: 'Schäden',
     companies: 'Firmen',
     plans: 'Pläne',
     revenue: 'Einnahmen',

@@ -1468,7 +1468,7 @@ export const sq = {
     sorting: 'Sortiren',
     repairs: 'Riparime',
     repairWorkers: 'Procesi i Reparimit',
-    damage: 'Raportim Demtimi',
+    damage: 'Demtimet',
     companies: 'Kompanite',
     plans: 'Planet',
     revenue: 'Te Ardhurat',
