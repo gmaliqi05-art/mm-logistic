@@ -3037,6 +3037,7 @@ export const en: typeof sq = {
       cancelBatch: 'Cancel',
       confirmCancel: 'Cancel this sorting batch?',
       resume: 'Resume sorting',
+      continueRemaining: 'Resume sorting ({n} left)',
       chooseBatch: 'Which sorting to fill?',
       noProductsForCategory: 'This category has no configured products',
       fromNote: 'From note',

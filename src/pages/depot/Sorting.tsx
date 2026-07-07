@@ -495,6 +495,8 @@ export default function DepotSorting() {
 
   // A cancelled sorting batch is never lost: it can be resumed (put back to
   // in_progress) and reopened to finish, so no incoming sorting disappears.
+  // (Cancelled batches were never committed to stock, so reopening + completing
+  // posts correctly.)
   async function handleResume(batch: BatchWithItems) {
     try {
       setSubmitting(true);
@@ -506,6 +508,47 @@ export default function DepotSorting() {
       if (updErr) throw updErr;
       await fetchAll();
       openBatch(batch);
+    } catch (err) {
+      setError(errMsg(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // A completed batch is already committed to stock (its sorted classes posted,
+  // the unsorted intake bucket drained by that amount). If it was only PARTLY
+  // sorted, the remaining pallets are still in stock as unsorted intake — so we
+  // continue by creating a fresh batch for just the remainder and opening it.
+  // This keeps stock correct (each batch commits its own items exactly once)
+  // and never blocks a load until its full quantity is sorted.
+  async function handleContinueRemaining(batch: BatchWithItems) {
+    const sorted = batch.items.reduce((s, i) => s + i.quantity, 0);
+    const remaining = Math.max(0, batch.total_received - sorted);
+    if (remaining <= 0) return;
+    try {
+      setSubmitting(true);
+      setError(null);
+      const companyId = profile!.company_id!;
+      const { data: created, error: insErr } = await supabase
+        .from('pallet_sorting_batches')
+        .insert({
+          company_id: companyId,
+          depot_id: profile?.depot_id ?? null,
+          category_id: batch.category_id,
+          total_received: remaining,
+          status: 'in_progress',
+          created_by: profile!.id,
+          source_delivery_note_id: batch.source_delivery_note_id ?? null,
+          reference_number_snapshot: batch.reference_number_snapshot ?? null,
+          notes: `Vazhdim i sortimit (${sorted}/${batch.total_received} u sortuan me pare)`,
+        })
+        .select('id')
+        .single();
+      if (insErr) throw insErr;
+      await fetchAll();
+      if (created?.id) {
+        setSearchParams((prev) => { prev.set('batch', created.id); return prev; }, { replace: true });
+      }
     } catch (err) {
       setError(errMsg(err));
     } finally {
@@ -795,6 +838,16 @@ export default function DepotSorting() {
                       className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
                     >
                       <ArrowRight className="w-3 h-3" />{t('depot.sorting.resume')}</button>
+                  )}
+                  {isCompleted && b.total_received - sorted > 0 && (
+                    <button
+                      onClick={() => handleContinueRemaining(b)}
+                      disabled={submitting}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+                    >
+                      <ArrowRight className="w-3 h-3" />
+                      {t('depot.sorting.continueRemaining').replace('{n}', String(b.total_received - sorted))}
+                    </button>
                   )}
                 </div>
               );

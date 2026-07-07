@@ -3034,6 +3034,7 @@ export const de: typeof sq = {
       cancelBatch: 'Abbrechen',
       confirmCancel: 'Diesen Sortiervorgang abbrechen?',
       resume: 'Sortierung fortsetzen',
+      continueRemaining: 'Sortierung fortsetzen ({n} ubrig)',
       chooseBatch: 'Welche Sortierung ausfullen?',
       noProductsForCategory: 'Diese Kategorie hat keine Produkte',
       fromNote: 'Aus Lieferschein',
