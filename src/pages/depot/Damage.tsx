@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Loader2, CheckCircle2, Send, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Loader2, CheckCircle2, ShieldAlert, Package, Minus, Plus, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -8,6 +8,11 @@ interface CategoryProduct {
   id: string;
   name: string;
   category_id: string;
+}
+
+interface CategoryRow {
+  id: string;
+  name: string;
 }
 
 interface StockRow {
@@ -40,26 +45,31 @@ export default function DepotDamage() {
   const { profile } = useAuth();
   const { t } = useTranslation();
   const [products, setProducts] = useState<CategoryProduct[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [stock, setStock] = useState<StockRow[]>([]);
   const [history, setHistory] = useState<DamageReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [productId, setProductId] = useState('');
-  const [conditionFrom, setConditionFrom] = useState('good');
+  const [tab, setTab] = useState<'report' | 'history'>('report');
   const [quantity, setQuantity] = useState<string>('');
   const [reason, setReason] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [busyProductId, setBusyProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function load() {
     if (!profile?.company_id || !profile.depot_id) return;
     setLoading(true);
-    const [prodRes, stockRes, histRes] = await Promise.all([
+    const [prodRes, catRes, stockRes, histRes] = await Promise.all([
       supabase
         .from('category_products')
         .select('id, name, category_id')
         .eq('company_id', profile.company_id)
         .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('product_categories')
+        .select('id, name')
+        .eq('company_id', profile.company_id)
         .order('name'),
       supabase
         .from('stock')
@@ -76,6 +86,7 @@ export default function DepotDamage() {
         .limit(50),
     ]);
     setProducts((prodRes.data as CategoryProduct[]) ?? []);
+    setCategories((catRes.data as CategoryRow[]) ?? []);
     setStock((stockRes.data as StockRow[]) ?? []);
     setHistory((histRes.data as unknown as DamageReport[]) ?? []);
     setLoading(false);
@@ -86,44 +97,73 @@ export default function DepotDamage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.company_id, profile?.depot_id]);
 
-  const available = useMemo(() => {
-    if (!productId) return 0;
-    return stock
-      .filter((s) => s.category_product_id === productId && s.condition === conditionFrom)
-      .reduce((acc, s) => acc + (s.quantity || 0), 0);
-  }, [productId, conditionFrom, stock]);
+  // Good-stock available per product in this depot (what can be marked damaged).
+  const goodByProduct = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of stock) {
+      if (s.condition !== 'good') continue;
+      m.set(s.category_product_id, (m.get(s.category_product_id) ?? 0) + (s.quantity || 0));
+    }
+    return m;
+  }, [stock]);
 
-  async function submit() {
+  const catName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of categories) m.set(c.id, c.name);
+    return m;
+  }, [categories]);
+
+  // Only products that actually have good stock to damage, grouped by category.
+  const groups = useMemo(() => {
+    const byCat = new Map<string, CategoryProduct[]>();
+    for (const p of products) {
+      if ((goodByProduct.get(p.id) ?? 0) <= 0) continue;
+      const arr = byCat.get(p.category_id) ?? [];
+      arr.push(p);
+      byCat.set(p.category_id, arr);
+    }
+    return Array.from(byCat.entries())
+      .map(([cid, items]) => ({ cid, name: catName.get(cid) ?? '—', items }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [products, goodByProduct, catName]);
+
+  function bump(delta: number) {
+    const cur = parseInt(quantity || '0', 10) || 0;
+    setQuantity(String(Math.max(0, cur + delta)));
+  }
+
+  async function applyDamage(p: CategoryProduct) {
     setError(null);
-    setSuccess(false);
+    setSuccess(null);
     const q = parseInt(quantity || '0', 10);
-    if (!productId) return setError(t('depot.damage.pickProduct') || 'Zgjidhni produktin');
-    if (q <= 0) return setError(t('depot.stock.positiveQty') || 'Sasia duhet te jete me e madhe se 0');
-    if (q > available) {
-      const condLabel = CONDITION_LABELS[conditionFrom] ?? conditionFrom;
-      const tpl = t('depot.damage.exceedsAvailable') || 'Stoku ne gjendjen "{condition}" eshte vetem {available}';
-      return setError(tpl.replace('{condition}', String(condLabel)).replace('{available}', String(available)));
+    if (q <= 0) {
+      setError(t('depot.damage.enterQtyFirst') || 'Shkruani sasinë e dëmtuar në fillim.');
+      return;
+    }
+    const avail = goodByProduct.get(p.id) ?? 0;
+    if (q > avail) {
+      setError(`${p.name}: stoku i mirë është vetëm ${avail}.`);
+      return;
     }
     if (!profile?.depot_id) return setError(t('depot.damage.noDepot') || 'Llogaria juaj nuk ka depo te caktuar');
 
-    setSubmitting(true);
+    setBusyProductId(p.id);
     const { error: rpcErr } = await supabase.rpc('report_stock_damage', {
       p_depot_id: profile.depot_id,
-      p_category_product_id: productId,
+      p_category_product_id: p.id,
       p_quantity: q,
       p_reason: reason || null,
-      p_condition_from: conditionFrom,
+      p_condition_from: 'good',
     });
-    setSubmitting(false);
+    setBusyProductId(null);
     if (rpcErr) {
       setError(rpcErr.message);
       return;
     }
-    setSuccess(true);
+    setSuccess(`${q} × ${p.name} → të dëmtuara`);
     setQuantity('');
-    setReason('');
     void load();
-    setTimeout(() => setSuccess(false), 2500);
+    setTimeout(() => setSuccess(null), 2500);
   }
 
   if (!profile?.depot_id) {
@@ -137,119 +177,151 @@ export default function DepotDamage() {
     );
   }
 
+  const qtyNum = parseInt(quantity || '0', 10) || 0;
+
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-3xl mx-auto">
+    <div className="p-3 sm:p-6 space-y-4 max-w-3xl mx-auto">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <AlertTriangle className="w-6 h-6 text-amber-600" /> Raportim demtimi
+        <h1 className="text-lg sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" /> {t('depot.damage.title') || 'Dëmtimet'}
         </h1>
-        <p className="text-sm text-slate-500 mt-1">{t('common.regjistroniPaletatQeDemtohenNeStok')}</p>
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+          {t('depot.damage.subtitle') || 'Shkruani sasinë, pastaj prekni produktin që u dëmtua.'}
+        </p>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="block">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500">Produkti</span>
-            <select
-              value={productId}
-              onChange={(e) => setProductId(e.target.value)}
-              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="">{t('common.zgjidhniProduktin')}</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </label>
+      {/* Tabs */}
+      <div className="inline-flex bg-slate-100 rounded-lg p-1 gap-1 text-sm">
+        <button
+          onClick={() => setTab('report')}
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${tab === 'report' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600'}`}
+        >
+          {t('depot.damage.tabReport') || 'Dëmto'}
+        </button>
+        <button
+          onClick={() => setTab('history')}
+          className={`px-3 py-1.5 rounded-md font-medium transition-colors inline-flex items-center gap-1.5 ${tab === 'history' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600'}`}
+        >
+          <FileText className="w-3.5 h-3.5" />{t('depot.damage.tabHistory') || 'Raportet'}
+          {history.length > 0 && <span className="text-[10px] bg-slate-200 text-slate-600 rounded-full px-1.5">{history.length}</span>}
+        </button>
+      </div>
 
-          <label className="block">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500">Gjendja burim</span>
-            <select
-              value={conditionFrom}
-              onChange={(e) => setConditionFrom(e.target.value)}
-              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-            >
-              {Object.entries(CONDITION_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="block">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500">{t('common.sasiaEDemtuar')}</span>
-            <input
-              type="number"
-              min={0}
-              max={available}
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="0"
-              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-            <p className="text-[11px] text-slate-400 mt-1">Ne gjendje: {available}</p>
-          </label>
-          <label className="block sm:col-span-1">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500">Arsyeja (opsionale)</span>
+      {tab === 'report' ? (
+        <>
+          {/* Quantity: sticky at top so it stays visible while tapping products */}
+          <div className="sticky top-0 z-10 bg-white rounded-xl border border-slate-200 p-3 shadow-sm space-y-2">
+            <span className="text-[11px] uppercase tracking-wide text-slate-500 font-medium">{t('common.sasiaEDemtuar') || 'Sasia e dëmtuar'}</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => bump(-1)}
+                className="w-11 h-11 rounded-lg border border-slate-300 text-slate-700 flex items-center justify-center active:bg-slate-100 flex-shrink-0"
+              >
+                <Minus className="w-5 h-5" />
+              </button>
+              <input
+                type="number"
+                min={0}
+                inputMode="numeric"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="0"
+                className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-slate-300 text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <button
+                type="button"
+                onClick={() => bump(1)}
+                className="w-11 h-11 rounded-lg border border-slate-300 text-slate-700 flex items-center justify-center active:bg-slate-100 flex-shrink-0"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
             <input
               type="text"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="p.sh. derguar gabimisht, transport, etj."
-              className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder={t('depot.damage.reasonPlaceholder') || 'Arsyeja (opsionale) — p.sh. gjatë ngarkimit'}
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
-          </label>
-        </div>
+            {error && (
+              <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg">{error}</div>
+            )}
+            {success && (
+              <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />{success}
+              </div>
+            )}
+          </div>
 
-        {error && (
-          <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg">{error}</div>
-        )}
-        {success && (
-          <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />{t('common.demtimiURegjistruaStokuUPerditesua')}</div>
-        )}
-
-        <div className="flex justify-end">
-          <button
-            onClick={submit}
-            disabled={submitting || !productId || available <= 0}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-60"
-          >
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            Raporto demtimin
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900">Historiku i demtimeve</h2>
-        </div>
-        {loading ? (
-          <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 text-slate-400 animate-spin" /></div>
-        ) : history.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500 text-center">{t('common.asnjeDemtimIRaportuarEnde')}</div>
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {history.map((h) => (
-              <li key={h.id} className="px-5 py-3 flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900 truncate">{h.product_name ?? '—'}</p>
-                  <p className="text-xs text-slate-500">
-                    {CONDITION_LABELS[h.condition_from] ?? h.condition_from} -&gt; I demtuar
-                    {h.reason ? ` · ${h.reason}` : ''}
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    {new Date(h.created_at).toLocaleString()} {h.reporter?.full_name ? `· ${h.reporter.full_name}` : ''}
-                  </p>
+          {/* Product buttons — small, mobile-first. Tap to damage `quantity`. */}
+          {loading ? (
+            <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 text-slate-400 animate-spin" /></div>
+          ) : groups.length === 0 ? (
+            <div className="p-8 text-center text-sm text-slate-500 bg-white rounded-xl border border-slate-200">
+              <Package className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              {t('depot.damage.noGoodStock') || 'Nuk ka stok të mirë për të dëmtuar.'}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {groups.map((g) => (
+                <div key={g.cid}>
+                  <p className="px-0.5 pb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{g.name}</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                    {g.items.map((p) => {
+                      const good = goodByProduct.get(p.id) ?? 0;
+                      const disabled = busyProductId !== null || qtyNum <= 0 || qtyNum > good;
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => applyDamage(p)}
+                          disabled={disabled}
+                          className="flex flex-col items-start gap-0.5 px-2 py-2 rounded-lg border border-slate-200 bg-white text-left active:bg-amber-50 hover:border-amber-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <span className="text-[11px] font-semibold text-slate-800 leading-tight line-clamp-2 w-full">{p.name}</span>
+                          <span className="text-[10px] text-slate-400 inline-flex items-center gap-1">
+                            {busyProductId === p.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                            {good}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <span className="text-lg font-bold text-amber-700">{h.quantity}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-4 py-3 border-b border-slate-100">
+            <h2 className="text-sm font-semibold text-slate-900">{t('depot.damage.historyTitle') || 'Historiku i dëmtimeve'}</h2>
+          </div>
+          {loading ? (
+            <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 text-slate-400 animate-spin" /></div>
+          ) : history.length === 0 ? (
+            <div className="p-6 text-sm text-slate-500 text-center">{t('common.asnjeDemtimIRaportuarEnde')}</div>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {history.map((h) => (
+                <li key={h.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-900 truncate">{h.product_name ?? '—'}</p>
+                    <p className="text-xs text-slate-500">
+                      {CONDITION_LABELS[h.condition_from] ?? h.condition_from} → I dëmtuar
+                      {h.reason ? ` · ${h.reason}` : ''}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {new Date(h.created_at).toLocaleString()} {h.reporter?.full_name ? `· ${h.reporter.full_name}` : ''}
+                    </p>
+                  </div>
+                  <span className="text-lg font-bold text-amber-700 flex-shrink-0">{h.quantity}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
