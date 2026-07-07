@@ -3034,6 +3034,8 @@ export const fr: typeof sq = {
       cancelBatch: 'Annuler',
       confirmCancel: 'Annuler ce lot de tri?',
       resume: 'Reprendre le tri',
+      continueRemaining: 'Reprendre le tri ({n} restants)',
+      cannotExceedIntake: 'Vous ne pouvez pas trier plus que la quantite recue ({sorted} > {total}).',
       chooseBatch: 'Quel tri remplir ?',
       noProductsForCategory: 'Cette cat\u00e9gorie n\'a pas de produits configur\u00e9s',
       fromNote: 'Du bon de livraison',

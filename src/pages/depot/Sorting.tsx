@@ -352,8 +352,24 @@ export default function DepotSorting() {
     if (movErr) throw movErr;
   }
 
+  // Sorting can never exceed the received quantity — otherwise more pallets
+  // than came in would be posted to stock (double counting). Returns an error
+  // string to show, or null when the amounts are valid.
+  function overSortError(): string | null {
+    const total = Math.max(0, parseInt(editTotal || '0', 10) || 0);
+    const sorted = itemInputs.reduce((s, r) => s + (parseInt(r.quantity || '0', 10) || 0), 0);
+    if (sorted > total) {
+      return t('depot.sorting.cannotExceedIntake')
+        .replace('{sorted}', String(sorted))
+        .replace('{total}', String(total));
+    }
+    return null;
+  }
+
   async function handleSaveProgress() {
     if (!activeBatchId) return;
+    const over = overSortError();
+    if (over) { setError(over); return; }
     try {
       setSubmitting(true);
       setError(null);
@@ -372,6 +388,8 @@ export default function DepotSorting() {
 
   async function handleComplete() {
     if (!activeBatchId) return;
+    const over = overSortError();
+    if (over) { setError(over); return; }
     try {
       setSubmitting(true);
       setError(null);
@@ -495,6 +513,8 @@ export default function DepotSorting() {
 
   // A cancelled sorting batch is never lost: it can be resumed (put back to
   // in_progress) and reopened to finish, so no incoming sorting disappears.
+  // (Cancelled batches were never committed to stock, so reopening + completing
+  // posts correctly.)
   async function handleResume(batch: BatchWithItems) {
     try {
       setSubmitting(true);
@@ -506,6 +526,47 @@ export default function DepotSorting() {
       if (updErr) throw updErr;
       await fetchAll();
       openBatch(batch);
+    } catch (err) {
+      setError(errMsg(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // A completed batch is already committed to stock (its sorted classes posted,
+  // the unsorted intake bucket drained by that amount). If it was only PARTLY
+  // sorted, the remaining pallets are still in stock as unsorted intake — so we
+  // continue by creating a fresh batch for just the remainder and opening it.
+  // This keeps stock correct (each batch commits its own items exactly once)
+  // and never blocks a load until its full quantity is sorted.
+  async function handleContinueRemaining(batch: BatchWithItems) {
+    const sorted = batch.items.reduce((s, i) => s + i.quantity, 0);
+    const remaining = Math.max(0, batch.total_received - sorted);
+    if (remaining <= 0) return;
+    try {
+      setSubmitting(true);
+      setError(null);
+      const companyId = profile!.company_id!;
+      const { data: created, error: insErr } = await supabase
+        .from('pallet_sorting_batches')
+        .insert({
+          company_id: companyId,
+          depot_id: profile?.depot_id ?? null,
+          category_id: batch.category_id,
+          total_received: remaining,
+          status: 'in_progress',
+          created_by: profile!.id,
+          source_delivery_note_id: batch.source_delivery_note_id ?? null,
+          reference_number_snapshot: batch.reference_number_snapshot ?? null,
+          notes: `Vazhdim i sortimit (${sorted}/${batch.total_received} u sortuan me pare)`,
+        })
+        .select('id')
+        .single();
+      if (insErr) throw insErr;
+      await fetchAll();
+      if (created?.id) {
+        setSearchParams((prev) => { prev.set('batch', created.id); return prev; }, { replace: true });
+      }
     } catch (err) {
       setError(errMsg(err));
     } finally {
@@ -796,6 +857,16 @@ export default function DepotSorting() {
                     >
                       <ArrowRight className="w-3 h-3" />{t('depot.sorting.resume')}</button>
                   )}
+                  {isCompleted && b.total_received - sorted > 0 && (
+                    <button
+                      onClick={() => handleContinueRemaining(b)}
+                      disabled={submitting}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+                    >
+                      <ArrowRight className="w-3 h-3" />
+                      {t('depot.sorting.continueRemaining').replace('{n}', String(b.total_received - sorted))}
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -904,6 +975,9 @@ export default function DepotSorting() {
                   </p>
                 </div>
               )}
+              {currentBatch.notes && (
+                <p className="text-[11px] text-slate-500">{currentBatch.notes}</p>
+              )}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-gray-50 rounded-lg p-2.5">
                   <label className="block text-[10px] font-medium text-gray-500 uppercase tracking-wide mb-1">
@@ -945,6 +1019,17 @@ export default function DepotSorting() {
                   </p>
                 </div>
               </div>
+
+              {diff < 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <p className="text-[11px] text-red-700">
+                    {t('depot.sorting.cannotExceedIntake')
+                      .replace('{sorted}', String(sortedTotal))
+                      .replace('{total}', String(totalReceivedNum))}
+                  </p>
+                </div>
+              )}
 
               <SortingItemsGrid
                 itemInputs={itemInputs}
@@ -993,12 +1078,12 @@ export default function DepotSorting() {
                 </button>
                 <button
                   onClick={() => {
-                    if (Math.abs(diff) > 0) {
+                    if (diff > 0) {
                       if (!window.confirm(`Ka nje diference prej ${diff} paletash. Vazhdo me perfundimin e sortimit?`)) return;
                     }
                     handleComplete();
                   }}
-                  disabled={submitting || sortedTotal === 0}
+                  disabled={submitting || sortedTotal === 0 || diff < 0}
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
