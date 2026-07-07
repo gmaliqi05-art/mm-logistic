@@ -26,8 +26,42 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 */
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const DEFAULT_MODEL = "claude-opus-4-8";
+// Cost/latency routing: a capable model does the work (navigating, filling,
+// completing processes); a fast, cheap model answers pure read-only questions
+// (reports, "how many", "who"). Both can be overridden via ai_config.
+const DEFAULT_MODEL = "claude-sonnet-5";            // actions + processes
+const DEFAULT_READ_MODEL = "claude-haiku-4-5-20251001"; // read-only info
 const MAX_TOOL_ROUNDS = 6;
+
+// Heuristic: does the latest user message ask to DO something (an action that
+// clicks buttons / navigates / writes), vs. just ask for information? We bias
+// toward the action model when unsure — reads are cheap to run on either, but
+// an action wrongly sent to the fast model might not click reliably.
+const ACTION_RE = new RegExp(
+  "\\b(" +
+  // Albanian
+  "hap|hape|hapni|hapet|krijo|krijoni|kri?jom|vazhdo|vazhdoje|perfundo|perfundoje|mbaro|mbaroje|" +
+  "regjistro|regjistroje|ruaj|ruaje|mbush|mbushe|fillo|filloje|demto|demtoje|sorto|sortoje|" +
+  "shto|dergo|dergoje|zgjidh|zgjedh|kliko|klikoje|posto|" +
+  // English / German / French common
+  "open|create|continue|finish|complete|register|save|fill|start|send|add|select|click|new|" +
+  "oeffne|erstelle|neu|ouvre|cree|creer" +
+  ")\\b",
+  "i",
+);
+
+function latestUserText(messages: Json[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m?.role !== "user") continue;
+    if (typeof m.content === "string") return m.content;
+    if (Array.isArray(m.content)) {
+      return m.content.filter((b: Json) => b?.type === "text").map((b: Json) => b.text).join(" ");
+    }
+    return "";
+  }
+  return "";
+}
 const ALLOWED_ROLES = ["company_admin", "accountant", "super_admin", "depot_worker"];
 
 const corsHeaders = {
@@ -539,16 +573,20 @@ Deno.serve(async (req) => {
   const { companyId, depotId, role, admin } = authResult.caller;
 
   // Config comes from the super-admin-managed ai_config table first, then env.
-  const { data: cfg } = await admin.from("ai_config").select("anthropic_api_key, model, enabled").eq("id", true).maybeSingle();
+  const { data: cfg } = await admin.from("ai_config").select("anthropic_api_key, model, model_read, enabled").eq("id", true).maybeSingle();
   if (cfg && cfg.enabled === false) return json(503, { error: "AI assistant is disabled by the administrator." });
   const apiKey = (cfg?.anthropic_api_key && cfg.anthropic_api_key.length > 0) ? cfg.anthropic_api_key : Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json(503, { error: "AI assistant not configured. Set the Anthropic API key in Super Admin settings." });
-  const model = (cfg?.model && cfg.model.length > 0) ? cfg.model : (Deno.env.get("ANTHROPIC_MODEL") || DEFAULT_MODEL);
+  const actionModel = (cfg?.model && cfg.model.length > 0) ? cfg.model : (Deno.env.get("ANTHROPIC_MODEL") || DEFAULT_MODEL);
+  const readModel = (cfg?.model_read && cfg.model_read.length > 0) ? cfg.model_read : DEFAULT_READ_MODEL;
 
   let body: Json;
   try { body = await req.json(); } catch { return json(400, { error: "Invalid JSON" }); }
   const messages: Json[] = Array.isArray(body?.messages) ? body.messages : [];
   if (messages.length === 0) return json(400, { error: "messages required" });
+
+  // Route: action requests -> capable model; pure info -> fast/cheap model.
+  const model = ACTION_RE.test(latestUserText(messages)) ? actionModel : readModel;
 
   const isDepot = role === "depot_worker";
   const tools = isDepot ? DEPOT_TOOLS : COMPANY_TOOLS;
