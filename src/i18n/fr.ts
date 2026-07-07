@@ -3033,6 +3033,8 @@ export const fr: typeof sq = {
       committedToStock: 'Tri publi\u00e9 au stock',
       cancelBatch: 'Annuler',
       confirmCancel: 'Annuler ce lot de tri?',
+      resume: 'Reprendre le tri',
+      chooseBatch: 'Quel tri remplir ?',
       noProductsForCategory: 'Cette cat\u00e9gorie n\'a pas de produits configur\u00e9s',
       fromNote: 'Du bon de livraison',
       dataFromCompany: 'Les donn\u00e9es ont \u00e9t\u00e9 d\u00e9finies par l\'entreprise. Vous pouvez ajuster les quantit\u00e9s si re\u00e7u diff\u00e9remment.',
