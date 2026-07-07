@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Wrench,
   Loader2,
@@ -118,6 +119,36 @@ function shortProductName(productName: string, categoryName: string): string {
   return rest;
 }
 
+// Match a spoken product/class (e.g. "B Klasse", "klasse b", "b", or a full
+// product name) to a repair product. Class letters are compared after stripping
+// the word "klasse" and punctuation; otherwise fall back to substring match.
+function normalizeClassToken(s: string): string {
+  return (s || '').toLowerCase().replace(/klasse|klase|class/g, '').replace(/[^a-z0-9]/g, '');
+}
+
+function matchRepairProduct(
+  spoken: string,
+  candidates: CatalogProduct[],
+): CatalogProduct | null {
+  const q = (spoken || '').trim().toLowerCase();
+  if (!q) return null;
+  const qNorm = normalizeClassToken(q);
+  // 1) exact class match on the short label ("B Klasse" -> "b").
+  if (qNorm) {
+    const exact = candidates.find(
+      (p) => normalizeClassToken(shortProductName(p.name, p.category_name)) === qNorm,
+    );
+    if (exact) return exact;
+  }
+  // 2) substring on the full product name or the short label.
+  const sub = candidates.find((p) => {
+    const full = p.name.toLowerCase();
+    const short = shortProductName(p.name, p.category_name).toLowerCase();
+    return full.includes(q) || q.includes(full) || short.includes(q) || q.includes(short);
+  });
+  return sub ?? null;
+}
+
 function todayDateStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -151,6 +182,8 @@ export default function DepotRepairWorkers() {
 
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [pendingFinish, setPendingFinish] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [justUpdatedId, setJustUpdatedId] = useState<string | null>(null);
   const [editingBatchWorkerId, setEditingBatchWorkerId] = useState<string | null>(null);
   const [editingBatchValue, setEditingBatchValue] = useState('');
@@ -555,6 +588,56 @@ export default function DepotRepairWorkers() {
     () => products.filter((p) => p.is_active && p.show_in_repair && visibleCategoryIds.has(p.category_id)),
     [products, visibleCategoryIds],
   );
+
+  // Voice fill from the assistant on the Repair Process page:
+  //   ?worker=<name>&product=<class or product>&finish=1
+  // Selects the worker chip and the product chip by name; finish=1 registers
+  // the batch ("Perfundo") once both are selected — mirroring the manual
+  // click flow the worker already uses (worker -> product -> Perfundo).
+  useEffect(() => {
+    const workerName = searchParams.get('worker');
+    const productName = searchParams.get('product');
+    const finish = searchParams.get('finish') === '1';
+    if (!workerName && !productName && !finish) return;
+    if (loading) return; // wait until workers/products are loaded
+
+    let matchedWorker: WorkerRow | null = null;
+    let matchedProduct: CatalogProduct | null = null;
+
+    if (workerName) {
+      const q = workerName.trim().toLowerCase();
+      matchedWorker =
+        workers.find((w) => {
+          const n = (w.full_name || '').toLowerCase();
+          return !!q && (n.includes(q) || q.includes(n));
+        }) ?? null;
+      if (matchedWorker) setSelectedWorkerId(matchedWorker.id);
+    }
+    if (productName) {
+      matchedProduct = matchRepairProduct(productName, visibleProducts);
+      if (matchedProduct) setSelectedProductId(matchedProduct.id);
+    }
+    if (finish) {
+      const willHaveWorker = matchedWorker || selectedWorkerId;
+      const willHaveProduct = matchedProduct || selectedProductId;
+      if (willHaveWorker && willHaveProduct) setPendingFinish(true);
+    }
+
+    const sp = new URLSearchParams(searchParams);
+    ['worker', 'product', 'finish'].forEach((k) => sp.delete(k));
+    setSearchParams(sp, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, workers, products, loading]);
+
+  // Once the voice selection resolves to a worker + product, register the batch.
+  useEffect(() => {
+    if (!pendingFinish || saving) return;
+    if (selectedWorker && selectedProduct) {
+      setPendingFinish(false);
+      void handleComplete();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingFinish, selectedWorker, selectedProduct, saving]);
 
   const productsByCategoryId = useMemo(() => {
     const map = new Map<string, CatalogProduct[]>();
