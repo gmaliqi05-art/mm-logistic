@@ -7,6 +7,7 @@ import CompanyFeaturesManager from '../../components/subscription/CompanyFeature
 
 interface CompanyWithSub {
   id: string;
+  company_number?: string | null;
   name: string;
   email: string;
   phone: string;
@@ -187,7 +188,8 @@ export default function SuperAdminCompanies() {
   const filtered = companies.filter((c) => {
     const matchSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase());
+      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      (c.company_number ?? '').toLowerCase().includes(search.toLowerCase());
     const matchStatus =
       statusFilter === 'all' || c.subscription?.status === statusFilter;
     return matchSearch && matchStatus;
@@ -287,7 +289,14 @@ export default function SuperAdminCompanies() {
                             <PlanIcon className="w-4 h-4 text-teal-600" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{company.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-gray-900">{company.name}</p>
+                              {company.company_number && (
+                                <span className="text-[10px] font-mono font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded px-1.5 py-0.5">
+                                  {company.company_number}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-gray-500">{company.email}</p>
                           </div>
                         </div>
