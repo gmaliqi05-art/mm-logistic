@@ -283,6 +283,19 @@ export default function CompanyDeliveryNotes() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, drivers, products]);
 
+  // Deep-link to a specific document: ?open=<note_id> opens that note's detail
+  // (used by the client statement / kartela so each row links to its document).
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (!openId || notes.length === 0) return;
+    const note = notes.find((n) => n.id === openId);
+    if (note) void openDetail(note);
+    const sp = new URLSearchParams(searchParams);
+    sp.delete('open');
+    setSearchParams(sp, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, notes]);
+
   async function fetchAll() {
     try {
       setLoading(true);
