@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Building2,
   ExternalLink,
+  FileText,
   Hash,
   Handshake,
   Loader2,
@@ -13,6 +14,7 @@ import {
   MapPin,
   Package,
   Phone,
+  Plus,
   Warehouse,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -295,6 +297,21 @@ export default function PartnerDetail() {
                 {TYPE_LABEL[partner.contact_type]}
               </span>
             </div>
+          </div>
+          {/* Client-scoped actions: only THIS client's orders / a pre-filled note. */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link
+              to={`/company/delivery-notes?partner=${encodeURIComponent(partner.name)}`}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+            >
+              <FileText className="w-4 h-4" /> Porosite
+            </Link>
+            <Link
+              to={`/company/delivery-notes?new=1&partner=${encodeURIComponent(partner.name)}`}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Fletedergese
+            </Link>
           </div>
         </div>
 
