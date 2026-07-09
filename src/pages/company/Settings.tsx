@@ -27,6 +27,7 @@ export default function CompanySettings() {
   const [tab, setTab] = useState<TabKey>('profile');
 
   const [companyName, setCompanyName] = useState('');
+  const [companyNumber, setCompanyNumber] = useState('');
   const [companyAddress, setCompanyAddress] = useState('');
   const [companyPhone, setCompanyPhone] = useState('');
   const [companyEmail, setCompanyEmail] = useState('');
@@ -65,6 +66,7 @@ export default function CompanySettings() {
       if (err) throw err;
       if (data) {
         setCompanyName(data.name || '');
+        setCompanyNumber(data.company_number || '');
         setCompanyAddress(data.address || '');
         setCompanyPhone(data.phone || '');
         setCompanyEmail(data.email || '');
@@ -195,8 +197,15 @@ export default function CompanySettings() {
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <Building2 className="w-6 h-6 text-blue-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{t('settings.companySettings')}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl font-bold text-gray-900">{t('settings.companySettings')}</h1>
+                {companyNumber && (
+                  <span className="text-xs font-mono font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-md px-2 py-1">
+                    ID: {companyNumber}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-gray-600 mt-1">{t('settings.companyDesc')}</p>
             </div>
           </div>
