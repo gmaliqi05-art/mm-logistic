@@ -1512,6 +1512,18 @@ export default function InvoiceBuilder() {
       )}
 
       {showPreview && (
+        <>
+        {/* Print only the invoice, reliably, even from inside this fixed modal
+            (mobile browsers otherwise print blank). Everything is hidden except
+            the .invoice-print-area, which is lifted to the page origin. */}
+        <style>{`
+          @media print {
+            body * { visibility: hidden !important; }
+            .invoice-print-area, .invoice-print-area * { visibility: visible !important; }
+            .invoice-print-area { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; box-shadow: none !important; border-radius: 0 !important; }
+            @page { size: A4; margin: 10mm; }
+          }
+        `}</style>
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex flex-col print:static print:bg-white print:backdrop-blur-0">
           <div className="flex items-center justify-between gap-3 px-4 py-3 bg-white border-b border-slate-200 print:hidden">
             <div className="flex items-center gap-2 min-w-0">
@@ -1547,11 +1559,14 @@ export default function InvoiceBuilder() {
             className="flex-1 overflow-auto p-4 md:p-8 print:p-0 print:overflow-visible"
             onClick={(e) => { if (e.target === e.currentTarget) setShowPreview(false); }}
           >
-            <div className="mx-auto max-w-[820px] bg-white shadow-xl rounded-lg overflow-hidden print:shadow-none print:rounded-none print:max-w-none">
+            {/* Fixed A4-ish width so the outer container scrolls left/right on a
+                phone instead of clipping the invoice. */}
+            <div className="invoice-print-area mx-auto w-[210mm] max-w-none bg-white shadow-xl rounded-lg overflow-hidden print:shadow-none print:rounded-none print:w-auto print:max-w-none">
               <InvoiceTemplate data={preview} />
             </div>
           </div>
         </div>
+        </>
       )}
     </div>
   );
