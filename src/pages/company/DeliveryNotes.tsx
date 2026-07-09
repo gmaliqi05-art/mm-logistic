@@ -89,6 +89,8 @@ interface NoteForm {
   items: NoteItemForm[];
   attachment_url: string;
   pallet_type: string;
+  is_return: boolean;
+  return_of_delivery_note_id: string;
 }
 
 interface Contact {
@@ -136,6 +138,8 @@ const emptyForm: NoteForm = {
   items: [{ ...emptyItem }],
   attachment_url: '',
   pallet_type: 'EPAL',
+  is_return: false,
+  return_of_delivery_note_id: '',
 };
 
 function CollapsibleHeader({ label, icon, isOpen, onToggle }: { label: string; icon: React.ReactNode; isOpen: boolean; onToggle: () => void }) {
@@ -172,6 +176,7 @@ export default function CompanyDeliveryNotes() {
   }, []);
   const [tabScope, setTabScope] = useState<'all' | 'review' | 'invoiced' | 'uninvoiced'>(initialScope);
   const [sortByPartner, setSortByPartner] = useState(false);
+  const [onlyReturns, setOnlyReturns] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -427,7 +432,8 @@ export default function CompanyDeliveryNotes() {
           assigned_driver_id: form.assigned_driver_id || null,
           assigned_depot_id: form.assigned_depot_id || null,
           note_number: noteNumber,
-          type: form.type,
+          // A return/reclamation is always incoming goods (a pickup).
+          type: form.is_return ? 'pickup' : form.type,
           status: isQuickDraft ? 'sent' : 'draft',
           is_quick_draft: isQuickDraft,
           our_role: ourRole,
@@ -471,6 +477,8 @@ export default function CompanyDeliveryNotes() {
           notes: form.notes,
           attachment_url: form.attachment_url || null,
           pallet_type: form.pallet_type || 'EPAL',
+          is_return: form.is_return,
+          return_of_delivery_note_id: form.is_return ? (form.return_of_delivery_note_id || null) : null,
         })
         .select()
         .single();
@@ -527,6 +535,38 @@ export default function CompanyDeliveryNotes() {
     } finally {
       setSaving(false);
     }
+  }
+
+  // When creating a return, picking the original delivery note pre-fills the
+  // partner and the item lines from that delivery, so the operator only has to
+  // trim quantities to what is actually being returned and set the condition.
+  async function loadReturnFromNote(noteId: string) {
+    if (!noteId) {
+      setForm((f) => ({ ...f, return_of_delivery_note_id: '', items: [{ ...emptyItem }] }));
+      return;
+    }
+    const src = notes.find((n) => n.id === noteId) as any;
+    const { data: srcItems } = await supabase
+      .from('delivery_note_items')
+      .select('category_id, category_product_id, quantity, condition')
+      .eq('delivery_note_id', noteId);
+    const items: NoteItemForm[] = ((srcItems ?? []) as any[]).map((i) => ({
+      category_id: i.category_id ?? '',
+      product_id: i.category_product_id ?? '',
+      quantity: i.quantity ?? 1,
+      condition: i.condition ?? 'good',
+      notes: '',
+      intended_action: 'stock',
+    }));
+    setForm((f) => ({
+      ...f,
+      return_of_delivery_note_id: noteId,
+      partner_id: src?.partner_id ?? f.partner_id,
+      partner_name: src?.partner_name ?? f.partner_name,
+      pickup_address: src?.delivery_address ?? f.pickup_address,
+      reference_number: src?.note_number ?? f.reference_number,
+      items: items.length ? items : [{ ...emptyItem }],
+    }));
   }
 
   async function openDetail(note: DeliveryNote) {
@@ -757,7 +797,11 @@ export default function CompanyDeliveryNotes() {
   }
 
   const filtered = notes.filter((n) => {
-    if (n.type !== tabType) return false;
+    if (onlyReturns) {
+      if (!(n as { is_return?: boolean }).is_return) return false;
+    } else if (n.type !== tabType) {
+      return false;
+    }
     if (tabScope === 'review' && !['pending_company_review', 'pending_stock_confirmation'].includes(n.status)) return false;
     if (tabScope === 'invoiced' && !(n as any).acc_invoice_id) return false;
     if (tabScope === 'uninvoiced' && ((n as any).acc_invoice_id || !['delivered', 'confirmed'].includes(n.status))) return false;
@@ -799,23 +843,41 @@ export default function CompanyDeliveryNotes() {
           <h1 className="text-2xl font-bold text-gray-900">{t('company.deliveryNotes.title')}</h1>
           <p className="text-gray-500 mt-1">{t('company.deliveryNotes.subtitle')}</p>
         </div>
-        <button
-          onClick={() => {
-            const defaultDate = todayLocalDate();
-            setForm({
-              ...emptyForm,
-              type: tabType,
-              assigned_depot_id: depots.length === 1 ? depots[0].id : '',
-              scheduled_delivery_date: tabType === 'delivery' ? defaultDate : '',
-              scheduled_pickup_date: tabType === 'pickup' ? defaultDate : '',
-            });
-            setShowCreateModal(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
-        >
-          <Plus className="w-4 h-4" />
-          {t('company.deliveryNotes.createNote')}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              setForm({
+                ...emptyForm,
+                is_return: true,
+                type: 'pickup',
+                assigned_depot_id: depots.length === 1 ? depots[0].id : '',
+                scheduled_pickup_date: todayLocalDate(),
+              });
+              setShowCreateModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors font-medium"
+          >
+            <ArrowDownLeft className="w-4 h-4" />
+            Krijo Kthim
+          </button>
+          <button
+            onClick={() => {
+              const defaultDate = todayLocalDate();
+              setForm({
+                ...emptyForm,
+                type: tabType,
+                assigned_depot_id: depots.length === 1 ? depots[0].id : '',
+                scheduled_delivery_date: tabType === 'delivery' ? defaultDate : '',
+                scheduled_pickup_date: tabType === 'pickup' ? defaultDate : '',
+              });
+              setShowCreateModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            {t('company.deliveryNotes.createNote')}
+          </button>
+        </div>
       </div>
 
       <div className="inline-flex bg-gray-100 rounded-lg p-1 gap-1">
@@ -848,9 +910,9 @@ export default function CompanyDeliveryNotes() {
         ] as const).map((s) => (
           <button
             key={s.key}
-            onClick={() => { setTabScope(s.key); if (searchParams.has('scope')) { searchParams.delete('scope'); setSearchParams(searchParams, { replace: true }); } }}
+            onClick={() => { setOnlyReturns(false); setTabScope(s.key); if (searchParams.has('scope')) { searchParams.delete('scope'); setSearchParams(searchParams, { replace: true }); } }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              tabScope === s.key
+              tabScope === s.key && !onlyReturns
                 ? 'bg-teal-600 text-white'
                 : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
@@ -858,6 +920,14 @@ export default function CompanyDeliveryNotes() {
             {s.label}
           </button>
         ))}
+        <button
+          onClick={() => setOnlyReturns((v) => !v)}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors inline-flex items-center gap-1 ${
+            onlyReturns ? 'bg-amber-600 text-white' : 'bg-white border border-amber-200 text-amber-700 hover:bg-amber-50'
+          }`}
+        >
+          <ArrowDownLeft className="w-3.5 h-3.5" /> Kthimet
+        </button>
       </div>
 
       {error && (
@@ -951,6 +1021,11 @@ export default function CompanyDeliveryNotes() {
                   >
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       <div className="flex items-center gap-2">
+                        {(note as any).is_return && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+                            <ArrowDownLeft className="w-3 h-3" /> Kthim
+                          </span>
+                        )}
                         {(note as any).document_number || note.note_number}
                         {(note as any).document_number && (note as any).document_number !== note.note_number && (
                           <span className="text-xs text-gray-400" title="Titull i porosise">({note.note_number})</span>
@@ -1051,6 +1126,9 @@ export default function CompanyDeliveryNotes() {
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
+                        {(note as any).is_return && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 flex-shrink-0">Kthim</span>
+                        )}
                         <span className="text-sm font-semibold text-gray-900 truncate">
                           {(note as any).document_number || note.note_number}
                         </span>
@@ -1107,7 +1185,7 @@ export default function CompanyDeliveryNotes() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowCreateModal(false)} />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
-              <h2 className="text-lg font-semibold text-gray-900">{t('company.deliveryNotes.createNote')}</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{form.is_return ? 'Krijo Kthim / Reklamacion' : t('company.deliveryNotes.createNote')}</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1123,6 +1201,32 @@ export default function CompanyDeliveryNotes() {
                   (Fletemarrje / hyrje) without closing the modal. Changing it
                   also realigns the default scheduled date to the matching
                   field, same as the "Create" button does on open. */}
+              {form.is_return ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-800">
+                    <ArrowDownLeft className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Kthim / Reklamacion</span>
+                  </div>
+                  <p className="text-xs text-amber-700">
+                    Zgjidhni fletëdërgesën origjinale, pastaj lini vetëm sasitë që po kthehen dhe caktoni gjendjen (i mirë / i dëmtuar). Malli i kthyer i shtohet stokut të depos.
+                  </p>
+                  <label className="block">
+                    <span className="text-xs font-medium text-amber-800">Fletëdërgesa origjinale</span>
+                    <select
+                      value={form.return_of_delivery_note_id}
+                      onChange={(e) => void loadReturnFromNote(e.target.value)}
+                      className="mt-1 w-full px-3 py-2 rounded-lg border border-amber-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="">Zgjidhni fletëdërgesën…</option>
+                      {notes.filter((n) => n.type === 'delivery' && !(n as any).is_return).slice(0, 100).map((n) => (
+                        <option key={n.id} value={n.id}>
+                          {(n as any).document_number || n.note_number} · {(n as any).partner_name || '—'} · {new Date(n.created_at).toLocaleDateString()}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ) : (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('company.deliveryNotes.directionLabel')}</label>
                 <div className="inline-flex w-full sm:w-auto bg-gray-100 rounded-lg p-1 gap-1">
@@ -1156,6 +1260,7 @@ export default function CompanyDeliveryNotes() {
                   </button>
                 </div>
               </div>
+              )}
 
               {/* Derguesi - always visible, auto-filled with our company */}
               <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg">
