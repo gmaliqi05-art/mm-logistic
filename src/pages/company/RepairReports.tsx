@@ -51,6 +51,7 @@ interface WorkerReport {
       total_quantity: number;
       entry_count: number;
       by_category?: Array<{ name: string; quantity: number }>;
+      by_product?: Array<{ name: string; quantity: number }>;
       entries?: ReportEntry[];
     }>;
   };
@@ -645,7 +646,9 @@ function ReportDetailModal({
                       )}
                     </button>
                     {open && (
-                      <WorkerEntriesTable entries={w.entries ?? []} t={t} />
+                      w.entries && w.entries.length > 0
+                        ? <WorkerEntriesTable entries={w.entries} t={t} />
+                        : <WorkerBreakdown byProduct={w.by_product ?? []} byCategory={w.by_category ?? []} />
                     )}
                   </div>
                 );
@@ -667,6 +670,35 @@ function ReportDetailModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Reports store a per-worker breakdown by product/category (not row-level
+// entries), so expanding a worker shows that breakdown. Mobile-friendly rows.
+function WorkerBreakdown({
+  byProduct,
+  byCategory,
+}: {
+  byProduct: Array<{ name: string; quantity: number }>;
+  byCategory: Array<{ name: string; quantity: number }>;
+}) {
+  const rows = byProduct.length > 0 ? byProduct : byCategory;
+  if (rows.length === 0) {
+    return (
+      <div className="border-t border-gray-100 bg-gray-50 p-4 text-xs text-gray-400 text-center">
+        Pa detaje shtese
+      </div>
+    );
+  }
+  return (
+    <div className="border-t border-gray-100 bg-gray-50 p-3 space-y-1.5">
+      {rows.map((r) => (
+        <div key={r.name} className="flex items-center justify-between gap-2 bg-white rounded-lg border border-gray-100 px-3 py-2">
+          <span className="text-sm text-gray-700 min-w-0 truncate">{r.name}</span>
+          <span className="text-sm font-bold text-teal-700 flex-shrink-0">{r.quantity}</span>
+        </div>
+      ))}
     </div>
   );
 }
