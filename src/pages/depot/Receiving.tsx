@@ -35,10 +35,14 @@ interface ItemRow {
   category_product_id: string;
   quantity: string;
   condition: string;
+  // When the goods arrive ALREADY sorted (e.g. a partner brings pre-graded
+  // pallets), the worker can pick the exact class instead of routing the pile
+  // through Sorting.
+  preSorted?: boolean;
 }
 
 function createRow(): ItemRow {
-  return { id: crypto.randomUUID(), category_id: '', category_product_id: '', quantity: '', condition: 'good' };
+  return { id: crypto.randomUUID(), category_id: '', category_product_id: '', quantity: '', condition: 'good', preSorted: false };
 }
 
 export default function DepotReceiving() {
@@ -282,11 +286,11 @@ export default function DepotReceiving() {
     setReceivingRows((prev) => prev.length > 1 ? prev.filter((r) => r.id !== id) : prev);
   }
 
-  function updateReceivingRow(id: string, field: keyof ItemRow, value: string) {
+  function updateReceivingRow(id: string, field: keyof ItemRow, value: string | boolean) {
     setReceivingRows((prev) => prev.map((r) => {
       if (r.id !== id) return r;
       const next = { ...r, [field]: value };
-      if (field === 'category_id') next.category_product_id = '';
+      if (field === 'category_id') { next.category_product_id = ''; next.preSorted = false; }
       return next;
     }));
   }
@@ -321,7 +325,7 @@ export default function DepotReceiving() {
     // sorting: the worker books the bulk at category level and the
     // sorter assigns each pallet to a specific product later.
     const missingProduct = validRows.find(
-      (r) => r.condition !== 'damaged' && !categoryRequiresSorting(r.category_id) && categoryHasProducts(r.category_id) && !r.category_product_id,
+      (r) => r.condition !== 'damaged' && (!categoryRequiresSorting(r.category_id) || r.preSorted) && categoryHasProducts(r.category_id) && !r.category_product_id,
     );
     if (missingProduct) {
       const cat = categories.find((c) => c.id === missingProduct.category_id);
@@ -345,7 +349,7 @@ export default function DepotReceiving() {
       // store at category level only. The product is set later by the sorter
       // when the batch is committed.
       const productIdFor = (r: ItemRow) =>
-        r.condition === 'damaged' || categoryRequiresSorting(r.category_id)
+        r.condition === 'damaged' || (categoryRequiresSorting(r.category_id) && !r.preSorted)
           ? null
           : (r.category_product_id || null);
 
@@ -541,6 +545,10 @@ export default function DepotReceiving() {
                 {receivingRows.map((row) => {
                   const rowProducts = productsForCategory(row.category_id);
                   const hasProducts = rowProducts.length > 0;
+                  // A sortable category normally routes to "unsorted" — unless the
+                  // worker marks the row as already sorted, then they pick the class.
+                  const requiresSort = categoryRequiresSorting(row.category_id) && !row.preSorted;
+                  const canPreSort = categoryRequiresSorting(row.category_id) && row.condition !== 'damaged';
                   return (
                   <div key={row.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -564,21 +572,21 @@ export default function DepotReceiving() {
                           {row.condition === 'damaged' && (
                             <span className="ml-2 text-amber-700 font-normal text-[10px]">{t('depot.receiving.notRequiredForDamaged') || '(pa nevoje per defekt)'}</span>
                           )}
-                          {categoryRequiresSorting(row.category_id) && row.condition !== 'damaged' && (
+                          {requiresSort && (
                             <span className="ml-2 text-amber-700 font-normal text-[10px]">{t('depot.receiving.classifiedInSorting') || '(klasifikohet ne sortire)'}</span>
                           )}
                         </label>
                         <select
-                          value={categoryRequiresSorting(row.category_id) && row.condition !== 'damaged' ? '' : row.category_product_id}
+                          value={requiresSort || row.condition === 'damaged' ? '' : row.category_product_id}
                           onChange={(e) => updateReceivingRow(row.id, 'category_product_id', e.target.value)}
-                          disabled={!row.category_id || !hasProducts || row.condition === 'damaged' || categoryRequiresSorting(row.category_id)}
-                          required={hasProducts && row.condition !== 'damaged' && !categoryRequiresSorting(row.category_id)}
+                          disabled={!row.category_id || !hasProducts || row.condition === 'damaged' || requiresSort}
+                          required={hasProducts && row.condition !== 'damaged' && !requiresSort}
                           className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:text-gray-400"
                         >
                           <option value="">
                             {row.condition === 'damaged'
                               ? (t('depot.receiving.damagedAtCategoryLevel') || '— defekt te kategoria —')
-                              : categoryRequiresSorting(row.category_id)
+                              : requiresSort
                                 ? (t('depot.receiving.pendingSorting') || '— pa klasifikuar (sortire) —')
                                 : (hasProducts ? (t('depot.stock.selectProduct') || 'Zgjedh produktin') : (row.category_id ? (t('depot.receiving.noProductsForCategory') || '— pa produkte —') : (t('depot.receiving.pickCategoryFirst') || '— zgjedh kategorin —')))}
                           </option>
@@ -586,6 +594,17 @@ export default function DepotReceiving() {
                             <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
                         </select>
+                        {canPreSort && (
+                          <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!!row.preSorted}
+                              onChange={(e) => updateReceivingRow(row.id, 'preSorted', e.target.checked)}
+                              className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                            />
+                            Tashmë të sortuara (zgjedh klasën)
+                          </label>
+                        )}
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">{t('common.quantity')}</label>
