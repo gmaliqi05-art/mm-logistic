@@ -21,6 +21,7 @@ import { useTranslation } from '../../i18n';
 
 interface Partner {
   id: string;
+  contact_number: string | null;
   name: string;
   contact_type: 'customer' | 'supplier' | 'both';
   email: string | null;
@@ -107,7 +108,7 @@ export default function PartnerDetail() {
       try {
         const { data: p, error: pErr } = await supabase
           .from('acc_contacts')
-          .select('id,name,contact_type,email,phone,vat_number,address,city,postal_code,country,website,notes')
+          .select('id,contact_number,name,contact_type,email,phone,vat_number,address,city,postal_code,country,website,notes')
           .eq('id', id!)
           .eq('company_id', profile!.company_id)
           .maybeSingle();
@@ -282,7 +283,14 @@ export default function PartnerDetail() {
               <Building2 className="w-6 h-6 text-teal-700" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl lg:text-2xl font-bold text-slate-900 truncate">{partner.name}</h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl lg:text-2xl font-bold text-slate-900 truncate">{partner.name}</h1>
+                {partner.contact_number && (
+                  <span className="inline-flex px-2 py-0.5 rounded-md text-xs font-mono font-semibold text-teal-700 bg-teal-50 border border-teal-100">
+                    {partner.contact_number}
+                  </span>
+                )}
+              </div>
               <span className={`mt-1 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold border ${TYPE_TONE[partner.contact_type]}`}>
                 {TYPE_LABEL[partner.contact_type]}
               </span>

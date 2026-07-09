@@ -24,6 +24,7 @@ export type PartnerType = 'customer' | 'supplier' | 'both';
 
 export interface Partner {
   id: string;
+  contact_number?: string | null;
   name: string;
   contact_type: PartnerType;
   address: string | null;
@@ -103,7 +104,7 @@ export default function CompanyPartners() {
       setError(null);
       const { data, error: qErr } = await supabase
         .from('acc_contacts')
-        .select('id, name, contact_type, address, city, postal_code, country, vat_number, email, phone, website, notes, is_active')
+        .select('id, contact_number, name, contact_type, address, city, postal_code, country, vat_number, email, phone, website, notes, is_active')
         .eq('company_id', profile.company_id)
         .eq('is_active', true)
         .order('name');
@@ -210,6 +211,7 @@ export default function CompanyPartners() {
       if (!q) return true;
       return (
         p.name.toLowerCase().includes(q) ||
+        (p.contact_number ?? '').toLowerCase().includes(q) ||
         (p.email ?? '').toLowerCase().includes(q) ||
         (p.phone ?? '').toLowerCase().includes(q) ||
         (p.city ?? '').toLowerCase().includes(q) ||
@@ -278,9 +280,16 @@ export default function CompanyPartners() {
                   <Link to={`/company/partners/${p.id}`} className="block group">
                     <h3 className="font-semibold text-gray-900 truncate group-hover:text-teal-700 transition-colors">{p.name}</h3>
                   </Link>
-                  <span className={`mt-1 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${typeBadgeCls[p.contact_type]}`}>
-                    {typeLabel[p.contact_type]}
-                  </span>
+                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                    {p.contact_number && (
+                      <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-teal-700 bg-teal-50 border border-teal-100">
+                        {p.contact_number}
+                      </span>
+                    )}
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${typeBadgeCls[p.contact_type]}`}>
+                      {typeLabel[p.contact_type]}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <Link
