@@ -20,6 +20,7 @@ import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { DeliveryNote } from '../../types';
+import ReturnModal from '../../components/delivery/ReturnModal';
 
 const statusIcons: Record<string, typeof CheckCircle2> = {
   draft: FileText,
@@ -59,6 +60,7 @@ export default function DepotDeliveryNotes() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showReturn, setShowReturn] = useState(false);
 
   useEffect(() => {
     if (profile?.company_id) fetchNotes();
@@ -123,10 +125,30 @@ export default function DepotDeliveryNotes() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Fletedergesat</h1>
-        <p className="text-gray-500 mt-1 text-sm">{t('common.pamjeInformativeShikoniKushKaCilen')}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Fletedergesat</h1>
+          <p className="text-gray-500 mt-1 text-sm">{t('common.pamjeInformativeShikoniKushKaCilen')}</p>
+        </div>
+        {profile?.depot_id && (
+          <button
+            onClick={() => setShowReturn(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors text-sm font-medium flex-shrink-0"
+          >
+            <ArrowDownLeft className="w-4 h-4" /> Krijo Kthim
+          </button>
+        )}
       </div>
+
+      {showReturn && profile?.company_id && profile?.depot_id && (
+        <ReturnModal
+          companyId={profile.company_id}
+          depotId={profile.depot_id}
+          createdById={profile.id}
+          onClose={() => setShowReturn(false)}
+          onCreated={fetchNotes}
+        />
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
