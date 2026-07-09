@@ -364,7 +364,11 @@ export default function CompanyDeliveryNotes() {
   }
 
   async function handleCreate() {
-    const trimmedTitle = form.note_number.trim();
+    // Returns have no "title" field — auto-number them so creation isn't blocked.
+    let trimmedTitle = form.note_number.trim();
+    if (!trimmedTitle && form.is_return) {
+      trimmedTitle = `KTHIM-${new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')}`;
+    }
 
     if (!trimmedTitle) {
       setError(t('companyAdmin.deliveryNotes.errOrderTitle'));
