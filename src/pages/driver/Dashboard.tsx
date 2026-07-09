@@ -1598,7 +1598,20 @@ export function TaskDetailSheet({
               </button>
             )}
 
-            {isInTransit && (
+            {/* Returns usually have no document — give the driver a one-tap
+                "finish return" that sends it to the company for approval,
+                instead of the photo-required proof capture. */}
+            {isInTransit && (note as any).is_return && (
+              <button
+                onClick={handleCloseWithoutDocument}
+                disabled={closingWithout}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 text-white font-semibold text-sm shadow-lg shadow-amber-600/25 active:scale-95 transition-transform disabled:opacity-60"
+              >
+                {closingWithout ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Perfundo kthimin
+              </button>
+            )}
+            {isInTransit && !(note as any).is_return && (
               <button
                 onClick={() => setShowProofCapture(true)}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white font-semibold text-sm shadow-lg shadow-emerald-600/25 active:scale-95 transition-transform"
