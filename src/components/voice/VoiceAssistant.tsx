@@ -92,6 +92,11 @@ export default function VoiceAssistant() {
     } catch { /* ignore */ }
     return (['sq', 'en', 'de', 'fr'].includes(language) ? language : 'sq') as Lang;
   });
+  // Language controls are hidden by default (voice-first, uncluttered) and
+  // revealed by tapping the assistant avatar 3 times.
+  const [showSettings, setShowSettings] = useState(false);
+  const langOverrideRef = useRef(false);
+  const avatarTapRef = useRef<{ n: number; t: number }>({ n: 0, t: 0 });
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const wakeRecRef = useRef<SpeechRecognitionLike | null>(null);
   // While true the wake-word listener must NOT hold the mic (a conversation is
@@ -121,8 +126,29 @@ export default function VoiceAssistant() {
   const bcp47 = LANG_MAP[speakLang] ?? 'en-US';
 
   function pickLang(code: Lang) {
+    langOverrideRef.current = true;
     setSpeakLang(code);
     try { localStorage.setItem(LANG_KEY, code); } catch { /* ignore */ }
+  }
+
+  // Keep the spoken language locked to the platform's UI language (one of the
+  // four the platform supports) unless the user explicitly overrode it — so the
+  // recognizer stays focused on the right language and hears names better.
+  useEffect(() => {
+    if (langOverrideRef.current) return;
+    try { if (localStorage.getItem(LANG_KEY)) return; } catch { /* ignore */ }
+    if (['sq', 'en', 'de', 'fr'].includes(language) && language !== speakLang) {
+      setSpeakLang(language as Lang);
+    }
+  }, [language, speakLang]);
+
+  // Tap the avatar 3 times quickly to reveal/hide the language options.
+  function bumpAvatarTap() {
+    const now = Date.now();
+    const r = avatarTapRef.current;
+    r.n = now - r.t < 700 ? r.n + 1 : 1;
+    r.t = now;
+    if (r.n >= 3) { r.n = 0; setShowSettings((s) => !s); }
   }
   const active = listening || busy || speaking;
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')?.content ?? '';
@@ -484,7 +510,14 @@ export default function VoiceAssistant() {
         <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-3 pb-safe-nav pointer-events-none">
           <div className="pointer-events-auto w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 p-3 space-y-2">
             <div className="flex items-center gap-2">
-              <ManagerAvatar size={26} />
+              <button
+                type="button"
+                onClick={bumpAvatarTap}
+                title={t('voice.speakLang')}
+                className="flex-shrink-0 rounded-full"
+              >
+                <ManagerAvatar size={26} />
+              </button>
               <span className="text-sm font-semibold text-slate-900">{t('voice.title')}</span>
               {speechSupported && (
                 <button
@@ -497,19 +530,24 @@ export default function VoiceAssistant() {
               )}
               <button onClick={() => { stop(); setOpen(false); }} className={`${speechSupported ? '' : 'ml-auto'} text-slate-400 hover:text-slate-600`}><X className="w-5 h-5" /></button>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-slate-400 mr-1">{t('voice.speakLang')}</span>
-              {LANGS.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => pickLang(l.code)}
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-md ${speakLang === l.code ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                >
-                  {l.label}
-                </button>
-              ))}
-            </div>
-            {lastAssistant && !active && (
+            {showSettings && (
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] text-slate-400 mr-1">{t('voice.speakLang')}</span>
+                {LANGS.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => pickLang(l.code)}
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-md ${speakLang === l.code ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* The assistant speaks its reply aloud, so we don't clutter the bar
+                with the text — only show it when settings are open, or when this
+                browser has no speech support (so text-only users still get it). */}
+            {lastAssistant && !active && (showSettings || !speechSupported) && (
               <p className="text-sm text-slate-700 bg-slate-50 rounded-lg px-3 py-2 max-h-24 overflow-y-auto">{lastAssistant}</p>
             )}
             <div className="flex items-center gap-2">
