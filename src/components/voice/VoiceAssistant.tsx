@@ -8,6 +8,7 @@ import { interpretStockQuestion, type VoiceStockRow } from '../../utils/voiceSto
 import { stripMarkdown } from '../../utils/stripMarkdown';
 import { isStopCommand } from '../../utils/voiceCommands';
 import ManagerAvatar from './ManagerAvatar';
+import { isAssistantEnabled, ASSISTANT_ENABLED_EVENT } from './assistantEnabled';
 
 interface SpeechRecognitionLike {
   lang: string; continuous: boolean; interimResults: boolean; maxAlternatives: number;
@@ -82,6 +83,8 @@ export default function VoiceAssistant() {
   const [wakeOn, setWakeOn] = useState(() => {
     try { return localStorage.getItem(WAKE_KEY) === '1'; } catch { return false; }
   });
+  // Master ON/OFF for the whole assistant (toggled from the header / settings).
+  const [enabled, setEnabled] = useState(isAssistantEnabled);
   // The language the user SPEAKS to the assistant. Browsers can't auto-detect
   // spoken language, so the user picks it; it drives speech recognition + TTS.
   // Defaults to the app UI language. (Typed text is auto-detected by the agent.)
@@ -182,6 +185,27 @@ export default function VoiceAssistant() {
     window.addEventListener('storage', sync);
     return () => { window.removeEventListener('mm-wake-changed', sync); window.removeEventListener('storage', sync); };
   }, []);
+
+  // Keep the master ON/OFF in sync when toggled from the header or Settings.
+  useEffect(() => {
+    const sync = () => setEnabled(isAssistantEnabled());
+    window.addEventListener(ASSISTANT_ENABLED_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => { window.removeEventListener(ASSISTANT_ENABLED_EVENT, sync); window.removeEventListener('storage', sync); };
+  }, []);
+
+  // When switched OFF, immediately silence and release the mic, and close.
+  useEffect(() => {
+    if (enabled) return;
+    convoRef.current = false;
+    setConvo(false);
+    cancelSpeech();
+    setSpeaking(false);
+    setListening(false);
+    try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+    try { wakeRecRef.current?.stop(); } catch { /* ignore */ }
+    setOpen(false);
+  }, [enabled]);
 
   // Clean up any in-flight speech / recognition when the widget unmounts.
   useEffect(() => () => {
@@ -407,7 +431,7 @@ export default function VoiceAssistant() {
   // continuously for "Hej Toni" and open + greet when heard. Off by default
   // (it keeps the mic on); the user enables it with the ear toggle.
   useEffect(() => {
-    if (!wakeOn || !speechSupported) return;
+    if (!enabled || !wakeOn || !speechSupported) return;
     if (active || open) return; // don't run the wake mic while busy/talking/open
     const Ctor = getRecognitionCtor();
     if (!Ctor) return;
@@ -431,7 +455,7 @@ export default function VoiceAssistant() {
     try { rec.start(); } catch { /* ignore */ }
     return () => { stopped = true; try { rec.stop(); } catch { /* ignore */ } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wakeOn, active, open, speechSupported, bcp47]);
+  }, [enabled, wakeOn, active, open, speechSupported, bcp47]);
 
   function toggleWake() {
     setWakeOn((on) => {
@@ -465,6 +489,9 @@ export default function VoiceAssistant() {
       setOpen(true);
     }
   }
+
+  // Master switch OFF → the robot is hidden entirely.
+  if (!enabled) return null;
 
   return (
     <>

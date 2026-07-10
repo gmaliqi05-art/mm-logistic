@@ -50,6 +50,7 @@ export default function SortingSessionPanel({ batchId }: { batchId?: string | nu
       .select('id, full_name, worker_category')
       .eq('company_id', companyId)
       .eq('role', 'depot_worker')
+      .eq('worker_category', 'reparature')
       .eq('is_active', true)
       .order('full_name');
     if (depotId) wq.eq('depot_id', depotId);

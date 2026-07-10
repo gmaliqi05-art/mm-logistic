@@ -30,6 +30,7 @@ import NotificationDropdown from '../components/NotificationDropdown';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import DeletionBanner from '../components/DeletionBanner';
 import VoiceAssistant from '../components/voice/VoiceAssistant';
+import AssistantToggle from '../components/voice/AssistantToggle';
 
 import type { Feature } from '../types';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -281,6 +282,7 @@ export default function DepotLayout() {
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4">
+            <AssistantToggle variant="header" />
             <LanguageSwitcher variant="header" />
             <NotificationDropdown />
             <button

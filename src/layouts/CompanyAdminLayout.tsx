@@ -42,6 +42,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { useTranslation } from '../i18n';
 import SupportChatWidget from '../components/support/SupportChatWidget';
 import VoiceAssistant from '../components/voice/VoiceAssistant';
+import AssistantToggle from '../components/voice/AssistantToggle';
 import NotificationDropdown from '../components/NotificationDropdown';
 import SubscriptionBanner from '../components/subscription/SubscriptionBanner';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -372,6 +373,7 @@ export default function CompanyAdminLayout() {
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4">
+            <AssistantToggle variant="header" />
             <LanguageSwitcher variant="header" />
             <NotificationDropdown />
             <button
