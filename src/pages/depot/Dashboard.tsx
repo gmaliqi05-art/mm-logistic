@@ -20,6 +20,7 @@ import { useTranslation } from '../../i18n';
 import DeliveryReviewPanel from '../../components/delivery/DeliveryReviewPanel';
 import ReparatureDashboard from './ReparatureDashboard';
 import WorkerTimeReport from '../../components/depot/WorkerTimeReport';
+import AttendancePanel from '../../components/depot/AttendancePanel';
 import { isDamageLike } from '../../utils/epalClassification';
 import type { StockCondition } from '../../types';
 
@@ -73,6 +74,7 @@ function DepoistDashboard() {
   const [flowRows, setFlowRows] = useState<FlowRow[]>([]);
   const [recent, setRecent] = useState<RecentMovement[]>([]);
   const [pendingSorting, setPendingSorting] = useState<PendingSortingBatch[]>([]);
+  const [timeRefresh, setTimeRefresh] = useState(0);
 
   useEffect(() => {
     if (profile?.depot_id && profile?.company_id) {
@@ -367,7 +369,17 @@ function DepoistDashboard() {
         </div>
       </div>
 
-      <WorkerTimeReport companyId={profile?.company_id ?? null} depotId={profile?.depot_id ?? null} />
+      {/* Register worker hours right here on the dashboard; the full page with
+          reports + send-to-company is at /depot/time-tracking. */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('depot.timeTracking.workHoursTitle')}</h2>
+        <Link to="/depot/time-tracking" className="text-xs text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">
+          {t('depot.timeTracking.reportTitle')} <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+      <AttendancePanel onChange={() => setTimeRefresh((k) => k + 1)} />
+
+      <WorkerTimeReport key={timeRefresh} companyId={profile?.company_id ?? null} depotId={profile?.depot_id ?? null} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
