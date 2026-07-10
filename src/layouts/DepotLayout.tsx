@@ -78,6 +78,7 @@ const navEntries: NavEntry[] = [
   },
 
   { to: '/depot/reports', icon: BarChart3, labelKey: 'nav.reports', end: false, bottomNav: false, categories: ['depoist'] },
+  { to: '/depot/time-tracking', icon: Clock, labelKey: 'nav.timeTracking', end: false, bottomNav: false, categories: ['depoist'] },
   { to: '/depot/chat', icon: MessageSquare, labelKey: 'nav.chat', end: false, bottomNav: true },
   { to: '/depot/documents', icon: FolderOpen, labelKey: 'nav.documents', end: false, bottomNav: false },
 

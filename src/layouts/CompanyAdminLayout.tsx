@@ -33,6 +33,7 @@ import {
   ChevronDown,
   ChevronRight,
   BookOpen,
+  Clock,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -109,6 +110,7 @@ const navEntries: NavEntry[] = [
       { to: '/company/reports', icon: BarChart3, labelKey: 'nav.reports' },
       { to: '/company/sorting-reports', icon: Layers, labelKey: 'nav.sortingReports', premium: true },
       { to: '/company/repair-reports', icon: Wrench, labelKey: 'nav.repairReports', premium: true },
+      { to: '/company/depot-time-reports', icon: Clock, labelKey: 'nav.depotTimeReports' },
       { to: '/company/financial-summary', icon: Calculator, labelKey: 'nav.financialSummary' },
       { to: '/company/audit-report', icon: FileCheck2, labelKey: 'nav.auditReport' },
       { to: '/company/stock-alerts', icon: AlertCircle, labelKey: 'nav.stockAlerts', premium: true },

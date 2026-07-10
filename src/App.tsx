@@ -132,6 +132,7 @@ const DepotDeliveryNotes = lazy(() => import('./pages/depot/DeliveryNotes'));
 const DepotChat = lazy(() => import('./pages/depot/Chat'));
 const DepotDocuments = lazy(() => import('./pages/depot/Documents'));
 const DepotReports = lazy(() => import('./pages/depot/Reports'));
+const DepotTimeTracking = lazy(() => import('./pages/depot/TimeTracking'));
 const DepotTrailers = lazy(() => import('./pages/depot/Trailers'));
 const DepotSettings = lazy(() => import('./pages/depot/Settings'));
 
@@ -148,6 +149,7 @@ const DriverTrailers = lazy(() => import('./pages/driver/Trailers'));
 const CompanyRoutePlanner = lazy(() => import('./pages/company/RoutePlanner'));
 const CompanyFleetReports = lazy(() => import('./pages/company/FleetReports'));
 const CompanySortingReports = lazy(() => import('./pages/company/SortingReports'));
+const CompanyDepotTimeReports = lazy(() => import('./pages/company/DepotTimeReports'));
 const LogisticsLiveMap = lazy(() => import('./pages/logistics/LiveMap'));
 const CompanyAutomjetet = lazy(() => import('./pages/company/Automjetet'));
 const CompanyLiveMapWithPlanner = lazy(() => import('./pages/company/LiveMapWithPlanner'));
@@ -332,6 +334,7 @@ function AppRoutes() {
           <Route path="reports" element={<CompanyReports />} />
           <Route path="sorting" element={<FeatureGate feature="sorting"><DepotSorting /></FeatureGate>} />
           <Route path="sorting-reports" element={<FeatureGate feature="sorting"><CompanySortingReports /></FeatureGate>} />
+          <Route path="depot-time-reports" element={<CompanyDepotTimeReports />} />
           <Route path="repair-reports" element={<FeatureGate feature="repairs"><CompanyRepairHub /></FeatureGate>} />
           <Route path="worker-repair-stats" element={<Navigate to="/company/repair-reports?tab=workers" replace />} />
           <Route path="chat" element={<CompanyChat />} />
@@ -386,6 +389,7 @@ function AppRoutes() {
           <Route path="damage" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><FeatureGate feature="repairs"><DepotDamage /></FeatureGate></ProtectedRoute>} />
           <Route path="documents" element={<DepotDocuments />} />
           <Route path="reports" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotReports /></ProtectedRoute>} />
+          <Route path="time-tracking" element={<ProtectedRoute roles={['depot_worker']} workerCategories={['depoist']}><DepotTimeTracking /></ProtectedRoute>} />
           <Route path="leave" element={<FeatureGate feature="hr"><HRMyLeave /></FeatureGate>} />
           <Route path="attendance" element={<FeatureGate feature="hr"><HRMyAttendance /></FeatureGate>} />
           <Route path="work-hours" element={<FeatureGate feature="hr"><HRMyWorkHours /></FeatureGate>} />
