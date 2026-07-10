@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Clock, Wrench, Layers, Loader2, BarChart3, ChevronDown, ChevronRight,
-  Package, Recycle, Users,
+  Package, Recycle, Users, Send,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n';
@@ -36,7 +36,20 @@ interface Depot {
   name: string;
 }
 
-type Period = 'today' | '7d' | '30d';
+export interface ReportSubmission {
+  period_type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  from: string;
+  to: string;
+  worker_id: string | null;
+  totals: { repair_min: number; sorting_min: number; repaired: number; sorted: number; scrapped: number };
+  workers: WorkerAgg[];
+}
+
+type Period = 'today' | '7d' | '30d' | 'custom';
+
+const PERIOD_TYPE: Record<Period, ReportSubmission['period_type']> = {
+  today: 'daily', '7d': 'weekly', '30d': 'monthly', custom: 'custom',
+};
 
 function fmtMin(mins: number): string {
   const m = Math.max(0, Math.round(mins));
@@ -60,31 +73,50 @@ function today(): string {
  * `depot_worker_time_report` RPC.
  *
  * - variant="depot": compact table for the depot dashboard (one depot).
- * - variant="company": company-wide detailed overview — KPI summary across all
- *   depots, a depot filter, and expandable per-worker rows that drill into the
- *   worker's daily breakdown.
+ * - variant="company": KPI summary + per-worker drill-down.
+ * - allowCustomRange / allowWorkerFilter: extra filters (used on the depot
+ *   work-hours page).
+ * - onSend: renders a "Send to company" button that hands the current
+ *   filtered snapshot back to the caller to persist.
  */
 export default function WorkerTimeReport({
   companyId,
   depotId = null,
   variant = 'depot',
+  allowCustomRange = false,
+  allowWorkerFilter = false,
+  onSend,
 }: {
   companyId: string | null;
   depotId?: string | null;
   variant?: 'depot' | 'company';
+  allowCustomRange?: boolean;
+  allowWorkerFilter?: boolean;
+  onSend?: (s: ReportSubmission) => Promise<void> | void;
 }) {
   const { t } = useTranslation();
   const isCompany = variant === 'company';
   const [period, setPeriod] = useState<Period>('7d');
+  const [customFrom, setCustomFrom] = useState(isoDaysAgo(6));
+  const [customTo, setCustomTo] = useState(today());
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [depots, setDepots] = useState<Depot[]>([]);
   const [depotFilter, setDepotFilter] = useState<string | null>(depotId);
+  const [workerFilter, setWorkerFilter] = useState<string>('');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const range = useMemo(() => {
+    if (period === 'custom') return { from: customFrom, to: customTo };
+    const to = today();
+    const from = period === 'today' ? to : period === '7d' ? isoDaysAgo(6) : isoDaysAgo(29);
+    return { from, to };
+  }, [period, customFrom, customTo]);
 
   // Company variant: load the depot list once for the filter dropdown.
   useEffect(() => {
-    if (!isCompany || !companyId) return;
+    if (!isCompany || !companyId || depotId) return;
     void (async () => {
       const { data } = await supabase
         .from('depots')
@@ -94,39 +126,33 @@ export default function WorkerTimeReport({
         .order('name');
       setDepots((data ?? []) as Depot[]);
     })();
-  }, [isCompany, companyId]);
+  }, [isCompany, companyId, depotId]);
 
   const load = useCallback(async () => {
     if (!companyId) return;
+    if (period === 'custom' && (!range.from || !range.to)) return;
     setLoading(true);
-    const from = period === 'today' ? today() : period === '7d' ? isoDaysAgo(6) : isoDaysAgo(29);
     const { data, error } = await supabase.rpc('depot_worker_time_report', {
       p_company_id: companyId,
-      p_depot_id: isCompany ? depotFilter : depotId,
-      p_from: from,
-      p_to: today(),
+      p_depot_id: isCompany && !depotId ? depotFilter : depotId,
+      p_from: range.from,
+      p_to: range.to,
     });
     if (!error) setRows((data ?? []) as ReportRow[]);
     setLoading(false);
-  }, [companyId, depotId, depotFilter, isCompany, period]);
+  }, [companyId, depotId, depotFilter, isCompany, period, range.from, range.to]);
 
   useEffect(() => { void load(); }, [load]);
 
-  const workers = useMemo<WorkerAgg[]>(() => {
+  const allWorkers = useMemo<WorkerAgg[]>(() => {
     const m = new Map<string, WorkerAgg>();
     for (const r of rows) {
       let w = m.get(r.worker_id);
       if (!w) {
         w = {
-          worker_id: r.worker_id,
-          full_name: r.full_name,
-          repair_min: 0,
-          sorting_min: 0,
-          repaired_pallets: 0,
-          scrapped_pallets: 0,
-          sorted_pallets: 0,
-          leave_days: 0,
-          days: [],
+          worker_id: r.worker_id, full_name: r.full_name,
+          repair_min: 0, sorting_min: 0, repaired_pallets: 0,
+          scrapped_pallets: 0, sorted_pallets: 0, leave_days: 0, days: [],
         };
         m.set(r.worker_id, w);
       }
@@ -144,6 +170,11 @@ export default function WorkerTimeReport({
     );
   }, [rows]);
 
+  const workers = useMemo(
+    () => (workerFilter ? allWorkers.filter((w) => w.worker_id === workerFilter) : allWorkers),
+    [allWorkers, workerFilter],
+  );
+
   const totals = useMemo(() => {
     return workers.reduce(
       (acc, w) => ({
@@ -157,11 +188,32 @@ export default function WorkerTimeReport({
     );
   }, [workers]);
 
+  const showSummary = isCompany || allowCustomRange;
+  const expandable = isCompany || allowCustomRange;
+
   const periods: Array<{ key: Period; label: string }> = [
     { key: 'today', label: t('depot.timeTracking.today') },
     { key: '7d', label: t('depot.timeTracking.last7') },
     { key: '30d', label: t('depot.timeTracking.last30') },
+    ...(allowCustomRange ? [{ key: 'custom' as Period, label: t('depot.timeTracking.custom') }] : []),
   ];
+
+  async function handleSend() {
+    if (!onSend) return;
+    setSending(true);
+    try {
+      await onSend({
+        period_type: PERIOD_TYPE[period],
+        from: range.from,
+        to: range.to,
+        worker_id: workerFilter || null,
+        totals,
+        workers,
+      });
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <section className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
@@ -176,7 +228,7 @@ export default function WorkerTimeReport({
           </div>
         </div>
         <div className="flex items-center gap-2 self-start flex-wrap">
-          {isCompany && depots.length > 0 && (
+          {isCompany && !depotId && depots.length > 0 && (
             <select
               value={depotFilter ?? ''}
               onChange={(e) => setDepotFilter(e.target.value || null)}
@@ -185,6 +237,18 @@ export default function WorkerTimeReport({
               <option value="">{t('depot.timeTracking.allDepots')}</option>
               {depots.map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+          )}
+          {allowWorkerFilter && allWorkers.length > 0 && (
+            <select
+              value={workerFilter}
+              onChange={(e) => setWorkerFilter(e.target.value)}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            >
+              <option value="">{t('depot.timeTracking.allWorkers')}</option>
+              {allWorkers.map((w) => (
+                <option key={w.worker_id} value={w.worker_id}>{w.full_name || '-'}</option>
               ))}
             </select>
           )}
@@ -204,8 +268,18 @@ export default function WorkerTimeReport({
         </div>
       </div>
 
-      {/* Company overview — KPI summary across the whole company. */}
-      {isCompany && !loading && workers.length > 0 && (
+      {period === 'custom' && allowCustomRange && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/60 text-xs">
+          <span className="text-gray-500">{t('depot.timeTracking.date')}:</span>
+          <input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
+          <span className="text-gray-400">–</span>
+          <input type="date" value={customTo} min={customFrom} max={today()} onChange={(e) => setCustomTo(e.target.value)}
+            className="border border-gray-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:border-teal-500" />
+        </div>
+      )}
+
+      {showSummary && !loading && workers.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-gray-100 border-b border-gray-100">
           <Kpi icon={Wrench} tone="amber" label={t('depot.timeTracking.repairTime')} value={fmtMin(totals.repair_min)} />
           <Kpi icon={Layers} tone="indigo" label={t('depot.timeTracking.sortTime')} value={fmtMin(totals.sorting_min)} />
@@ -254,7 +328,7 @@ export default function WorkerTimeReport({
                     w={w}
                     sortPct={sortPct}
                     isOpen={isOpen}
-                    expandable={isCompany}
+                    expandable={expandable}
                     onToggle={() => setExpanded(isOpen ? null : w.worker_id)}
                     t={t}
                   />
@@ -276,6 +350,19 @@ export default function WorkerTimeReport({
               </tr>
             </tfoot>
           </table>
+        </div>
+      )}
+
+      {onSend && !loading && workers.length > 0 && (
+        <div className="flex justify-end px-4 py-3 border-t border-gray-100">
+          <button
+            onClick={handleSend}
+            disabled={sending}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+          >
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {t('depot.timeTracking.sendToCompany')}
+          </button>
         </div>
       )}
     </section>
