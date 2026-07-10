@@ -1183,8 +1183,9 @@ export default function CompanyDashboard() {
         </div>
       )}
 
-      {/* Per-worker repair vs sorting time across all depots. */}
-      <WorkerTimeReport companyId={profile?.company_id ?? null} />
+      {/* Detailed repair vs sorting overview — company-wide KPIs, depot filter,
+          and per-worker daily drill-down. */}
+      <WorkerTimeReport companyId={profile?.company_id ?? null} variant="company" />
 
       {/* Recent activity feed — pulls last 8 audit_log rows for the company.
           Now that the audit_row_changes trigger covers 14 tables the feed is
