@@ -23,6 +23,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
 import type { ProductCategory, PalletSortingBatch, PalletSortingItem } from '../../types';
 import { epalClassRank } from '../../utils/productSort';
+import SortingSessionPanel from '../../components/depot/SortingSessionPanel';
 
 interface CategoryProduct {
   id: string;
@@ -778,6 +779,8 @@ export default function DepotSorting() {
           {t('depot.sorting.noSortingCategories')}
         </div>
       )}
+
+      <SortingSessionPanel batchId={activeBatchId} />
 
       <section>
         <div className="flex items-center gap-2 mb-3">

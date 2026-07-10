@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Upload, Save, Loader2, Image as ImageIcon, Radio, FileText, Bell, Plug, ShieldCheck, Trash2 } from 'lucide-react';
+import { Building2, Upload, Save, Loader2, Image as ImageIcon, Radio, FileText, Bell, Plug, ShieldCheck, Trash2, Clock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
@@ -9,9 +9,10 @@ import PushNotificationSettings from '../../components/PushNotificationSettings'
 import VoiceWakeSettings from '../../components/voice/VoiceWakeSettings';
 import ComplianceHealthCard from '../../components/accounting/ComplianceHealthCard';
 import LucidWarningBanner from '../../components/compliance/LucidWarningBanner';
+import DepotTimeSettingsCard from '../../components/company/DepotTimeSettingsCard';
 import { isLucidApplicable } from '../../utils/lucid';
 
-type TabKey = 'profile' | 'invoice' | 'integrations' | 'notifications' | 'compliance';
+type TabKey = 'profile' | 'invoice' | 'integrations' | 'notifications' | 'compliance' | 'depot';
 
 const CURRENCIES = ['EUR', 'CHF', 'ALL', 'RSD', 'BAM', 'MKD', 'RON', 'BGN', 'PLN', 'GBP', 'USD'];
 
@@ -183,6 +184,7 @@ export default function CompanySettings() {
     ...(accountingEnabled
       ? [{ key: 'compliance' as TabKey, label: 'Pajtueshmeria', icon: ShieldCheck }]
       : []),
+    { key: 'depot', label: t('depot.timeTracking.settingsTitle'), icon: Clock },
     { key: 'integrations', label: 'Integrimet', icon: Plug },
     { key: 'notifications', label: 'Njoftimet', icon: Bell },
   ];
@@ -561,7 +563,9 @@ export default function CompanySettings() {
             </div>
           )}
 
-          {tab !== 'notifications' && tab !== 'compliance' && (
+          {tab === 'depot' && <DepotTimeSettingsCard />}
+
+          {tab !== 'notifications' && tab !== 'compliance' && tab !== 'depot' && (
             <div className="flex justify-end pt-4 border-t border-gray-200">
               <button
                 onClick={handleSave}
