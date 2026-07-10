@@ -32,6 +32,7 @@ import type { StockCondition } from '../../types';
 import DocumentTypeChooser, { type ScanDocKind } from '../../components/scanner/DocumentTypeChooser';
 import ScanDocumentModal from '../../components/accounting/ScanDocumentModal';
 import QuickNoteModal from '../../components/delivery/QuickNoteModal';
+import WorkerTimeReport from '../../components/depot/WorkerTimeReport';
 import { usePendingReviewCounts } from '../../hooks/usePendingReviewCounts';
 import { ClipboardList } from 'lucide-react';
 import type { DeliveryNote, StockAlert, Stock as StockType, StockMovement } from '../../types';
@@ -1181,6 +1182,9 @@ export default function CompanyDashboard() {
           </div>
         </div>
       )}
+
+      {/* Per-worker repair vs sorting time across all depots. */}
+      <WorkerTimeReport companyId={profile?.company_id ?? null} />
 
       {/* Recent activity feed — pulls last 8 audit_log rows for the company.
           Now that the audit_row_changes trigger covers 14 tables the feed is

@@ -19,6 +19,7 @@ import { PageSkeleton } from '../../components/ui/Skeleton';
 import { useTranslation } from '../../i18n';
 import DeliveryReviewPanel from '../../components/delivery/DeliveryReviewPanel';
 import ReparatureDashboard from './ReparatureDashboard';
+import WorkerTimeReport from '../../components/depot/WorkerTimeReport';
 import { isDamageLike } from '../../utils/epalClassification';
 import type { StockCondition } from '../../types';
 
@@ -365,6 +366,8 @@ function DepoistDashboard() {
           )}
         </div>
       </div>
+
+      <WorkerTimeReport companyId={profile?.company_id ?? null} depotId={profile?.depot_id ?? null} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
