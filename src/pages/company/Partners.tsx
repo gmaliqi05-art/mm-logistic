@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Building2,
   Plus,
@@ -82,6 +82,7 @@ const typeBadgeCls: Record<PartnerType, string> = {
 export default function CompanyPartners() {
   const { profile } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -274,12 +275,14 @@ export default function CompanyPartners() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {filtered.map((p) => (
-            <article key={p.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+            <article
+              key={p.id}
+              onClick={() => navigate(`/company/partners/${p.id}`)}
+              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md hover:border-teal-300 transition-all cursor-pointer"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <Link to={`/company/partners/${p.id}`} className="block group">
-                    <h3 className="font-semibold text-gray-900 truncate group-hover:text-teal-700 transition-colors">{p.name}</h3>
-                  </Link>
+                  <h3 className="font-semibold text-gray-900 truncate">{p.name}</h3>
                   <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                     {p.contact_number && (
                       <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-teal-700 bg-teal-50 border border-teal-100">
@@ -291,7 +294,7 @@ export default function CompanyPartners() {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   <Link
                     to={`/company/partners/${p.id}`}
                     className="p-1.5 rounded-md border border-gray-200 text-gray-600 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-200 transition-colors"

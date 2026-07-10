@@ -327,12 +327,22 @@ export default function PartnerDetail() {
         </dl>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Kpi label={tp('kpiIn')} value={totals.in} tone="emerald" icon={ArrowDownLeft} />
-        <Kpi label={tp('kpiOut')} value={totals.out} tone="rose" icon={ArrowUpRight} />
-        <Kpi label={tp('kpiCarrier')} value={totals.carrier} tone="slate" icon={Handshake} />
-        <Kpi label={tp('kpiCustody')} value={totals.custody} tone="amber" icon={Warehouse} />
-        <Kpi label={tp('kpiDocuments')} value={totals.documents} tone="sky" icon={Package} />
+      {/* Official-statement summary: compact, bordered, no colored tiles. */}
+      <div className="rounded-lg border border-slate-300 bg-white overflow-hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y lg:divide-y-0 divide-slate-200">
+          {[
+            { label: tp('kpiIn'), value: totals.in },
+            { label: tp('kpiOut'), value: totals.out },
+            { label: tp('kpiCarrier'), value: totals.carrier },
+            { label: tp('kpiCustody'), value: totals.custody },
+            { label: tp('kpiDocuments'), value: totals.documents },
+          ].map((k) => (
+            <div key={k.label} className="px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">{k.label}</p>
+              <p className="mt-0.5 text-lg font-bold text-slate-900 tabular-nums">{k.value.toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {(lifetime.salesCount > 0 || lifetime.purchasesCount > 0) && (
@@ -561,31 +571,3 @@ function InfoLine({ icon: Icon, label }: { icon: typeof Mail; label: string }) {
   );
 }
 
-function Kpi({
-  label,
-  value,
-  tone,
-  icon: Icon,
-}: {
-  label: string;
-  value: number;
-  tone: 'emerald' | 'rose' | 'slate' | 'amber' | 'sky';
-  icon: typeof ArrowDownLeft;
-}) {
-  const toneMap: Record<string, string> = {
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    rose: 'bg-rose-50 text-rose-700 border-rose-100',
-    slate: 'bg-slate-50 text-slate-700 border-slate-200',
-    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-    sky: 'bg-sky-50 text-sky-700 border-sky-100',
-  };
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
-      <div className={`inline-flex items-center justify-center w-8 h-8 rounded-lg border ${toneMap[tone]} mb-2`}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="text-lg font-bold text-slate-900 mt-0.5">{value.toLocaleString()}</div>
-    </div>
-  );
-}
