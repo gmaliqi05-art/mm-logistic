@@ -90,6 +90,7 @@ export default function CompanyPartners() {
   const [filterType, setFilterType] = useState<'' | PartnerType>('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingNumber, setEditingNumber] = useState<string | null>(null);
   const [form, setForm] = useState<PartnerForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -120,12 +121,14 @@ export default function CompanyPartners() {
 
   function openCreate() {
     setEditingId(null);
+    setEditingNumber(null);
     setForm(emptyForm);
     setShowForm(true);
   }
 
   function openEdit(p: Partner) {
     setEditingId(p.id);
+    setEditingNumber(p.contact_number ?? null);
     setForm({
       name: p.name,
       contact_type: p.contact_type,
@@ -354,10 +357,11 @@ export default function CompanyPartners() {
         <PartnerFormModal
           form={form}
           setForm={setForm}
-          onClose={() => { setShowForm(false); setEditingId(null); setForm(emptyForm); }}
+          onClose={() => { setShowForm(false); setEditingId(null); setEditingNumber(null); setForm(emptyForm); }}
           onSave={save}
           saving={saving}
           editing={!!editingId}
+          contactNumber={editingNumber}
         />
       )}
     </div>
@@ -371,6 +375,7 @@ interface ModalProps {
   onSave: () => void;
   saving: boolean;
   editing: boolean;
+  contactNumber?: string | null;
 }
 
 type VatResult =
@@ -378,7 +383,7 @@ type VatResult =
   | { valid: false; reason: string }
   | null;
 
-export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editing }: ModalProps) {
+export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editing, contactNumber }: ModalProps) {
   const { t } = useTranslation();
   const [vatChecking, setVatChecking] = useState(false);
   const [vatResult, setVatResult] = useState<VatResult>(null);
@@ -435,6 +440,14 @@ export function PartnerFormModal({ form, setForm, onClose, onSave, saving, editi
         </div>
 
         <div className="p-5 space-y-4 modal-body-scroll flex-1">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <span className="text-[11px] uppercase tracking-wide text-slate-500">Numri i klientit</span>
+            {editing && contactNumber ? (
+              <span className="font-mono text-sm font-bold text-teal-700">{contactNumber}</span>
+            ) : (
+              <span className="text-xs text-slate-400 italic">caktohet automatikisht pas ruajtjes (KL-…)</span>
+            )}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Emri i Kompanise *">
               <input
