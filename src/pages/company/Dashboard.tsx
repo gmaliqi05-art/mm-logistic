@@ -580,10 +580,10 @@ export default function CompanyDashboard() {
       {/* Greeting + Scan */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+          <h1 className="text-lg lg:text-xl font-semibold text-gray-900">
             {t('company.dashboard.title')}
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">{t('company.dashboard.subtitle')}</p>
+          <p className="text-gray-500 text-xs mt-0.5">{t('company.dashboard.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {profile?.company_id && (
@@ -1122,10 +1122,10 @@ export default function CompanyDashboard() {
           that already shipped. Links into the accounting module where the
           full work happens. */}
       {stats.accountingSummary && (
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-            <h2 className="font-semibold text-emerald-900 text-sm flex items-center gap-2">
-              <Calculator className="w-4 h-4" />
+            <h2 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-emerald-600" />
               {t('company.dashboard.accountingSummaryTitle')}
             </h2>
             <Link to="/accounting" className="text-xs text-emerald-700 hover:text-emerald-900 font-medium">
@@ -1425,22 +1425,18 @@ function ReviewCTA({ counts, t }: { counts: ReturnType<typeof usePendingReviewCo
   return (
     <Link
       to="/company/review"
-      className="group relative flex items-center gap-4 p-4 lg:p-5 bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 rounded-2xl text-white shadow-lg hover:shadow-xl active:scale-[0.99] transition-all overflow-hidden"
+      className="flex items-center gap-3 p-3 bg-white border border-sky-200 rounded-lg hover:bg-sky-50 transition-colors"
     >
-      <span className="absolute top-3 right-4 flex items-center justify-center">
-        <span className="absolute w-3 h-3 bg-white/40 rounded-full animate-ping" />
-        <span className="relative w-2 h-2 bg-white rounded-full" />
-      </span>
-      <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm flex-shrink-0">
-        <ClipboardList className="w-6 h-6 text-white" />
+      <div className="p-2 rounded-lg bg-sky-50 flex-shrink-0">
+        <ClipboardList className="w-4 h-4 text-sky-600" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold uppercase tracking-wide">{t('review.cta.title')}</p>
-        <p className="text-xs lg:text-sm text-white/90 mt-0.5 truncate">{parts.join(' - ')}</p>
+        <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{t('review.cta.title')}</p>
+        <p className="text-[11px] text-slate-500 mt-0.5 truncate">{parts.join(' - ')}</p>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <span className="text-2xl lg:text-3xl font-bold tabular-nums">{counts.total}</span>
-        <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="text-lg font-bold tabular-nums text-sky-700">{counts.total}</span>
+        <ArrowRight className="w-4 h-4 text-slate-300" />
       </div>
     </Link>
   );
@@ -1450,19 +1446,17 @@ function StatCard({ label, value, icon: Icon, color, suffix, badge }: {
   label: string; value: string | number; icon: typeof Warehouse; color: string; suffix?: string; badge?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3.5 lg:p-5">
+    <div className="bg-white rounded-lg border border-gray-200 p-3 lg:p-3.5">
       <div className="flex items-start justify-between">
         <div className="min-w-0">
-          <p className="text-[10px] lg:text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
-          <div className="flex items-baseline gap-1 mt-1 lg:mt-2">
-            <p className="text-xl lg:text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
+          <div className="flex items-baseline gap-1 mt-1">
+            <p className="text-lg lg:text-xl font-bold text-gray-900">{value}</p>
             {suffix && <span className="text-[10px] text-gray-400 hidden lg:inline">{suffix}</span>}
           </div>
           {badge && <span className="inline-block mt-1 text-[9px] font-medium text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{badge}</span>}
         </div>
-        <div className={`${color} p-2 lg:p-2.5 rounded-xl flex-shrink-0`}>
-          <Icon className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
-        </div>
+        <Icon className={`w-4 h-4 flex-shrink-0 ${color.startsWith('bg-') ? color.replace('bg-', 'text-').replace(/-500$/, '-600') : 'text-slate-500'}`} />
       </div>
     </div>
   );
@@ -1509,17 +1503,14 @@ function QuickAction({ to, icon: Icon, label, color }: {
 function QuickActionTile({ to, icon: Icon, label, color }: {
   to: string; icon: typeof FileText; label: string; color: string;
 }) {
-  const colorMap: Record<string, { bg: string; icon: string; text: string }> = {
-    teal: { bg: 'bg-teal-50 active:bg-teal-100', icon: 'text-teal-600', text: 'text-teal-700' },
-    emerald: { bg: 'bg-emerald-50 active:bg-emerald-100', icon: 'text-emerald-600', text: 'text-emerald-700' },
-    cyan: { bg: 'bg-cyan-50 active:bg-cyan-100', icon: 'text-cyan-600', text: 'text-cyan-700' },
-    gray: { bg: 'bg-gray-50 active:bg-gray-100', icon: 'text-gray-600', text: 'text-gray-700' },
-  };
-  const c = colorMap[color] || colorMap.gray;
+  void color;
   return (
-    <Link to={to} className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl transition-colors ${c.bg}`}>
-      <Icon className={`w-5 h-5 ${c.icon}`} />
-      <span className={`text-[10px] font-medium text-center leading-tight ${c.text}`}>{label}</span>
+    <Link
+      to={to}
+      className="flex flex-col items-center justify-start gap-1 px-1 py-2.5 rounded-lg bg-white border border-slate-200 active:bg-slate-50 transition-colors"
+    >
+      <Icon className="w-5 h-5 text-slate-600" />
+      <span className="text-[10px] font-medium text-center leading-tight text-slate-600">{label}</span>
     </Link>
   );
 }
