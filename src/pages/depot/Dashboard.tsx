@@ -339,16 +339,14 @@ function DepoistDashboard() {
         </div>
       </div>
 
-      {/* Register worker hours right here on the dashboard; the full page with
-          reports + send-to-company is at /depot/time-tracking. */}
+      {/* Repair vs sorting report. Register worker hours in the collapsible
+          panel at the bottom of the page, or the full /depot/time-tracking. */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('depot.timeTracking.workHoursTitle')}</h2>
+        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">{t('depot.timeTracking.reportTitle')}</h2>
         <Link to="/depot/time-tracking" className="text-xs text-teal-700 hover:text-teal-900 inline-flex items-center gap-1">
-          {t('depot.timeTracking.reportTitle')} <ArrowRight className="w-3.5 h-3.5" />
+          {t('depot.timeTracking.workHoursTitle')} <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <AttendancePanel onChange={() => setTimeRefresh((k) => k + 1)} />
-
       <WorkerTimeReport key={timeRefresh} companyId={profile?.company_id ?? null} depotId={profile?.depot_id ?? null} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -424,6 +422,9 @@ function DepoistDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Worker-hours activation — collapsed by default, at the bottom. */}
+      <AttendancePanel collapsible onChange={() => setTimeRefresh((k) => k + 1)} />
     </div>
   );
 }
