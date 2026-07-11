@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Clock, Play, LogOut, Loader2, CheckCircle2, RotateCcw, Users } from 'lucide-react';
+import { Clock, Play, LogOut, Loader2, CheckCircle2, RotateCcw, Users, Menu, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../i18n';
@@ -45,7 +45,13 @@ function fmtTime(iso: string): string {
  * start); ending the day sets clock_out (e.g. a worker leaves at 11:00). This
  * bounds each worker's productive window so repair time reflects real hours.
  */
-export default function AttendancePanel({ onChange }: { onChange?: () => void }) {
+export default function AttendancePanel({
+  onChange,
+  collapsible = false,
+}: {
+  onChange?: () => void;
+  collapsible?: boolean;
+}) {
   const { profile } = useAuth();
   const { t } = useTranslation();
   const [workers, setWorkers] = useState<DepotWorker[]>([]);
@@ -54,6 +60,8 @@ export default function AttendancePanel({ onChange }: { onChange?: () => void })
   const [busy, setBusy] = useState<string | null>(null);
   const [endingId, setEndingId] = useState<string | null>(null);
   const [endTime, setEndTime] = useState(nowHM());
+  // Collapsible mode: closed by default, opens on click (hamburger).
+  const [open, setOpen] = useState(!collapsible);
 
   const companyId = profile?.company_id ?? null;
   const depotId = profile?.depot_id ?? null;
@@ -181,22 +189,36 @@ export default function AttendancePanel({ onChange }: { onChange?: () => void })
   }
 
   const pendingCount = workers.filter((w) => !shiftByWorker.get(w.id)).length;
+  const activeCount = shifts.filter((sh) => !sh.clock_out).length;
+
+  const headerInner = (
+    <>
+      {collapsible && <Menu className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+        <Clock className="w-4 h-4" />
+      </div>
+      <div className="min-w-0 text-left">
+        <h2 className="text-sm font-semibold text-gray-800">{t('depot.timeTracking.attendanceTitle')}</h2>
+        <p className="text-[11px] text-gray-500 mt-0.5">
+          {t('depot.timeTracking.standardShift')}: {settings.shift_start} – {settings.shift_end}
+          {collapsible && !open && activeCount > 0 && ` · ${activeCount} ${t('depot.timeTracking.working')}`}
+        </p>
+      </div>
+    </>
+  );
 
   return (
     <section className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
-            <Clock className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-gray-800">{t('depot.timeTracking.attendanceTitle')}</h2>
-            <p className="text-[11px] text-gray-500 mt-0.5">
-              {t('depot.timeTracking.standardShift')}: {settings.shift_start} – {settings.shift_end}
-            </p>
-          </div>
-        </div>
-        {pendingCount > 0 && (
+      <div className={`flex items-start justify-between gap-3 ${open ? 'mb-3' : ''}`}>
+        {collapsible ? (
+          <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 min-w-0 flex-1">
+            {headerInner}
+            <ChevronDown className={`w-4 h-4 text-gray-400 ml-auto flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 min-w-0">{headerInner}</div>
+        )}
+        {open && pendingCount > 0 && (
           <button
             onClick={activateAll}
             disabled={busy !== null || !depotId}
@@ -208,7 +230,7 @@ export default function AttendancePanel({ onChange }: { onChange?: () => void })
         )}
       </div>
 
-      {!depotId ? (
+      {open && (!depotId ? (
         <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
           {t('depot.timeTracking.needDepot')}
         </p>
@@ -306,7 +328,7 @@ export default function AttendancePanel({ onChange }: { onChange?: () => void })
             );
           })}
         </div>
-      )}
+      ))}
     </section>
   );
 }
